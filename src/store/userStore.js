@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/db.js';
+import { getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
 
 const DEFAULT_PROFILE = {
   name: '',
@@ -35,9 +36,10 @@ const useUserStore = create((set, get) => ({
   async addXP(amount) {
     const p = get().profile;
     if (!p) return;
-    const xp = p.xp + amount;
     const totalXp = p.totalXp + amount;
-    await get().updateProfile({ xp, totalXp });
+    const level = getLevelFromTotalXP(totalXp);
+    const title = getTitle(level);
+    await get().updateProfile({ xp: p.xp + amount, totalXp, level, title });
   },
 }));
 

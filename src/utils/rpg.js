@@ -34,6 +34,26 @@ export function getTitle(level) {
   return TITLES[Math.min(level, 10)] ?? 'Magnum Opus';
 }
 
+const clamp = (n) => Math.max(0, Math.min(100, Math.round(n)));
+
+// Five-axis character radar (each 0-100) from aggregate training data.
+export function getCharacterStats({
+  maxWeight = 0,
+  avgVolume = 0,
+  avgSets = 0,
+  streak = 0,
+  workoutsPerWeek = 0,
+  muscleVariety = 0,
+}) {
+  return [
+    { axis: 'Strength', value: clamp((maxWeight / 200) * 100) },
+    { axis: 'Power', value: clamp((avgVolume / 8000) * 100) },
+    { axis: 'Endurance', value: clamp((avgSets / 25) * 100) },
+    { axis: 'Consistency', value: clamp(streak * 5 + (workoutsPerWeek / 5) * 50) },
+    { axis: 'Balance', value: clamp((muscleVariety / 15) * 100) },
+  ];
+}
+
 // Returns { level, progress (0-1), xpToNext, currentLevelXP, nextLevelXP }
 export function getXPProgress(totalXp) {
   const level = getLevelFromTotalXP(totalXp);

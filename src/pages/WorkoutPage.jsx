@@ -7,6 +7,7 @@ import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import RestTimer from '../components/workout/RestTimer.jsx';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal.jsx';
 import TemplateCard from '../components/template/TemplateCard.jsx';
+import LevelUpScreen from '../components/rpg/LevelUpScreen.jsx';
 import { useExercise } from '../hooks/useExercises.js';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 
@@ -47,6 +48,7 @@ export default function WorkoutPage() {
   const [endOpen, setEndOpen] = useState(false);
   const [showRest, setShowRest] = useState(false);
   const [editingName, setEditingName] = useState(false);
+  const [levelUp, setLevelUp] = useState(null);
   const nameRef = useRef();
 
   const alreadyAdded = activeWorkout?.exercises.map((e) => e.exerciseId) ?? [];
@@ -56,13 +58,20 @@ export default function WorkoutPage() {
   }
 
   async function handleSave(xp) {
-    await completeWorkout(xp);
+    const result = await completeWorkout(xp);
     setEndOpen(false);
+    if (result?.leveledUp) {
+      setLevelUp({ level: result.newLevel, title: result.newTitle });
+    }
   }
 
   if (!activeWorkout) {
     return (
-      <div className="anim-fade-slide-up px-5 pb-24 pt-8">
+      <>
+        {levelUp && (
+          <LevelUpScreen level={levelUp.level} title={levelUp.title} onDismiss={() => setLevelUp(null)} />
+        )}
+        <div className="anim-fade-slide-up px-5 pb-24 pt-8">
         <h1 className="font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
           Ready?
         </h1>
@@ -104,7 +113,8 @@ export default function WorkoutPage() {
             <TemplateCard key={t.id} template={t} onStart={startFromTemplate} />
           ))
         )}
-      </div>
+        </div>
+      </>
     );
   }
 
