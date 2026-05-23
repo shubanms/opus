@@ -19,7 +19,7 @@ export default function ExercisePicker({ isOpen, onClose, onSelect, alreadyAdded
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={multi ? 'Add Exercises' : 'Add Exercise'}>
       <ExerciseSearch value={search} onChange={setSearch} />
-      <div className="mt-3 max-h-96 overflow-y-auto">
+      <div className="mt-3 max-h-[55vh] overflow-y-auto">
         <ExerciseList
           exercises={exercises}
           onSelect={handleSelect}
