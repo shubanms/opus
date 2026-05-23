@@ -26,9 +26,9 @@ export default function ExercisePage() {
       : `${Array.isArray(exercises) ? exercises.length : '…'} exercises`;
 
   return (
-    <div className="anim-fade-slide-up px-5 pb-6 pt-8">
+    <div className="anim-fade-slide-up px-5 pb-6 pt-6">
       {/* Header */}
-      <div className="mb-5 flex items-start justify-between">
+      <div className="mb-4 flex items-end justify-between">
         <div>
           <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
             Exercises
@@ -39,7 +39,7 @@ export default function ExercisePage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-full"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-obsidian)' }}
           aria-label="Add custom exercise"
         >
@@ -50,24 +50,31 @@ export default function ExercisePage() {
       {/* Search */}
       <ExerciseSearch value={search} onChange={setSearch} />
 
-      {/* Muscle filter — hidden while searching */}
+      {/* Muscle filter — compact, hidden while searching */}
       {!search && (
-        <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
-          <BodyPicker selected={selectedMuscle} onSelect={setSelectedMuscle} />
-          {selectedMuscle && (
-            <button
-              onClick={() => setSelectedMuscle(null)}
-              className="mt-3 font-sans text-xs"
-              style={{ color: 'var(--color-gold)' }}
-            >
-              Clear filter
-            </button>
-          )}
+        <div className="mt-3">
+          <div className="flex items-center justify-between">
+            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+              Filter by muscle
+            </span>
+            {selectedMuscle && (
+              <button
+                onClick={() => setSelectedMuscle(null)}
+                className="font-sans text-xs font-medium"
+                style={{ color: 'var(--color-gold)' }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="mt-2">
+            <BodyPicker selected={selectedMuscle} onSelect={setSelectedMuscle} />
+          </div>
         </div>
       )}
 
       {/* Exercise list */}
-      <div className="mt-4">
+      <div className="mt-5">
         <ExerciseList
           exercises={exercises}
           onSelect={(ex) => navigate(`/exercises/${ex.id}`)}

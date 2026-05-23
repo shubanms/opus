@@ -102,7 +102,11 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
 ## UX standard (keep for all future work)
 - Bottom-sheet modals cap at 90vh with fixed header + scrollable body (never push off-screen top)
 - All pages render inside AppLayout main with pb-24 for BottomNav clearance
-- Destructive actions (delete) require confirm
+- Destructive actions (delete) require confirm; full data wipe requires typing "DELETE"
+- Design for an Android phone screen first: compact filters, generous tap targets,
+  give content (lists) vertical priority over chrome. Settings reachable via gear on Profile.
+- Full reset: Settings → Danger zone → type DELETE → wipeAllData() clears all tables +
+  localStorage, then reloads to BASE_URL for a clean start.
 
 ## Data-integrity principle (keep for all future work)
 Anything addable must be removable/editable/deletable, and deletes must revert
