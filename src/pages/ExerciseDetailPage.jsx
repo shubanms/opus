@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube } from 'lucide-react';
 import { useExercise } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume } from '../hooks/useProgress.js';
 import { deleteCustomExercise } from '../utils/exerciseActions.js';
@@ -141,26 +141,37 @@ export default function ExerciseDetailPage() {
         )}
       </div>
 
-      {/* Demo image */}
-      {demoUrl && (
-        <div
-          className="mt-5 overflow-hidden rounded-2xl"
-          style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-        >
-          <div className="mb-2 flex items-center gap-2 px-4 pt-4">
-            <PlayCircle size={14} style={{ color: 'var(--color-ash)' }} />
-            <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-              How to do it
-            </span>
-          </div>
+      {/* How to do it — always available via video; image when Wger has one */}
+      <div
+        className="mt-5 overflow-hidden rounded-2xl"
+        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
+      >
+        <div className="flex items-center gap-2 px-4 pt-4">
+          <PlayCircle size={14} style={{ color: 'var(--color-ash)' }} />
+          <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            How to do it
+          </span>
+        </div>
+
+        {demoUrl && (
           <img
             src={demoUrl}
             alt={`${exercise.name} demo`}
-            className="w-full object-contain"
+            className="mt-3 w-full object-contain"
             style={{ maxHeight: 220, background: 'var(--color-chalk)' }}
           />
-        </div>
-      )}
+        )}
+
+        <a
+          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${exercise.name} proper form tutorial`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="m-4 flex items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
+          style={{ background: 'var(--color-obsidian)', color: 'var(--color-chalk)' }}
+        >
+          <Youtube size={16} style={{ color: '#FF4444' }} /> Watch how-to video
+        </a>
+      </div>
 
       {/* PRs */}
       <div className="mt-5">
