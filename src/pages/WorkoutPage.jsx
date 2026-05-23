@@ -40,7 +40,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
 }
 
 export default function WorkoutPage() {
-  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName } = useWorkoutStore();
+  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy } = useWorkoutStore();
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
 
@@ -160,6 +160,27 @@ export default function WorkoutPage() {
           </button>
         </div>
       </div>
+
+      {/* Energy check-in */}
+      {activeWorkout.energy == null && (
+        <div className="mb-4 rounded-2xl px-4 py-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+          <p className="mb-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            How's your energy today?
+          </p>
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                onClick={() => setEnergy(n)}
+                className="flex h-10 flex-1 items-center justify-center rounded-xl font-mono text-sm font-medium"
+                style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Rest timer */}
       {showRest && (

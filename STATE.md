@@ -84,13 +84,25 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
 - workoutStore.repeatWorkout + WorkoutCard expandable detail with "Repeat this workout"
 - ExerciseSection shows template target hint during active workout
 
+**PRD Sprint 8 — Body Stats, Health & Progress Charts (completed):**
+- `utils/healthActions.js` — logBodyStat (upsert by date), logSleep
+- `hooks/useProgress.js` — useWeeklyVolume, useMuscleFrequency, useWorkoutDays, useExerciseMaxWeight, useSleepLogs
+- `components/progress/` — TrendChart (line), MuscleFrequency (bars), Heatmap (12-week grid), BodyStatsForm, SleepForm
+- ProgressPage: 3 tabs — Overview (weekly volume / muscle focus / training calendar), By Exercise (max weight + volume), Body (weight trend / measurements / sleep)
+- Energy check-in (1-5) at workout start → saved to energyLogs on complete
+- UX bonus: modal height cap + scrollable body; delete workouts from cards
+
 ## What's in progress
-- Nothing — PRD Sprints 5, 6, 7 all complete
+- Nothing — PRD Sprints 5–8 all complete
 
 ## What's not started
-- PRD Sprint 8 (Body stats & health tracking, Progress page charts)
 - PRD Sprint 9 (Notifications & shareable card)
 - PRD Sprint 10 (Polish, PWA, onboarding, data export/import, launch)
+
+## UX standard (keep for all future work)
+- Bottom-sheet modals cap at 90vh with fixed header + scrollable body (never push off-screen top)
+- All pages render inside AppLayout main with pb-24 for BottomNav clearance
+- Destructive actions (delete) require confirm
 
 ## Known issues / deviations
 - Local builds blocked (web session network policy); CI builds on GitHub Actions
