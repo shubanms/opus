@@ -73,10 +73,45 @@ const useWorkoutStore = create((set, get) => ({
     });
   },
 
-  async completeWorkout() {
+  toggleWarmup(exerciseId, setNumber) {
+    const w = get().activeWorkout;
+    if (!w) return;
+    set({
+      activeWorkout: {
+        ...w,
+        exercises: w.exercises.map(e =>
+          e.exerciseId !== exerciseId
+            ? e
+            : {
+                ...e,
+                sets: e.sets.map(s =>
+                  s.setNumber === setNumber ? { ...s, isWarmup: !s.isWarmup } : s
+                ),
+              }
+        ),
+      },
+    });
+  },
+
+  removeExercise(exerciseId) {
+    const w = get().activeWorkout;
+    if (!w) return;
+    set({
+      activeWorkout: {
+        ...w,
+        exercises: w.exercises.filter(e => e.exerciseId !== exerciseId),
+      },
+    });
+  },
+
+  async completeWorkout(xpEarned = 0) {
     const w = get().activeWorkout;
     if (!w) return null;
     const duration = Math.round((Date.now() - w.startedAt) / 1000);
+    const allSets = w.exercises.flatMap(e => e.sets);
+    const workingSets = allSets.filter(s => !s.isWarmup);
+    const totalVolume = Math.round(workingSets.reduce((s, x) => s + x.weight * x.reps, 0));
+    const totalSets = workingSets.length;
     const workoutId = await db.workouts.add({
       date: new Date().toISOString().slice(0, 10),
       templateId: w.templateId,
@@ -84,7 +119,9 @@ const useWorkoutStore = create((set, get) => ({
       status: 'completed',
       duration,
       notes: '',
-      xpEarned: 0,
+      xpEarned,
+      totalVolume,
+      totalSets,
       createdAt: Date.now(),
     });
     for (const ex of w.exercises) {
