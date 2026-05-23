@@ -12,6 +12,8 @@ export const STREAK_BONUS_PER_DAY = 10;
 export const CONSISTENCY_BONUS = 30;
 
 export function calcSetXP(weight, reps) {
+  // Bodyweight sets (no external load) still earn XP from reps.
+  if (!weight || weight <= 0) return Math.round((reps ?? 0));
   return Math.round((weight * reps) / 10);
 }
 

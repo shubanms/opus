@@ -34,6 +34,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
     <ExerciseSection
       exercise={ex}
       muscleGroup={muscleGroup}
+      isBodyweight={exerciseData?.equipment === 'bodyweight'}
       onSetLogged={onSetLogged}
       onRemove={onRemove}
     />

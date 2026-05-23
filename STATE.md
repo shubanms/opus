@@ -108,8 +108,17 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
   via `createPortal(..., document.body)`. RULE: any full-screen fixed overlay MUST
   portal to body.
 
+**Sprint 9 extension:**
+- Bodyweight exercises: SetLogger detects `equipment === 'bodyweight'` → reps-only
+  (no forced weight), optional "+ Add weight" for weighted variations; bodyweight
+  sets earn XP from reps (calcSetXP) and record rep PRs
+- Profile sharing: ProfileCard (level, title, character-stat bars, totals)
+- Customize-before-share: ShareSheet modal with live preview + theme (Slate/Black/
+  Light) + accent (gold/ember/sage) pickers; cards accept a `theme` prop
+- ShareButton now opens the customizer; works for workout + profile cards
+
 ## What's in progress
-- Nothing — PRD Sprints 5–9 complete
+- Nothing — PRD Sprints 5–9 complete (+ extension)
 
 ## What's not started
 - PRD Sprint 10 (Polish, PWA, onboarding, data export/import, launch)
