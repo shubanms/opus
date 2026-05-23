@@ -1,23 +1,53 @@
 import { useNavigate } from 'react-router-dom';
-import { Flame, ChevronRight, Play } from 'lucide-react';
+import { Flame, ChevronRight, Play, Moon, CalendarCheck } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
+import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getTitle } from '../utils/rpg.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
 import useWorkoutStore from '../store/workoutStore.js';
 
+function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="mb-6 flex w-full items-center justify-between rounded-2xl px-5 py-4"
+      style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-stone)' }}
+    >
+      <div className="min-w-0 text-left">
+        <p className="truncate font-sans text-base font-semibold" style={{ color: 'var(--color-chalk)' }}>
+          {title}
+        </p>
+        <p className="truncate font-sans text-xs" style={{ color: 'var(--color-ash)' }}>
+          {subtitle}
+        </p>
+      </div>
+      <div className="ml-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
+        <Icon size={16} strokeWidth={2.4} style={{ color: 'var(--color-obsidian)' }} />
+      </div>
+    </button>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { profile } = useRPG();
   const workouts = useWorkouts();
+  const today = useToday();
   const activeWorkout = useWorkoutStore(s => s.activeWorkout);
+  const startFromTemplate = useWorkoutStore(s => s.startFromTemplate);
   const recent = workouts.slice(0, 3);
 
   const totalXp = profile?.totalXp ?? 0;
   const { level } = getXPProgress(totalXp);
   const title = getTitle(level);
+
+  function startTemplate() {
+    startFromTemplate(today.template);
+    navigate('/workout');
+  }
 
   return (
     <div className="anim-fade-slide-up px-5 pb-24 pt-8">
@@ -53,27 +83,39 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Quick start */}
-      <button
-        onClick={() => navigate('/workout')}
-        className="mb-6 flex w-full items-center justify-between rounded-2xl px-5 py-4"
-        style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-stone)' }}
-      >
-        <div className="text-left">
-          <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-chalk)' }}>
-            {activeWorkout ? 'Continue workout' : 'Start workout'}
-          </p>
-          <p className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>
-            {activeWorkout ? `${activeWorkout.name} in progress` : 'Jump into a new session'}
-          </p>
-        </div>
+      {/* Today's workout */}
+      {activeWorkout ? (
+        <TodayCard
+          title="Continue workout"
+          subtitle={`${activeWorkout.name} in progress`}
+          onClick={() => navigate('/workout')}
+        />
+      ) : today.type === 'template' ? (
+        <TodayCard
+          icon={CalendarCheck}
+          title={today.template.name}
+          subtitle={`${today.reason} · ${today.template.exercises.length} exercises`}
+          onClick={startTemplate}
+        />
+      ) : today.type === 'rest' ? (
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-gold)' }}
+          className="mb-6 flex items-center gap-3 rounded-2xl px-5 py-4"
+          style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
         >
-          <Play size={16} fill="var(--color-obsidian)" style={{ color: 'var(--color-obsidian)' }} />
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
+            <Moon size={16} style={{ color: 'var(--color-sage)' }} />
+          </div>
+          <div className="flex-1">
+            <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Rest day</p>
+            <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{today.reason}</p>
+          </div>
+          <button onClick={() => navigate('/workout')} className="font-sans text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
+            Train anyway
+          </button>
         </div>
-      </button>
+      ) : (
+        <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
+      )}
 
       {/* Recent workouts */}
       {recent.length > 0 ? (

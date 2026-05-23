@@ -1,4 +1,8 @@
-import { Clock, Zap, Layers } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame } from 'lucide-react';
+import { useWorkoutDetail } from '../../hooks/useWorkout.js';
+import useWorkoutStore from '../../store/workoutStore.js';
 
 function formatDuration(secs) {
   const m = Math.floor(secs / 60);
@@ -12,42 +16,92 @@ function formatDate(iso) {
 }
 
 export default function WorkoutCard({ workout }) {
+  const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
+  const repeatWorkout = useWorkoutStore((s) => s.repeatWorkout);
+  const detail = useWorkoutDetail(expanded ? workout.id : null);
+
+  async function handleRepeat(e) {
+    e.stopPropagation();
+    await repeatWorkout(workout.id);
+    navigate('/workout');
+  }
+
   return (
     <div
       className="mb-3 rounded-2xl px-4 py-3"
       style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            {workout.name}
-          </p>
-          <p className="mt-0.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            {formatDate(workout.date)}
-          </p>
+      <button onClick={() => setExpanded((v) => !v)} className="w-full text-left">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {workout.name}
+            </p>
+            <p className="mt-0.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {formatDate(workout.date)}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {workout.xpEarned > 0 && (
+              <span className="flex items-center gap-1 font-mono text-sm font-medium" style={{ color: 'var(--color-gold)' }}>
+                <Zap size={13} />+{workout.xpEarned}
+              </span>
+            )}
+            <ChevronDown
+              size={16}
+              style={{ color: 'var(--color-ash)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 200ms' }}
+            />
+          </div>
         </div>
-        {workout.xpEarned > 0 && (
-          <span className="flex items-center gap-1 font-mono text-sm font-medium" style={{ color: 'var(--color-gold)' }}>
-            <Zap size={13} />+{workout.xpEarned}
-          </span>
-        )}
-      </div>
 
-      <div className="mt-3 flex gap-4">
-        <span className="flex items-center gap-1.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          <Clock size={12} />
-          {formatDuration(workout.duration)}
-        </span>
-        <span className="flex items-center gap-1.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          <Layers size={12} />
-          {workout.totalSets} sets
-        </span>
-        {workout.totalVolume > 0 && (
-          <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            {workout.totalVolume.toLocaleString()} kg
+        <div className="mt-3 flex gap-4">
+          <span className="flex items-center gap-1.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            <Clock size={12} />
+            {formatDuration(workout.duration)}
           </span>
-        )}
-      </div>
+          <span className="flex items-center gap-1.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            <Layers size={12} />
+            {workout.totalSets} sets
+          </span>
+          {workout.totalVolume > 0 && (
+            <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {workout.totalVolume.toLocaleString()} kg
+            </span>
+          )}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="mt-3 border-t pt-3" style={{ borderColor: 'var(--color-ivory)' }}>
+          {detail.map((ex) => (
+            <div key={ex.exerciseId} className="mb-2">
+              <p className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                {ex.name}
+              </p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {ex.sets.map((s) => (
+                  <span
+                    key={s.id}
+                    className="flex items-center gap-1 font-mono text-xs"
+                    style={{ color: s.isWarmup ? 'var(--color-ember)' : 'var(--color-text-secondary)' }}
+                  >
+                    {s.isWarmup && <Flame size={10} />}
+                    {s.weight}×{s.reps}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={handleRepeat}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-semibold"
+            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          >
+            <RotateCcw size={14} /> Repeat this workout
+          </button>
+        </div>
+      )}
     </div>
   );
 }

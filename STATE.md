@@ -8,7 +8,7 @@ Current version: v0.5.0
 Earlier work got ahead of the PRD sprint order. Actual mapping:
 - PRD Sprint 5 (Progressive Overload) — **done**
 - PRD Sprint 6 (RPG System) — **done** (radar CharacterCard, level-up celebration, XP animation, XPBar/LevelBadge/TitleBadge)
-- PRD Sprint 7 (Templates & Planning) — basics done early; **backfill TODO: template targets (sets/reps/weight), weekly planner, today's-workout recommendation, rest-day detection, repeat-last-workout, duplication**
+- PRD Sprint 7 (Templates & Planning) — **done** (targets, weekly planner, today's recommendation, rest-day, repeat-workout, duplication)
 Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, disabled Wger auto-sync in favor of curated seed.
 
 ## What's working
@@ -74,12 +74,23 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
 - EndWorkoutModal — animated XP bar showing the gain
 - ProfilePage — CharacterCard radar; HomePage — LevelBadge + XPBar
 
+**PRD Sprint 7 — Templates & Planning (completed):**
+- DB v4: templateExercises gains targetSets/targetReps/targetWeight
+- templateActions: targets in create/update, duplicateTemplate, assignTemplateToDay, clearDay
+- TemplateBuilder: per-exercise target inputs (sets × reps @ kg)
+- useTemplates: targets joined in; `useToday()` recommendation (template / rest / fresh)
+- WeeklyPlanner: 7-day grid to assign routines to weekdays
+- HomePage: today's-workout card (assigned routine, rest-day, or fresh start)
+- workoutStore.repeatWorkout + WorkoutCard expandable detail with "Repeat this workout"
+- ExerciseSection shows template target hint during active workout
+
 ## What's in progress
-- Nothing — PRD Sprint 6 deliverables complete
+- Nothing — PRD Sprints 5, 6, 7 all complete
 
 ## What's not started
-- PRD Sprint 7 backfill (targets, weekly planner, today's recommendation, rest-day, repeat-workout, duplication)
-- PRD Sprint 8 (Body stats & health), 9 (Notifications & share card), 10 (Polish & launch)
+- PRD Sprint 8 (Body stats & health tracking, Progress page charts)
+- PRD Sprint 9 (Notifications & shareable card)
+- PRD Sprint 10 (Polish, PWA, onboarding, data export/import, launch)
 
 ## Known issues / deviations
 - Local builds blocked (web session network policy); CI builds on GitHub Actions

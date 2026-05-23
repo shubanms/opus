@@ -29,3 +29,19 @@ export function useWorkoutSets(workoutId) {
     [workoutId]
   ) ?? [];
 }
+
+// Workout sets grouped by exercise, with names. Pass null to skip loading.
+export function useWorkoutDetail(workoutId) {
+  return useLiveQuery(async () => {
+    if (!workoutId) return [];
+    const sets = await db.sets.where('workoutId').equals(workoutId).sortBy('setNumber');
+    const groups = {};
+    for (const s of sets) (groups[s.exerciseId] ??= []).push(s);
+    const result = [];
+    for (const [exId, exSets] of Object.entries(groups)) {
+      const ex = await db.exercises.get(Number(exId));
+      result.push({ exerciseId: Number(exId), name: ex?.name ?? 'Exercise', sets: exSets });
+    }
+    return result;
+  }, [workoutId]) ?? [];
+}

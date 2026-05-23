@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
-import { deleteTemplate } from '../utils/templateActions.js';
+import { deleteTemplate, duplicateTemplate } from '../utils/templateActions.js';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import TemplateBuilder from '../components/template/TemplateBuilder.jsx';
+import WeeklyPlanner from '../components/template/WeeklyPlanner.jsx';
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
@@ -26,6 +27,10 @@ export default function TemplatesPage() {
     if (window.confirm(`Delete "${template.name}"?`)) {
       await deleteTemplate(template.id);
     }
+  }
+
+  async function handleDuplicate(template) {
+    await duplicateTemplate(template.id);
   }
 
   return (
@@ -54,6 +59,8 @@ export default function TemplatesPage() {
         </button>
       </div>
 
+      {templates.length > 0 && <WeeklyPlanner templates={templates} />}
+
       {templates.length === 0 ? (
         <div className="mt-16 text-center">
           <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
@@ -72,7 +79,7 @@ export default function TemplatesPage() {
         </div>
       ) : (
         templates.map((t) => (
-          <TemplateCard key={t.id} template={t} onEdit={openEdit} onDelete={handleDelete} />
+          <TemplateCard key={t.id} template={t} onEdit={openEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
         ))
       )}
 

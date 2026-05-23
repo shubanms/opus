@@ -32,8 +32,33 @@ const useWorkoutStore = create((set, get) => ({
         exercises: (template.exercises ?? []).map(e => ({
           exerciseId: e.id,
           name: e.name,
+          targetSets: e.targetSets ?? null,
+          targetReps: e.targetReps ?? null,
+          targetWeight: e.targetWeight ?? null,
           sets: [],
         })),
+      },
+    });
+  },
+
+  async repeatWorkout(workoutId) {
+    const w = await db.workouts.get(workoutId);
+    if (!w) return;
+    const sets = await db.sets.where('workoutId').equals(workoutId).toArray();
+    const orderedIds = [];
+    for (const s of sets) if (!orderedIds.includes(s.exerciseId)) orderedIds.push(s.exerciseId);
+    const exercises = [];
+    for (const id of orderedIds) {
+      const ex = await db.exercises.get(id);
+      exercises.push({ exerciseId: id, name: ex?.name ?? 'Exercise', sets: [] });
+    }
+    set({
+      activeWorkout: {
+        id: null,
+        name: w.name,
+        templateId: w.templateId ?? null,
+        startedAt: Date.now(),
+        exercises,
       },
     });
   },

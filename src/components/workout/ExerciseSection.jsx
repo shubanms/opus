@@ -30,6 +30,12 @@ export default function ExerciseSection({ exercise, muscleGroup, onSetLogged, on
           >
             {(muscleGroup ?? '').replace(/-/g, ' ')}
           </span>
+          {(exercise.targetSets || exercise.targetReps || exercise.targetWeight) && (
+            <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              Target: {exercise.targetSets ?? '—'}×{exercise.targetReps ?? '—'}
+              {exercise.targetWeight ? ` @ ${exercise.targetWeight}kg` : ''}
+            </p>
+          )}
         </div>
         <button
           onClick={onRemove}
