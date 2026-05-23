@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { Trophy, Clock, Zap } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { calcWorkoutXP } from '../../utils/rpg.js';
+import { useRPG } from '../../hooks/useRPG.js';
+import XPBar from '../rpg/XPBar.jsx';
 
 function formatDuration(secs) {
   const m = Math.floor(secs / 60);
@@ -10,6 +12,7 @@ function formatDuration(secs) {
 }
 
 export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, onSave, onClose }) {
+  const { profile } = useRPG();
   const stats = useMemo(() => {
     if (!activeWorkout) return null;
     const allSets = activeWorkout.exercises.flatMap((e) => e.sets);
@@ -59,6 +62,13 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>XP earned</p>
         </div>
       </div>
+
+      {/* XP progress (animates the gained XP) */}
+      {profile && (
+        <div className="mb-5">
+          <XPBar totalXp={(profile.totalXp ?? 0) + stats.xp} />
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3">

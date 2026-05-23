@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/db.js';
-import { PR_BONUS } from '../utils/rpg.js';
+import { PR_BONUS, STREAK_BONUS_PER_DAY, getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
 
 const useWorkoutStore = create((set, get) => ({
   activeWorkout: null,
@@ -187,6 +187,15 @@ const useWorkoutStore = create((set, get) => ({
     const { default: useUserStore } = await import('./userStore.js');
     const userStore = useUserStore.getState();
     const profile = userStore.profile;
+    const result = {
+      workoutId,
+      prCount: prBonus / PR_BONUS,
+      xpEarned: xpEarned + prBonus,
+      leveledUp: false,
+      newLevel: profile?.level ?? 1,
+      newTitle: profile?.title ?? 'First Rep',
+    };
+
     if (profile) {
       const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
       let streak = profile.streak ?? 0;
@@ -194,11 +203,20 @@ const useWorkoutStore = create((set, get) => ({
         streak = profile.lastWorkoutDate === yesterday ? streak + 1 : 1;
         await userStore.updateProfile({ lastWorkoutDate: today, streak });
       }
-      await userStore.addXP(xpEarned + prBonus);
+      const streakBonus = streak * STREAK_BONUS_PER_DAY;
+      const totalGain = xpEarned + prBonus + streakBonus;
+      const oldLevel = getLevelFromTotalXP(profile.totalXp);
+      const newLevel = getLevelFromTotalXP(profile.totalXp + totalGain);
+      await userStore.addXP(totalGain);
+      result.xpEarned = totalGain;
+      result.streakBonus = streakBonus;
+      result.leveledUp = newLevel > oldLevel;
+      result.newLevel = newLevel;
+      result.newTitle = getTitle(newLevel);
     }
 
     set({ activeWorkout: null });
-    return workoutId;
+    return result;
   },
 
   discardWorkout() {

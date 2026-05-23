@@ -6,8 +6,8 @@ Current version: v0.5.0
 
 ## ⚠️ PRD alignment note
 Earlier work got ahead of the PRD sprint order. Actual mapping:
-- PRD Sprint 5 (Progressive Overload) — **now done** (this commit)
-- PRD Sprint 6 (RPG System) — mostly done early; **backfill TODO: radar CharacterCard, level-up celebration screen, XP tick animation, XPBar/LevelBadge/TitleBadge components**
+- PRD Sprint 5 (Progressive Overload) — **done**
+- PRD Sprint 6 (RPG System) — **done** (radar CharacterCard, level-up celebration, XP animation, XPBar/LevelBadge/TitleBadge)
 - PRD Sprint 7 (Templates & Planning) — basics done early; **backfill TODO: template targets (sets/reps/weight), weekly planner, today's-workout recommendation, rest-day detection, repeat-last-workout, duplication**
 Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, disabled Wger auto-sync in favor of curated seed.
 
@@ -65,12 +65,20 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
 - `components/progress/PRBadge.jsx` — gold-pulse PR badge
 - ExerciseDetailPage: real volume chart + PR badges (replaced placeholders)
 
+**PRD Sprint 6 — RPG System (completed):**
+- `utils/rpg.js` — getCharacterStats (5-axis radar normalization)
+- `userStore.addXP` — recomputes level + title on every gain
+- `workoutStore.completeWorkout` — streak bonus XP, returns level-up info
+- `hooks/useRPG.js` — useCharacterStats (live radar data from history)
+- `components/rpg/` — XPBar (animated), LevelBadge, TitleBadge, CharacterCard (Recharts radar), LevelUpScreen (full-screen celebration)
+- EndWorkoutModal — animated XP bar showing the gain
+- ProfilePage — CharacterCard radar; HomePage — LevelBadge + XPBar
+
 ## What's in progress
-- Nothing — PRD Sprint 5 deliverables complete
+- Nothing — PRD Sprint 6 deliverables complete
 
 ## What's not started
-- PRD Sprint 6 backfill (radar chart, level-up celebration, XP animation)
-- PRD Sprint 7 backfill (targets, planner, recommendations)
+- PRD Sprint 7 backfill (targets, weekly planner, today's recommendation, rest-day, repeat-workout, duplication)
 - PRD Sprint 8 (Body stats & health), 9 (Notifications & share card), 10 (Polish & launch)
 
 ## Known issues / deviations

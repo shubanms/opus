@@ -4,6 +4,8 @@ import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { getXPProgress, getTitle } from '../utils/rpg.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
+import LevelBadge from '../components/rpg/LevelBadge.jsx';
+import XPBar from '../components/rpg/XPBar.jsx';
 import useWorkoutStore from '../store/workoutStore.js';
 
 export default function HomePage() {
@@ -14,7 +16,7 @@ export default function HomePage() {
   const recent = workouts.slice(0, 3);
 
   const totalXp = profile?.totalXp ?? 0;
-  const { level, progress } = getXPProgress(totalXp);
+  const { level } = getXPProgress(totalXp);
   const title = getTitle(level);
 
   return (
@@ -35,28 +37,19 @@ export default function HomePage() {
           className="mb-5 rounded-2xl px-4 py-3"
           style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
         >
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <span className="font-sans text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
-                Lv. {level}
-              </span>
-              <span className="ml-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                {title}
-              </span>
-            </div>
+          <div className="mb-3 flex items-center gap-3">
+            <LevelBadge level={level} size="sm" />
+            <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {title}
+            </span>
             {profile.streak > 0 && (
-              <span className="flex items-center gap-1 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
+              <span className="ml-auto flex items-center gap-1 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
                 <Flame size={12} />
                 {profile.streak} day streak
               </span>
             )}
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--color-ivory)' }}>
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${Math.round(progress * 100)}%`, background: 'var(--color-gold)' }}
-            />
-          </div>
+          <XPBar totalXp={totalXp} showLabel={false} />
         </div>
       )}
 
