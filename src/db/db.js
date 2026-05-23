@@ -40,3 +40,9 @@ db.version(3).stores({
   workouts:
     '++id, date, templateId, status, duration, createdAt',
 });
+
+// v4: add per-exercise targets to templateExercises (sets/reps/weight)
+db.version(4).stores({
+  templateExercises:
+    '++id, templateId, exerciseId, orderIndex, targetSets, targetReps, targetWeight',
+});
