@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, TrendingUp, PlayCircle } from 'lucide-react';
 import { useExercise } from '../hooks/useExercises.js';
-import { usePRs } from '../hooks/useProgress.js';
+import { usePRs, useExerciseVolume } from '../hooks/useProgress.js';
+import VolumeChart from '../components/progress/VolumeChart.jsx';
+import PRBadge from '../components/progress/PRBadge.jsx';
 
 const DIFFICULTY_COLOR = {
   beginner:     '#6B8F71',
@@ -15,7 +17,7 @@ function PRCard({ prs }) {
   const reps = prs.find((p) => p.type === 'reps');
   const volume = prs.find((p) => p.type === 'volume');
 
-  if (!weight && !reps) {
+  if (!weight && !reps && !volume) {
     return (
       <div className="rounded-2xl p-4 text-center" style={{ background: 'var(--color-ivory)' }}>
         <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
@@ -33,31 +35,10 @@ function PRCard({ prs }) {
           Personal Records
         </span>
       </div>
-      <div className="flex gap-6">
-        {weight && (
-          <div>
-            <p className="font-mono text-2xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
-              {weight.value}<span className="text-sm"> kg</span>
-            </p>
-            <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Best weight</p>
-          </div>
-        )}
-        {reps && (
-          <div>
-            <p className="font-mono text-2xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
-              {reps.value}<span className="text-sm"> reps</span>
-            </p>
-            <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Best reps</p>
-          </div>
-        )}
-        {volume && (
-          <div>
-            <p className="font-mono text-2xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
-              {volume.value}<span className="text-sm"> kg</span>
-            </p>
-            <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Best vol.</p>
-          </div>
-        )}
+      <div className="flex flex-col gap-2">
+        {weight && <PRBadge label="Best weight" value={weight.value} unit="kg" />}
+        {reps && <PRBadge label="Best reps" value={reps.value} unit="reps" />}
+        {volume && <PRBadge label="Best volume" value={volume.value} unit="kg" />}
       </div>
     </div>
   );
@@ -68,6 +49,7 @@ export default function ExerciseDetailPage() {
   const navigate = useNavigate();
   const exercise = useExercise(Number(id));
   const prs = usePRs(Number(id));
+  const volume = useExerciseVolume(Number(id));
   const [demoUrl, setDemoUrl] = useState(null);
 
   useEffect(() => {
@@ -153,7 +135,7 @@ export default function ExerciseDetailPage() {
         <PRCard prs={prs} />
       </div>
 
-      {/* Volume history placeholder */}
+      {/* Volume history */}
       <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
         <div className="mb-2 flex items-center gap-2">
           <TrendingUp size={15} style={{ color: 'var(--color-ash)' }} />
@@ -161,9 +143,7 @@ export default function ExerciseDetailPage() {
             Volume History
           </span>
         </div>
-        <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Charts available in a future sprint.
-        </p>
+        <VolumeChart data={volume} />
       </div>
     </div>
   );

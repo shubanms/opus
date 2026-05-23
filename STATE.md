@@ -1,8 +1,15 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 6 (Templates & Routines)
-Current version: v0.6.0
+Current sprint: 5 (Progressive Overload Engine) — realigned to PRD numbering
+Current version: v0.5.0
+
+## ⚠️ PRD alignment note
+Earlier work got ahead of the PRD sprint order. Actual mapping:
+- PRD Sprint 5 (Progressive Overload) — **now done** (this commit)
+- PRD Sprint 6 (RPG System) — mostly done early; **backfill TODO: radar CharacterCard, level-up celebration screen, XP tick animation, XPBar/LevelBadge/TitleBadge components**
+- PRD Sprint 7 (Templates & Planning) — basics done early; **backfill TODO: template targets (sets/reps/weight), weekly planner, today's-workout recommendation, rest-day detection, repeat-last-workout, duplication**
+Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, disabled Wger auto-sync in favor of curated seed.
 
 ## What's working
 - Vite + React 18 + Tailwind v3, PWA installable, transparent gold logo
@@ -49,11 +56,22 @@ Current version: v0.6.0
 - `workoutStore.startFromTemplate(template)` — pre-loads exercises into active workout
 - WorkoutPage start screen: Quick start + routine list (one-tap start) + Manage link
 
+**PRD Sprint 5 — Progressive Overload Engine (this commit):**
+- `utils/overload.js` — getOverloadSuggestion (three-lever logic), isDeloadDue (5+ day detector)
+- `hooks/useOverload.js` — useOverload(exerciseId) from last 3 sessions; useDeloadDue()
+- `hooks/useProgress.js` — useExerciseVolume(id) per-session volume aggregation
+- `components/workout/OverloadNudge.jsx` — gold coaching nudge above each exercise in active workout
+- `components/progress/VolumeChart.jsx` — Recharts bar chart, last 10 sessions
+- `components/progress/PRBadge.jsx` — gold-pulse PR badge
+- ExerciseDetailPage: real volume chart + PR badges (replaced placeholders)
+
 ## What's in progress
-- Nothing — Sprint 6 deliverables complete
+- Nothing — PRD Sprint 5 deliverables complete
 
 ## What's not started
-- Sprint 7–10: see OPUS_PRD.md sprint plan (Progress charts ~Sprint 8)
+- PRD Sprint 6 backfill (radar chart, level-up celebration, XP animation)
+- PRD Sprint 7 backfill (targets, planner, recommendations)
+- PRD Sprint 8 (Body stats & health), 9 (Notifications & share card), 10 (Polish & launch)
 
 ## Known issues / deviations
 - Local builds blocked (web session network policy); CI builds on GitHub Actions
