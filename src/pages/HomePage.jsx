@@ -57,7 +57,7 @@ export default function HomePage() {
           OPUS
         </h1>
         <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Build your masterpiece.
+          {profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}
         </p>
       </div>
 

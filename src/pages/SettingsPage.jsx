@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Github, Trash2, Info, Bell } from 'lucide-react';
+import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
+import { useRPG } from '../hooks/useRPG.js';
+import useUserStore from '../store/userStore.js';
+import useSettingsStore from '../store/settingsStore.js';
 import { NOTIF_TYPES } from '../utils/notifications.js';
+import { exportData, importData } from '../utils/dataActions.js';
 
 function Switch({ on, onChange, disabled }) {
   return (
@@ -27,6 +31,23 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [reset, setReset] = useState(false);
   const { settings, perm, update, toggleType, setMaster } = useNotifications();
+  const { profile } = useRPG();
+  const updateProfile = useUserStore((s) => s.updateProfile);
+  const barWeight = useSettingsStore((s) => s.barWeight);
+  const setBarWeight = useSettingsStore((s) => s.setBarWeight);
+  const fileRef = useRef();
+
+  async function handleImport(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      await importData(text);
+      window.location.assign(import.meta.env.BASE_URL);
+    } catch {
+      alert('Could not import this file.');
+    }
+  }
 
   return (
     <div className="anim-fade-slide-up px-5 pb-8 pt-8">
@@ -38,6 +59,37 @@ export default function SettingsPage() {
       <h1 className="mb-6 font-display text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
         Settings
       </h1>
+
+      {/* Profile */}
+      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="mb-3 flex items-center gap-2">
+          <User size={14} style={{ color: 'var(--color-ash)' }} />
+          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            Profile
+          </span>
+        </div>
+        <div className="flex items-center justify-between py-1.5">
+          <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Name</span>
+          <input
+            defaultValue={profile?.name ?? ''}
+            onBlur={(e) => updateProfile({ name: e.target.value.trim() })}
+            placeholder="Athlete"
+            className="w-40 rounded-lg px-3 py-1.5 text-right font-sans text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+        </div>
+        <div className="flex items-center justify-between py-1.5">
+          <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Barbell weight (kg)</span>
+          <input
+            value={barWeight}
+            onChange={(e) => setBarWeight(Number(e.target.value) || 0)}
+            type="number"
+            inputMode="decimal"
+            className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+        </div>
+      </section>
 
       {/* About */}
       <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
@@ -113,6 +165,36 @@ export default function SettingsPage() {
             </div>
           </>
         )}
+      </section>
+
+      {/* Data */}
+      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="mb-3 flex items-center gap-2">
+          <Database size={14} style={{ color: 'var(--color-ash)' }} />
+          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            Data
+          </span>
+        </div>
+        <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          Back up everything to a file, or restore from one.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={exportData}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
+            style={{ background: 'var(--color-obsidian)', color: 'var(--color-chalk)' }}
+          >
+            <Download size={15} /> Export
+          </button>
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            <Upload size={15} /> Import
+          </button>
+          <input ref={fileRef} type="file" accept="application/json" onChange={handleImport} className="hidden" />
+        </div>
       </section>
 
       {/* Danger zone */}
