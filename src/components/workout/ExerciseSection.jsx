@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
+import OverloadNudge from './OverloadNudge.jsx';
 
 const MUSCLE_HUE = {
   chest: '#D4622A', triceps: '#D4622A', 'front-deltoids': '#D4622A',
@@ -38,6 +39,10 @@ export default function ExerciseSection({ exercise, muscleGroup, onSetLogged, on
         >
           <X size={13} style={{ color: 'var(--color-ash)' }} />
         </button>
+      </div>
+
+      <div className="mt-3">
+        <OverloadNudge exerciseId={exercise.exerciseId} />
       </div>
 
       <SetLogger exerciseId={exercise.exerciseId} onSetLogged={onSetLogged} />
