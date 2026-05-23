@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, ChevronRight } from 'lucide-react';
+import { Plus, ChevronRight, Trash2 } from 'lucide-react';
+import { deleteBodyStat, deleteSleep } from '../utils/healthActions.js';
 import PageWrapper from '../components/layout/PageWrapper.jsx';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
 import TrendChart from '../components/progress/TrendChart.jsx';
@@ -118,6 +119,44 @@ function Body() {
       )}
 
       <Section title="Sleep quality"><TrendChart data={sleepTrend} empty="Log sleep to track quality." /></Section>
+
+      {stats.length > 0 && (
+        <Section title="Body entries">
+          <div className="flex flex-col gap-1.5">
+            {stats.slice(0, 6).map((s) => (
+              <div key={s.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
+                <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>{s.date}</span>
+                <span className="flex items-center gap-3">
+                  {s.weight != null && <span className="font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>{s.weight} kg</span>}
+                  <button onClick={() => deleteBodyStat(s.id)} aria-label="Delete entry">
+                    <Trash2 size={13} style={{ color: 'var(--color-ember)' }} />
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {sleep.length > 0 && (
+        <Section title="Sleep entries">
+          <div className="flex flex-col gap-1.5">
+            {sleep.slice(0, 6).map((s) => (
+              <div key={s.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
+                <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>{s.date}</span>
+                <span className="flex items-center gap-3">
+                  <span className="font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>
+                    {s.hours != null ? `${s.hours}h` : ''}{s.quality ? ` ★${s.quality}` : ''}
+                  </span>
+                  <button onClick={() => deleteSleep(s.id)} aria-label="Delete entry">
+                    <Trash2 size={13} style={{ color: 'var(--color-ember)' }} />
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <BodyStatsForm isOpen={statForm} onClose={() => setStatForm(false)} />
       <SleepForm isOpen={sleepForm} onClose={() => setSleepForm(false)} />

@@ -13,3 +13,11 @@ export async function logSleep({ date, hours, quality }) {
   if (existing) await db.sleepLogs.update(existing.id, { date, hours, quality });
   else await db.sleepLogs.add({ date, hours, quality });
 }
+
+export async function deleteBodyStat(id) {
+  await db.bodyStats.delete(id);
+}
+
+export async function deleteSleep(id) {
+  await db.sleepLogs.delete(id);
+}

@@ -104,6 +104,18 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
 - All pages render inside AppLayout main with pb-24 for BottomNav clearance
 - Destructive actions (delete) require confirm
 
+## Data-integrity principle (keep for all future work)
+Anything addable must be removable/editable/deletable, and deletes must revert
+ALL derived data. Reference: `deleteWorkout` reverses sets, energy logs, PRs
+(recomputed), and XP/level/title/streak (recomputed from remaining workouts).
+- Workout XP is stored as the full gained amount per workout (`xpEarned`), so the
+  profile can be rebuilt by summing remaining workouts.
+- `recomputeProfile()` / `recomputePRs()` in utils/workoutActions.js are the
+  canonical rebuilders — reuse them after any deletion that affects history.
+- Custom exercises: deletable (cascades sets/PRs/template refs + refreshes
+  workout totals). Body-stat & sleep entries: deletable. Built-in seed
+  exercises are intentionally not deletable.
+
 ## Known issues / deviations
 - Local builds blocked (web session network policy); CI builds on GitHub Actions
 - No package-lock.json; workflow uses `npm install`
