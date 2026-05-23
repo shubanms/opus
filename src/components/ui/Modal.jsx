@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export default function Modal({ isOpen, onClose, title, children }) {
@@ -11,7 +12,9 @@ export default function Modal({ isOpen, onClose, title, children }) {
 
   if (!isOpen) return null;
 
-  return (
+  // Portal to body so ancestor transforms (page animations) never trap the
+  // fixed overlay inside a non-viewport containing block.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center"
       onClick={onClose}
@@ -44,6 +47,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

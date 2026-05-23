@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucide-react';
-import { useWorkoutDetail } from '../../hooks/useWorkout.js';
+import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
 import { deleteWorkout } from '../../utils/workoutActions.js';
+import ShareButton from '../share/ShareButton.jsx';
 import useWorkoutStore from '../../store/workoutStore.js';
 
 function formatDuration(secs) {
@@ -21,6 +22,7 @@ export default function WorkoutCard({ workout }) {
   const navigate = useNavigate();
   const repeatWorkout = useWorkoutStore((s) => s.repeatWorkout);
   const detail = useWorkoutDetail(expanded ? workout.id : null);
+  const shareData = useShareData(expanded ? workout.id : null);
 
   async function handleRepeat(e) {
     e.stopPropagation();
@@ -109,6 +111,12 @@ export default function WorkoutCard({ workout }) {
             >
               <RotateCcw size={14} /> Repeat this workout
             </button>
+            <ShareButton
+              data={shareData}
+              label=""
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+              style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            />
             <button
               onClick={handleDelete}
               className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"

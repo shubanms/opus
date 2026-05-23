@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import TitleBadge from './TitleBadge.jsx';
 
 // Full-screen gold celebration shown when the user levels up.
@@ -9,7 +10,7 @@ export default function LevelUpScreen({ level, title, onDismiss }) {
     return () => clearTimeout(t);
   }, [onDismiss]);
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex flex-col items-center justify-center px-8"
       style={{ background: 'var(--color-obsidian)', animation: 'fadeIn 300ms var(--ease-out)' }}
@@ -50,6 +51,7 @@ export default function LevelUpScreen({ level, title, onDismiss }) {
       >
         Tap to continue
       </p>
-    </div>
+    </div>,
+    document.body
   );
 }
