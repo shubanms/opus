@@ -1,0 +1,82 @@
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes tickUp {
+  from {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ringDraw {
+  from {
+    stroke-dashoffset: 565;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes goldPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(201, 168, 76, 0.3);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Utility animation classes */
+.anim-fade-slide-up {
+  animation: fadeSlideUp var(--dur-enter) var(--ease-out) both;
+}
+
+.anim-fade-in {
+  animation: fadeIn var(--dur-standard) var(--ease-out) both;
+}
+
+.anim-tick-up {
+  animation: tickUp var(--dur-standard) var(--ease-out) both;
+}

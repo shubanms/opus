@@ -24,9 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Until Sprint 1 adds the Vite project, there is no build step and we
-      # publish the static root (placeholder index.html). Once package.json
-      # with a "build" script exists, we build and publish dist/ instead.
+      # Builds the Vite app when package.json has a "build" script, otherwise
+      # falls back to publishing the static root. npm install (not npm ci) is
+      # used because no committed package-lock.json is generated yet.
       - name: Detect build setup
         id: detect
         run: |
@@ -43,11 +43,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Install dependencies
         if: steps.detect.outputs.has_build == 'true'
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Build
         if: steps.detect.outputs.has_build == 'true'

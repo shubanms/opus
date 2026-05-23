@@ -1,0 +1,29 @@
+import { createBrowserRouter } from 'react-router-dom';
+import AppLayout from './components/layout/AppLayout.jsx';
+import LoadingPage from './pages/LoadingPage.jsx';
+import HomePage from './pages/HomePage.jsx';
+import WorkoutPage from './pages/WorkoutPage.jsx';
+import HistoryPage from './pages/HistoryPage.jsx';
+import ExercisePage from './pages/ExercisePage.jsx';
+import ProgressPage from './pages/ProgressPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
+import SettingsPage from './pages/SettingsPage.jsx';
+
+export const router = createBrowserRouter(
+  [
+    { path: '/', element: <LoadingPage /> },
+    {
+      element: <AppLayout />,
+      children: [
+        { path: '/home', element: <HomePage /> },
+        { path: '/workout', element: <WorkoutPage /> },
+        { path: '/history', element: <HistoryPage /> },
+        { path: '/exercises', element: <ExercisePage /> },
+        { path: '/progress', element: <ProgressPage /> },
+        { path: '/profile', element: <ProfilePage /> },
+        { path: '/settings', element: <SettingsPage /> },
+      ],
+    },
+  ],
+  { basename: '/opus' }
+);
