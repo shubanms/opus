@@ -18,11 +18,12 @@ export default function Modal({ isOpen, onClose, title, children }) {
     >
       <div className="absolute inset-0" style={{ background: 'rgba(17,16,16,0.7)' }} />
       <div
-        className="relative w-full max-w-md rounded-t-3xl px-5 pb-10 pt-5"
+        className="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl"
         style={{ background: 'var(--color-chalk)', animation: 'fadeSlideUp 300ms var(--ease-out)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-5 flex items-center justify-between">
+        {/* Fixed header */}
+        <div className="flex flex-shrink-0 items-center justify-between px-5 pb-4 pt-5">
           <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
             {title}
           </h2>
@@ -34,7 +35,14 @@ export default function Modal({ isOpen, onClose, title, children }) {
             <X size={16} style={{ color: 'var(--color-ash)' }} />
           </button>
         </div>
-        {children}
+
+        {/* Scrollable body */}
+        <div
+          className="overflow-y-auto px-5"
+          style={{ paddingBottom: 'calc(var(--space-8) + env(safe-area-inset-bottom))' }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

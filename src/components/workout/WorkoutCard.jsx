@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame } from 'lucide-react';
+import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucide-react';
 import { useWorkoutDetail } from '../../hooks/useWorkout.js';
+import { deleteWorkout } from '../../utils/workoutActions.js';
 import useWorkoutStore from '../../store/workoutStore.js';
 
 function formatDuration(secs) {
@@ -25,6 +26,13 @@ export default function WorkoutCard({ workout }) {
     e.stopPropagation();
     await repeatWorkout(workout.id);
     navigate('/workout');
+  }
+
+  async function handleDelete(e) {
+    e.stopPropagation();
+    if (window.confirm(`Delete "${workout.name}"? This can't be undone.`)) {
+      await deleteWorkout(workout.id);
+    }
   }
 
   return (
@@ -93,13 +101,23 @@ export default function WorkoutCard({ workout }) {
               </div>
             </div>
           ))}
-          <button
-            onClick={handleRepeat}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
-          >
-            <RotateCcw size={14} /> Repeat this workout
-          </button>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={handleRepeat}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-semibold"
+              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+            >
+              <RotateCcw size={14} /> Repeat this workout
+            </button>
+            <button
+              onClick={handleDelete}
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+              style={{ background: 'var(--color-ivory)' }}
+              aria-label="Delete workout"
+            >
+              <Trash2 size={15} style={{ color: 'var(--color-ember)' }} />
+            </button>
+          </div>
         </div>
       )}
     </div>
