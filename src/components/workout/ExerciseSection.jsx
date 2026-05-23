@@ -10,7 +10,7 @@ const MUSCLE_HUE = {
   abs: '#C9A84C', obliques: '#C9A84C',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, onSetLogged, onRemove }) {
+export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
 
   return (
@@ -51,7 +51,7 @@ export default function ExerciseSection({ exercise, muscleGroup, onSetLogged, on
         <OverloadNudge exerciseId={exercise.exerciseId} />
       </div>
 
-      <SetLogger exerciseId={exercise.exerciseId} onSetLogged={onSetLogged} />
+      <SetLogger exerciseId={exercise.exerciseId} onSetLogged={onSetLogged} isBodyweight={isBodyweight} />
     </div>
   );
 }

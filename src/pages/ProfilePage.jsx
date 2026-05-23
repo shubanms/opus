@@ -1,17 +1,31 @@
 import { useNavigate } from 'react-router-dom';
 import { Flame, Zap, Settings } from 'lucide-react';
-import { useRPG } from '../hooks/useRPG.js';
+import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
+import { getXPProgress, getTitle } from '../utils/rpg.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
+import ShareButton from '../components/share/ShareButton.jsx';
+import ProfileCard from '../components/share/ProfileCard.jsx';
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { profile, loaded } = useRPG();
   const workouts = useWorkouts();
+  const charStats = useCharacterStats();
 
   if (!loaded || !profile) return null;
 
   const totalXp = profile.totalXp ?? 0;
+  const { level } = getXPProgress(totalXp);
+
+  const profileShareData = {
+    level,
+    title: getTitle(level),
+    stats: charStats,
+    workouts: workouts.length,
+    streak: profile.streak ?? 0,
+    totalXp,
+  };
 
   return (
     <div className="anim-fade-slide-up px-5 pb-8 pt-8">
@@ -60,6 +74,15 @@ export default function ProfilePage() {
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Total XP</p>
         </div>
       </div>
+
+      <ShareButton
+        data={profileShareData}
+        CardComponent={ProfileCard}
+        filename="opus-profile.png"
+        label="Share profile"
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
+        style={{ background: 'var(--color-obsidian)', color: 'var(--color-chalk)' }}
+      />
     </div>
   );
 }
