@@ -34,3 +34,9 @@ db.version(2).stores({
   notifications:
     '++id, type, scheduledFor, sent',
 }).upgrade(tx => tx.table('exercises').clear());
+
+// v3: index workouts.createdAt (used by useWorkouts ordering)
+db.version(3).stores({
+  workouts:
+    '++id, date, templateId, status, duration, createdAt',
+});

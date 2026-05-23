@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import useWorkoutStore from '../store/workoutStore.js';
 import ExerciseSection from '../components/workout/ExerciseSection.jsx';
