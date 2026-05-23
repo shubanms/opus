@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, ChevronRight } from 'lucide-react';
 import useWorkoutStore from '../store/workoutStore.js';
 import ExerciseSection from '../components/workout/ExerciseSection.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import RestTimer from '../components/workout/RestTimer.jsx';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal.jsx';
+import TemplateCard from '../components/template/TemplateCard.jsx';
 import { useExercise } from '../hooks/useExercises.js';
+import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 
 function ElapsedTimer({ startedAt }) {
   const [secs, setSecs] = useState(Math.round((Date.now() - startedAt) / 1000));
@@ -36,7 +39,9 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
 }
 
 export default function WorkoutPage() {
-  const { activeWorkout, startWorkout, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName } = useWorkoutStore();
+  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName } = useWorkoutStore();
+  const navigate = useNavigate();
+  const templates = useTemplatesWithExercises();
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -57,20 +62,48 @@ export default function WorkoutPage() {
 
   if (!activeWorkout) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-6 pb-24">
-        <p className="mb-2 font-display text-5xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+      <div className="anim-fade-slide-up px-5 pb-24 pt-8">
+        <h1 className="font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
           Ready?
+        </h1>
+        <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          Start fresh or pick a routine
         </p>
-        <p className="mb-10 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Start a new workout session
-        </p>
+
         <button
           onClick={() => startWorkout()}
-          className="rounded-2xl px-10 py-4 font-sans text-base font-semibold"
+          className="mt-6 w-full rounded-2xl py-4 font-sans text-base font-semibold"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
         >
-          Start workout
+          Quick start (empty)
         </button>
+
+        <div className="mt-8 mb-3 flex items-center justify-between">
+          <h2 className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            Your routines
+          </h2>
+          <button
+            onClick={() => navigate('/templates')}
+            className="flex items-center gap-1 font-sans text-xs"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            Manage <ChevronRight size={12} />
+          </button>
+        </div>
+
+        {templates.length === 0 ? (
+          <button
+            onClick={() => navigate('/templates')}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl py-5 font-sans text-sm font-medium"
+            style={{ border: '1px dashed var(--color-ash)', color: 'var(--color-text-secondary)' }}
+          >
+            <Plus size={15} /> Create a routine
+          </button>
+        ) : (
+          templates.map((t) => (
+            <TemplateCard key={t.id} template={t} onStart={startFromTemplate} />
+          ))
+        )}
       </div>
     );
   }
