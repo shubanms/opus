@@ -1,9 +1,11 @@
-import { Flame, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Flame, Zap, Settings } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
 
 export default function ProfilePage() {
+  const navigate = useNavigate();
   const { profile, loaded } = useRPG();
   const workouts = useWorkouts();
 
@@ -13,12 +15,24 @@ export default function ProfilePage() {
 
   return (
     <div className="anim-fade-slide-up px-5 pb-8 pt-8">
-      <h1 className="mb-1 font-display text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-        Profile
-      </h1>
-      <p className="mb-6 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        Joined {profile.joinDate}
-      </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="font-display text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Profile
+          </h1>
+          <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Joined {profile.joinDate}
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/settings')}
+          className="flex h-9 w-9 items-center justify-center rounded-full"
+          style={{ background: 'var(--color-ivory)' }}
+          aria-label="Settings"
+        >
+          <Settings size={18} style={{ color: 'var(--color-text-secondary)' }} />
+        </button>
+      </div>
 
       <CharacterCard profile={profile} />
 
