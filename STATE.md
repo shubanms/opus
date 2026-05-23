@@ -1,8 +1,8 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 5 (RPG Home, Profile & Exercise Polish)
-Current version: v0.5.0
+Current sprint: 6 (Templates & Routines)
+Current version: v0.6.0
 
 ## What's working
 - Vite + React 18 + Tailwind v3, PWA installable, transparent gold logo
@@ -38,11 +38,22 @@ Current version: v0.5.0
 - `workoutStore.js`: PR detection on complete (weight/reps/volume per exercise), streak tracking, XP award all happen inside `completeWorkout`
 - Bug fix: `muscleGroup` (singular) used correctly in WorkoutPage
 
+**Sprint 6 additions:**
+- DB v3: indexes `workouts.createdAt` (fixed SchemaError)
+- `useTemplates.js` — `useTemplatesWithExercises()` joins templates + exercise details
+- `utils/templateActions.js` — createTemplate / updateTemplate / deleteTemplate
+- `TemplateCard.jsx` — routine card: name, day badge, exercise count, muscle tags, start/edit/delete
+- `TemplateBuilder.jsx` — modal: name, day picker, multi-add exercises, save
+- `TemplatesPage.jsx` (/templates) — list + create + edit + delete routines
+- `ExercisePicker.jsx` — added `multi` mode (stays open, "Done" button) for routine building
+- `workoutStore.startFromTemplate(template)` — pre-loads exercises into active workout
+- WorkoutPage start screen: Quick start + routine list (one-tap start) + Manage link
+
 ## What's in progress
-- Nothing — Sprint 5 deliverables complete
+- Nothing — Sprint 6 deliverables complete
 
 ## What's not started
-- Sprint 6–10: see OPUS_PRD.md sprint plan
+- Sprint 7–10: see OPUS_PRD.md sprint plan (Progress charts ~Sprint 8)
 
 ## Known issues / deviations
 - Local builds blocked (web session network policy); CI builds on GitHub Actions

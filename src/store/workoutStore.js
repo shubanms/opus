@@ -22,6 +22,22 @@ const useWorkoutStore = create((set, get) => ({
     if (w) set({ activeWorkout: { ...w, name } });
   },
 
+  startFromTemplate(template) {
+    set({
+      activeWorkout: {
+        id: null,
+        name: template.name,
+        templateId: template.id,
+        startedAt: Date.now(),
+        exercises: (template.exercises ?? []).map(e => ({
+          exerciseId: e.id,
+          name: e.name,
+          sets: [],
+        })),
+      },
+    });
+  },
+
   addExercise(exercise) {
     const w = get().activeWorkout;
     if (!w) return;

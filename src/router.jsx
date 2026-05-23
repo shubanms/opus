@@ -9,6 +9,7 @@ import ExerciseDetailPage from './pages/ExerciseDetailPage.jsx';
 import ProgressPage from './pages/ProgressPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
+import TemplatesPage from './pages/TemplatesPage.jsx';
 
 export const router = createBrowserRouter(
   [
@@ -19,6 +20,7 @@ export const router = createBrowserRouter(
         { path: '/home', element: <HomePage /> },
         { path: '/workout', element: <WorkoutPage /> },
         { path: '/history', element: <HistoryPage /> },
+        { path: '/templates', element: <TemplatesPage /> },
         { path: '/exercises', element: <ExercisePage /> },
         { path: '/exercises/:id', element: <ExerciseDetailPage /> },
         { path: '/progress', element: <ProgressPage /> },
