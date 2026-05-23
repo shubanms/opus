@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/db.js';
+import { PR_BONUS } from '../utils/rpg.js';
 
 const useWorkoutStore = create((set, get) => ({
   activeWorkout: null,
@@ -112,8 +113,10 @@ const useWorkoutStore = create((set, get) => ({
     const workingSets = allSets.filter(s => !s.isWarmup);
     const totalVolume = Math.round(workingSets.reduce((s, x) => s + x.weight * x.reps, 0));
     const totalSets = workingSets.length;
+    const today = new Date().toISOString().slice(0, 10);
+
     const workoutId = await db.workouts.add({
-      date: new Date().toISOString().slice(0, 10),
+      date: today,
       templateId: w.templateId,
       name: w.name,
       status: 'completed',
@@ -124,6 +127,7 @@ const useWorkoutStore = create((set, get) => ({
       totalSets,
       createdAt: Date.now(),
     });
+
     for (const ex of w.exercises) {
       for (const s of ex.sets) {
         await db.sets.add({
@@ -138,6 +142,45 @@ const useWorkoutStore = create((set, get) => ({
         });
       }
     }
+
+    // PR detection
+    let prBonus = 0;
+    for (const ex of w.exercises) {
+      const working = ex.sets.filter(s => !s.isWarmup && (s.weight > 0 || s.reps > 0));
+      if (!working.length) continue;
+      const maxWeight = Math.max(...working.map(s => s.weight));
+      const maxReps = Math.max(...working.map(s => s.reps));
+      const maxVol = Math.max(...working.map(s => s.weight * s.reps));
+      const existing = await db.prs.where('exerciseId').equals(ex.exerciseId).toArray();
+      const upsert = async (type, value) => {
+        if (value <= 0) return;
+        const prev = existing.find(p => p.type === type);
+        if (!prev || value > prev.value) {
+          const record = { exerciseId: ex.exerciseId, type, value, achievedAt: Date.now(), workoutId };
+          if (prev) await db.prs.put({ ...prev, ...record });
+          else await db.prs.add(record);
+          prBonus += PR_BONUS;
+        }
+      };
+      await upsert('weight', maxWeight);
+      await upsert('reps', maxReps);
+      await upsert('volume', maxVol);
+    }
+
+    // XP + streak (lazy import to avoid circular dep)
+    const { default: useUserStore } = await import('./userStore.js');
+    const userStore = useUserStore.getState();
+    const profile = userStore.profile;
+    if (profile) {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      let streak = profile.streak ?? 0;
+      if (profile.lastWorkoutDate !== today) {
+        streak = profile.lastWorkoutDate === yesterday ? streak + 1 : 1;
+        await userStore.updateProfile({ lastWorkoutDate: today, streak });
+      }
+      await userStore.addXP(xpEarned + prBonus);
+    }
+
     set({ activeWorkout: null });
     return workoutId;
   },

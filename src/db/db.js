@@ -7,6 +7,12 @@ export const db = new Dexie('OpusDB');
 db.version(1).stores({
   exercises:
     '++id, name, muscleGroup, equipment, isCustom',
+});
+
+// v2: adds difficulty index; clears exercises so seed re-runs with new fields
+db.version(2).stores({
+  exercises:
+    '++id, name, muscleGroup, equipment, isCustom, difficulty',
   workouts:
     '++id, date, templateId, status, duration',
   sets:
@@ -27,4 +33,4 @@ db.version(1).stores({
     '++id',
   notifications:
     '++id, type, scheduledFor, sent',
-});
+}).upgrade(tx => tx.table('exercises').clear());

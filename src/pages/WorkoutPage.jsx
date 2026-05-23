@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, ChevronDown } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus } from 'lucide-react';
 import useWorkoutStore from '../store/workoutStore.js';
-import useUserStore from '../store/userStore.js';
 import ExerciseSection from '../components/workout/ExerciseSection.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import RestTimer from '../components/workout/RestTimer.jsx';
@@ -25,7 +24,7 @@ function ElapsedTimer({ startedAt }) {
 
 function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
   const exerciseData = useExercise(ex.exerciseId);
-  const muscleGroup = exerciseData?.muscleGroups?.[0] ?? null;
+  const muscleGroup = exerciseData?.muscleGroup ?? null;
   return (
     <ExerciseSection
       exercise={ex}
@@ -38,7 +37,6 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
 
 export default function WorkoutPage() {
   const { activeWorkout, startWorkout, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName } = useWorkoutStore();
-  const addXP = useUserStore((s) => s.addXP);
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
@@ -54,7 +52,6 @@ export default function WorkoutPage() {
 
   async function handleSave(xp) {
     await completeWorkout(xp);
-    addXP(xp);
     setEndOpen(false);
   }
 
