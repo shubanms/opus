@@ -1,12 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect } from 'react';
 import { db } from '../db/db.js';
-import { syncExercises, seedDatabase } from '../utils/wger.js';
+import { seedDatabase } from '../utils/wger.js';
 
 export function useExercises({ muscleGroup = null, search = '' } = {}) {
-  // Seed DB on first mount if empty, then kick off background Wger sync
   useEffect(() => {
-    seedDatabase().then(() => syncExercises());
+    seedDatabase();
   }, []);
 
   const exercises = useLiveQuery(async () => {
