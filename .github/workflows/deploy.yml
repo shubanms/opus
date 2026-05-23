@@ -1,0 +1,66 @@
+name: Deploy OPUS to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Until Sprint 1 adds the Vite project, there is no build step and we
+      # publish the static root (placeholder index.html). Once package.json
+      # with a "build" script exists, we build and publish dist/ instead.
+      - name: Detect build setup
+        id: detect
+        run: |
+          if [ -f package.json ] && grep -q '"build"' package.json; then
+            echo "has_build=true" >> "$GITHUB_OUTPUT"
+            echo "publish_dir=dist" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_build=false" >> "$GITHUB_OUTPUT"
+            echo "publish_dir=." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node
+        if: steps.detect.outputs.has_build == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.detect.outputs.has_build == 'true'
+        run: npm ci
+
+      - name: Build
+        if: steps.detect.outputs.has_build == 'true'
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.detect.outputs.publish_dir }}
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
