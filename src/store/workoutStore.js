@@ -244,6 +244,8 @@ const useWorkoutStore = create((set, get) => ({
       const totalGain = xpEarned + prBonus + streakBonus;
       const oldLevel = getLevelFromTotalXP(profile.totalXp);
       const newLevel = getLevelFromTotalXP(profile.totalXp + totalGain);
+      // Persist the full gained XP so deletion can cleanly reverse it.
+      await db.workouts.update(workoutId, { xpEarned: totalGain });
       await userStore.addXP(totalGain);
       result.xpEarned = totalGain;
       result.streakBonus = streakBonus;

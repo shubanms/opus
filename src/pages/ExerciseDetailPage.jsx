@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, TrendingUp, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2 } from 'lucide-react';
 import { useExercise } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume } from '../hooks/useProgress.js';
+import { deleteCustomExercise } from '../utils/exerciseActions.js';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
 
@@ -79,6 +80,13 @@ export default function ExerciseDetailPage() {
 
   const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#8A8780';
 
+  async function handleDelete() {
+    if (window.confirm(`Delete "${exercise.name}" and all its logged history? This can't be undone.`)) {
+      await deleteCustomExercise(exercise.id);
+      navigate('/exercises');
+    }
+  }
+
   return (
     <div className="anim-fade-slide-up px-5 pb-8 pt-6">
       <button onClick={() => navigate(-1)} className="mb-5 flex items-center gap-2">
@@ -145,6 +153,16 @@ export default function ExerciseDetailPage() {
         </div>
         <VolumeChart data={volume} />
       </div>
+
+      {exercise.isCustom && (
+        <button
+          onClick={handleDelete}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-medium"
+          style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}
+        >
+          <Trash2 size={15} /> Delete exercise
+        </button>
+      )}
     </div>
   );
 }
