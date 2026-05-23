@@ -1,41 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OPUS</title>
-  <style>
-    :root { --obsidian: #111010; --chalk: #F7F5F2; --gold: #C9A84C; }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: var(--obsidian);
-      color: var(--chalk);
-      font-family: Georgia, 'Times New Roman', serif;
-      text-align: center;
-    }
-    h1 {
-      font-size: 4rem;
-      letter-spacing: 1.2rem;
-      text-indent: 1.2rem;
-      font-weight: 700;
-    }
-    p {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      letter-spacing: 0.35rem;
-      text-transform: uppercase;
-      color: var(--gold);
-      font-family: -apple-system, system-ui, sans-serif;
-    }
-  </style>
-</head>
-<body>
-  <h1>OPUS</h1>
-  <p>Build your masterpiece.</p>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#111010" />
+    <meta name="description" content="OPUS — Build your masterpiece. A free, offline-first gym tracker." />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="OPUS" />
+    <link rel="apple-touch-icon" href="/opus/lifter.png" />
+    <link rel="icon" type="image/png" href="/opus/lifter.png" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <title>OPUS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
