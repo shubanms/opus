@@ -56,17 +56,41 @@ export default function ExerciseDetailPage() {
   useEffect(() => {
     if (!exercise?.name) return;
     const ctrl = new AbortController();
-    const term = exercise.name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
-    fetch(
-      `https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(term)}&language=english&format=json`,
-      { signal: ctrl.signal }
-    )
-      .then(r => r.json())
-      .then(data => {
-        const img = data.suggestions?.[0]?.data?.image;
-        if (img) setDemoUrl(img);
-      })
-      .catch(() => {});
+    const abs = (u) => (u && u.startsWith('/') ? `https://wger.de${u}` : u);
+
+    async function loadDemo() {
+      try {
+        const term = exercise.name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+        const res = await fetch(
+          `https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(term)}&language=english&format=json`,
+          { signal: ctrl.signal }
+        );
+        const data = await res.json();
+        const top = data.suggestions?.[0]?.data;
+        if (!top) return;
+
+        // Search result image is a relative media path — make it absolute.
+        if (top.image) {
+          setDemoUrl(abs(top.image));
+          return;
+        }
+        // Fallback: look up the exercise's images by base id.
+        if (top.base_id) {
+          const r2 = await fetch(
+            `https://wger.de/api/v2/exerciseimage/?exercise_base=${top.base_id}&format=json`,
+            { signal: ctrl.signal }
+          );
+          const d2 = await r2.json();
+          const main = d2.results?.find((x) => x.is_main) ?? d2.results?.[0];
+          if (main?.image) setDemoUrl(abs(main.image));
+        }
+      } catch {
+        /* offline or not found — fall back to hiding the demo */
+      }
+    }
+
+    setDemoUrl(null);
+    loadDemo();
     return () => ctrl.abort();
   }, [exercise?.name]);
 
