@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { DEFAULT_THEME } from './themes.js';
+import { toDisplay, unitLabel } from '../../utils/units.js';
 
 function formatDuration(secs) {
   const m = Math.floor((secs ?? 0) / 60);
@@ -16,6 +17,8 @@ function formatDate(iso) {
 const ShareableCard = forwardRef(function ShareableCard({ data, theme = DEFAULT_THEME }, ref) {
   const d = data ?? {};
   const { bg, text, sub, accent } = theme;
+  const unit = d.unit ?? 'kg';
+  const ulabel = unitLabel(unit);
   const muscles = (d.muscles ?? []).slice(0, 4).map((m) => m.replace(/-/g, ' ')).join('  ·  ');
 
   const stat = (value, label) => (
@@ -34,7 +37,12 @@ const ShareableCard = forwardRef(function ShareableCard({ data, theme = DEFAULT_
           </div>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 52, fontWeight: 700, letterSpacing: 8, color: text }}>OPUS</span>
         </div>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, color: sub }}>{formatDate(d.date)}</span>
+        <div style={{ textAlign: 'right' }}>
+          {d.athlete && (
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 30, fontWeight: 600, color: text }}>{d.athlete}</div>
+          )}
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, color: sub }}>{formatDate(d.date)}</div>
+        </div>
       </div>
 
       <div style={{ marginTop: 'auto' }}>
@@ -47,14 +55,14 @@ const ShareableCard = forwardRef(function ShareableCard({ data, theme = DEFAULT_
       <div style={{ height: 4, marginTop: 44, marginBottom: 44, background: `linear-gradient(90deg, ${accent}, rgba(0,0,0,0))` }} />
 
       <div style={{ display: 'flex' }}>
-        {stat((d.totalVolume ?? 0).toLocaleString(), 'Volume (kg)')}
+        {stat(Math.round(toDisplay(d.totalVolume ?? 0, unit)).toLocaleString(), `Volume (${ulabel})`)}
         {stat(d.totalSets ?? 0, 'Sets')}
         {stat(formatDuration(d.duration), 'Duration')}
       </div>
 
       {d.pr && (
         <div style={{ marginTop: 48, alignSelf: 'flex-start', background: accent, color: '#111010', borderRadius: 9999, padding: '16px 32px', fontFamily: "'DM Sans', sans-serif", fontSize: 30, fontWeight: 600 }}>
-          PR · {d.pr.exercise ? `${d.pr.exercise} ` : ''}{d.pr.value} kg
+          PR · {d.pr.exercise ? `${d.pr.exercise} ` : ''}{Math.round(toDisplay(d.pr.value, unit) * 10) / 10} {ulabel}
         </div>
       )}
 

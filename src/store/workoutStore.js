@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { db } from '../db/db.js';
 import { PR_BONUS, STREAK_BONUS_PER_DAY, getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
+import { computeVolume } from '../utils/volume.js';
+import { getCurrentBodyweight } from '../utils/healthActions.js';
 
 const useWorkoutStore = create((set, get) => ({
   activeWorkout: null,
@@ -160,9 +162,13 @@ const useWorkoutStore = create((set, get) => ({
     const duration = Math.round((Date.now() - w.startedAt) / 1000);
     const allSets = w.exercises.flatMap(e => e.sets);
     const workingSets = allSets.filter(s => !s.isWarmup);
-    const totalVolume = Math.round(workingSets.reduce((s, x) => s + x.weight * x.reps, 0));
     const totalSets = workingSets.length;
     const today = new Date().toISOString().slice(0, 10);
+
+    // Bodyweight counts toward volume; snapshot bodyweight for accurate history.
+    const bodyweightKg = await getCurrentBodyweight();
+    const flatSets = w.exercises.flatMap((e) => e.sets.map((s) => ({ ...s, exerciseId: e.exerciseId })));
+    const totalVolume = await computeVolume(flatSets, bodyweightKg);
 
     const workoutId = await db.workouts.add({
       date: today,
@@ -174,6 +180,7 @@ const useWorkoutStore = create((set, get) => ({
       xpEarned,
       totalVolume,
       totalSets,
+      bodyweightKg,
       createdAt: Date.now(),
     });
 

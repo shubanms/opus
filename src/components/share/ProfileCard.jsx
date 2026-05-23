@@ -23,7 +23,7 @@ const ProfileCard = forwardRef(function ProfileCard({ data, theme = DEFAULT_THEM
           </div>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 52, fontWeight: 700, letterSpacing: 8, color: text }}>OPUS</span>
         </div>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, color: sub }}>ATHLETE</span>
+        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 30, fontWeight: 600, color: text }}>{d.name || 'ATHLETE'}</span>
       </div>
 
       <div style={{ marginTop: 'auto' }}>

@@ -1,9 +1,11 @@
 import { db } from '../db/db.js';
+import { computeVolume } from './volume.js';
 
 async function recomputeWorkoutTotals(workoutId) {
+  const workout = await db.workouts.get(workoutId);
   const sets = (await db.sets.where('workoutId').equals(workoutId).toArray()).filter((s) => !s.isWarmup);
   await db.workouts.update(workoutId, {
-    totalVolume: Math.round(sets.reduce((a, s) => a + s.weight * s.reps, 0)),
+    totalVolume: await computeVolume(sets, workout?.bodyweightKg),
     totalSets: sets.length,
   });
 }

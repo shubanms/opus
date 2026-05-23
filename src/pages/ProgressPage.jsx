@@ -13,6 +13,8 @@ import {
   useWeeklyVolume, useMuscleFrequency, useWorkoutDays,
   useExerciseVolume, useExerciseMaxWeight, useBodyStats, useSleepLogs,
 } from '../hooks/useProgress.js';
+import useSettingsStore from '../store/settingsStore.js';
+import { toDisplay, unitLabel } from '../utils/units.js';
 
 const TABS = ['Overview', 'By Exercise', 'Body'];
 
@@ -28,12 +30,14 @@ function Section({ title, children }) {
 }
 
 function Overview() {
-  const weekly = useWeeklyVolume(8);
+  const unit = useSettingsStore((s) => s.unit);
+  const weeklyRaw = useWeeklyVolume(8);
+  const weekly = weeklyRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
   const muscles = useMuscleFrequency();
   const days = useWorkoutDays();
   return (
     <>
-      <Section title="Weekly volume (8 weeks)"><VolumeChart data={weekly} /></Section>
+      <Section title="Weekly volume (8 weeks)"><VolumeChart data={weekly} unit={unitLabel(unit)} /></Section>
       <Section title="Muscle focus"><MuscleFrequency data={muscles} /></Section>
       <Section title="Training calendar"><Heatmap days={days} /></Section>
     </>
@@ -41,10 +45,13 @@ function Overview() {
 }
 
 function ByExercise() {
+  const unit = useSettingsStore((s) => s.unit);
   const [picker, setPicker] = useState(false);
   const [selected, setSelected] = useState(null);
-  const volume = useExerciseVolume(selected?.id);
-  const maxWeight = useExerciseMaxWeight(selected?.id);
+  const volumeRaw = useExerciseVolume(selected?.id);
+  const maxWeightRaw = useExerciseMaxWeight(selected?.id);
+  const volume = volumeRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
+  const maxWeight = maxWeightRaw.map((d) => ({ label: d.label, value: toDisplay(d.value, unit) }));
 
   return (
     <>
@@ -61,8 +68,8 @@ function ByExercise() {
 
       {selected && (
         <>
-          <Section title="Max weight"><TrendChart data={maxWeight} unit="kg" empty="No sets logged yet." /></Section>
-          <Section title="Volume per session"><VolumeChart data={volume} /></Section>
+          <Section title="Max weight"><TrendChart data={maxWeight} unit={unitLabel(unit)} empty="No sets logged yet." /></Section>
+          <Section title="Volume per session"><VolumeChart data={volume} unit={unitLabel(unit)} /></Section>
         </>
       )}
 
@@ -78,11 +85,12 @@ function ByExercise() {
 function Body() {
   const [statForm, setStatForm] = useState(false);
   const [sleepForm, setSleepForm] = useState(false);
+  const unit = useSettingsStore((s) => s.unit);
   const stats = useBodyStats();
   const sleep = useSleepLogs();
 
   const latest = stats[0];
-  const weightTrend = stats.filter((s) => s.weight != null).reverse().map((s) => ({ label: s.date.slice(5), value: s.weight }));
+  const weightTrend = stats.filter((s) => s.weight != null).reverse().map((s) => ({ label: s.date.slice(5), value: toDisplay(s.weight, unit) }));
   const sleepTrend = sleep.filter((s) => s.quality > 0).reverse().map((s) => ({ label: s.date.slice(5), value: s.quality }));
 
   const MEAS = [
@@ -101,7 +109,7 @@ function Body() {
         </button>
       </div>
 
-      <Section title="Body weight"><TrendChart data={weightTrend} unit="kg" empty="Log your weight to see the trend." /></Section>
+      <Section title="Body weight"><TrendChart data={weightTrend} unit={unitLabel(unit)} empty="Log your weight to see the trend." /></Section>
 
       {latest && (
         <Section title="Latest measurements">
@@ -127,7 +135,7 @@ function Body() {
               <div key={s.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
                 <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>{s.date}</span>
                 <span className="flex items-center gap-3">
-                  {s.weight != null && <span className="font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>{s.weight} kg</span>}
+                  {s.weight != null && <span className="font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>{toDisplay(s.weight, unit)} {unitLabel(unit)}</span>}
                   <button onClick={() => deleteBodyStat(s.id)} aria-label="Delete entry">
                     <Trash2 size={13} style={{ color: 'var(--color-ember)' }} />
                   </button>

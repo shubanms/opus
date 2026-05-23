@@ -19,6 +19,14 @@ export function useBodyStats() {
   ) ?? [];
 }
 
+// Current bodyweight (kg) = most recent logged body-stat weight.
+export function useCurrentBodyweight() {
+  return useLiveQuery(
+    () => db.bodyStats.orderBy('date').reverse().filter((s) => s.weight != null).first().then((s) => s?.weight ?? null),
+    []
+  ) ?? null;
+}
+
 // Returns sleep logs newest-first.
 export function useSleepLogs() {
   return useLiveQuery(
@@ -105,23 +113,28 @@ export function useExerciseMaxWeight(exerciseId, limit = 10) {
 }
 
 // Per-session volume for an exercise (last `limit` sessions, oldest→newest).
+// Counts bodyweight for bodyweight exercises using each workout's snapshot.
 export function useExerciseVolume(exerciseId, limit = 10) {
   return useLiveQuery(async () => {
     if (!exerciseId) return [];
+    const ex = await db.exercises.get(exerciseId);
+    const isBw = ex?.equipment === 'bodyweight';
     const sets = await db.sets.where('exerciseId').equals(exerciseId).toArray();
     const byWorkout = {};
     for (const s of sets) {
       if (s.isWarmup) continue;
-      byWorkout[s.workoutId] = (byWorkout[s.workoutId] ?? 0) + s.weight * s.reps;
+      (byWorkout[s.workoutId] ??= []).push(s);
     }
     const ids = Object.keys(byWorkout).map(Number).sort((a, b) => a - b);
     const result = [];
     for (const id of ids) {
       const w = await db.workouts.get(id);
-      result.push({
-        label: w?.date ? w.date.slice(5) : String(id),
-        volume: Math.round(byWorkout[id]),
-      });
+      const bw = w?.bodyweightKg || 0;
+      const volume = byWorkout[id].reduce(
+        (a, s) => a + ((isBw ? bw + (s.weight || 0) : (s.weight || 0)) * (s.reps || 0)),
+        0
+      );
+      result.push({ label: w?.date ? w.date.slice(5) : String(id), volume: Math.round(volume) });
     }
     return result.slice(-limit);
   }, [exerciseId]) ?? [];

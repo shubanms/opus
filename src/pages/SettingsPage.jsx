@@ -4,10 +4,15 @@ import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 import { useRPG } from '../hooks/useRPG.js';
+import { useCurrentBodyweight } from '../hooks/useProgress.js';
 import useUserStore from '../store/userStore.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { NOTIF_TYPES } from '../utils/notifications.js';
 import { exportData, importData } from '../utils/dataActions.js';
+import { logBodyStat } from '../utils/healthActions.js';
+import { toDisplay, toKg, unitLabel } from '../utils/units.js';
+
+const SEXES = ['Male', 'Female', 'Other'];
 
 function Switch({ on, onChange, disabled }) {
   return (
@@ -25,6 +30,15 @@ function Switch({ on, onChange, disabled }) {
   );
 }
 
+function Row({ label, children }) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>{label}</span>
+      {children}
+    </div>
+  );
+}
+
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export default function SettingsPage() {
@@ -35,7 +49,11 @@ export default function SettingsPage() {
   const updateProfile = useUserStore((s) => s.updateProfile);
   const barWeight = useSettingsStore((s) => s.barWeight);
   const setBarWeight = useSettingsStore((s) => s.setBarWeight);
+  const unit = useSettingsStore((s) => s.unit);
+  const setUnit = useSettingsStore((s) => s.setUnit);
+  const bodyweight = useCurrentBodyweight();
   const fileRef = useRef();
+  const age = profile?.birthYear ? new Date().getFullYear() - profile.birthYear : '';
 
   async function handleImport(e) {
     const file = e.target.files?.[0];
@@ -68,8 +86,20 @@ export default function SettingsPage() {
             Profile
           </span>
         </div>
+        {/* Units */}
         <div className="flex items-center justify-between py-1.5">
-          <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Name</span>
+          <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Units</span>
+          <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
+            {['kg', 'lbs'].map((u) => (
+              <button key={u} onClick={() => setUnit(u)} className="px-4 py-1.5 font-sans text-sm font-medium"
+                style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+                {u}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Row label="Name">
           <input
             defaultValue={profile?.name ?? ''}
             onBlur={(e) => updateProfile({ name: e.target.value.trim() })}
@@ -77,18 +107,60 @@ export default function SettingsPage() {
             className="w-40 rounded-lg px-3 py-1.5 text-right font-sans text-sm outline-none"
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
           />
-        </div>
-        <div className="flex items-center justify-between py-1.5">
-          <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Barbell weight (kg)</span>
+        </Row>
+
+        <Row label={`Bodyweight (${unitLabel(unit)})`}>
           <input
-            value={barWeight}
-            onChange={(e) => setBarWeight(Number(e.target.value) || 0)}
-            type="number"
-            inputMode="decimal"
+            key={bodyweight}
+            defaultValue={bodyweight != null ? toDisplay(bodyweight, unit) : ''}
+            onBlur={(e) => { if (e.target.value !== '') logBodyStat({ date: new Date().toISOString().slice(0, 10), weight: toKg(Number(e.target.value), unit) }); }}
+            type="number" inputMode="decimal" placeholder="—"
             className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
           />
-        </div>
+        </Row>
+
+        <Row label="Height (cm)">
+          <input
+            defaultValue={profile?.height ?? ''}
+            onBlur={(e) => updateProfile({ height: e.target.value ? Number(e.target.value) : null })}
+            type="number" inputMode="decimal" placeholder="—"
+            className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+        </Row>
+
+        <Row label="Age">
+          <input
+            defaultValue={age}
+            onBlur={(e) => updateProfile({ birthYear: e.target.value ? new Date().getFullYear() - Number(e.target.value) : null })}
+            type="number" inputMode="numeric" placeholder="—"
+            className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+        </Row>
+
+        <Row label="Sex">
+          <div className="flex gap-1">
+            {SEXES.map((s) => (
+              <button key={s} onClick={() => updateProfile({ sex: s })} className="rounded-lg px-3 py-1.5 font-sans text-xs"
+                style={{ background: profile?.sex === s ? 'var(--color-gold)' : 'var(--color-ivory)', color: profile?.sex === s ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+                {s[0]}
+              </button>
+            ))}
+          </div>
+        </Row>
+
+        <Row label={`Barbell weight (${unitLabel(unit)})`}>
+          <input
+            key={`${unit}-${barWeight}`}
+            defaultValue={toDisplay(barWeight, unit)}
+            onBlur={(e) => setBarWeight(toKg(Number(e.target.value) || 0, unit))}
+            type="number" inputMode="decimal"
+            className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+        </Row>
       </section>
 
       {/* About */}
