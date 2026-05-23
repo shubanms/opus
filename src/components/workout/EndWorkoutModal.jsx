@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { Trophy, Clock, Zap } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
+import { db } from '../../db/db.js';
 import { calcWorkoutXP } from '../../utils/rpg.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import XPBar from '../rpg/XPBar.jsx';
+import ShareButton from '../share/ShareButton.jsx';
 
 function formatDuration(secs) {
   const m = Math.floor(secs / 60);
@@ -27,7 +30,29 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
     };
   }, [activeWorkout]);
 
+  const muscles = useLiveQuery(async () => {
+    if (!activeWorkout) return [];
+    const set = new Set();
+    for (const ex of activeWorkout.exercises) {
+      const e = await db.exercises.get(ex.exerciseId);
+      if (e?.muscleGroup) set.add(e.muscleGroup);
+    }
+    return [...set];
+  }, [activeWorkout]) ?? [];
+
   if (!stats) return null;
+
+  const shareData = {
+    name: activeWorkout.name,
+    date: new Date().toISOString().slice(0, 10),
+    duration: elapsedSecs,
+    totalVolume: stats.totalVolume,
+    totalSets: stats.sets,
+    xpEarned: stats.xp,
+    muscles,
+    pr: null,
+    level: profile?.level ?? 1,
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Workout complete">
@@ -87,6 +112,13 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
           Save & finish
         </button>
       </div>
+
+      <ShareButton
+        data={shareData}
+        label="Share card"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium"
+        style={{ background: 'var(--color-stone)', color: 'var(--color-chalk)' }}
+      />
     </Modal>
   );
 }

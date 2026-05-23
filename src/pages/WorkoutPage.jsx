@@ -10,6 +10,7 @@ import TemplateCard from '../components/template/TemplateCard.jsx';
 import LevelUpScreen from '../components/rpg/LevelUpScreen.jsx';
 import { useExercise } from '../hooks/useExercises.js';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
+import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
 
 function ElapsedTimer({ startedAt }) {
   const [secs, setSecs] = useState(Math.round((Date.now() - startedAt) / 1000));
@@ -60,6 +61,10 @@ export default function WorkoutPage() {
   async function handleSave(xp) {
     const result = await completeWorkout(xp);
     setEndOpen(false);
+    await maybePromptPermission();
+    if (result?.prCount > 0) {
+      notifyPR(`You set ${result.prCount} new record${result.prCount === 1 ? '' : 's'} this session.`);
+    }
     if (result?.leveledUp) {
       setLevelUp({ level: result.newLevel, title: result.newTitle });
     }

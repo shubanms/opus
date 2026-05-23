@@ -92,12 +92,32 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
 - Energy check-in (1-5) at workout start → saved to energyLogs on complete
 - UX bonus: modal height cap + scrollable body; delete workouts from cards
 
+**PRD Sprint 9 — Notifications & Shareable Card (completed):**
+- `utils/share.js` — html2canvas capture → Web Share API (files) with download fallback
+- `components/share/ShareableCard.jsx` — 1080×1080 card (name, muscles, volume/sets/duration, PR, level, XP)
+- `components/share/ShareButton.jsx` — button + off-screen capture card; share from end-of-workout modal AND expanded history/recent cards
+- `hooks/useWorkout.js` — useShareData(workoutId)
+- `utils/notifications.js` + `hooks/useNotifications.js` — permission flow, per-type toggles, quiet hours (DND), PR celebration fires on finish; one-time prompt after first workout
+- Settings: Notifications section (master + types + quiet hours)
+
+**Critical fix — modals/overlays portaled:**
+- `.anim-fade-slide-up` uses `both` fill, leaving `transform: translateY(0)` on page
+  wrappers permanently → that made the wrapper the containing block for any
+  `position: fixed` child, so modals rendered trapped at the top of the page
+  (seen on Progress → By Exercise picker). Fixed by rendering Modal + LevelUpScreen
+  via `createPortal(..., document.body)`. RULE: any full-screen fixed overlay MUST
+  portal to body.
+
 ## What's in progress
-- Nothing — PRD Sprints 5–8 all complete
+- Nothing — PRD Sprints 5–9 complete
 
 ## What's not started
-- PRD Sprint 9 (Notifications & shareable card)
 - PRD Sprint 10 (Polish, PWA, onboarding, data export/import, launch)
+
+## Note on scheduled notifications
+A static GitHub Pages PWA can't deliver true background notifications (no push
+server). PR celebrations fire while the app is open; gym-nudge/streak/weekly are
+preference-ready and would need push infra (or periodic background sync) to deliver.
 
 ## UX standard (keep for all future work)
 - Bottom-sheet modals cap at 90vh with fixed header + scrollable body (never push off-screen top)
