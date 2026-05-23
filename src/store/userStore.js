@@ -4,6 +4,9 @@ import { getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
 
 const DEFAULT_PROFILE = {
   name: '',
+  height: null,
+  sex: null,
+  birthYear: null,
   level: 1,
   xp: 0,
   totalXp: 0,

@@ -2,7 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { Flame, Zap, Settings } from 'lucide-react';
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
+import { useCurrentBodyweight } from '../hooks/useProgress.js';
 import { getXPProgress, getTitle } from '../utils/rpg.js';
+import { fmtWeight } from '../utils/units.js';
+import useSettingsStore from '../store/settingsStore.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
 import ProfileCard from '../components/share/ProfileCard.jsx';
@@ -12,13 +15,25 @@ export default function ProfilePage() {
   const { profile, loaded } = useRPG();
   const workouts = useWorkouts();
   const charStats = useCharacterStats();
+  const bodyweight = useCurrentBodyweight();
+  const unit = useSettingsStore((s) => s.unit);
 
   if (!loaded || !profile) return null;
 
   const totalXp = profile.totalXp ?? 0;
   const { level } = getXPProgress(totalXp);
+  const age = profile.birthYear ? new Date().getFullYear() - profile.birthYear : null;
+
+  const identity = [
+    profile.name || null,
+    age ? `${age} yrs` : null,
+    profile.sex || null,
+    profile.height ? `${profile.height} cm` : null,
+    bodyweight != null ? fmtWeight(bodyweight, unit) : null,
+  ].filter(Boolean);
 
   const profileShareData = {
+    name: profile.name,
     level,
     title: getTitle(level),
     stats: charStats,
@@ -47,6 +62,12 @@ export default function ProfilePage() {
           <Settings size={18} style={{ color: 'var(--color-text-secondary)' }} />
         </button>
       </div>
+
+      {identity.length > 0 && (
+        <p className="mb-4 -mt-2 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          {identity.join('  ·  ')}
+        </p>
+      )}
 
       <CharacterCard profile={profile} />
 

@@ -2,6 +2,7 @@
 //   1. increase reps  2. increase sets  3. increase weight
 // sessions: array of past sessions (newest first), each a list of working sets
 //           [{ weight, reps }, ...]
+import { toDisplay, unitLabel } from './units.js';
 
 export const OVERLOAD_DEFAULTS = {
   targetReps: 12,
@@ -12,6 +13,9 @@ export const OVERLOAD_DEFAULTS = {
 
 export function getOverloadSuggestion(sessions, opts = {}) {
   const cfg = { ...OVERLOAD_DEFAULTS, ...opts };
+  const unit = opts.unit ?? 'kg';
+  const w = (kg) => `${Math.round(toDisplay(kg, unit) * 10) / 10}${unitLabel(unit)}`;
+  const at = (kg) => (kg > 0 ? ` at ${w(kg)}` : '');
 
   if (!sessions || sessions.length === 0) {
     return {
@@ -52,7 +56,7 @@ export function getOverloadSuggestion(sessions, opts = {}) {
       suggestedWeight: next,
       suggestedReps: cfg.startReps,
       suggestedSets: cfg.targetSets,
-      reason: `Maxed reps and sets twice over. Step up to ${next}kg and drop back to ${cfg.startReps} reps.`,
+      reason: `Maxed reps and sets twice over. Step up to ${w(next)} and drop back to ${cfg.startReps} reps.`,
       confidence: 'high',
     };
   }
@@ -64,7 +68,7 @@ export function getOverloadSuggestion(sessions, opts = {}) {
       suggestedSets: setCount + 1,
       suggestedReps: cfg.targetReps,
       suggestedWeight: topWeight,
-      reason: `All sets hit ${cfg.targetReps}+ reps. Add set #${setCount + 1} at ${topWeight}kg.`,
+      reason: `All sets hit ${cfg.targetReps}+ reps. Add set #${setCount + 1}${at(topWeight)}.`,
       confidence: setCount >= cfg.targetSets - 1 ? 'high' : 'medium',
     };
   }
@@ -78,7 +82,7 @@ export function getOverloadSuggestion(sessions, opts = {}) {
       suggestedReps: goal,
       suggestedSets: setCount,
       suggestedWeight: topWeight,
-      reason: `Strong work — push for ${goal} reps at ${topWeight}kg today.`,
+      reason: `Strong work — push for ${goal} reps${at(topWeight)} today.`,
       confidence: 'medium',
     };
   }

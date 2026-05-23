@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucide-react';
 import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
 import { deleteWorkout } from '../../utils/workoutActions.js';
+import { fmtVolume, toDisplay } from '../../utils/units.js';
 import ShareButton from '../share/ShareButton.jsx';
 import useWorkoutStore from '../../store/workoutStore.js';
+import useSettingsStore from '../../store/settingsStore.js';
 
 function formatDuration(secs) {
   const m = Math.floor(secs / 60);
@@ -21,6 +23,7 @@ export default function WorkoutCard({ workout }) {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
   const repeatWorkout = useWorkoutStore((s) => s.repeatWorkout);
+  const unit = useSettingsStore((s) => s.unit);
   const detail = useWorkoutDetail(expanded ? workout.id : null);
   const shareData = useShareData(expanded ? workout.id : null);
 
@@ -76,7 +79,7 @@ export default function WorkoutCard({ workout }) {
           </span>
           {workout.totalVolume > 0 && (
             <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              {workout.totalVolume.toLocaleString()} kg
+              {fmtVolume(workout.totalVolume, unit)}
             </span>
           )}
         </div>
@@ -97,7 +100,7 @@ export default function WorkoutCard({ workout }) {
                     style={{ color: s.isWarmup ? 'var(--color-ember)' : 'var(--color-text-secondary)' }}
                   >
                     {s.isWarmup && <Flame size={10} />}
-                    {s.weight}×{s.reps}
+                    {s.weight > 0 ? `${toDisplay(s.weight, unit)}×${s.reps}` : `${s.reps} reps`}
                   </span>
                 ))}
               </div>

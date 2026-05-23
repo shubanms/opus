@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 const GOLD = '#C9A84C';
 const ASH = '#8A8780';
 
-export default function VolumeChart({ data }) {
+export default function VolumeChart({ data, unit = 'kg' }) {
   if (!data || data.length === 0) {
     return (
       <p className="py-6 text-center font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
@@ -39,7 +39,7 @@ export default function VolumeChart({ data }) {
           }}
           labelStyle={{ color: '#F7F5F2' }}
           itemStyle={{ color: GOLD }}
-          formatter={(v) => [`${v.toLocaleString()} kg`, 'Volume']}
+          formatter={(v) => [`${v.toLocaleString()} ${unit}`, 'Volume']}
         />
         <Bar dataKey="volume" fill={GOLD} radius={[4, 4, 0, 0]} maxBarSize={28} />
       </BarChart>

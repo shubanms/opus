@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
 import { getOverloadSuggestion, isDeloadDue } from '../utils/overload.js';
+import useSettingsStore from '../store/settingsStore.js';
 
 // Overload suggestion for an exercise from its last 3 sessions of working sets.
 export function useOverload(exerciseId) {
@@ -20,7 +21,7 @@ export function useOverload(exerciseId) {
       .slice(0, 3)
       .map((id) => byWorkout[id]);
 
-    return getOverloadSuggestion(sessions);
+    return getOverloadSuggestion(sessions, { unit: useSettingsStore.getState().unit });
   }, [exerciseId]) ?? null;
 }
 

@@ -1,24 +1,29 @@
 import { useState } from 'react';
 import Modal from '../ui/Modal.jsx';
 import { logBodyStat } from '../../utils/healthActions.js';
-
-const FIELDS = [
-  { key: 'weight', label: 'Weight', unit: 'kg' },
-  { key: 'bodyFat', label: 'Body fat', unit: '%' },
-  { key: 'chest', label: 'Chest', unit: 'cm' },
-  { key: 'waist', label: 'Waist', unit: 'cm' },
-  { key: 'hips', label: 'Hips', unit: 'cm' },
-  { key: 'arms', label: 'Arms', unit: 'cm' },
-  { key: 'thighs', label: 'Thighs', unit: 'cm' },
-];
+import useSettingsStore from '../../store/settingsStore.js';
+import { toKg, unitLabel } from '../../utils/units.js';
 
 export default function BodyStatsForm({ isOpen, onClose }) {
   const [vals, setVals] = useState({});
+  const unit = useSettingsStore((s) => s.unit);
+
+  const FIELDS = [
+    { key: 'weight', label: 'Weight', unit: unitLabel(unit), isWeight: true },
+    { key: 'bodyFat', label: 'Body fat', unit: '%' },
+    { key: 'chest', label: 'Chest', unit: 'cm' },
+    { key: 'waist', label: 'Waist', unit: 'cm' },
+    { key: 'hips', label: 'Hips', unit: 'cm' },
+    { key: 'arms', label: 'Arms', unit: 'cm' },
+    { key: 'thighs', label: 'Thighs', unit: 'cm' },
+  ];
 
   async function save() {
     const entry = { date: new Date().toISOString().slice(0, 10) };
     for (const f of FIELDS) {
-      if (vals[f.key] !== undefined && vals[f.key] !== '') entry[f.key] = Number(vals[f.key]);
+      if (vals[f.key] !== undefined && vals[f.key] !== '') {
+        entry[f.key] = f.isWeight ? toKg(Number(vals[f.key]), unit) : Number(vals[f.key]);
+      }
     }
     await logBodyStat(entry);
     setVals({});

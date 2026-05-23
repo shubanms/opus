@@ -1,6 +1,8 @@
 import { X } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
+import useSettingsStore from '../../store/settingsStore.js';
+import { toDisplay, unitLabel } from '../../utils/units.js';
 
 const MUSCLE_HUE = {
   chest: '#D4622A', triceps: '#D4622A', 'front-deltoids': '#D4622A',
@@ -12,6 +14,7 @@ const MUSCLE_HUE = {
 
 export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
+  const unit = useSettingsStore((s) => s.unit);
 
   return (
     <div
@@ -33,7 +36,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
           {(exercise.targetSets || exercise.targetReps || exercise.targetWeight) && (
             <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               Target: {exercise.targetSets ?? '—'}×{exercise.targetReps ?? '—'}
-              {exercise.targetWeight ? ` @ ${exercise.targetWeight}kg` : ''}
+              {exercise.targetWeight ? ` @ ${toDisplay(exercise.targetWeight, unit)}${unitLabel(unit)}` : ''}
             </p>
           )}
         </div>

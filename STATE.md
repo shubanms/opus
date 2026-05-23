@@ -1,8 +1,18 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 10 (Polish, PWA & Launch) — MVP COMPLETE
-Current version: v1.0.0
+Current sprint: 11 (Personal Profile, Body Metrics & Central Units) — Roadmap v2
+Current version: v1.1.0 (post-MVP)
+
+## Roadmap v2
+See OPUS_ROADMAP.md for Sprints 11–20.
+
+**Sprint 11 done:**
+- Central units: `store/settingsStore.js` (unit kg/lbs) + `utils/units.js` (toDisplay/toKg/unitLabel/fmtWeight/fmtVolume); threaded through SetLogger, PlateCalculator (lb plates), WorkoutCard, EndWorkoutModal, ExerciseDetail PRs+chart, Progress charts/body, share cards, overload nudge text, template targets.
+- Profile identity: name/height/sex/birthYear on userProfile (unindexed, no migration); bodyweight = latest bodyStats (`useCurrentBodyweight`); shown on Profile, editable in Settings.
+- Onboarding revamp: name, bodyweight, height, age, sex, units, barbell weight (clarified separate from bodyweight).
+- Bodyweight counts toward volume: `utils/volume.js` (computeVolume) + `workouts.bodyweightKg` snapshot; applied in completeWorkout, recomputeWorkoutTotals, useExerciseVolume.
+- Name on share cards (ShareableCard athlete, ProfileCard name).
 
 ## ⚠️ PRD alignment note
 Earlier work got ahead of the PRD sprint order. Actual mapping:

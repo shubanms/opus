@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Plus, Trash2, Flame, Dumbbell } from 'lucide-react';
 import useWorkoutStore from '../../store/workoutStore.js';
+import useSettingsStore from '../../store/settingsStore.js';
 import { useLastSets } from '../../hooks/useWorkout.js';
+import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import PlateCalculator from './PlateCalculator.jsx';
 
 export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = false }) {
   const { activeWorkout, logSet, removeSet, toggleWarmup } = useWorkoutStore();
+  const unit = useSettingsStore((s) => s.unit);
   const exercise = activeWorkout?.exercises.find((e) => e.exerciseId === exerciseId);
   const lastSets = useLastSets(exerciseId);
 
@@ -26,7 +29,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   function handleLog() {
     if (!canLog) return;
     logSet(exerciseId, {
-      weight: showWeight ? weightNum || 0 : 0,
+      weight: showWeight ? toKg(weightNum || 0, unit) : 0,
       reps: repsNum || 0,
       rpe: showRpe ? parseInt(rpe) || null : null,
       isWarmup: false,
@@ -36,7 +39,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
     setRpe('');
   }
 
-  const fmt = (s) => (s.weight > 0 ? `${s.weight}kg × ${s.reps}` : `${s.reps} reps`);
+  const fmt = (s) => (s.weight > 0 ? `${toDisplay(s.weight, unit)}${unitLabel(unit)} × ${s.reps}` : `${s.reps} reps`);
 
   return (
     <div className="mt-3">
@@ -45,7 +48,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         <div className="mb-2 flex flex-wrap gap-3">
           {lastSets.map((s) => (
             <span key={s.id} className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              {s.weight > 0 ? `${s.weight}×${s.reps}` : `${s.reps}`}
+              {s.weight > 0 ? `${toDisplay(s.weight, unit)}×${s.reps}` : `${s.reps}`}
             </span>
           ))}
           <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)', opacity: 0.6 }}>
@@ -92,7 +95,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
               <input
                 value={weight}
                 onChange={(e) => { setWeight(e.target.value); setShowPlates(false); }}
-                placeholder="kg"
+                placeholder={unitLabel(unit)}
                 type="number"
                 inputMode="decimal"
                 className="min-w-0 flex-1 bg-transparent font-mono text-sm outline-none"

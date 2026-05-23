@@ -4,6 +4,10 @@ import { Trophy, Clock, Zap } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { db } from '../../db/db.js';
 import { calcWorkoutXP } from '../../utils/rpg.js';
+import { computeVolume } from '../../utils/volume.js';
+import { getCurrentBodyweight } from '../../utils/healthActions.js';
+import { fmtVolume } from '../../utils/units.js';
+import useSettingsStore from '../../store/settingsStore.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import XPBar from '../rpg/XPBar.jsx';
 import ShareButton from '../share/ShareButton.jsx';
@@ -16,19 +20,25 @@ function formatDuration(secs) {
 
 export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, onSave, onClose }) {
   const { profile } = useRPG();
+  const unit = useSettingsStore((s) => s.unit);
   const stats = useMemo(() => {
     if (!activeWorkout) return null;
     const allSets = activeWorkout.exercises.flatMap((e) => e.sets);
     const workingSets = allSets.filter((s) => !s.isWarmup);
-    const totalVolume = Math.round(workingSets.reduce((s, x) => s + x.weight * x.reps, 0));
     const xp = calcWorkoutXP(workingSets);
     return {
       exercises: activeWorkout.exercises.length,
       sets: workingSets.length,
-      totalVolume,
       xp,
     };
   }, [activeWorkout]);
+
+  const totalVolume = useLiveQuery(async () => {
+    if (!activeWorkout) return 0;
+    const flat = activeWorkout.exercises.flatMap((e) => e.sets.map((s) => ({ ...s, exerciseId: e.exerciseId })));
+    const bw = await getCurrentBodyweight();
+    return computeVolume(flat, bw);
+  }, [activeWorkout]) ?? 0;
 
   const muscles = useLiveQuery(async () => {
     if (!activeWorkout) return [];
@@ -44,14 +54,16 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
 
   const shareData = {
     name: activeWorkout.name,
+    athlete: profile?.name || null,
     date: new Date().toISOString().slice(0, 10),
     duration: elapsedSecs,
-    totalVolume: stats.totalVolume,
+    totalVolume,
     totalSets: stats.sets,
     xpEarned: stats.xp,
     muscles,
     pr: null,
     level: profile?.level ?? 1,
+    unit,
   };
 
   return (
@@ -73,9 +85,9 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Sets</p>
         </div>
         <div className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
-          <p className="font-sans text-xs font-medium" style={{ color: 'var(--color-ash)' }}>kg</p>
+          <p className="font-sans text-xs font-medium" style={{ color: 'var(--color-ash)' }}>vol</p>
           <p className="mt-1 font-mono text-xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
-            {stats.totalVolume.toLocaleString()}
+            {fmtVolume(totalVolume, unit)}
           </p>
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Total volume</p>
         </div>

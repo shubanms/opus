@@ -3,26 +3,29 @@ import { X, Plus } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import ExercisePicker from '../workout/ExercisePicker.jsx';
 import { createTemplate, updateTemplate } from '../../utils/templateActions.js';
+import useSettingsStore from '../../store/settingsStore.js';
+import { toDisplay, toKg, unitLabel } from '../../utils/units.js';
 
 const DAYS = [
   { v: null, l: 'Any' }, { v: 1, l: 'Mon' }, { v: 2, l: 'Tue' }, { v: 3, l: 'Wed' },
   { v: 4, l: 'Thu' }, { v: 5, l: 'Fri' }, { v: 6, l: 'Sat' }, { v: 0, l: 'Sun' },
 ];
 
-function initExercises(editing) {
+function initExercises(editing, unit) {
   return (editing?.exercises ?? []).map((e) => ({
     id: e.id,
     name: e.name,
     targetSets: e.targetSets ?? '',
     targetReps: e.targetReps ?? '',
-    targetWeight: e.targetWeight ?? '',
+    targetWeight: e.targetWeight != null ? toDisplay(e.targetWeight, unit) : '',
   }));
 }
 
 export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
+  const unit = useSettingsStore((s) => s.unit);
   const [name, setName] = useState(editing?.name ?? '');
   const [day, setDay] = useState(editing?.dayOfWeek ?? null);
-  const [exercises, setExercises] = useState(() => initExercises(editing));
+  const [exercises, setExercises] = useState(() => initExercises(editing, unit));
   const [pickerOpen, setPickerOpen] = useState(false);
 
   function addExercise(ex) {
@@ -56,7 +59,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
         exerciseId: e.id,
         targetSets: e.targetSets === '' ? null : Number(e.targetSets),
         targetReps: e.targetReps === '' ? null : Number(e.targetReps),
-        targetWeight: e.targetWeight === '' ? null : Number(e.targetWeight),
+        targetWeight: e.targetWeight === '' ? null : toKg(Number(e.targetWeight), unit),
       })),
     };
     if (editing) await updateTemplate(editing.id, payload);
@@ -118,7 +121,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
                 className="w-14 rounded-lg px-2 py-1.5 text-center font-mono text-xs outline-none" style={targetInput} />
               <span className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>@</span>
               <input value={ex.targetWeight} onChange={(e) => setField(ex.id, 'targetWeight', e.target.value)}
-                placeholder="kg" type="number" inputMode="decimal"
+                placeholder={unitLabel(unit)} type="number" inputMode="decimal"
                 className="w-16 rounded-lg px-2 py-1.5 text-center font-mono text-xs outline-none" style={targetInput} />
             </div>
           </div>

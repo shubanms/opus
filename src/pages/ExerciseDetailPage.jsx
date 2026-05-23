@@ -4,6 +4,8 @@ import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube } from 'luci
 import { useExercise } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume } from '../hooks/useProgress.js';
 import { deleteCustomExercise } from '../utils/exerciseActions.js';
+import { toDisplay, unitLabel } from '../utils/units.js';
+import useSettingsStore from '../store/settingsStore.js';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
 
@@ -13,10 +15,11 @@ const DIFFICULTY_COLOR = {
   advanced:     '#D4622A',
 };
 
-function PRCard({ prs }) {
+function PRCard({ prs, unit }) {
   const weight = prs.find((p) => p.type === 'weight');
   const reps = prs.find((p) => p.type === 'reps');
   const volume = prs.find((p) => p.type === 'volume');
+  const u = unitLabel(unit);
 
   if (!weight && !reps && !volume) {
     return (
@@ -37,9 +40,9 @@ function PRCard({ prs }) {
         </span>
       </div>
       <div className="flex flex-col gap-2">
-        {weight && <PRBadge label="Best weight" value={weight.value} unit="kg" />}
+        {weight && <PRBadge label="Best weight" value={toDisplay(weight.value, unit)} unit={u} />}
         {reps && <PRBadge label="Best reps" value={reps.value} unit="reps" />}
-        {volume && <PRBadge label="Best volume" value={volume.value} unit="kg" />}
+        {volume && <PRBadge label="Best volume" value={toDisplay(volume.value, unit)} unit={u} />}
       </div>
     </div>
   );
@@ -50,7 +53,9 @@ export default function ExerciseDetailPage() {
   const navigate = useNavigate();
   const exercise = useExercise(Number(id));
   const prs = usePRs(Number(id));
-  const volume = useExerciseVolume(Number(id));
+  const volumeRaw = useExerciseVolume(Number(id));
+  const unit = useSettingsStore((s) => s.unit);
+  const volume = volumeRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
   const [demoUrl, setDemoUrl] = useState(null);
 
   useEffect(() => {
@@ -176,7 +181,7 @@ export default function ExerciseDetailPage() {
 
       {/* PRs */}
       <div className="mt-5">
-        <PRCard prs={prs} />
+        <PRCard prs={prs} unit={unit} />
       </div>
 
       {/* Volume history */}
@@ -187,7 +192,7 @@ export default function ExerciseDetailPage() {
             Volume History
           </span>
         </div>
-        <VolumeChart data={volume} />
+        <VolumeChart data={volume} unit={unitLabel(unit)} />
       </div>
 
       {exercise.isCustom && (

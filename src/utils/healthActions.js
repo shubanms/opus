@@ -21,3 +21,9 @@ export async function deleteBodyStat(id) {
 export async function deleteSleep(id) {
   await db.sleepLogs.delete(id);
 }
+
+// Most recent logged bodyweight (kg), or null.
+export async function getCurrentBodyweight() {
+  const latest = await db.bodyStats.orderBy('date').reverse().filter((s) => s.weight != null).first();
+  return latest?.weight ?? null;
+}
