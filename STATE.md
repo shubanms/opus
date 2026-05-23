@@ -1,8 +1,8 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 5 (Progressive Overload Engine) — realigned to PRD numbering
-Current version: v0.5.0
+Current sprint: 10 (Polish, PWA & Launch) — MVP COMPLETE
+Current version: v1.0.0
 
 ## ⚠️ PRD alignment note
 Earlier work got ahead of the PRD sprint order. Actual mapping:
@@ -117,8 +117,19 @@ Bonus (user-requested, not in PRD): exercise difficulty tags, Wger demo images, 
   Light) + accent (gold/ember/sage) pickers; cards accept a `theme` prop
 - ShareButton now opens the customizer; works for workout + profile cards
 
+**PRD Sprint 10 — Polish, PWA & Launch (completed):**
+- ErrorBoundary wrapping the app (friendly crash screen instead of white screen)
+- First-run Onboarding (name + barbell weight); Home greets by name
+- Settings completed: Profile (name, bar weight), Data (JSON export/import), plus
+  existing Notifications + Danger zone
+- `settingsStore` (bar weight + onboarded flag); PlateCalculator uses it
+- README.md written
+- DEFERRED: kg/lbs unit conversion — needs threading through every weight display
+  to stay consistent (the user dislikes partial/inconsistent UI), so left as a
+  dedicated follow-up rather than half-done. Bar weight + all data are in kg.
+
 ## What's in progress
-- Nothing — PRD Sprints 5–9 complete (+ extension)
+- Nothing — PRD Sprints 1–10 complete. MVP shipped (v1.0.0).
 
 ## What's not started
 - PRD Sprint 10 (Polish, PWA, onboarding, data export/import, launch)

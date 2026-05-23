@@ -1,12 +1,14 @@
 import { X } from 'lucide-react';
 import { calcPlates } from '../../utils/plateCalc.js';
+import useSettingsStore from '../../store/settingsStore.js';
 
 const PLATE_BG = {
   25: '#D4622A', 20: '#C9A84C', 15: '#6B8F71',
   10: '#8A8780', 5: '#4A4A4A', 2.5: '#3A3A3A', 1.25: '#2C2C2C',
 };
 
-export default function PlateCalculator({ weight, barWeight = 20, onClose }) {
+export default function PlateCalculator({ weight, onClose }) {
+  const barWeight = useSettingsStore((s) => s.barWeight);
   const plates = calcPlates(weight, barWeight);
 
   return (
