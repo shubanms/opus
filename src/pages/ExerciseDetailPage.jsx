@@ -157,6 +157,7 @@ export default function ExerciseDetailPage() {
           <img
             src={demoUrl}
             alt={`${exercise.name} demo`}
+            onError={() => setDemoUrl(null)}
             className="mt-3 w-full object-contain"
             style={{ maxHeight: 220, background: 'var(--color-chalk)' }}
           />
