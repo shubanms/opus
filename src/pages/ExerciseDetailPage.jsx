@@ -209,7 +209,7 @@ export default function ExerciseDetailPage() {
           target="_blank"
           rel="noopener noreferrer"
           className="m-4 flex items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-obsidian)', color: 'var(--color-chalk)' }}
+          style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
         >
           <Youtube size={16} style={{ color: '#FF4444' }} /> Watch how-to video
         </a>

@@ -59,7 +59,7 @@ export default function BodyPicker({ selected, onSelect }) {
           style={{ background: showModel ? 'var(--color-obsidian)' : 'var(--color-ivory)' }}
           aria-label="Toggle body map"
         >
-          <Eye size={14} style={{ color: showModel ? 'var(--color-chalk)' : 'var(--color-ash)' }} />
+          <Eye size={14} style={{ color: showModel ? 'var(--color-text-inverse)' : 'var(--color-ash)' }} />
         </button>
       </div>
 
@@ -78,7 +78,7 @@ export default function BodyPicker({ selected, onSelect }) {
                 className="flex-1 py-2 font-sans text-xs font-medium"
                 style={{
                   background: view === v ? 'var(--color-obsidian)' : 'transparent',
-                  color: view === v ? 'var(--color-chalk)' : 'var(--color-ash)',
+                  color: view === v ? 'var(--color-text-inverse)' : 'var(--color-ash)',
                 }}
               >
                 {v === 'anterior' ? 'Front' : 'Back'}

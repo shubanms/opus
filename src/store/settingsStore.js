@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 
+import { applyTheme } from '../utils/theme.js';
+
 const KEY = 'opus_prefs';
-const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false };
+const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system' };
 
 function load() {
   try {
@@ -14,8 +16,13 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound }));
+    const { barWeight, unit, onboarded, effects, sound, theme } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme }));
+  },
+  setTheme(theme) {
+    set({ theme });
+    get().persist();
+    applyTheme(theme);
   },
   setBarWeight(barWeight) {
     set({ barWeight });

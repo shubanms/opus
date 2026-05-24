@@ -25,7 +25,7 @@ export default function AchievementToast({ achievements, onDismiss }) {
             <p className="font-sans text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
               Achievement unlocked
             </p>
-            <p className="truncate font-sans text-sm font-semibold" style={{ color: 'var(--color-chalk)' }}>{a.title}</p>
+            <p className="truncate font-sans text-sm font-semibold" style={{ color: 'var(--color-text-inverse)' }}>{a.title}</p>
           </div>
           {a.xp > 0 && <span className="ml-auto font-mono text-sm" style={{ color: 'var(--color-gold)' }}>+{a.xp}</span>}
         </div>

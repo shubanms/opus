@@ -1,8 +1,13 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 16 (Recovery Body-Map) — Roadmap v2
-Current version: v1.6.0 (post-MVP)
+Current sprint: 17 (Dark Mode & Theming + Transitions) — Roadmap v2
+Current version: v1.7.0 (post-MVP)
+
+**Sprint 17 done:**
+- Dark mode: `:root[data-theme='dark']` flips only chalk/ivory/text tokens. Foreground `color: chalk` usages migrated to `text-inverse` (light in both themes) so contrast holds on stone/obsidian surfaces; literal palette unchanged.
+- `settingsStore.theme` (light/dark/system) + `utils/theme.js` (applyTheme + meta theme-color); applied at boot in main.jsx, follows OS on 'system'. Settings → Experience → Theme.
+- Motion/life: global colour transition (smooth theme switch), button press-scale (reduced-motion aware), BottomNav active icon lift, pulsing halo on Home start button; SVGs excluded.
 
 **Sprint 16 done:**
 - `hooks/useRecovery.js` (ALL_MUSCLES; per-muscle days-since-last-trained + most-neglected).

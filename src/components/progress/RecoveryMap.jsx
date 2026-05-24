@@ -54,7 +54,7 @@ export default function RecoveryMap() {
               key={v}
               onClick={() => setView(v)}
               className="px-3 py-1 font-sans text-xs font-medium"
-              style={{ background: view === v ? 'var(--color-obsidian)' : 'transparent', color: view === v ? 'var(--color-chalk)' : 'var(--color-ash)' }}
+              style={{ background: view === v ? 'var(--color-obsidian)' : 'transparent', color: view === v ? 'var(--color-text-inverse)' : 'var(--color-ash)' }}
             >
               {v === 'anterior' ? 'Front' : 'Back'}
             </button>

@@ -42,7 +42,7 @@ export default function ResetDataModal({ isOpen, onClose }) {
         onClick={confirm}
         disabled={!ok}
         className="mt-4 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-ember)', color: 'var(--color-chalk)', opacity: ok ? 1 : 0.35 }}
+        style={{ background: 'var(--color-ember)', color: 'var(--color-text-inverse)', opacity: ok ? 1 : 0.35 }}
       >
         {busy ? 'Resetting…' : 'Reset all data'}
       </button>

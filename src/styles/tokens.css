@@ -40,3 +40,13 @@
   --dur-enter: 350ms;
   --dur-loading: 600ms;
 }
+
+/* Dark theme: only background/surface/text tokens flip. The literal palette
+   (stone, obsidian, accents, text-inverse) stays fixed so "light text/icon on
+   dark surface" usages keep their contrast. */
+:root[data-theme='dark'] {
+  --color-chalk: #1a1614;
+  --color-ivory: #262220;
+  --color-text-primary: #f3efe9;
+  --color-text-secondary: #a09a90;
+}

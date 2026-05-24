@@ -45,7 +45,7 @@ export default function ExercisePage() {
           style={{ background: 'var(--color-obsidian)' }}
           aria-label="Add custom exercise"
         >
-          <Plus size={18} style={{ color: 'var(--color-chalk)' }} />
+          <Plus size={18} style={{ color: 'var(--color-text-inverse)' }} />
         </button>
       </div>
 

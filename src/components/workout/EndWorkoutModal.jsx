@@ -126,7 +126,7 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
         data={shareData}
         label="Share card"
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium"
-        style={{ background: 'var(--color-stone)', color: 'var(--color-chalk)' }}
+        style={{ background: 'var(--color-stone)', color: 'var(--color-text-inverse)' }}
       />
     </Modal>
   );
