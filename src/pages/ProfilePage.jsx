@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays } from 'lucide-react';
+import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight } from 'lucide-react';
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js';
@@ -74,6 +74,17 @@ export default function ProfilePage() {
       </p>
 
       <CharacterCard profile={profile} />
+
+      <button
+        onClick={() => navigate('/progression')}
+        className="mt-3 flex w-full items-center justify-between rounded-xl px-4 py-3"
+        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
+      >
+        <span className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+          View ranks & prestige
+        </span>
+        <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
+      </button>
 
       {/* Lifetime stats */}
       <h2 className="mb-3 mt-6 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>

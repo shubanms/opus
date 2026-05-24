@@ -1,16 +1,17 @@
 import { db } from '../db/db.js';
 
-// Data-driven achievements. `test(stats)` decides unlock; `xp` is the reward.
+// Data-driven achievements. `test(stats)` decides unlock; `xp` is the reward;
+// `hidden` keeps the title/desc secret until earned (game-style).
 export const ACHIEVEMENTS = [
   { key: 'first',      title: 'First Rep',       desc: 'Complete your first workout',     xp: 50,   test: (s) => s.workouts >= 1 },
   { key: 'w10',        title: 'Getting Serious', desc: 'Complete 10 workouts',            xp: 100,  test: (s) => s.workouts >= 10 },
   { key: 'w50',        title: 'Devoted',         desc: 'Complete 50 workouts',            xp: 250,  test: (s) => s.workouts >= 50 },
   { key: 'w100',       title: 'Centurion',       desc: 'Complete 100 workouts',           xp: 500,  test: (s) => s.workouts >= 100 },
-  { key: 'streak7',    title: 'Week Warrior',    desc: '7-day training streak',           xp: 100,  test: (s) => s.bestStreak >= 7 },
-  { key: 'streak30',   title: 'Unbreakable',     desc: '30-day training streak',          xp: 400,  test: (s) => s.bestStreak >= 30 },
-  { key: 'vol10k',     title: 'Ten Tonne',       desc: 'Lift 10,000 kg total',            xp: 100,  test: (s) => s.totalVolume >= 10000 },
-  { key: 'vol100k',    title: 'Heavy Hitter',    desc: 'Lift 100,000 kg total',           xp: 300,  test: (s) => s.totalVolume >= 100000 },
-  { key: 'vol1m',      title: 'Million Club',    desc: 'Lift 1,000,000 kg total',         xp: 1000, test: (s) => s.totalVolume >= 1000000 },
+  { key: 'streak7',    title: 'Week Warrior',    desc: 'Reach a 7-day training streak',   xp: 100,  test: (s) => s.bestStreak >= 7 },
+  { key: 'streak30',   title: 'Unbreakable',     desc: 'Reach a 30-day training streak',  xp: 400,  test: (s) => s.bestStreak >= 30 },
+  { key: 'vol10k',     title: 'Ten Tonne',       desc: 'Lift 10,000 kg in total',         xp: 100,  test: (s) => s.totalVolume >= 10000 },
+  { key: 'vol100k',    title: 'Heavy Hitter',    desc: 'Lift 100,000 kg in total',        xp: 300,  test: (s) => s.totalVolume >= 100000 },
+  { key: 'vol1m',      title: 'Million Club',    desc: 'Lift 1,000,000 kg in total',      xp: 1000, test: (s) => s.totalVolume >= 1000000, hidden: true },
   { key: 'sets100',    title: 'Set Machine',     desc: 'Log 100 working sets',            xp: 100,  test: (s) => s.totalSets >= 100 },
   { key: 'sets1000',   title: 'Relentless',      desc: 'Log 1,000 working sets',          xp: 400,  test: (s) => s.totalSets >= 1000 },
   { key: 'allMuscles', title: 'Well Rounded',    desc: 'Train all 15 muscle groups',      xp: 200,  test: (s) => s.muscleVariety >= 15 },
@@ -18,9 +19,9 @@ export const ACHIEVEMENTS = [
   { key: 'pr50',       title: 'Peak Performer',  desc: 'Set 50 personal records',         xp: 400,  test: (s) => s.prCount >= 50 },
   { key: 'level5',     title: 'Forged',          desc: 'Reach level 5',                   xp: 0,    test: (s) => s.level >= 5 },
   { key: 'level10',    title: 'Magnum Opus',     desc: 'Reach level 10',                  xp: 0,    test: (s) => s.level >= 10 },
-  { key: 'earlyBird',  title: 'Early Bird',      desc: 'Train before 7am',                xp: 75,   test: (s) => s.earlyBird },
-  { key: 'nightOwl',   title: 'Night Owl',       desc: 'Train after 9pm',                 xp: 75,   test: (s) => s.nightOwl },
-  { key: 'architect',  title: 'Architect',       desc: 'Create a custom exercise',        xp: 50,   test: (s) => s.customExercises >= 1 },
+  { key: 'earlyBird',  title: 'Early Bird',      desc: 'Finish a workout before 7am',     xp: 75,   test: (s) => s.earlyBird, hidden: true },
+  { key: 'nightOwl',   title: 'Night Owl',       desc: 'Finish a workout after 9pm',      xp: 75,   test: (s) => s.nightOwl, hidden: true },
+  { key: 'architect',  title: 'Architect',       desc: 'Create a custom exercise',        xp: 50,   test: (s) => s.customExercises >= 1, hidden: true },
 ];
 
 // Lifetime aggregates used by achievement predicates.
@@ -77,4 +78,16 @@ export async function checkAchievements() {
     await useUserStore.getState().addXP(xp);
   }
   return newly;
+}
+
+// Re-locks achievements whose conditions no longer hold (e.g. after a workout
+// is deleted), so XP fully reverts. Profile XP is recomputed by the caller.
+export async function reconcileAchievements() {
+  const stats = await computeStats();
+  const byKey = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.key, a]));
+  const rows = await db.achievements.toArray();
+  for (const row of rows) {
+    const def = byKey[row.key];
+    if (!def || !def.test(stats)) await db.achievements.delete(row.id);
+  }
 }

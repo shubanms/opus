@@ -1,5 +1,5 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
-import { getXPProgress, getTitle } from '../../utils/rpg.js';
+import { getXPProgress, getRankLabel } from '../../utils/rpg.js';
 import { useCharacterStats } from '../../hooks/useRPG.js';
 import TitleBadge from './TitleBadge.jsx';
 import XPBar from './XPBar.jsx';
@@ -11,7 +11,7 @@ export default function CharacterCard({ profile }) {
   const stats = useCharacterStats();
   const totalXp = profile?.totalXp ?? 0;
   const { level } = getXPProgress(totalXp);
-  const title = getTitle(level);
+  const title = getRankLabel(totalXp);
 
   return (
     <div

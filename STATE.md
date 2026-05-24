@@ -1,8 +1,17 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 14 (Achievements & Trophy Case + Profile revamp) — Roadmap v2
-Current version: v1.4.0 (post-MVP)
+Current sprint: 15 (Progression detail + fixes) — Roadmap v2
+Current version: v1.5.0 (post-MVP)
+
+**Sprint 15 (partial) done:**
+- Fix: deleting a workout now re-locks achievements whose conditions no longer hold (reconcileAchievements) so XP fully reverts.
+- Fix (prior): DatabaseClosedError recovery (versionchange handling + DbRecovery screen).
+- rpg.js: RANKS ladder, prestige tiers (getPrestige/prestigeXp/roman/getRankLabel) beyond Magnum Opus.
+- AchievementsPage (/achievements): full list, how-to, hidden/secret achievements (game-style).
+- ProgressionPage (/progression): rank ladder (1-10 titles + XP) + prestige tiers I-V.
+- Profile: TrophyCase → /achievements, "View ranks & prestige" → /progression; CharacterCard shows prestige label.
+- TODO: testing detour (Vitest + unit tests) as separate PR.
 
 **Sprint 14 done:**
 - DB v6: `achievements` table. `utils/achievements.js` (19 data-driven defs + computeStats + checkAchievements; awards XP).

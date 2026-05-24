@@ -10,6 +10,8 @@ import ProgressPage from './pages/ProgressPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import TemplatesPage from './pages/TemplatesPage.jsx';
+import AchievementsPage from './pages/AchievementsPage.jsx';
+import ProgressionPage from './pages/ProgressionPage.jsx';
 
 export const router = createBrowserRouter(
   [
@@ -21,6 +23,8 @@ export const router = createBrowserRouter(
         { path: '/workout', element: <WorkoutPage /> },
         { path: '/history', element: <HistoryPage /> },
         { path: '/templates', element: <TemplatesPage /> },
+        { path: '/achievements', element: <AchievementsPage /> },
+        { path: '/progression', element: <ProgressionPage /> },
         { path: '/exercises', element: <ExercisePage /> },
         { path: '/exercises/:id', element: <ExerciseDetailPage /> },
         { path: '/progress', element: <ProgressPage /> },
