@@ -4,6 +4,11 @@ Last updated: 2026-05-23
 Current sprint: 17 (Dark Mode & Theming + Transitions) — Roadmap v2
 Current version: v1.7.0 (post-MVP)
 
+**Rest timer & tracking (detour) done:**
+- RestTimer: presets (1:00/1:30/2:00/3:00) + ±15s adjust; chosen preset persists as `settingsStore.restDuration`. Keyed per set so it resets each rest.
+- `utils/restStats.js` (restGaps/avgRest/avgRestAcross/formatRest from set completedAt) + test.
+- History detail shows session summary (exercises · total time · avg rest) + per-exercise avg rest.
+
 **Walkthrough tour (detour) done:**
 - `components/tour/Tour.jsx` — themed full-screen 8-step carousel (workouts, XP/ranks, achievements, library/notes, routines, recovery/progress, sharing, settings) with dots, Back/Next, Skip.
 - `settingsStore.tourSeen` + setTourSeen; shows after onboarding when unseen; Settings → Experience → "Replay walkthrough" re-runs it.

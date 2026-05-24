@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { applyTheme } from '../utils/theme.js';
 
 const KEY = 'opus_prefs';
-const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', tourSeen: false };
+const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', tourSeen: false, restDuration: 90 };
 
 function load() {
   try {
@@ -16,11 +16,15 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen }));
+    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration }));
   },
   setTourSeen(tourSeen) {
     set({ tourSeen });
+    get().persist();
+  },
+  setRestDuration(restDuration) {
+    set({ restDuration });
     get().persist();
   },
   setTheme(theme) {

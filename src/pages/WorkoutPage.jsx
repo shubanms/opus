@@ -13,6 +13,7 @@ import Particles from '../components/fx/Particles.jsx';
 import { useExercise } from '../hooks/useExercises.js';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useHaptics } from '../hooks/useHaptics.js';
+import useSettingsStore from '../store/settingsStore.js';
 import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
 
@@ -57,12 +58,16 @@ export default function WorkoutPage() {
   const [levelUp, setLevelUp] = useState(null);
   const [celebrate, setCelebrate] = useState(false);
   const [unlocked, setUnlocked] = useState(null);
+  const [restKey, setRestKey] = useState(0);
+  const restDuration = useSettingsStore((s) => s.restDuration);
+  const setRestDuration = useSettingsStore((s) => s.setRestDuration);
   const nameRef = useRef();
   const haptic = useHaptics();
 
   const alreadyAdded = activeWorkout?.exercises.map((e) => e.exerciseId) ?? [];
 
   function handleSetLogged() {
+    setRestKey((k) => k + 1);
     setShowRest(true);
   }
 
@@ -211,9 +216,11 @@ export default function WorkoutPage() {
       {showRest && (
         <div className="mb-4">
           <RestTimer
-            duration={90}
+            key={restKey}
+            duration={restDuration}
             onComplete={() => setShowRest(false)}
             onSkip={() => setShowRest(false)}
+            onSetDefault={setRestDuration}
           />
         </div>
       )}
