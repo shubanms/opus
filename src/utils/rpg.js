@@ -1,4 +1,15 @@
-export const XP_THRESHOLDS = [0, 500, 1200, 2500, 4500, 7000, 10000, 14000, 19000, 25000];
+// 50 levels on a steepening quadratic curve: total XP to BE level L is
+// LEVEL_BASE·(L-1)². (Closely matches the original hand-tuned 10-level table,
+// so no one drops a level — it just extends much further.)
+export const LEVEL_COUNT = 50;
+const LEVEL_BASE = 300;
+
+export function xpForLevel(level) {
+  const L = Math.max(1, Math.min(Math.floor(level), LEVEL_COUNT));
+  return LEVEL_BASE * (L - 1) * (L - 1);
+}
+
+export const XP_THRESHOLDS = Array.from({ length: LEVEL_COUNT }, (_, i) => xpForLevel(i + 1));
 
 export const TITLES = {
   1: 'First Rep', 2: 'Iron Beginner', 3: 'Committed',
@@ -6,17 +17,24 @@ export const TITLES = {
   7: 'Elite',     8: 'Masterwork',   9: 'Legendary', 10: 'Magnum Opus',
 };
 
+// 10 named titles spread across the 50 levels (one per band of 5).
+const TITLE_BAND = LEVEL_COUNT / 10;
+
 export const COMPLETE_BONUS = 20;
 export const PR_BONUS = 50;
 export const STREAK_BONUS_PER_DAY = 10;
 export const CONSISTENCY_BONUS = 30;
 
-// The 10 named ranks with their XP thresholds.
-export const RANKS = XP_THRESHOLDS.map((xp, i) => ({ level: i + 1, title: TITLES[i + 1], xp }));
+// The 10 named milestone ranks (each spans TITLE_BAND levels), with the level
+// + XP where the title begins.
+export const RANKS = Array.from({ length: 10 }, (_, i) => {
+  const level = i * TITLE_BAND + 1;
+  return { level, title: TITLES[i + 1], xp: xpForLevel(level) };
+});
 
-// Beyond Magnum Opus (level 10 / max threshold) come prestige tiers.
-export const MAX_TITLE_XP = XP_THRESHOLDS[XP_THRESHOLDS.length - 1];
-export const PRESTIGE_STEP = 15000;
+// Beyond max level (50) come prestige tiers.
+export const MAX_TITLE_XP = xpForLevel(LEVEL_COUNT);
+export const PRESTIGE_STEP = 30000;
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 export function roman(n) {
@@ -54,17 +72,16 @@ export function calcWorkoutXP(sets) {
   return setXP + COMPLETE_BONUS;
 }
 
+// Inverse of xpForLevel: level = 1 + floor(sqrt(xp / base)), capped at LEVEL_COUNT.
 export function getLevelFromTotalXP(totalXp) {
-  let level = 1;
-  for (let i = 1; i < XP_THRESHOLDS.length; i++) {
-    if (totalXp >= XP_THRESHOLDS[i]) level = i + 1;
-    else break;
-  }
-  return level;
+  if (!totalXp || totalXp <= 0) return 1;
+  const L = 1 + Math.floor(Math.sqrt(totalXp / LEVEL_BASE) + 1e-9);
+  return Math.min(L, LEVEL_COUNT);
 }
 
 export function getTitle(level) {
-  return TITLES[Math.min(level, 10)] ?? 'Magnum Opus';
+  const band = Math.min(Math.max(Math.ceil(level / TITLE_BAND), 1), 10);
+  return TITLES[band] ?? 'Magnum Opus';
 }
 
 const clamp = (n) => Math.max(0, Math.min(100, Math.round(n)));

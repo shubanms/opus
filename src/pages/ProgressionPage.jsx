@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Lock, Star } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
-import { RANKS, getLevelFromTotalXP, getPrestige, prestigeXp, roman, getRankLabel } from '../utils/rpg.js';
+import { RANKS, getLevelFromTotalXP, getPrestige, prestigeXp, roman, getRankLabel, PRESTIGE_STEP } from '../utils/rpg.js';
 
 function Rung({ reached, current, left, right, sub }) {
   return (
@@ -62,23 +62,26 @@ export default function ProgressionPage() {
         Ranks
       </h2>
       <div className="flex flex-col gap-2">
-        {RANKS.map((r) => (
-          <Rung
-            key={r.level}
-            reached={totalXp >= r.xp}
-            current={level === r.level && prestige === 0}
-            left={r.title}
-            sub={`Level ${r.level}`}
-            right={r.xp === 0 ? 'Start' : `${r.xp.toLocaleString()} XP`}
-          />
-        ))}
+        {RANKS.map((r, i) => {
+          const bandEnd = i < RANKS.length - 1 ? RANKS[i + 1].level - 1 : 50;
+          return (
+            <Rung
+              key={r.level}
+              reached={totalXp >= r.xp}
+              current={level >= r.level && level <= bandEnd && prestige === 0}
+              left={r.title}
+              sub={`Levels ${r.level}–${bandEnd}`}
+              right={r.xp === 0 ? 'Start' : `${r.xp.toLocaleString()} XP`}
+            />
+          );
+        })}
       </div>
 
       <h2 className="mb-2 mt-6 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
         Prestige
       </h2>
       <p className="mb-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-        Beyond Magnum Opus, every {(15000).toLocaleString()} XP earns a prestige tier.
+        Beyond level 50, every {PRESTIGE_STEP.toLocaleString()} XP earns a prestige tier.
       </p>
       <div className="flex flex-col gap-2">
         {tiers.map((t) => (
