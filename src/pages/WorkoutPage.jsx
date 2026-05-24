@@ -8,6 +8,7 @@ import RestTimer from '../components/workout/RestTimer.jsx';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal.jsx';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import LevelUpScreen from '../components/rpg/LevelUpScreen.jsx';
+import AchievementToast from '../components/rpg/AchievementToast.jsx';
 import Particles from '../components/fx/Particles.jsx';
 import { useExercise } from '../hooks/useExercises.js';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
@@ -55,6 +56,7 @@ export default function WorkoutPage() {
   const [editingName, setEditingName] = useState(false);
   const [levelUp, setLevelUp] = useState(null);
   const [celebrate, setCelebrate] = useState(false);
+  const [unlocked, setUnlocked] = useState(null);
   const nameRef = useRef();
   const haptic = useHaptics();
 
@@ -81,12 +83,16 @@ export default function WorkoutPage() {
     } else {
       haptic('success');
     }
+    if (result?.newAchievements?.length) {
+      setUnlocked(result.newAchievements);
+    }
   }
 
   if (!activeWorkout) {
     return (
       <>
         {celebrate && <Particles />}
+        {unlocked && <AchievementToast achievements={unlocked} onDismiss={() => setUnlocked(null)} />}
         {levelUp && (
           <LevelUpScreen level={levelUp.level} title={levelUp.title} onDismiss={() => setLevelUp(null)} />
         )}

@@ -53,3 +53,9 @@ db.version(5).stores({
   exerciseNotes:
     '++id, exerciseId, text, updatedAt',
 });
+
+// v6: unlocked achievements
+db.version(6).stores({
+  achievements:
+    '++id, key, unlockedAt',
+});

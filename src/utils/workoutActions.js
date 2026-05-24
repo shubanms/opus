@@ -1,5 +1,6 @@
 import { db } from '../db/db.js';
 import { getLevelFromTotalXP, getTitle } from './rpg.js';
+import { ACHIEVEMENTS } from './achievements.js';
 
 // Rebuild PR records for an exercise from its remaining (non-warmup) sets.
 export async function recomputePRs(exerciseId) {
@@ -20,7 +21,11 @@ export async function recomputePRs(exerciseId) {
 // Recompute profile XP/level/title + streak purely from remaining workouts.
 export async function recomputeProfile() {
   const workouts = await db.workouts.toArray();
-  const totalXp = workouts.reduce((a, w) => a + (w.xpEarned ?? 0), 0);
+  const workoutXp = workouts.reduce((a, w) => a + (w.xpEarned ?? 0), 0);
+  // Achievement XP is permanent (not tied to a workout) — add it back in.
+  const unlocked = new Set((await db.achievements.toArray()).map((a) => a.key));
+  const achievementXp = ACHIEVEMENTS.reduce((a, def) => a + (unlocked.has(def.key) ? (def.xp || 0) : 0), 0);
+  const totalXp = workoutXp + achievementXp;
   const level = getLevelFromTotalXP(totalXp);
   const title = getTitle(level);
 

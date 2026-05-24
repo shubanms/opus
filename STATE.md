@@ -1,8 +1,16 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 13 (Celebration & Motion Engine) — Roadmap v2
-Current version: v1.3.0 (post-MVP)
+Current sprint: 14 (Achievements & Trophy Case + Profile revamp) — Roadmap v2
+Current version: v1.4.0 (post-MVP)
+
+**Sprint 14 done:**
+- DB v6: `achievements` table. `utils/achievements.js` (19 data-driven defs + computeStats + checkAchievements; awards XP).
+- Detection in `completeWorkout` → returns `newAchievements`; also catch-up on mount via `useAchievements`.
+- `recomputeProfile` now includes unlocked-achievement XP (so delete-recompute keeps it).
+- Components: AchievementBadge, TrophyCase, AchievementToast (unlock celebration: particles + card).
+- `hooks/useLifetimeStats` (workouts/volume/sets/PRs/hours/best-streak).
+- Profile revamp: name header + identity line, CharacterCard, Lifetime stats grid, current-streak/XP, member-since, TrophyCase, share.
 
 **Sprint 13 done:**
 - `components/fx/Particles.jsx` (gold burst, portaled), `components/fx/CountUp.jsx` (odometer)
