@@ -59,3 +59,15 @@ db.version(6).stores({
   achievements:
     '++id, key, unlockedAt',
 });
+
+// When a newer tab/build wants to upgrade the schema, close this (older)
+// connection and reload so the upgrade isn't blocked and left stuck.
+if (typeof window !== 'undefined') {
+  db.on('versionchange', () => {
+    try { db.close(); } catch { /* ignore */ }
+    window.location.reload();
+  });
+  db.on('blocked', () => {
+    console.warn('OpusDB upgrade is blocked by another open tab.');
+  });
+}

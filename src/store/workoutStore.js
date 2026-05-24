@@ -282,8 +282,13 @@ const useWorkoutStore = create((set, get) => ({
       result.newTitle = getTitle(newLevel);
     }
 
-    const { checkAchievements } = await import('../utils/achievements.js');
-    result.newAchievements = await checkAchievements();
+    try {
+      const { checkAchievements } = await import('../utils/achievements.js');
+      result.newAchievements = await checkAchievements();
+    } catch (e) {
+      console.error('Achievement check failed (workout still saved):', e);
+      result.newAchievements = [];
+    }
 
     set({ activeWorkout: null });
     return result;
