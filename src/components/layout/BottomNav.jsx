@@ -39,11 +39,15 @@ export default function BottomNav() {
               <>
                 <Icon
                   size={22}
-                  style={{ color: isActive ? 'var(--color-gold)' : 'var(--color-ash)' }}
+                  style={{
+                    color: isActive ? 'var(--color-gold)' : 'var(--color-ash)',
+                    transform: isActive ? 'translateY(-2px) scale(1.12)' : 'none',
+                    transition: 'transform var(--dur-standard) var(--ease-out), color var(--dur-standard)',
+                  }}
                 />
                 <span
                   className="font-sans text-[10px]"
-                  style={{ color: isActive ? 'var(--color-chalk)' : 'var(--color-ash)' }}
+                  style={{ color: isActive ? 'var(--color-text-inverse)' : 'var(--color-ash)' }}
                 >
                   {label}
                 </span>

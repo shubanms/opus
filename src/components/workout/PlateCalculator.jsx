@@ -21,7 +21,7 @@ export default function PlateCalculator({ weight, onClose }) {
   return (
     <div className="mt-3 rounded-2xl p-4" style={{ background: 'var(--color-stone)' }}>
       <div className="mb-3 flex items-center justify-between">
-        <p className="font-sans text-sm font-medium" style={{ color: 'var(--color-chalk)' }}>
+        <p className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-inverse)' }}>
           Plates per side — {weight}{u}
         </p>
         <button onClick={onClose} aria-label="Close plate calculator">
@@ -42,7 +42,7 @@ export default function PlateCalculator({ weight, onClose }) {
                 className="flex items-center justify-center rounded"
                 style={{ background: PLATE_BG[kg] ?? '#2C2C2C', width: 36, height: 48 + Math.min(kg, 25) * 0.8 }}
               >
-                <span className="font-mono font-bold" style={{ color: 'var(--color-chalk)', fontSize: 10 }}>{kg}</span>
+                <span className="font-mono font-bold" style={{ color: 'var(--color-text-inverse)', fontSize: 10 }}>{kg}</span>
               </div>
             ))
           )}
@@ -51,11 +51,11 @@ export default function PlateCalculator({ weight, onClose }) {
 
       <div className="mt-3 flex gap-5">
         <div>
-          <p className="font-mono text-base font-medium" style={{ color: 'var(--color-chalk)' }}>{weight}{u}</p>
+          <p className="font-mono text-base font-medium" style={{ color: 'var(--color-text-inverse)' }}>{weight}{u}</p>
           <p className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>target</p>
         </div>
         <div>
-          <p className="font-mono text-base font-medium" style={{ color: 'var(--color-chalk)' }}>{bar}{u}</p>
+          <p className="font-mono text-base font-medium" style={{ color: 'var(--color-text-inverse)' }}>{bar}{u}</p>
           <p className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>bar</p>
         </div>
         <div>

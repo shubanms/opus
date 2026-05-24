@@ -17,3 +17,34 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
 }
+
+/* Smooth theme switches: animate colour-only properties. */
+* {
+  transition: background-color var(--dur-standard) var(--ease-out),
+    border-color var(--dur-standard) var(--ease-out),
+    color var(--dur-standard) var(--ease-out);
+}
+
+/* Tactile press feedback on tappable elements. */
+button {
+  transition: transform var(--dur-micro) var(--ease-out),
+    background-color var(--dur-standard) var(--ease-out),
+    color var(--dur-standard) var(--ease-out);
+}
+button:active {
+  transform: scale(0.96);
+}
+
+/* Keep the animated SVG visuals (charts, body map, particles) crisp. */
+svg,
+svg * {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  button:active {
+    transition: none !important;
+    transform: none !important;
+  }
+}

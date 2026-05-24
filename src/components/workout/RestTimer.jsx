@@ -66,7 +66,7 @@ export default function RestTimer({ duration = 90, onComplete, onSkip }) {
       </svg>
 
       <div className="flex-1">
-        <p className="font-mono text-lg font-medium" style={{ color: 'var(--color-chalk)' }}>
+        <p className="font-mono text-lg font-medium" style={{ color: 'var(--color-text-inverse)' }}>
           {label}
         </p>
         <p className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>Rest</p>

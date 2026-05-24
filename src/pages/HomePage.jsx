@@ -18,14 +18,17 @@ function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
       style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-stone)' }}
     >
       <div className="min-w-0 text-left">
-        <p className="truncate font-sans text-base font-semibold" style={{ color: 'var(--color-chalk)' }}>
+        <p className="truncate font-sans text-base font-semibold" style={{ color: 'var(--color-text-inverse)' }}>
           {title}
         </p>
         <p className="truncate font-sans text-xs" style={{ color: 'var(--color-ash)' }}>
           {subtitle}
         </p>
       </div>
-      <div className="ml-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
+      <div
+        className="ml-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+        style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.6s var(--ease-out) infinite' }}
+      >
         <Icon size={16} strokeWidth={2.4} style={{ color: 'var(--color-obsidian)' }} />
       </div>
     </button>

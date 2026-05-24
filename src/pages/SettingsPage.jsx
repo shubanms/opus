@@ -24,7 +24,7 @@ function Switch({ on, onChange, disabled }) {
     >
       <span
         className="absolute top-0.5 h-5 w-5 rounded-full"
-        style={{ background: 'var(--color-chalk)', left: on ? 18 : 2, transition: 'left 160ms var(--ease-out)', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+        style={{ background: 'var(--color-text-inverse)', left: on ? 18 : 2, transition: 'left 160ms var(--ease-out)', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
       />
     </button>
   );
@@ -55,6 +55,8 @@ export default function SettingsPage() {
   const setEffects = useSettingsStore((s) => s.setEffects);
   const sound = useSettingsStore((s) => s.sound);
   const setSound = useSettingsStore((s) => s.setSound);
+  const theme = useSettingsStore((s) => s.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
   const bodyweight = useCurrentBodyweight();
   const fileRef = useRef();
   const age = profile?.birthYear ? new Date().getFullYear() - profile.birthYear : '';
@@ -251,6 +253,16 @@ export default function SettingsPage() {
             Experience
           </span>
         </div>
+        <Row label="Theme">
+          <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
+            {['light', 'dark', 'system'].map((t) => (
+              <button key={t} onClick={() => setTheme(t)} className="px-3 py-1.5 font-sans text-xs font-medium capitalize"
+                style={{ background: theme === t ? 'var(--color-gold)' : 'transparent', color: theme === t ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </Row>
         <Row label="Effects & haptics">
           <Switch on={effects} onChange={setEffects} />
         </Row>
@@ -274,7 +286,7 @@ export default function SettingsPage() {
           <button
             onClick={exportData}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-obsidian)', color: 'var(--color-chalk)' }}
+            style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
           >
             <Download size={15} /> Export
           </button>
@@ -303,7 +315,7 @@ export default function SettingsPage() {
         <button
           onClick={() => setReset(true)}
           className="w-full rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-ember)', color: 'var(--color-chalk)' }}
+          style={{ background: 'var(--color-ember)', color: 'var(--color-text-inverse)' }}
         >
           Reset all data
         </button>

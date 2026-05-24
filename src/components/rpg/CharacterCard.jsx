@@ -20,7 +20,7 @@ export default function CharacterCard({ profile }) {
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-mono text-3xl font-semibold" style={{ color: 'var(--color-chalk)' }}>
+          <p className="font-mono text-3xl font-semibold" style={{ color: 'var(--color-text-inverse)' }}>
             Lv. {level}
           </p>
           <div className="mt-1">

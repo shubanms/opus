@@ -122,7 +122,7 @@ export default function ProfilePage() {
         filename="opus-profile.png"
         label="Share profile"
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-obsidian)', color: 'var(--color-chalk)' }}
+        style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
       />
     </div>
   );
