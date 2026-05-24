@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight } from 'lucide-react';
+import { Plus, ChevronRight, RotateCcw } from 'lucide-react';
 import useWorkoutStore from '../store/workoutStore.js';
 import ExerciseSection from '../components/workout/ExerciseSection.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
@@ -51,7 +51,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, on
 }
 
 export default function WorkoutPage() {
-  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset } = useWorkoutStore();
+  const { activeWorkout, resumed, dismissResumed, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset } = useWorkoutStore();
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
 
@@ -67,6 +67,15 @@ export default function WorkoutPage() {
   const setRestDuration = useSettingsStore((s) => s.setRestDuration);
   const nameRef = useRef();
   const haptic = useHaptics();
+
+  // Gentle cue when a session was restored from a lock/reload.
+  useEffect(() => {
+    if (resumed && activeWorkout) {
+      haptic('success');
+      playChime('success');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumed]);
 
   const alreadyAdded = activeWorkout?.exercises.map((e) => e.exerciseId) ?? [];
 
@@ -159,6 +168,21 @@ export default function WorkoutPage() {
 
   return (
     <div className="px-5 pb-40 pt-8">
+      {resumed && (
+        <div
+          className="anim-fade-slide-up mb-4 flex items-center gap-2 rounded-xl px-3 py-2"
+          style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-gold)' }}
+        >
+          <RotateCcw size={14} style={{ color: 'var(--color-gold)' }} />
+          <span className="flex-1 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Picked up your in-progress workout.
+          </span>
+          <button onClick={dismissResumed} className="font-sans text-xs font-semibold" style={{ color: 'var(--color-gold)' }}>
+            Got it
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-5 flex items-start justify-between">
         <div className="flex-1">

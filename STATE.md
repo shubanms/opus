@@ -1,8 +1,14 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap v2 COMPLETE (Sprints 11–20). App at v2.0.0.
-Current version: v2.0.0
+Current sprint: Roadmap v3 in progress (see OPUS_ROADMAP_V3.md) — S1 done; S8 next
+Current version: v2.0.0 (→ v3.0.0 at v3 close)
+
+**Roadmap v3 S1 (Resume in-progress workout) done:**
+- `activeWorkout` mirrored to localStorage (`opus_active_workout`): boot-hydrate via `loadActive()` in `workoutStore.js`, write-through via `useWorkoutStore.subscribe`, cleared on complete/discard.
+- Pure `utils/workoutSession.js` (`serialize`/`deserialize`/`isStale` — 18h/clock-skew/shape-validated) + test.
+- `resumed` store flag + `dismissResumed`; WorkoutPage shows a "Picked up your workout" banner + a one-time success chime/haptic on restore.
+- Order note: doing S1 → S8 next (per user); rest of v3 flexible.
 
 **Post-v2 fix:** WeeklyRecap now takes `dismissible` — Home stays dismissible (per-week), and Progress → Overview shows an always-visible copy so "Share my week" is reachable after the Home card is dismissed.
 
