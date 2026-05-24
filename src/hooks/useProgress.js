@@ -19,6 +19,25 @@ export function useBodyStats() {
   ) ?? [];
 }
 
+// Lifetime totals for the profile page.
+export function useLifetimeStats() {
+  return useLiveQuery(async () => {
+    const workouts = await db.workouts.toArray();
+    const prs = await db.prs.toArray();
+    const totalVolume = workouts.reduce((a, w) => a + (w.totalVolume || 0), 0);
+    const totalSets = workouts.reduce((a, w) => a + (w.totalSets || 0), 0);
+    const seconds = workouts.reduce((a, w) => a + (w.duration || 0), 0);
+    const dates = [...new Set(workouts.map((w) => w.date))].sort();
+    let best = 0, run = 0, prev = null;
+    for (const d of dates) {
+      run = prev && (new Date(d) - new Date(prev)) / 86400000 === 1 ? run + 1 : 1;
+      best = Math.max(best, run);
+      prev = d;
+    }
+    return { workouts: workouts.length, totalVolume, totalSets, hours: seconds / 3600, prCount: prs.length, bestStreak: best };
+  }, []) ?? { workouts: 0, totalVolume: 0, totalSets: 0, hours: 0, prCount: 0, bestStreak: 0 };
+}
+
 // Current bodyweight (kg) = most recent logged body-stat weight.
 export function useCurrentBodyweight() {
   return useLiveQuery(
