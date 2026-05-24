@@ -29,6 +29,33 @@ Living plan for the next wave. Committed so it survives session refreshes;
 | P6 | **"vs last time" inline diff** | Normal | Each set shows ↑/↓ vs the previous session (already store last-session sets). |
 | P7 | **Shake-to-undo last set** | Normal | `DeviceMotion` shake gesture undoes the last logged set, with haptic confirm. |
 | P8 | **Backup nudge** | Normal | Periodic "export your data" reminder — the one safeguard against local-only data loss. |
+| P9 | **Multi-session boss raids** | RPG | Bosses get an HP bar chipped down across workouts; victory screen on kill. Upgrades static boss *gates* into a *fight*. |
+| P10 | **Prestige rebirth perks** | RPG | Each prestige, choose one permanent perk (+quest XP, slower decay, extra rest token). Makes prestige a choice. |
+| P11 | **Gear loadout** | RPG | Earn cosmetic gear (belt, straps, chalk) granting themed XP buffs for matching lifts. Pairs with loot drops (P3). |
+| P12 | **Crit sets** | RPG | A set can randomly "crit" with a burst + bonus XP; daily first-set is crit-buffed. Reuses Particles/sound. |
+| P13 | **XP wager** | RPG | Stake XP on hitting next session's target — win a bonus, lose the stake. Opt-in risk/reward. |
+| P14 | **Evolving companion** | RPG | A real **3D** mascot (not SVG) that grows with streak/level. Tech investigation below. |
+| P15 | **Calendar view** | Normal | Month grid of sessions (richer than heatmap); tap a day for detail. |
+| P16 | **PWA shortcuts** | Normal | Manifest jump-list quick actions ("Start workout"/"Log water") on long-press. NB: jump list, **not** home-screen widgets (see note). |
+
+## P14 — Companion mascot: tech investigation
+Goal: a genuinely 3D-looking, polished mascot — no static SVG, no AI slop. Two real paths:
+
+- **True 3D (recommended for the "3D" ask):** `@react-three/fiber` + `@react-three/drei`
+  over Three.js, rendering a **CC0 low-poly rigged character** from **Quaternius**
+  (browse on poly.pizza; GLB/glTF, public domain — zero attribution, zero legal risk).
+  Convert GLB → component with `gltfjsx` (gltf.pmnd.rs). Idle/celebrate animations via
+  the model's clips; **evolution = swap model / stack accessories / tint** per level &
+  prestige (ties into Gear P11 + Loot P3).
+  - *Cost:* three.js + r3f ≈ 150–600 KB gz + the model. Current app bundle is ~330 KB gz,
+    so this must be **code-split / lazy-loaded** (only on Profile/Home), GLB compressed
+    with Draco or meshopt, and gated behind `effects` + `prefers-reduced-motion`.
+- **Lighter alt (if bundle is the priority):** **Rive** — a rigged vector mascot driven by
+  a state machine, ~2 KB asset + ~100 KB runtime, reacts to app state (level/streak) live.
+  Polished and cheap, but it's vector — may read closer to the "SVG" feel the user wants to avoid.
+
+Decision pending: 3D fidelity (r3f + Quaternius) vs bundle/perf (Rive). Leaning r3f + Quaternius,
+lazy-loaded, since the explicit ask is "3D-looking with real free assets."
 
 ## Parking lot (raised, not yet pinned)
 - **Character class / skill tree** — Powerlifter / Bodybuilder / Athlete weight XP, quests, radar differently.
