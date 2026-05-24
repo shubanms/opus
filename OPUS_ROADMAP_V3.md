@@ -48,8 +48,9 @@ fits — never gratuitous, always gated by `settingsStore.effects`/`sound` and
   Home aura/motion gated by effects + reduced-motion; `CountUp` on profile/recap.
 
 ## Status
-Done: S1 (resume workout), S7 (Wrapped), S8 (living scene). Dropped: S6.
-Remaining: S2 (on-open reminders, in progress), S3 (reorder), S4 (equipment), S5 (export).
+**v3 COMPLETE** — shipped S1 (resume workout), S2 (on-open reminders), S3 (reorder),
+S4 (equipment inventory), S5 (CSV/PDF export), S7 (Wrapped), S8 (living scene).
+S6 (milestone certificates) dropped per user. App tagged intent **v3.0.0**.
 
 ## Verification (per sprint)
 Container can't run the app/network — verify via code review, import scans,
