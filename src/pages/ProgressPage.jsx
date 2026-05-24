@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Plus, ChevronRight, Trash2 } from 'lucide-react';
-import { deleteBodyStat, deleteSleep } from '../utils/healthActions.js';
+import { Plus, ChevronRight, Trash2, Pencil, Footprints, Droplet } from 'lucide-react';
+import { deleteBodyStat, deleteSleep, deleteActivity } from '../utils/healthActions.js';
 import PageWrapper from '../components/layout/PageWrapper.jsx';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
 import TrendChart from '../components/progress/TrendChart.jsx';
@@ -8,6 +8,7 @@ import MuscleFrequency from '../components/progress/MuscleFrequency.jsx';
 import Heatmap from '../components/progress/Heatmap.jsx';
 import BodyStatsForm from '../components/progress/BodyStatsForm.jsx';
 import SleepForm from '../components/progress/SleepForm.jsx';
+import ActivityForm from '../components/progress/ActivityForm.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import {
   useWeeklyVolume, useMuscleFrequency, useWorkoutDays,
@@ -86,10 +87,13 @@ function ByExercise() {
 function Body() {
   const [statForm, setStatForm] = useState(false);
   const [sleepForm, setSleepForm] = useState(false);
+  const [actForm, setActForm] = useState(false);
+  const [editEntry, setEditEntry] = useState(null);
   const unit = useSettingsStore((s) => s.unit);
   const stats = useBodyStats();
   const sleep = useSleepLogs();
   const activity = useActivityHistory();
+  const activityDesc = [...activity].reverse();
 
   const latest = stats[0];
   const weightTrend = stats.filter((s) => s.weight != null).reverse().map((s) => ({ label: s.date.slice(5), value: toDisplay(s.weight, unit) }));
@@ -136,6 +140,47 @@ function Body() {
 
       <Section title="Water intake (glasses)"><TrendChart data={waterTrend} empty="Log water to track intake." /></Section>
 
+      {/* Activity log */}
+      <div className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            Activity log
+          </h3>
+          <button
+            onClick={() => { setEditEntry(null); setActForm(true); }}
+            className="flex items-center gap-1 font-sans text-xs font-medium"
+            style={{ color: 'var(--color-gold)' }}
+          >
+            <Plus size={13} /> Log a day
+          </button>
+        </div>
+        {activityDesc.length === 0 ? (
+          <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>No steps or water logged yet.</p>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            {activityDesc.slice(0, 10).map((a) => (
+              <div key={a.id} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
+                <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>{a.date}</span>
+                <span className="flex items-center gap-3">
+                  <span className="flex items-center gap-1 font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>
+                    <Footprints size={12} style={{ color: 'var(--color-gold)' }} />{(a.steps ?? 0).toLocaleString()}
+                  </span>
+                  <span className="flex items-center gap-1 font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>
+                    <Droplet size={12} style={{ color: 'var(--color-sage)' }} />{a.water ?? 0}
+                  </span>
+                  <button onClick={() => { setEditEntry(a); setActForm(true); }} aria-label="Edit entry">
+                    <Pencil size={13} style={{ color: 'var(--color-ash)' }} />
+                  </button>
+                  <button onClick={() => deleteActivity(a.id)} aria-label="Delete entry">
+                    <Trash2 size={13} style={{ color: 'var(--color-ember)' }} />
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {stats.length > 0 && (
         <Section title="Body entries">
           <div className="flex flex-col gap-1.5">
@@ -176,6 +221,7 @@ function Body() {
 
       <BodyStatsForm isOpen={statForm} onClose={() => setStatForm(false)} />
       <SleepForm isOpen={sleepForm} onClose={() => setSleepForm(false)} />
+      <ActivityForm isOpen={actForm} entry={editEntry} onClose={() => setActForm(false)} />
     </>
   );
 }

@@ -87,6 +87,7 @@ export default function WorkoutPage() {
       setTimeout(() => setCelebrate(false), 1300);
     } else {
       haptic('success');
+      playChime('success');
     }
     if (result?.newAchievements?.length) {
       setUnlocked(result.newAchievements);

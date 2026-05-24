@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Award } from 'lucide-react';
 import Particles from '../fx/Particles.jsx';
+import { playChime } from '../../utils/sound.js';
 
 export default function AchievementToast({ achievements, onDismiss }) {
   useEffect(() => {
+    playChime('achievement');
     const t = setTimeout(onDismiss, 4200);
     return () => clearTimeout(t);
   }, [onDismiss]);
