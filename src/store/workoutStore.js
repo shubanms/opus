@@ -176,6 +176,27 @@ const useWorkoutStore = create((set, get) => ({
     });
   },
 
+  // Toggle whether an exercise is chained into a superset with the one above it.
+  // Members of a superset share a supersetId; rest is taken only after the last.
+  toggleSuperset(exerciseId) {
+    const w = get().activeWorkout;
+    if (!w) return;
+    const i = w.exercises.findIndex(e => e.exerciseId === exerciseId);
+    if (i <= 0) return;
+    const cur = w.exercises[i];
+    const prev = w.exercises[i - 1];
+    const joined = cur.supersetId != null && cur.supersetId === prev.supersetId;
+    const exercises = w.exercises.slice();
+    if (joined) {
+      exercises[i] = { ...cur, supersetId: null };
+    } else {
+      const groupId = prev.supersetId ?? Date.now();
+      exercises[i - 1] = { ...prev, supersetId: groupId };
+      exercises[i] = { ...cur, supersetId: groupId };
+    }
+    set({ activeWorkout: { ...w, exercises } });
+  },
+
   async completeWorkout(xpEarned = 0) {
     const w = get().activeWorkout;
     if (!w) return null;

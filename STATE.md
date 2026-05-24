@@ -1,8 +1,13 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap Sprint 19 (part 1: 1RM + Hall of Records) done; supersets next
+Current sprint: Roadmap Sprint 19 complete (1RM + Hall of Records + supersets)
 Current version: v1.7.0 (post-MVP)
+
+**Sprint 19 part 2 (Supersets/circuits) done:**
+- In-memory `supersetId` on active-workout exercises (completeWorkout ignores unknown fields → safe; grouping not persisted to history). `workoutStore.toggleSuperset(id)` chains an exercise with the one above (shared groupId) or unlinks it.
+- `utils/supersets.js` (tested): `supersetRuns(exercises)` groups contiguous shared-id runs (length-1 = standalone, robust to link/unlink/remove); `noRestIds(exercises)` = members that skip rest (all but the last).
+- WorkoutPage renders multi-runs inside a gold left-bracket with a "Superset · N moves · rest after the last" label; ExerciseSection header has a Link/Superset toggle (non-first exercises). Shared rest: `handleSetLogged(exerciseId)` skips the rest timer for non-final superset members.
 
 **Sprint 19 part 1 (Estimated 1RM + Hall of Records) done:**
 - `utils/oneRepMax.js` Epley `epley1RM(weight,reps)` (+ test). `useExerciseOneRepMax(id)` (best e1RM per session, oldest→newest) + `useAllPRs()` (all prs newest-first with exercise names).

@@ -16,6 +16,7 @@ import { useHaptics } from '../hooks/useHaptics.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
+import { supersetRuns, noRestIds } from '../utils/supersets.js';
 
 function ElapsedTimer({ startedAt }) {
   const [secs, setSecs] = useState(Math.round((Date.now() - startedAt) / 1000));
@@ -32,7 +33,7 @@ function ElapsedTimer({ startedAt }) {
   );
 }
 
-function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
+function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, onToggleSuperset }) {
   const exerciseData = useExercise(ex.exerciseId);
   const muscleGroup = exerciseData?.muscleGroup ?? null;
   return (
@@ -42,12 +43,15 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
       isBodyweight={exerciseData?.equipment === 'bodyweight'}
       onSetLogged={onSetLogged}
       onRemove={onRemove}
+      canLink={canLink}
+      linked={linked}
+      onToggleSuperset={onToggleSuperset}
     />
   );
 }
 
 export default function WorkoutPage() {
-  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes } = useWorkoutStore();
+  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset } = useWorkoutStore();
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
 
@@ -66,9 +70,13 @@ export default function WorkoutPage() {
 
   const alreadyAdded = activeWorkout?.exercises.map((e) => e.exerciseId) ?? [];
 
-  function handleSetLogged() {
+  const exercises = activeWorkout?.exercises ?? [];
+  const runs = supersetRuns(exercises);
+  const noRest = noRestIds(exercises);
+
+  function handleSetLogged(exerciseId) {
     setRestKey((k) => k + 1);
-    setShowRest(true);
+    setShowRest(!(exerciseId != null && noRest.has(exerciseId)));
   }
 
   async function handleSave(xp) {
@@ -226,15 +234,37 @@ export default function WorkoutPage() {
         </div>
       )}
 
-      {/* Exercise sections */}
-      {activeWorkout.exercises.map((ex) => (
-        <ExerciseSectionWrapper
-          key={ex.exerciseId}
-          ex={ex}
-          onSetLogged={handleSetLogged}
-          onRemove={() => removeExercise(ex.exerciseId)}
-        />
-      ))}
+      {/* Exercise sections (grouped into superset brackets) */}
+      {runs.map((run) => {
+        const renderEx = (ex) => {
+          const idx = exercises.indexOf(ex);
+          const linked = idx > 0 && ex.supersetId != null && ex.supersetId === exercises[idx - 1].supersetId;
+          return (
+            <ExerciseSectionWrapper
+              key={ex.exerciseId}
+              ex={ex}
+              canLink={idx > 0}
+              linked={linked}
+              onSetLogged={handleSetLogged}
+              onRemove={() => removeExercise(ex.exerciseId)}
+              onToggleSuperset={() => toggleSuperset(ex.exerciseId)}
+            />
+          );
+        };
+        if (run.length < 2) return renderEx(run[0]);
+        return (
+          <div
+            key={`ss-${run[0].exerciseId}`}
+            className="mb-4 rounded-2xl py-1 pl-2"
+            style={{ borderLeft: '3px solid var(--color-gold)' }}
+          >
+            <p className="mb-1 pl-2 pt-1 font-sans text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
+              Superset · {run.length} moves · rest after the last
+            </p>
+            {run.map(renderEx)}
+          </div>
+        );
+      })}
 
       {/* Add exercise */}
       <button
