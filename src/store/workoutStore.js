@@ -244,6 +244,13 @@ const useWorkoutStore = create((set, get) => ({
     const totalSets = workingSets.length;
     const today = new Date().toISOString().slice(0, 10);
 
+    // Don't save (or reward) an empty session — discard it instead. Prevents
+    // farming XP by finishing a workout with nothing logged.
+    if (totalSets === 0) {
+      set({ activeWorkout: null, resumed: false });
+      return { discarded: true };
+    }
+
     // Bodyweight counts toward volume; snapshot bodyweight for accurate history.
     const bodyweightKg = await getCurrentBodyweight();
     const flatSets = w.exercises.flatMap((e) => e.sets.map((s) => ({ ...s, exerciseId: e.exerciseId })));

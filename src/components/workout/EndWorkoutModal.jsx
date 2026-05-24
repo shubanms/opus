@@ -115,12 +115,18 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
         </button>
         <button
           onClick={() => onSave(stats.xp)}
+          disabled={!stats || stats.sets === 0}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: !stats || stats.sets === 0 ? 0.35 : 1 }}
         >
           Save & finish
         </button>
       </div>
+      {stats && stats.sets === 0 && (
+        <p className="mt-2 text-center font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          Log at least one set to finish — or discard the session.
+        </p>
+      )}
 
       <ShareButton
         data={shareData}
