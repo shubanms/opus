@@ -1,8 +1,9 @@
-name: Deploy OPUS to GitHub Pages
+name: Test & Deploy
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -11,55 +12,39 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Runs on every push and PR. Deploy depends on this passing.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+
+  # Only builds + publishes on a push to main, and only if tests passed.
   build-and-deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # Builds the Vite app when package.json has a "build" script, otherwise
-      # falls back to publishing the static root. npm install (not npm ci) is
-      # used because no committed package-lock.json is generated yet.
-      - name: Detect build setup
-        id: detect
-        run: |
-          if [ -f package.json ] && grep -q '"build"' package.json; then
-            echo "has_build=true" >> "$GITHUB_OUTPUT"
-            echo "publish_dir=dist" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_build=false" >> "$GITHUB_OUTPUT"
-            echo "publish_dir=." >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Setup Node
-        if: steps.detect.outputs.has_build == 'true'
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install dependencies
-        if: steps.detect.outputs.has_build == 'true'
-        run: npm install --no-audit --no-fund
-
-      - name: Build
-        if: steps.detect.outputs.has_build == 'true'
-        run: npm run build
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ steps.detect.outputs.publish_dir }}
-
-      - name: Deploy to GitHub Pages
-        id: deployment
+          path: dist
+      - id: deployment
         uses: actions/deploy-pages@v4
