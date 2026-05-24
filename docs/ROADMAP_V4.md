@@ -34,11 +34,23 @@ Living plan for the next wave. Committed so it survives session refreshes;
 | P11 | **Gear loadout** | RPG | Earn cosmetic gear (belt, straps, chalk) granting themed XP buffs for matching lifts. Pairs with loot drops (P3). |
 | P12 | **Crit sets** | RPG | A set can randomly "crit" with a burst + bonus XP; daily first-set is crit-buffed. Reuses Particles/sound. |
 | P13 | **XP wager** | RPG | Stake XP on hitting next session's target — win a bonus, lose the stake. Opt-in risk/reward. |
-| P14 | **Evolving companion** | RPG | A real **3D** mascot (not SVG) that grows with streak/level. Tech investigation below. |
+| P14 | **Companion — "Magnus"** ✅ *(shipped v1)* | RPG | Real **3D** gold robot on Home: greeting + tap dialogue, reactive animations, chimes. Lazy-loaded, gated by `effects`/reduced-motion. Evolution (gear/level skins) is the next iteration. |
 | P15 | **Calendar view** | Normal | Month grid of sessions (richer than heatmap); tap a day for detail. |
 | P16 | **PWA shortcuts** | Normal | Manifest jump-list quick actions ("Start workout"/"Log water") on long-press. NB: jump list, **not** home-screen widgets (see note). |
 
-## P14 — Companion mascot: tech investigation
+## P14 — Companion mascot: SHIPPED (v1) + roadmap
+**Built:** "Magnus" — the gold `RobotExpressive` (CC0) rendered with `@react-three/fiber`
++ three.js. Lives on Home (`components/mascot/Companion.jsx` + `RobotModel.jsx`), with
+contextual dialogue + clip mapping in pure, tested `utils/mascot.js`. Greets on load
+(intro the first time), reacts to taps with a hype line + animation + `playChime`.
+Code-split into its own chunk (~236 KB gz, lazy), model precached for offline,
+gated by `settingsStore.effects` + `prefers-reduced-motion` (static idle frame otherwise).
+
+**Next iterations:** wire to real events (level-up → Dance, PR → ThumbsUp, streak break →
+No), evolution via tints/accessories per level & prestige (ties Gear P11 + Loot P3),
+optional placement on Profile, a name/rename setting, and Draco-compressing the GLB.
+
+### Original investigation (kept for context)
 Goal: a genuinely 3D-looking, polished mascot — no static SVG, no AI slop. Two real paths:
 
 - **True 3D (recommended for the "3D" ask):** `@react-three/fiber` + `@react-three/drei`
