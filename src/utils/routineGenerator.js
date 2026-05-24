@@ -94,3 +94,35 @@ export function generateRoutine({ exercises, groups, level, count, rng }) {
     targetWeight: null,
   }));
 }
+
+const SWAP_COUNT = {
+  light: (n) => Math.min(1, n),
+  medium: (n) => Math.ceil(n / 2),
+  full: (n) => n,
+};
+
+// Swap some exercises in a routine while keeping its shape. Each `slot` carries
+// { exerciseId, muscleGroup, difficulty, targetSets, targetReps, targetWeight }.
+// Pinned exercise ids are never swapped; targets are preserved; replacements come
+// from the same muscle group at similar difficulty and don't collide with other
+// exercises already in the routine. intensity: light=1, medium≈half, full=all.
+export function reshuffleRoutine({ slots, intensity = 'full', pinnedIds = [], pool, rng }) {
+  const pinned = new Set(pinnedIds);
+  const swappable = slots.map((_, i) => i).filter((i) => !pinned.has(slots[i].exerciseId));
+  const n = (SWAP_COUNT[intensity] ?? SWAP_COUNT.full)(swappable.length);
+  const chosen = shuffle(swappable, rng).slice(0, n);
+
+  const usedIds = new Set(slots.map((s) => s.exerciseId));
+  const result = slots.slice();
+  for (const i of chosen) {
+    const slot = slots[i];
+    const ranked = pickForGroup(pool, slot.muscleGroup, slot.difficulty, rng);
+    const pick = ranked.find((e) => !usedIds.has(e.id));
+    if (pick) {
+      usedIds.delete(slot.exerciseId);
+      usedIds.add(pick.id);
+      result[i] = { ...slot, exerciseId: pick.id, muscleGroup: pick.muscleGroup, difficulty: pick.difficulty };
+    }
+  }
+  return result;
+}
