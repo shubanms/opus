@@ -4,6 +4,7 @@ import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucid
 import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
 import { deleteWorkout } from '../../utils/workoutActions.js';
 import { fmtVolume, toDisplay } from '../../utils/units.js';
+import { avgRest, avgRestAcross, formatRest } from '../../utils/restStats.js';
 import { setWorkoutNote, setWorkoutColor } from '../../utils/noteActions.js';
 import ShareButton from '../share/ShareButton.jsx';
 import ColorPicker from '../ui/ColorPicker.jsx';
@@ -95,34 +96,57 @@ export default function WorkoutCard({ workout }) {
 
       {expanded && (
         <div className="mt-3 border-t pt-3" style={{ borderColor: 'var(--color-ivory)' }}>
-          {detail.map((ex) => (
-            <div key={ex.exerciseId} className="mb-2">
-              <p className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                {ex.name}
-              </p>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {ex.sets.map((s) => (
-                  <span
-                    key={s.id}
-                    className="flex items-center gap-1 font-mono text-xs"
-                    style={{ color: s.isWarmup ? 'var(--color-ember)' : 'var(--color-text-secondary)' }}
-                  >
-                    {s.isWarmup && <Flame size={10} />}
-                    {s.weight > 0 ? `${toDisplay(s.weight, unit)}×${s.reps}` : `${s.reps} reps`}
-                  </span>
-                ))}
-              </div>
-              {ex.sets.some((s) => s.note) && (
-                <div className="mt-1">
-                  {ex.sets.filter((s) => s.note).map((s) => (
-                    <p key={s.id} className="font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>
-                      · {s.note}
-                    </p>
+          {/* Session summary incl. rest */}
+          <div className="mb-3 flex flex-wrap gap-x-5 gap-y-1">
+            <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {detail.length} exercise{detail.length === 1 ? '' : 's'}
+            </span>
+            <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {formatDuration(workout.duration)} total
+            </span>
+            <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              avg rest {formatRest(avgRestAcross(detail.map((e) => e.sets)))}
+            </span>
+          </div>
+
+          {detail.map((ex) => {
+            const rest = avgRest(ex.sets);
+            return (
+              <div key={ex.exerciseId} className="mb-2">
+                <div className="flex items-baseline justify-between">
+                  <p className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                    {ex.name}
+                  </p>
+                  {rest != null && (
+                    <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                      rest {formatRest(rest)}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {ex.sets.map((s) => (
+                    <span
+                      key={s.id}
+                      className="flex items-center gap-1 font-mono text-xs"
+                      style={{ color: s.isWarmup ? 'var(--color-ember)' : 'var(--color-text-secondary)' }}
+                    >
+                      {s.isWarmup && <Flame size={10} />}
+                      {s.weight > 0 ? `${toDisplay(s.weight, unit)}×${s.reps}` : `${s.reps} reps`}
+                    </span>
                   ))}
                 </div>
-              )}
-            </div>
-          ))}
+                {ex.sets.some((s) => s.note) && (
+                  <div className="mt-1">
+                    {ex.sets.filter((s) => s.note).map((s) => (
+                      <p key={s.id} className="font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>
+                        · {s.note}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {/* Session note */}
           <textarea
