@@ -17,6 +17,29 @@ export const QUEST_POOL = [
 // Muscle groups that count as "legs" for the legs quest.
 export const LEG_GROUPS = new Set(['quadriceps', 'hamstring', 'gluteal', 'calves']);
 
+// Quest definition lookup by id (for reconciling claims against their def).
+export const QUEST_BY_ID = Object.fromEntries(QUEST_POOL.map((q) => [q.id, q]));
+
+// Per-metric quest stats from a week's already-filtered data. Inputs:
+//   workouts — completed workouts in the week
+//   sets     — non-warmup sets belonging to those workouts
+//   prs      — PRs achieved in the week
+//   exMuscle — { exerciseId: muscleGroup }
+export function computeQuestStats({ workouts, sets, prs, exMuscle }) {
+  const muscles = new Set(sets.map((s) => exMuscle[s.exerciseId]).filter(Boolean));
+  const legWorkouts = new Set(
+    sets.filter((s) => LEG_GROUPS.has(exMuscle[s.exerciseId])).map((s) => s.workoutId)
+  );
+  return {
+    sessions: workouts.length,
+    volumeKg: workouts.reduce((a, w) => a + (w.totalVolume || 0), 0),
+    sets: sets.length,
+    muscleVariety: muscles.size,
+    legsSessions: legWorkouts.size,
+    prs: prs.length,
+  };
+}
+
 const WEEK_MS = 7 * 86400000;
 
 function mondayOf(date) {
@@ -39,6 +62,13 @@ export function weekKeyOf(date = new Date()) {
 // Epoch-ms of this week's Monday (for filtering timestamped records like PRs).
 export function weekStartMs(date = new Date()) {
   return mondayOf(date).getTime();
+}
+
+// Epoch-ms of the Monday named by a stored weekKey ('YYYY-MM-DD'), parsed as
+// local midnight so it matches weekStartMs.
+export function weekStartMsFromKey(weekKey) {
+  const [y, m, d] = weekKey.split('-').map(Number);
+  return new Date(y, m - 1, d).getTime();
 }
 
 // Monotonic integer week counter, used to seed the rotation.

@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
-import { weeklyQuests, weekKeyOf, weekStartMs, LEG_GROUPS } from '../utils/quests.js';
+import { weeklyQuests, weekKeyOf, weekStartMs, computeQuestStats } from '../utils/quests.js';
 
 // This week's quests with live progress + claimed state, derived from existing
 // workout/set/PR data. No new tracking — quests just read what's already logged.
@@ -18,19 +18,7 @@ export function useQuests() {
     const exercises = await db.exercises.toArray();
     const exMuscle = Object.fromEntries(exercises.map((e) => [e.id, e.muscleGroup]));
 
-    const muscles = new Set(sets.map((s) => exMuscle[s.exerciseId]).filter(Boolean));
-    const legWorkouts = new Set(
-      sets.filter((s) => LEG_GROUPS.has(exMuscle[s.exerciseId])).map((s) => s.workoutId)
-    );
-
-    const stats = {
-      sessions: workouts.length,
-      volumeKg: workouts.reduce((a, w) => a + (w.totalVolume || 0), 0),
-      sets: sets.length,
-      muscleVariety: muscles.size,
-      legsSessions: legWorkouts.size,
-      prs: prs.length,
-    };
+    const stats = computeQuestStats({ workouts, sets, prs, exMuscle });
 
     const claimedIds = new Set(
       (await db.questClaims.where('weekKey').equals(weekKey).toArray()).map((c) => c.questId)
