@@ -46,9 +46,13 @@ contextual dialogue + clip mapping in pure, tested `utils/mascot.js`. Greets on 
 Code-split into its own chunk (~236 KB gz, lazy), model precached for offline,
 gated by `settingsStore.effects` + `prefers-reduced-motion` (static idle frame otherwise).
 
+**v1.1:** appears on **Home + Profile**; plays **ambient idle-break gestures** every 9–15s;
+fixed the navigate-away/return clip (clone the cached GLTF per mount via SkeletonUtils
+instead of mutating the shared scene).
+
 **Next iterations:** wire to real events (level-up → Dance, PR → ThumbsUp, streak break →
 No), evolution via tints/accessories per level & prestige (ties Gear P11 + Loot P3),
-optional placement on Profile, a name/rename setting, and Draco-compressing the GLB.
+a name/rename setting, and Draco-compressing the GLB.
 
 ### Original investigation (kept for context)
 Goal: a genuinely 3D-looking, polished mascot — no static SVG, no AI slop. Two real paths:

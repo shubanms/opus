@@ -17,6 +17,8 @@ export const CLIP = {
 };
 
 const HYPE_CLIPS = [CLIP.cheer, CLIP.dance, CLIP.flex, CLIP.jump, CLIP.yes];
+// Idle-break gestures Magnus plays on his own to feel alive between taps.
+const AMBIENT_CLIPS = [CLIP.wave, CLIP.cheer, CLIP.jump, CLIP.yes, CLIP.dance, CLIP.flex, CLIP.no];
 
 const choose = (arr, rng = Math.random) => arr[Math.floor(rng() * arr.length)] ?? arr[0];
 
@@ -62,4 +64,9 @@ export function clipForKind(kind, rng = Math.random) {
   if (kind === 'rest') return CLIP.yes;
   if (kind === 'hype') return choose(HYPE_CLIPS, rng);
   return CLIP.idle;
+}
+
+// A random idle-break gesture (no dialogue) so he keeps moving on his own.
+export function ambientClip(rng = Math.random) {
+  return choose(AMBIENT_CLIPS, rng);
 }

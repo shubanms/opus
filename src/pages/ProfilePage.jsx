@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles, TrendingDown, Swords } from 'lucide-react';
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
@@ -15,6 +16,8 @@ import ShareButton from '../components/share/ShareButton.jsx';
 import ProfileCard from '../components/share/ProfileCard.jsx';
 import ChallengeCard from '../components/share/ChallengeCard.jsx';
 import CountUp from '../components/fx/CountUp.jsx';
+
+const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
 
 function StatTile({ icon: Icon, value, label, accent, countTo }) {
   const effects = useSettingsStore((s) => s.effects);
@@ -95,6 +98,10 @@ export default function ProfilePage() {
       <p className="mb-5 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
         {identity.length ? identity.join('  ·  ') : `Member since ${profile.joinDate}`}
       </p>
+
+      <Suspense fallback={<div style={{ height: 150 }} />}>
+        <Companion autoGreet={false} />
+      </Suspense>
 
       <CharacterCard profile={profile} />
 

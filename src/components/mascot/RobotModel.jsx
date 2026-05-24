@@ -1,36 +1,40 @@
 import { useEffect, useMemo } from 'react';
 import { useLoader, useFrame, useThree } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import * as THREE from 'three';
 import { CLIP } from '../../utils/mascot.js';
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/robot.glb`;
 
-// The gold RobotExpressive (CC0). Normalizes/centers the model, plays the
-// requested clip, and falls back to a looping Idle for one-shot reactions.
-// `still` renders a single settled idle frame (reduced-motion / effects off).
-export default function RobotModel({ clip = CLIP.idle, still = false }) {
+// The gold RobotExpressive (CC0). useLoader caches the GLTF, so we clone the
+// scene per mount (SkeletonUtils keeps the skeleton intact) — otherwise
+// re-centering would mutate the shared cached scene and break it on remount
+// (the "cut off on navigate-back" bug). `gesture` re-triggers the active clip;
+// one-shots fade back to a looping Idle. `still` renders one settled frame.
+export default function RobotModel({ clip = CLIP.idle, gesture = 0, still = false }) {
   const gltf = useLoader(GLTFLoader, MODEL_URL);
   const { invalidate } = useThree();
-  const mixer = useMemo(() => new THREE.AnimationMixer(gltf.scene), [gltf.scene]);
+
+  const scene = useMemo(() => cloneSkinned(gltf.scene), [gltf.scene]);
+  const mixer = useMemo(() => new THREE.AnimationMixer(scene), [scene]);
   const actions = useMemo(() => {
     const map = {};
     for (const c of gltf.animations) map[c.name] = mixer.clipAction(c);
     return map;
   }, [gltf.animations, mixer]);
 
-  // Center on origin and scale to a consistent height. Measure at scale 1
-  // (matrices updated) then derive the scaled offset — avoids stale-matrix clip.
+  // Center on origin and scale to a consistent height (idempotent on a fresh clone).
   useMemo(() => {
-    gltf.scene.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(gltf.scene);
+    scene.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(scene);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const s = 2 / Math.max(size.x, size.y, size.z);
-    gltf.scene.scale.setScalar(s);
-    gltf.scene.position.set(-center.x * s, -center.y * s, -center.z * s);
-    gltf.scene.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
-  }, [gltf.scene]);
+    scene.scale.setScalar(s);
+    scene.position.set(-center.x * s, -center.y * s, -center.z * s);
+    scene.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+  }, [scene]);
 
   useEffect(() => {
     const idle = actions[CLIP.idle];
@@ -44,20 +48,19 @@ export default function RobotModel({ clip = CLIP.idle, still = false }) {
     for (const a of Object.values(actions)) if (a !== target) a.fadeOut(0.25);
     target.reset();
     target.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat, oneShot ? 1 : Infinity);
-    target.clampWhenFinished = false;
     target.fadeIn(0.25).play();
     let to;
     if (oneShot && idle) {
-      to = setTimeout(() => { idle.reset().fadeIn(0.3).play(); }, target.getClip().duration * 1000);
+      to = setTimeout(() => { idle.reset().fadeIn(0.35).play(); }, target.getClip().duration * 1000);
     }
     return () => clearTimeout(to);
-  }, [clip, still, actions, mixer, invalidate]);
+  }, [clip, gesture, still, actions, mixer, invalidate]);
 
   useFrame((_, delta) => { if (!still) mixer.update(delta); });
 
   return (
-    <group rotation={[0, 0.5, 0]} position={[0, -0.12, 0]}>
-      <primitive object={gltf.scene} />
+    <group rotation={[0, 0.5, 0]} position={[0, -0.12, 0]} dispose={null}>
+      <primitive object={scene} />
     </group>
   );
 }
