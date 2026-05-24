@@ -1,8 +1,13 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap v3 — S1+S2+S3+S7+S8 done; S6 dropped; S4/S5 remain
+Current sprint: Roadmap v3 — S1+S2+S3+S4+S7+S8 done; S6 dropped; S5 remains
 Current version: v2.0.0 (→ v3.0.0 at v3 close)
+
+**Roadmap v3 S4 (Equipment / plate inventory) done:**
+- `settingsStore.inventory` { active, gym/home: { barKg, plates, unit } } + setters (setInventoryActive/Bar/Plates). Plates are display-unit numbers stamped with `unit`; barKg null → global barWeight; plates null → standard set.
+- Pure `utils/inventory.js` `togglePlate` + `effectivePlates(locData,unit,standard)` (custom only applies in its unit, else standard) — tested. plateCalc.test extended (sparse owned sets, empty → bar only).
+- `EquipmentModal` (Settings → Profile → "Equipment & plates"): Gym/Home toggle, per-location bar + owned-plate chips + add-custom. `PlateCalculator` uses the active location's bar + plates. Existing behavior preserved (defaults null → standard set).
 
 **Roadmap v3 S3 (Reorder exercises) done:**
 - Pure `utils/reorder.js` `moveItem(arr,index,dir)` (swap neighbour; same-ref no-op at bounds) + test.

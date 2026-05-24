@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
+import EquipmentModal from '../components/settings/EquipmentModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 import { useRPG } from '../hooks/useRPG.js';
 import { useCurrentBodyweight } from '../hooks/useProgress.js';
@@ -45,6 +46,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 export default function SettingsPage() {
   const navigate = useNavigate();
   const [reset, setReset] = useState(false);
+  const [equip, setEquip] = useState(false);
   const { settings, perm, update, toggleType, setMaster } = useNotifications();
   const { profile } = useRPG();
   const updateProfile = useUserStore((s) => s.updateProfile);
@@ -174,6 +176,15 @@ export default function SettingsPage() {
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
           />
         </Row>
+
+        <button
+          onClick={() => setEquip(true)}
+          className="mt-1 flex w-full items-center justify-between rounded-xl px-3 py-2.5"
+          style={{ background: 'var(--color-ivory)' }}
+        >
+          <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Equipment &amp; plates</span>
+          <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Gym / Home →</span>
+        </button>
 
         <Row label="Daily step goal">
           <input
@@ -366,6 +377,7 @@ export default function SettingsPage() {
       </section>
 
       <ResetDataModal isOpen={reset} onClose={() => setReset(false)} />
+      <EquipmentModal isOpen={equip} onClose={() => setEquip(false)} />
     </div>
   );
 }
