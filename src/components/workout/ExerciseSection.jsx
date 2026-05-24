@@ -1,4 +1,4 @@
-import { X, StickyNote } from 'lucide-react';
+import { X, StickyNote, Link2 } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -13,7 +13,7 @@ const MUSCLE_HUE = {
   abs: '#C9A84C', obliques: '#C9A84C',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove }) {
+export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove, canLink, linked, onToggleSuperset }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
@@ -42,14 +42,29 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
             </p>
           )}
         </div>
-        <button
-          onClick={onRemove}
-          className="ml-2 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-ivory)' }}
-          aria-label="Remove exercise"
-        >
-          <X size={13} style={{ color: 'var(--color-ash)' }} />
-        </button>
+        <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+          {canLink && (
+            <button
+              onClick={onToggleSuperset}
+              className="flex items-center gap-1 rounded-full px-2 py-1 font-sans text-[11px] font-medium"
+              style={{
+                background: linked ? 'var(--color-gold)' : 'var(--color-ivory)',
+                color: linked ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+              }}
+              aria-label={linked ? 'Remove from superset' : 'Superset with exercise above'}
+            >
+              <Link2 size={12} /> {linked ? 'Superset' : 'Link'}
+            </button>
+          )}
+          <button
+            onClick={onRemove}
+            className="flex h-7 w-7 items-center justify-center rounded-full"
+            style={{ background: 'var(--color-ivory)' }}
+            aria-label="Remove exercise"
+          >
+            <X size={13} style={{ color: 'var(--color-ash)' }} />
+          </button>
+        </div>
       </div>
 
       {note && (
@@ -63,7 +78,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
         <OverloadNudge exerciseId={exercise.exerciseId} />
       </div>
 
-      <SetLogger exerciseId={exercise.exerciseId} onSetLogged={onSetLogged} isBodyweight={isBodyweight} />
+      <SetLogger exerciseId={exercise.exerciseId} onSetLogged={() => onSetLogged?.(exercise.exerciseId)} isBodyweight={isBodyweight} />
     </div>
   );
 }
