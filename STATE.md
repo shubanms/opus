@@ -11,7 +11,11 @@ Current version: v1.5.0 (post-MVP)
 - AchievementsPage (/achievements): full list, how-to, hidden/secret achievements (game-style).
 - ProgressionPage (/progression): rank ladder (1-10 titles + XP) + prestige tiers I-V.
 - Profile: TrophyCase → /achievements, "View ranks & prestige" → /progression; CharacterCard shows prestige label.
-- TODO: testing detour (Vitest + unit tests) as separate PR.
+**Testing detour done:**
+- Vitest added (`vitest.config.js`, node env, `npm test`); separate from vite build config.
+- Unit tests for pure logic: rpg, units, plateCalc, overload, volume(setLoad), achievement predicates (`src/utils/*.test.js`).
+- CI: `.github/workflows/test.yml` runs `npm test` on push/PR (independent of the deploy workflow).
+- GOING FORWARD: add `*.test.js` for new pure utils; keep DOM/DB-dependent logic out of unit tests or mock it.
 
 **Sprint 14 done:**
 - DB v6: `achievements` table. `utils/achievements.js` (19 data-driven defs + computeStats + checkAchievements; awards XP).
