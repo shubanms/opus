@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
+import { epley1RM } from '../utils/oneRepMax.js';
 
 // Returns personal records for an exercise, newest first.
 export function usePRs(exerciseId) {
@@ -174,6 +175,43 @@ export function useExerciseVolume(exerciseId, limit = 10) {
     }
     return result.slice(-limit);
   }, [exerciseId]) ?? [];
+}
+
+// Best estimated 1RM (Epley) per session for an exercise (last `limit`,
+// oldest→newest). Sessions with no estimable sets are skipped.
+export function useExerciseOneRepMax(exerciseId, limit = 10) {
+  return useLiveQuery(async () => {
+    if (!exerciseId) return [];
+    const sets = await db.sets.where('exerciseId').equals(exerciseId).toArray();
+    const byWorkout = {};
+    for (const s of sets) {
+      if (s.isWarmup) continue;
+      byWorkout[s.workoutId] = Math.max(byWorkout[s.workoutId] ?? 0, epley1RM(s.weight, s.reps));
+    }
+    const ids = Object.keys(byWorkout).map(Number).sort((a, b) => a - b);
+    const result = [];
+    for (const id of ids) {
+      if (!byWorkout[id]) continue;
+      const w = await db.workouts.get(id);
+      result.push({ label: w?.date ? w.date.slice(5) : String(id), value: Math.round(byWorkout[id]) });
+    }
+    return result.slice(-limit);
+  }, [exerciseId]) ?? [];
+}
+
+// Every personal record across all exercises, newest first, with the
+// exercise name joined in — powers the Hall of Records timeline.
+export function useAllPRs() {
+  return useLiveQuery(async () => {
+    const prs = await db.prs.orderBy('achievedAt').reverse().toArray();
+    if (!prs.length) return [];
+    const names = {};
+    for (const exId of [...new Set(prs.map((p) => p.exerciseId))]) {
+      const ex = await db.exercises.get(exId);
+      names[exId] = ex?.name ?? 'Unknown exercise';
+    }
+    return prs.map((p) => ({ ...p, exerciseName: names[p.exerciseId] }));
+  }, []) ?? [];
 }
 
 // Stub — weekly volume aggregation implemented in Sprint 8

@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote } from 'lucide-react';
 import { useExercise, useExerciseNote } from '../hooks/useExercises.js';
-import { usePRs, useExerciseVolume } from '../hooks/useProgress.js';
+import { usePRs, useExerciseVolume, useExerciseOneRepMax } from '../hooks/useProgress.js';
 import { deleteCustomExercise, toggleFavorite, setExerciseColor } from '../utils/exerciseActions.js';
 import { setExerciseNote } from '../utils/noteActions.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
+import TrendChart from '../components/progress/TrendChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
 import ColorPicker from '../components/ui/ColorPicker.jsx';
 
@@ -57,9 +58,12 @@ export default function ExerciseDetailPage() {
   const exercise = useExercise(Number(id));
   const prs = usePRs(Number(id));
   const volumeRaw = useExerciseVolume(Number(id));
+  const e1rmRaw = useExerciseOneRepMax(Number(id));
   const note = useExerciseNote(Number(id));
   const unit = useSettingsStore((s) => s.unit);
   const volume = volumeRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
+  const e1rm = e1rmRaw.map((d) => ({ label: d.label, value: Math.round(toDisplay(d.value, unit)) }));
+  const bestE1rm = e1rmRaw.length ? Math.max(...e1rmRaw.map((d) => d.value)) : 0;
   const [demoUrl, setDemoUrl] = useState(null);
 
   useEffect(() => {
@@ -226,6 +230,26 @@ export default function ExerciseDetailPage() {
       <div className="mt-5">
         <PRCard prs={prs} unit={unit} />
       </div>
+
+      {/* Estimated 1RM */}
+      {e1rmRaw.length > 0 && (
+        <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+          <div className="mb-1 flex items-center gap-2">
+            <TrendingUp size={15} style={{ color: 'var(--color-ash)' }} />
+            <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+              Estimated 1RM
+            </span>
+          </div>
+          <p className="mb-2 font-mono text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+            {Math.round(toDisplay(bestE1rm, unit))} {unitLabel(unit)}
+            <span className="ml-2 font-sans text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>best</span>
+          </p>
+          <TrendChart data={e1rm} unit={unitLabel(unit)} empty="Log weighted sets to estimate." />
+          <p className="mt-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Epley estimate from your heaviest set each session.
+          </p>
+        </div>
+      )}
 
       {/* Volume history */}
       <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>

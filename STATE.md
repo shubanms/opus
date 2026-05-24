@@ -1,8 +1,14 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Detour (majestic sound + activity log) done
+Current sprint: Roadmap Sprint 19 (part 1: 1RM + Hall of Records) done; supersets next
 Current version: v1.7.0 (post-MVP)
+
+**Sprint 19 part 1 (Estimated 1RM + Hall of Records) done:**
+- `utils/oneRepMax.js` Epley `epley1RM(weight,reps)` (+ test). `useExerciseOneRepMax(id)` (best e1RM per session, oldest→newest) + `useAllPRs()` (all prs newest-first with exercise names).
+- ExerciseDetailPage: "Estimated 1RM" card (best value + TrendChart trend, unit-aware).
+- New `HallOfRecordsPage` (/records): all PRs grouped by date, newest first; linked from ProfilePage ("Hall of Records" button).
+- TODO Sprint 19 part 2: supersets/circuits in the active workout (separate PR — touches core workout flow).
 
 **Sound + activity-history (detour) done:**
 - `utils/sound.js` rewritten into a small WebAudio synth (no samples, offline): detuned saw+triangle voices through a lowpass + ADSR + light feedback-delay space. Cues: success, rest, pr (triumphant), achievement (sparkle), quest (IV→I lift), levelup (grand fanfare). Still gated by settingsStore.sound; resumes ctx on gesture (iOS).

@@ -87,6 +87,17 @@ export default function ProfilePage() {
         <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
       </button>
 
+      <button
+        onClick={() => navigate('/records')}
+        className="mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3"
+        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
+      >
+        <span className="flex items-center gap-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+          <Trophy size={15} style={{ color: 'var(--color-gold)' }} /> Hall of Records
+        </span>
+        <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
+      </button>
+
       {/* Lifetime stats */}
       <h2 className="mb-3 mt-6 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
         Lifetime
