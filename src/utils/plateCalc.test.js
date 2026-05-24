@@ -32,3 +32,18 @@ describe('nearestLoadable', () => {
     expect(nearestLoadable(101, 20)).toBeLessThanOrEqual(101);
   });
 });
+
+describe('custom plate inventory (sparse owned sets)', () => {
+  it('only uses owned plates', () => {
+    // owns just 20/10/5; target 100, bar 20 → 40/side → 20 + 20
+    expect(calcPlates(100, 20, [20, 10, 5])).toEqual([{ kg: 20, count: 2 }]);
+  });
+  it('rounds down to the nearest loadable with a sparse set', () => {
+    // 97 not makeable with 20/10/5 → 38.5/side → 35 → 90 loaded
+    expect(nearestLoadable(97, 20, [20, 10, 5])).toBe(90);
+  });
+  it('bar only when no plates are owned', () => {
+    expect(calcPlates(100, 20, [])).toEqual([]);
+    expect(nearestLoadable(100, 20, [])).toBe(20);
+  });
+});

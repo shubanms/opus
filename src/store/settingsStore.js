@@ -3,7 +3,17 @@ import { create } from 'zustand';
 import { applyTheme } from '../utils/theme.js';
 
 const KEY = 'opus_prefs';
-const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '', coachMarksSeen: {} };
+const DEFAULTS = {
+  barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system',
+  tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '', coachMarksSeen: {},
+  // Equipment per location. barKg null → use global barWeight; plates null → standard
+  // set for the current unit; plates are display-unit numbers stamped with `unit`.
+  inventory: {
+    active: 'gym',
+    gym: { barKg: null, plates: null, unit: null },
+    home: { barKg: null, plates: null, unit: null },
+  },
+};
 
 function load() {
   try {
@@ -16,8 +26,20 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen }));
+    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory }));
+  },
+  setInventoryActive(active) {
+    set((s) => ({ inventory: { ...s.inventory, active } }));
+    get().persist();
+  },
+  setInventoryBar(loc, barKg) {
+    set((s) => ({ inventory: { ...s.inventory, [loc]: { ...s.inventory[loc], barKg } } }));
+    get().persist();
+  },
+  setInventoryPlates(loc, plates, unit) {
+    set((s) => ({ inventory: { ...s.inventory, [loc]: { ...s.inventory[loc], plates, unit } } }));
+    get().persist();
   },
   setRecapDismissedWeek(recapDismissedWeek) {
     set({ recapDismissedWeek });
