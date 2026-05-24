@@ -10,6 +10,7 @@ import CharacterCard from '../components/rpg/CharacterCard.jsx';
 import TrophyCase from '../components/rpg/TrophyCase.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
 import ProfileCard from '../components/share/ProfileCard.jsx';
+import ChallengeCard from '../components/share/ChallengeCard.jsx';
 
 function StatTile({ icon: Icon, value, label, accent }) {
   return (
@@ -52,6 +53,16 @@ export default function ProfilePage() {
     workouts: workouts.length,
     streak: profile.streak ?? 0,
     totalXp,
+  };
+
+  const challengeShareData = {
+    name: profile.name,
+    level,
+    title: getRankLabel(totalXp),
+    workouts: life.workouts,
+    volumeKg: life.totalVolume,
+    bestStreak: life.bestStreak,
+    unit,
   };
 
   return (
@@ -135,6 +146,15 @@ export default function ProfilePage() {
         label="Share profile"
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
         style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
+      />
+
+      <ShareButton
+        data={challengeShareData}
+        CardComponent={ChallengeCard}
+        filename="opus-challenge.png"
+        label="Challenge a friend"
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
+        style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
       />
     </div>
   );

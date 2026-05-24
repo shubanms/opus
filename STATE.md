@@ -1,8 +1,13 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap Sprint 20 (final) in progress — A: weekly recap done
+Current sprint: Roadmap Sprint 20 (final) in progress — A+B done; C (coach marks + polish + v2.0.0) next
 Current version: v1.7.0 (→ v2.0.0 at Sprint 20 close)
+
+**Sprint 20 part B (Challenge card + radar history) done:**
+- `utils/snapshots.js` (pure bits tested): monthly character-stat snapshots in localStorage; `monthKeyOf`, `previousSnapshot`, `mergeRadarSeries`, save/get.
+- CharacterCard: saves this month's snapshot, overlays the latest prior month as a dashed muted radar series + a Now/Last-month legend.
+- `components/share/ChallengeCard.jsx` ("Beat my numbers": workouts/volume/best-streak + level) + "Challenge a friend" share button on ProfilePage.
 
 **Sprint 20 part A (Weekly Recap) done:**
 - `hooks/useWeeklyRecap.js` — this week's sessions/volume/sets/PRs/XP/top-lift (Monday-aligned, reuses quests week helpers).
