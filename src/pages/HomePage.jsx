@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
@@ -18,6 +19,8 @@ import ActivityRings from '../components/progress/ActivityRings.jsx';
 import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import QuestBoard from '../components/rpg/QuestBoard.jsx';
 import useWorkoutStore from '../store/workoutStore.js';
+
+const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
 
 function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
   return (
@@ -99,6 +102,11 @@ export default function HomePage() {
           {profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}
         </p>
       </div>
+
+      {/* Magnus — 3D training companion */}
+      <Suspense fallback={<div style={{ height: 150 }} />}>
+        <Companion />
+      </Suspense>
 
       {/* Level / XP strip */}
       {profile && (
