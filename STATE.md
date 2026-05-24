@@ -1,8 +1,14 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap Sprint 16 (Evolving Character Mark) done — back on roadmap
+Current sprint: Detour (majestic sound + activity log) done
 Current version: v1.7.0 (post-MVP)
+
+**Sound + activity-history (detour) done:**
+- `utils/sound.js` rewritten into a small WebAudio synth (no samples, offline): detuned saw+triangle voices through a lowpass + ADSR + light feedback-delay space. Cues: success, rest, pr (triumphant), achievement (sparkle), quest (IV→I lift), levelup (grand fanfare). Still gated by settingsStore.sound; resumes ctx on gesture (iOS).
+- Sound wired to more moments: RestTimer complete (`rest`), QuestBoard claim (`quest`), AchievementToast (`achievement`), workout saved (`success`); pr/levelup unchanged keys, richer output.
+- Activity history now fully viewable/editable: `healthActions.logActivity({date,steps,water})` (date-aware upsert) + `deleteActivity`. New `components/progress/ActivityForm.jsx` (add for any past date / edit a day; date locked when editing). Progress → Body "Activity log" section lists recent days with steps+water + edit/delete (closes the addable=editable/deletable gap). Rings still drive today.
+- NOTE: future cinematic option = bundle CC0 samples + Howler.js; deferred (sandbox can't fetch audio).
 
 **Evolving Character Mark (Roadmap Sprint 16 visual) done:**
 - `components/logo/OpusMark.jsx` now prop-driven by `level` (1–10) + `prestige`: ring thickens, gains one stud per level, a brightening gold halo (boxShadow), and — once prestiging — a slow rotating bright sweep (`.anim-spin-slow`, reduced-motion off) + a crown of gem pips. `level=0` default keeps the plain branding mark (LoadingScreen/Onboarding unchanged).

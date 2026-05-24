@@ -25,7 +25,7 @@ export default function QuestBoard() {
     const ok = await claimQuest({ weekKey, questId: q.id, xp: q.xp });
     if (ok) {
       haptic('pr');
-      playChime('pr');
+      playChime('quest');
       setBurst(true);
       setTimeout(() => setBurst(false), 1300);
     }

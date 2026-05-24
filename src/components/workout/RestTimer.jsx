@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Minus, Plus } from 'lucide-react';
 import { useHaptics } from '../../hooks/useHaptics.js';
+import { playChime } from '../../utils/sound.js';
 
 const R = 18;
 const C = 2 * Math.PI * R; // ≈ 113
@@ -18,6 +19,7 @@ export default function RestTimer({ duration = 90, onComplete, onSkip, onSetDefa
         if (r <= 1) {
           clearInterval(ref.current);
           haptic('pr');
+          playChime('rest');
           onComplete?.();
           return 0;
         }

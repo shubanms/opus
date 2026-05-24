@@ -40,6 +40,20 @@ export async function addWater(delta) {
   else if (delta > 0) await db.dailyLogs.add({ date, steps: 0, water: delta });
 }
 
+// Upsert a full day's activity (steps + water) for any date — used by the log.
+export async function logActivity({ date, steps, water }) {
+  const e = await db.dailyLogs.where('date').equals(date).first();
+  const patch = {};
+  if (steps != null) patch.steps = Math.max(0, steps);
+  if (water != null) patch.water = Math.max(0, water);
+  if (e) await db.dailyLogs.update(e.id, patch);
+  else await db.dailyLogs.add({ date, steps: patch.steps ?? 0, water: patch.water ?? 0 });
+}
+
+export async function deleteActivity(id) {
+  await db.dailyLogs.delete(id);
+}
+
 // Most recent logged bodyweight (kg), or null.
 export async function getCurrentBodyweight() {
   const latest = await db.bodyStats.orderBy('date').reverse().filter((s) => s.weight != null).first();
