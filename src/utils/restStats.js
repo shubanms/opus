@@ -3,7 +3,7 @@
 
 export function restGaps(sets) {
   const ordered = [...sets]
-    .filter((s) => s.completedAt)
+    .filter((s) => s.completedAt != null)
     .sort((a, b) => a.completedAt - b.completedAt);
   const gaps = [];
   for (let i = 1; i < ordered.length; i++) {
