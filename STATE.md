@@ -1,8 +1,13 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 15 (Progression detail + fixes) — Roadmap v2
-Current version: v1.5.0 (post-MVP)
+Current sprint: 16 (Recovery Body-Map) — Roadmap v2
+Current version: v1.6.0 (post-MVP)
+
+**Sprint 16 done:**
+- `hooks/useRecovery.js` (ALL_MUSCLES; per-muscle days-since-last-trained + most-neglected).
+- `components/progress/RecoveryMap.jsx` — react-body-highlighter colored by recency (ember=today → gold=1d → sage=2d → neutral=ready), front/back toggle, tap-a-muscle info, neglected nudge, legend.
+- Shown on HomePage (after today card) once there's history.
 
 **Sprint 15 (partial) done:**
 - Fix: deleting a workout now re-locks achievements whose conditions no longer hold (reconcileAchievements) so XP fully reverts.

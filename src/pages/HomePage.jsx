@@ -7,6 +7,7 @@ import { getXPProgress, getTitle } from '../utils/rpg.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
+import RecoveryMap from '../components/progress/RecoveryMap.jsx';
 import useWorkoutStore from '../store/workoutStore.js';
 
 function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
@@ -115,6 +116,13 @@ export default function HomePage() {
         </div>
       ) : (
         <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
+      )}
+
+      {/* Recovery body-map */}
+      {workouts.length > 0 && (
+        <div className="mb-6">
+          <RecoveryMap />
+        </div>
       )}
 
       {/* Recent workouts */}
