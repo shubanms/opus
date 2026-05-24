@@ -81,7 +81,7 @@ export default function ActivityRings() {
 
   return (
     <div className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-      {burst && <Particles count={16} />
+      {burst && <Particles count={16} />}
       <p className="mb-3 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
         Today's activity
       </p>
