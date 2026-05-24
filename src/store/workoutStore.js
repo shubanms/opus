@@ -3,12 +3,35 @@ import { db } from '../db/db.js';
 import { PR_BONUS, STREAK_BONUS_PER_DAY, getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
 import { computeVolume } from '../utils/volume.js';
 import { getCurrentBodyweight } from '../utils/healthActions.js';
+import { serialize, deserialize, isStale } from '../utils/workoutSession.js';
+
+const ACTIVE_KEY = 'opus_active_workout';
+
+// Restore a non-stale in-progress session from a previous run (lock/reload).
+function loadActive() {
+  try {
+    const saved = deserialize(localStorage.getItem(ACTIVE_KEY));
+    if (saved && !isStale(saved)) return saved;
+    if (saved) localStorage.removeItem(ACTIVE_KEY);
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+const restored = loadActive();
 
 const useWorkoutStore = create((set, get) => ({
-  activeWorkout: null,
+  activeWorkout: restored,
+  resumed: !!restored,
+
+  dismissResumed() {
+    set({ resumed: false });
+  },
 
   startWorkout(name = 'Workout', templateId = null) {
     set({
+      resumed: false,
       activeWorkout: {
         id: null,
         name,
@@ -37,6 +60,7 @@ const useWorkoutStore = create((set, get) => ({
 
   startFromTemplate(template) {
     set({
+      resumed: false,
       activeWorkout: {
         id: null,
         name: template.name,
@@ -67,6 +91,7 @@ const useWorkoutStore = create((set, get) => ({
       exercises.push({ exerciseId: id, name: ex?.name ?? 'Exercise', sets: [] });
     }
     set({
+      resumed: false,
       activeWorkout: {
         id: null,
         name: w.name,
@@ -311,13 +336,26 @@ const useWorkoutStore = create((set, get) => ({
       result.newAchievements = [];
     }
 
-    set({ activeWorkout: null });
+    set({ activeWorkout: null, resumed: false });
     return result;
   },
 
   discardWorkout() {
-    set({ activeWorkout: null });
+    set({ activeWorkout: null, resumed: false });
   },
 }));
+
+// Write-through: mirror the active session to localStorage on every change so a
+// lock/reload restores it; clear it when the workout ends.
+if (typeof window !== 'undefined') {
+  useWorkoutStore.subscribe((state) => {
+    try {
+      if (state.activeWorkout) localStorage.setItem(ACTIVE_KEY, serialize(state.activeWorkout));
+      else localStorage.removeItem(ACTIVE_KEY);
+    } catch {
+      /* ignore */
+    }
+  });
+}
 
 export default useWorkoutStore;
