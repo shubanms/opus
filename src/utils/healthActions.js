@@ -22,6 +22,24 @@ export async function deleteSleep(id) {
   await db.sleepLogs.delete(id);
 }
 
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+// Upsert today's step count.
+export async function setSteps(steps) {
+  const date = todayStr();
+  const e = await db.dailyLogs.where('date').equals(date).first();
+  if (e) await db.dailyLogs.update(e.id, { steps });
+  else await db.dailyLogs.add({ date, steps, water: 0 });
+}
+
+// Add (or remove) glasses of water for today.
+export async function addWater(delta) {
+  const date = todayStr();
+  const e = await db.dailyLogs.where('date').equals(date).first();
+  if (e) await db.dailyLogs.update(e.id, { water: Math.max(0, (e.water || 0) + delta) });
+  else if (delta > 0) await db.dailyLogs.add({ date, steps: 0, water: delta });
+}
+
 // Most recent logged bodyweight (kg), or null.
 export async function getCurrentBodyweight() {
   const latest = await db.bodyStats.orderBy('date').reverse().filter((s) => s.weight != null).first();

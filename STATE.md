@@ -1,8 +1,16 @@
 # OPUS — Project State
 
-Last updated: 2026-05-23
+Last updated: 2026-05-24
 Current sprint: 17 (Dark Mode & Theming + Transitions) — Roadmap v2
 Current version: v1.7.0 (post-MVP)
+
+**Daily activity (steps + water) (detour) done:**
+- DB v7 `dailyLogs` (`++id, date, steps, water`), one row per date. `utils/healthActions.js` setSteps/addWater (upsert today).
+- `hooks/useProgress.js` useDailyActivity (today) + useActivityHistory (trends).
+- `components/progress/ActivityRings.jsx` — two animated SVG rings (steps=gold, water=sage) on Home: "Add steps" prompt + −/+ glass buttons.
+- `settingsStore` stepGoal (8000) / waterGoal (8) + setters; goal inputs in Settings → Profile.
+- Progress → Body: Daily steps + Water intake trend charts (last 14 logged days).
+- (Water was only ever PRD'd as a reminder type — now a real tracker.)
 
 **Rest timer & tracking (detour) done:**
 - RestTimer: presets (1:00/1:30/2:00/3:00) + ±15s adjust; chosen preset persists as `settingsStore.restDuration`. Keyed per set so it resets each rest.
