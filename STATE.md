@@ -1,8 +1,14 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap Sprint 20 (final) in progress — A+B done; C (coach marks + polish + v2.0.0) next
-Current version: v1.7.0 (→ v2.0.0 at Sprint 20 close)
+Current sprint: Roadmap v2 COMPLETE (Sprints 11–20). App at v2.0.0.
+Current version: v2.0.0
+
+**Sprint 20 part C (Coach marks + final polish + v2.0.0) done:**
+- `components/coach/CoachMark.jsx` — per-tab first-use tip (home/progress/workout/exercises/profile), portaled above the bottom nav, "Got it" to dismiss. Gated in AppLayout to after onboarding + tour.
+- `settingsStore.coachMarksSeen` (per-route seen-state) + `markCoachSeen`/`resetCoachMarks`. Settings → Experience adds "Show tips again".
+- Version bumped to **v2.0.0** (package.json + Settings → About). Roadmap v2 (Sprints 11–20) complete.
+- (Optional next: create a git tag v2.0.0 — not done automatically; ask the user.)
 
 **Sprint 20 part B (Challenge card + radar history) done:**
 - `utils/snapshots.js` (pure bits tested): monthly character-stat snapshots in localStorage; `monthKeyOf`, `previousSnapshot`, `mergeRadarSeries`, save/get.

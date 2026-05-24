@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { applyTheme } from '../utils/theme.js';
 
 const KEY = 'opus_prefs';
-const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '' };
+const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '', coachMarksSeen: {} };
 
 function load() {
   try {
@@ -16,11 +16,19 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek }));
+    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen }));
   },
   setRecapDismissedWeek(recapDismissedWeek) {
     set({ recapDismissedWeek });
+    get().persist();
+  },
+  markCoachSeen(route) {
+    set((s) => ({ coachMarksSeen: { ...s.coachMarksSeen, [route]: true } }));
+    get().persist();
+  },
+  resetCoachMarks() {
+    set({ coachMarksSeen: {} });
     get().persist();
   },
   setTourSeen(tourSeen) {
