@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MASCOT_NAME, CLIP, pickLine, clipForKind } from './mascot.js';
+import { MASCOT_NAME, CLIP, pickLine, clipForKind, ambientClip } from './mascot.js';
 
 const first = () => 0; // deterministic: always pick the first candidate
 
@@ -35,5 +35,12 @@ describe('mascot', () => {
     const clips = new Set(Object.values(CLIP));
     expect(clips.has(clipForKind('hype', first))).toBe(true);
     expect(clipForKind('whatever')).toBe(CLIP.idle);
+  });
+
+  it('ambientClip returns a known, non-idle gesture', () => {
+    const clips = new Set(Object.values(CLIP));
+    const c = ambientClip(first);
+    expect(clips.has(c)).toBe(true);
+    expect(c).not.toBe(CLIP.idle);
   });
 });

@@ -5,13 +5,13 @@ import { useRPG } from '../../hooks/useRPG.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
-import { CLIP, MASCOT_NAME, clipForKind, pickLine } from '../../utils/mascot.js';
+import { CLIP, MASCOT_NAME, ambientClip, clipForKind, pickLine } from '../../utils/mascot.js';
 
 const MET_KEY = 'opus_mascot_met';
 const wasMet = () => { try { return localStorage.getItem(MET_KEY) === '1'; } catch { return true; } };
 const markMet = () => { try { localStorage.setItem(MET_KEY, '1'); } catch { /* ignore */ } };
 
-export default function Companion() {
+export default function Companion({ autoGreet = true }) {
   const { profile } = useRPG();
   const effects = useSettingsStore((s) => s.effects);
   const haptic = useHaptics();
@@ -21,31 +21,42 @@ export default function Companion() {
     : false;
   const animate = effects && !reducedMotion;
 
-  const [clip, setClip] = useState(CLIP.idle);
+  // `gesture` increments so RobotModel replays a clip even if the name repeats.
+  const [{ clip, gesture }, setGesture] = useState({ clip: CLIP.idle, gesture: 0 });
   const [line, setLine] = useState('');
   const hideRef = useRef();
-  const resetRef = useRef();
+
+  const play = useCallback((nextClip) => {
+    if (animate) setGesture((g) => ({ clip: nextClip, gesture: g.gesture + 1 }));
+  }, [animate]);
 
   const say = useCallback((kind) => {
     const streak = profile?.streak ?? 0;
     const hour = new Date().getHours();
     setLine(pickLine({ kind, streak, hour }));
-    if (animate) setClip(clipForKind(kind));
+    play(clipForKind(kind));
     clearTimeout(hideRef.current);
-    clearTimeout(resetRef.current);
     hideRef.current = setTimeout(() => setLine(''), 5200);
-    if (animate) resetRef.current = setTimeout(() => setClip(CLIP.idle), 4200);
-  }, [profile?.streak, animate]);
+  }, [profile?.streak, play]);
 
-  // Greeting on first mount (intro the first time ever).
+  // Greeting on mount (Home only). Intro the very first time ever.
   useEffect(() => {
-    const t = setTimeout(() => {
-      say(wasMet() ? 'greet' : 'firstMeet');
-      markMet();
-    }, 650);
-    return () => { clearTimeout(t); clearTimeout(hideRef.current); clearTimeout(resetRef.current); };
+    if (!autoGreet) return;
+    const t = setTimeout(() => { say(wasMet() ? 'greet' : 'firstMeet'); markMet(); }, 650);
+    return () => { clearTimeout(t); clearTimeout(hideRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Idle-break: every 9–15s Magnus does a little gesture on his own.
+  useEffect(() => {
+    if (!animate) return;
+    let timer;
+    const loop = () => {
+      timer = setTimeout(() => { play(ambientClip()); loop(); }, 9000 + Math.random() * 6000);
+    };
+    loop();
+    return () => clearTimeout(timer);
+  }, [animate, play]);
 
   const onTap = useCallback(() => {
     haptic('tap');
@@ -90,7 +101,7 @@ export default function Companion() {
           <directionalLight position={[3, 6, 5]} intensity={2.2} color="#fff2d6" />
           <directionalLight position={[-4, 3, -4]} intensity={1.4} color="#c9a84c" />
           <Suspense fallback={null}>
-            <RobotModel clip={clip} still={!animate} />
+            <RobotModel clip={clip} gesture={gesture} still={!animate} />
           </Suspense>
         </Canvas>
       </button>
