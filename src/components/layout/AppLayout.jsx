@@ -5,6 +5,7 @@ import Tour from '../tour/Tour.jsx';
 import CoachMark from '../coach/CoachMark.jsx';
 import UiHost from '../ui/UiHost.jsx';
 import { useRPG } from '../../hooks/useRPG.js';
+import { useOnOpenReminders } from '../../hooks/useOnOpenReminders.js';
 import useSettingsStore from '../../store/settingsStore.js';
 
 export default function AppLayout() {
@@ -12,6 +13,7 @@ export default function AppLayout() {
   const { loaded } = useRPG();
   const onboarded = useSettingsStore((s) => s.onboarded);
   const tourSeen = useSettingsStore((s) => s.tourSeen);
+  useOnOpenReminders();
 
   return (
     <div className="min-h-full" style={{ background: 'var(--color-chalk)' }}>
