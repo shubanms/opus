@@ -4,6 +4,11 @@ Last updated: 2026-05-24
 Current sprint: Roadmap Sprint 19 complete (1RM + Hall of Records + supersets)
 Current version: v1.7.0 (post-MVP)
 
+**Quest claims now revert on workout delete (fix):**
+- Quest *progress* was already live (useLiveQuery); the gap was claimed-quest XP not reverting on delete (inconsistent w/ achievements).
+- `quests.js`: extracted pure `computeQuestStats({workouts,sets,prs,exMuscle})` (reused by useQuests) + `QUEST_BY_ID` + `weekStartMsFromKey`.
+- `questActions.reconcileQuests()` re-checks every claim against its week's current data and deletes claims that no longer meet target; wired into `deleteWorkout` before `recomputeProfile` (which sums questClaims XP → XP reverts). Tests added.
+
 **Sprint 19 part 2 (Supersets/circuits) done:**
 - In-memory `supersetId` on active-workout exercises (completeWorkout ignores unknown fields → safe; grouping not persisted to history). `workoutStore.toggleSuperset(id)` chains an exercise with the one above (shared groupId) or unlinks it.
 - `utils/supersets.js` (tested): `supersetRuns(exercises)` groups contiguous shared-id runs (length-1 = standalone, robust to link/unlink/remove); `noRestIds(exercises)` = members that skip rest (all but the last).
