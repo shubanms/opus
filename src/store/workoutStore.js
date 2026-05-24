@@ -4,6 +4,7 @@ import { PR_BONUS, STREAK_BONUS_PER_DAY, getLevelFromTotalXP, getTitle } from '.
 import { computeVolume } from '../utils/volume.js';
 import { getCurrentBodyweight } from '../utils/healthActions.js';
 import { serialize, deserialize, isStale } from '../utils/workoutSession.js';
+import { moveItem } from '../utils/reorder.js';
 
 const ACTIVE_KEY = 'opus_active_workout';
 
@@ -199,6 +200,18 @@ const useWorkoutStore = create((set, get) => ({
         exercises: w.exercises.filter(e => e.exerciseId !== exerciseId),
       },
     });
+  },
+
+  // Reorder an exercise up (-1) or down (+1). Superset grouping re-derives from
+  // the new order, so moving a member out of its run naturally breaks the link.
+  moveExercise(exerciseId, dir) {
+    const w = get().activeWorkout;
+    if (!w) return;
+    const i = w.exercises.findIndex((e) => e.exerciseId === exerciseId);
+    if (i < 0) return;
+    const exercises = moveItem(w.exercises, i, dir);
+    if (exercises === w.exercises) return;
+    set({ activeWorkout: { ...w, exercises } });
   },
 
   // Toggle whether an exercise is chained into a superset with the one above it.
