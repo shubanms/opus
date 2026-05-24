@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight } from 'lucide-react';
+import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles } from 'lucide-react';
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js';
@@ -109,6 +109,17 @@ export default function ProfilePage() {
       >
         <span className="flex items-center gap-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
           <Trophy size={15} style={{ color: 'var(--color-gold)' }} /> Hall of Records
+        </span>
+        <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
+      </button>
+
+      <button
+        onClick={() => navigate('/wrapped')}
+        className="mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3"
+        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
+      >
+        <span className="flex items-center gap-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+          <Sparkles size={15} style={{ color: 'var(--color-gold)' }} /> Wrapped — monthly & yearly
         </span>
         <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
       </button>

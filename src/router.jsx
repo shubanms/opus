@@ -13,6 +13,7 @@ import TemplatesPage from './pages/TemplatesPage.jsx';
 import AchievementsPage from './pages/AchievementsPage.jsx';
 import ProgressionPage from './pages/ProgressionPage.jsx';
 import HallOfRecordsPage from './pages/HallOfRecordsPage.jsx';
+import WrappedPage from './pages/WrappedPage.jsx';
 
 export const router = createBrowserRouter(
   [
@@ -27,6 +28,7 @@ export const router = createBrowserRouter(
         { path: '/achievements', element: <AchievementsPage /> },
         { path: '/progression', element: <ProgressionPage /> },
         { path: '/records', element: <HallOfRecordsPage /> },
+        { path: '/wrapped', element: <WrappedPage /> },
         { path: '/exercises', element: <ExercisePage /> },
         { path: '/exercises/:id', element: <ExerciseDetailPage /> },
         { path: '/progress', element: <ProgressPage /> },

@@ -1,8 +1,14 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap v3 in progress (see OPUS_ROADMAP_V3.md) — S1 + S8 done
+Current sprint: Roadmap v3 in progress (see OPUS_ROADMAP_V3.md) — S1 + S7 + S8 done
 Current version: v2.0.0 (→ v3.0.0 at v3 close)
+
+**Roadmap v3 S7 (Spotify-style Wrapped) done:**
+- Pure `utils/wrapped.js`: `buildWrapped(workouts,sets,prs,range,exName)` (sessions/volume/sets/PRs/XP/hours/top-lift/busiest-day/weekly series) + `monthRange`/`yearRange`/`rangeOf`/`availablePeriods` (months newest-first + years from first workout). Tested.
+- `hooks/useWrapped.js` (period → live data + selectable periods; defaults to current month).
+- `pages/WrappedPage.jsx` (/wrapped): Month/Year toggle + ◀▸ period stepper, headline volume CountUp + weekly sparkline, stat grid, top-lift/busiest/XP chips, share. Linked from ProfilePage.
+- `components/share/WrappedCard.jsx` (1080×1080, sparkline + stats) via generic ShareSheet.
 
 **Roadmap v3 S8 (Living home scene + animated reveals) done:**
 - Pure `utils/ambient.js` `sceneParams({streak,level,prestige,reducedMotion})` → {intensity, glowAlpha, goldShade, glowBlur, motionSpeed} (monotonic, clamped, motionSpeed 0 when reduced/effects-off). Tested.
