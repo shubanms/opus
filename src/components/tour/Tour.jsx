@@ -5,13 +5,13 @@ import { Dumbbell, TrendingUp, Award, BookOpen, CalendarCheck, Activity, Share2,
 import useSettingsStore from '../../store/settingsStore.js';
 
 const STEPS = [
-  { icon: Dumbbell, title: 'Log your workouts', body: 'Tap the center ➕ to start a session. Add exercises, log sets with the plate calculator, RPE and rest timer.' },
-  { icon: TrendingUp, title: 'Level up', body: 'Every set earns XP. Climb the ranks from First Rep to Magnum Opus — and beyond into prestige tiers.' },
+  { icon: Dumbbell, title: 'Log your workouts', body: 'Tap the center ➕ to start. Add exercises — reorder them or chain supersets — and log sets with the plate calculator, RPE and rest timer. Get interrupted? Your session is saved.' },
+  { icon: TrendingUp, title: 'Level up', body: 'Every set earns XP. Climb from First Rep to Magnum Opus and into prestige tiers, and clear weekly quests for bonus XP.' },
   { icon: Award, title: 'Unlock achievements', body: 'Hit milestones to earn trophies. Some are hidden — find them on your Profile.' },
   { icon: BookOpen, title: 'Your exercise library', body: 'Browse, favorite ★, colour-code, and add coaching notes that show every time you train a movement.' },
   { icon: CalendarCheck, title: 'Routines & planning', body: 'Build reusable routines with targets, assign them to weekdays, and get a "today" suggestion on Home.' },
-  { icon: Activity, title: 'Track recovery & progress', body: 'See which muscles are fresh on the body map, and chart volume, PRs and body metrics in Progress.' },
-  { icon: Share2, title: 'Show it off', body: 'Share customisable workout & profile cards to your friends straight from the app.' },
+  { icon: Activity, title: 'Track recovery & progress', body: 'See which muscles are fresh on the body map, track steps & water, and chart volume, PRs, estimated 1RM and body metrics.' },
+  { icon: Share2, title: 'Show it off', body: 'Share workout, profile, weekly-recap and Wrapped cards — your monthly & yearly stats — straight from the app.' },
   { icon: Palette, title: 'Make it yours', body: 'Sound, effects, dark mode and kg/lbs all live in Settings — and most start off. Open Settings to switch on what you like (you can replay this tour there anytime).' },
 ];
 

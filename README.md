@@ -8,17 +8,19 @@ A free, offline-first Progressive Web App for gym tracking with RPG progression.
 
 ## Features
 
-- **Workout logging** — sets, reps, RPE, warmups, rest timer, plate calculator
-- **Bodyweight support** — reps-only logging with optional added weight
-- **Exercise library** — curated across all muscle groups, difficulty tags, body-map filter, how-to videos
+- **Workout logging** — sets, reps, RPE, warmups, rest timer, plate calculator, **supersets**, **reorder**, **resume-after-reload**
+- **Bodyweight support** — reps-only logging with optional added weight (counts toward volume)
+- **Exercise library** — curated across all muscle groups, difficulty tags, body-map filter, notes & colour labels, how-to videos
 - **Routines & planning** — reusable templates with targets, weekly planner, today's-workout suggestion
 - **Progressive overload** — three-lever coaching (reps → sets → weight) + deload signal
-- **RPG system** — XP, levels, titles, a five-axis character radar, and level-up celebrations
-- **Progress charts** — weekly volume, muscle focus, training heatmap, per-exercise trends
-- **Health tracking** — body weight, measurements, sleep, pre-workout energy
-- **Shareable cards** — customizable workout & profile cards via the native share sheet
+- **RPG system** — XP, levels, titles, prestige tiers, a five-axis radar with month-over-month overlay, an evolving emblem, achievements & weekly quests
+- **Progress & insight** — weekly volume, muscle focus, training heatmap, recovery body-map, per-exercise trends, **estimated 1RM**, **Hall of Records**
+- **Health tracking** — body weight, measurements, sleep, pre-workout energy, daily **steps & water**
+- **Wrapped** — Spotify-style monthly & yearly recap, shareable
+- **Shareable cards** — customizable workout, profile, recap & challenge cards via the native share sheet
 - **Personal records** — auto-detected, with full revert when a workout is deleted
-- **Your data, yours** — JSON export/import, full local reset, installable PWA
+- **Comfort & polish** — light/dark themes, kg/lbs, equipment/plate inventory (gym/home), synthesized cues, guided tour & coach marks, in-app reminders
+- **Your data, yours** — JSON / CSV / PDF export, import, full local reset, installable PWA
 
 ## Tech stack
 
@@ -40,6 +42,16 @@ Pushes to `main` build and deploy to GitHub Pages via GitHub Actions (`.github/w
 ## Data & privacy
 
 All data is stored locally in IndexedDB. Nothing is sent to a server. Back up or move your data anytime via Settings → Data → Export / Import, or wipe it via Settings → Danger zone.
+
+## Documentation
+
+Plans, references, and project memory live in [`docs/`](./docs/):
+
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — codebase map (routes, DB, utils/hooks/stores, patterns)
+- [`docs/GUIDELINES.md`](./docs/GUIDELINES.md) — engineering, UX, data-integrity & testing rules
+- [`docs/RELEASES.md`](./docs/RELEASES.md) — what shipped in v1.0.0 / v2.0.0 / v3.0.0
+- [`docs/STATE.md`](./docs/STATE.md) — live status + build log
+- [`docs/PRD.md`](./docs/PRD.md), [`docs/ROADMAP_V2.md`](./docs/ROADMAP_V2.md), [`docs/ROADMAP_V3.md`](./docs/ROADMAP_V3.md) — the plans
 
 ---
 

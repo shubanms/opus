@@ -4,6 +4,9 @@ Last updated: 2026-05-24
 Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0.
 Current version: v3.0.0
 
+> Docs reorganized into `docs/` (this file moved here). Index: `docs/README.md`. Map: `docs/ARCHITECTURE.md`.
+> Rules: `docs/GUIDELINES.md`. Per-version features: `docs/RELEASES.md`. Entry point: root `CLAUDE.md`.
+
 **Roadmap v3 S5 (Export CSV / PDF) done:**
 - Pure `utils/csv.js` (`escapeCsv`/`toCsv`/`setsToCsv`, unit-aware) + test.
 - `dataActions.exportSetsCsv(unit)` (every set joined w/ workout+exercise names) and `exportPdf(unit)` (dependency-free printable report via window.open + print CSS → Save as PDF).
@@ -174,7 +177,7 @@ Current version: v3.0.0
 - Marking: favorite★ + color on exercises (ExerciseCard dot+star, detail toggle, ExercisePage favorites filter); color on templates (TemplateBuilder picker, TemplateCard dot); color on workouts (WorkoutCard picker+dot).
 
 ## Roadmap v2
-See OPUS_ROADMAP.md for Sprints 11–20.
+See ROADMAP_V2.md for Sprints 11–20.
 
 **Sprint 11 done:**
 - Central units: `store/settingsStore.js` (unit kg/lbs) + `utils/units.js` (toDisplay/toKg/unitLabel/fmtWeight/fmtVolume); threaded through SetLogger, PlateCalculator (lb plates), WorkoutCard, EndWorkoutModal, ExerciseDetail PRs+chart, Progress charts/body, share cards, overload nudge text, template targets.
