@@ -7,6 +7,10 @@ Current version: v3.0.0
 > Docs reorganized into `docs/` (this file moved here). Index: `docs/README.md`. Map: `docs/ARCHITECTURE.md`.
 > Rules: `docs/GUIDELINES.md`. Per-version features: `docs/RELEASES.md`. Entry point: root `CLAUDE.md`.
 
+**Bug fixes (post-wave):**
+- Build break: `ActivityRings.jsx` had `{burst && <Particles/>` missing `}` → fixed (#65). (node-env tests + node --check don't parse JSX, so JSX errors only fail the production build; consider adding a build step to the CI test job.)
+- Empty-workout XP exploit: `calcWorkoutXP([])` returns COMPLETE_BONUS, so finishing a session with **zero working sets** saved a workout + granted XP/streak (farmable). Fixed: EndWorkoutModal "Save & finish" disabled at 0 sets + `completeWorkout` discards empty sessions (`{discarded:true}`, clears activeWorkout, no save/XP); WorkoutPage skips celebration on discard.
+
 **New-ideas wave (post-v3) — auto-routines / shuffle / stale-nudge (4 PRs):**
 - **PR 1 (auto-generate) DONE**: pure `utils/routineGenerator.js` — `makeRng` (mulberry32), `LEVEL_DEFAULTS` (count+targets: beg 4/3×10, int 6/4×8, adv 7/4×6), `pickForGroup` (difficulty-proximity ranking = thin-advanced fallback), `defaultCount`, `generateRoutine({exercises,groups,level,count,rng})` (round-robin, no dupes) + tests. `RoutineGeneratorModal.jsx` (group chips from ALL_MUSCLES, level segmented, auto name, day, preview, Particles+chime) → `createTemplate`. "Auto" button + empty-state CTA on TemplatesPage. Assume full gym (no equipment UI).
 - **PR 2 (shuffle/re-roll) DONE**: pure `reshuffleRoutine({slots,intensity,pinnedIds,pool,rng})` (light=1/medium≈half/full=all; same-group same-difficulty swaps; pinned + targets preserved; no dupes) + tests. TemplateCard: one-tap **medium** shuffle button → updateTemplate. TemplateBuilder: light/medium/full shuffle control + per-row **pin** toggle (rows now carry muscleGroup/difficulty/pinned). Gated chime.

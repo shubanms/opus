@@ -95,6 +95,7 @@ export default function WorkoutPage() {
   async function handleSave(xp) {
     const result = await completeWorkout(xp);
     setEndOpen(false);
+    if (result?.discarded) return; // empty session — nothing saved or rewarded
     await maybePromptPermission();
     if (result?.prCount > 0) {
       notifyPR(`You set ${result.prCount} new record${result.prCount === 1 ? '' : 's'} this session.`);
