@@ -45,12 +45,18 @@ export async function requestPermission() {
   return Notification.requestPermission();
 }
 
-function inDND(s) {
-  const h = new Date().getHours();
+// Whether `now` falls in the do-not-disturb window (handles midnight wrap).
+// Exported so in-app reminders share the exact same quiet-hours logic.
+export function inQuietHours(s, now = new Date()) {
+  const h = now.getHours();
   if (s.dndStart === s.dndEnd) return false;
   return s.dndStart < s.dndEnd
     ? h >= s.dndStart && h < s.dndEnd
     : h >= s.dndStart || h < s.dndEnd; // window wraps midnight
+}
+
+function inDND(s) {
+  return inQuietHours(s);
 }
 
 export function notify(type, { title, body }) {

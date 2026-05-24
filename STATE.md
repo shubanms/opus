@@ -1,8 +1,15 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap v3 in progress (see OPUS_ROADMAP_V3.md) — S1 + S7 + S8 done
+Current sprint: Roadmap v3 — S1+S2+S7+S8 done; S6 dropped; S3/S4/S5 remain
 Current version: v2.0.0 (→ v3.0.0 at v3 close)
+
+**Roadmap v3 S2 (On-open reminders) done:**
+- Pure `utils/reminders.js` `pickReminders({settings,now,today,weekKey,lastWorkoutDate,streak,markers})` → in-app toasts: weeklySummary (once/ISO week), one daily nudge (streakRisk in evening if streak>0 else gymNudge), suppressed in quiet hours / when trained today / already shown. Tested.
+- `notifications.js` exports `inQuietHours` (inDND delegates).
+- `hooks/useOnOpenReminders.js`: fires once per app session via `uiStore.showToast`, dedupe markers in `opus_reminder_markers`, gated on loaded+profile+onboarded. Mounted in AppLayout. (Offline-safe; no OS push.)
+
+**S6 (Milestone certificates) dropped** per user.
 
 **Roadmap v3 S7 (Spotify-style Wrapped) done:**
 - Pure `utils/wrapped.js`: `buildWrapped(workouts,sets,prs,range,exName)` (sessions/volume/sets/PRs/XP/hours/top-lift/busiest-day/weekly series) + `monthRange`/`yearRange`/`rangeOf`/`availablePeriods` (months newest-first + years from first workout). Tested.

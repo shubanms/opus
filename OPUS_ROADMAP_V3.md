@@ -40,16 +40,16 @@ fits — never gratuitous, always gated by `settingsStore.effects`/`sound` and
   `settingsStore` (kg), back-compat shim for flat `barWeight`. New `EquipmentModal`.
 - **S5 — Export CSV / PDF**: pure `utils/csv.js`; `dataActions` CSV exports; PDF via
   `window.print()` + print CSS (no new dep).
-- **S6 — Milestone certificates**: pure `utils/milestones.js` (mirrors achievements,
-  reuses `computeStats`); `CertificateCard` via generic ShareSheet; live-derived
-  (celebrated keys in localStorage) — no migration.
-- **S7 — 'Wrapped' (Spotify-style)**: browsable period recap — current month "so far",
-  any previous month, and year-end. Pure `utils/wrapped.js` (`buildWrapped` +
-  `monthRange`/`yearRange`/`availablePeriods`, replaces the `useVolumeByWeek` stub);
-  `hooks/useWrapped.js`; period selector + shareable `WrappedCard`.
-- **S8 — Living home scene + animated stat reveals**: pure `utils/ambient.js`
-  (`sceneParams({streak,level,prestige})`, tested); Home aura/motion gated by
-  effects + reduced-motion; wire `CountUp` into profile/recap/progress + radar.
+- ~~**S6 — Milestone certificates**~~ — **dropped** (user decision; not needed).
+- **S7 — 'Wrapped' (Spotify-style)** — done: browsable period recap (current month
+  "so far", any previous month, year-end). Pure `utils/wrapped.js`; `hooks/useWrapped.js`;
+  `/wrapped` page + shareable `WrappedCard`.
+- **S8 — Living home scene + animated stat reveals** — done: pure `utils/ambient.js`;
+  Home aura/motion gated by effects + reduced-motion; `CountUp` on profile/recap.
+
+## Status
+Done: S1 (resume workout), S7 (Wrapped), S8 (living scene). Dropped: S6.
+Remaining: S2 (on-open reminders, in progress), S3 (reorder), S4 (equipment), S5 (export).
 
 ## Verification (per sprint)
 Container can't run the app/network — verify via code review, import scans,
