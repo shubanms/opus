@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles } from 'lucide-react';
+import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles, TrendingDown } from 'lucide-react';
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js';
 import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
+import { decayInfo } from '../utils/decay.js';
 import { fmtWeight, fmtVolume } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
@@ -38,7 +39,8 @@ export default function ProfilePage() {
   if (!loaded || !profile) return null;
 
   const totalXp = profile.totalXp ?? 0;
-  const { level } = getXPProgress(totalXp);
+  const { effectiveXp, decaying, lost } = decayInfo(profile);
+  const { level } = getXPProgress(effectiveXp);
   const age = profile.birthYear ? new Date().getFullYear() - profile.birthYear : null;
 
   const identity = [
@@ -51,8 +53,8 @@ export default function ProfilePage() {
   const profileShareData = {
     name: profile.name,
     level,
-    prestige: getPrestige(totalXp),
-    title: getRankLabel(totalXp),
+    prestige: getPrestige(effectiveXp),
+    title: getRankLabel(effectiveXp),
     stats: charStats,
     workouts: workouts.length,
     streak: profile.streak ?? 0,
@@ -62,7 +64,7 @@ export default function ProfilePage() {
   const challengeShareData = {
     name: profile.name,
     level,
-    title: getRankLabel(totalXp),
+    title: getRankLabel(effectiveXp),
     workouts: life.workouts,
     volumeKg: life.totalVolume,
     bestStreak: life.bestStreak,
@@ -90,6 +92,15 @@ export default function ProfilePage() {
       </p>
 
       <CharacterCard profile={profile} />
+
+      {decaying && (
+        <div className="mt-2 flex items-center gap-2 rounded-xl px-4 py-2.5" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ember)' }}>
+          <TrendingDown size={15} style={{ color: 'var(--color-ember)' }} />
+          <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Rank slipping from inactivity — <span style={{ color: 'var(--color-text-primary)' }}>−{lost.toLocaleString()} XP</span>. Train to recover it.
+          </span>
+        </div>
+      )}
 
       <button
         onClick={() => navigate('/progression')}
