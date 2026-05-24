@@ -3,12 +3,15 @@ import { Plus, Trash2, Flame, Dumbbell, StickyNote } from 'lucide-react';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useLastSets } from '../../hooks/useWorkout.js';
+import { useHaptics } from '../../hooks/useHaptics.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
+import { calcSetXP } from '../../utils/rpg.js';
 import PlateCalculator from './PlateCalculator.jsx';
 
 export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = false }) {
   const { activeWorkout, logSet, removeSet, toggleWarmup, setSetNote } = useWorkoutStore();
   const unit = useSettingsStore((s) => s.unit);
+  const haptic = useHaptics();
   const exercise = activeWorkout?.exercises.find((e) => e.exerciseId === exerciseId);
   const lastSets = useLastSets(exerciseId);
 
@@ -18,6 +21,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   const [showRpe, setShowRpe] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
   const [addWeight, setAddWeight] = useState(false);
+  const [xpFloat, setXpFloat] = useState(null);
 
   if (!exercise) return null;
 
@@ -28,12 +32,15 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
   function handleLog() {
     if (!canLog) return;
+    const weightKg = showWeight ? toKg(weightNum || 0, unit) : 0;
     logSet(exerciseId, {
-      weight: showWeight ? toKg(weightNum || 0, unit) : 0,
+      weight: weightKg,
       reps: repsNum || 0,
       rpe: showRpe ? parseInt(rpe) || null : null,
       isWarmup: false,
     });
+    haptic('tap');
+    setXpFloat({ key: Date.now(), xp: calcSetXP(weightKg, repsNum || 0) });
     onSetLogged?.();
     setReps('');
     setRpe('');
@@ -99,7 +106,17 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
       ))}
 
       {/* Input row */}
-      <div className="mt-2 flex items-center gap-2">
+      <div className="relative mt-2 flex items-center gap-2">
+        {xpFloat && xpFloat.xp > 0 && (
+          <span
+            key={xpFloat.key}
+            className="pointer-events-none absolute right-1 top-0 font-mono text-sm font-bold"
+            style={{ color: 'var(--color-gold)', animation: 'floatUp 900ms var(--ease-out) forwards' }}
+            onAnimationEnd={() => setXpFloat(null)}
+          >
+            +{xpFloat.xp} XP
+          </span>
+        )}
         {showWeight && (
           <>
             <div className="flex flex-1 items-center gap-1 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>

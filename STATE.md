@@ -1,8 +1,19 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 12 (Notes & Color-Coding) — Roadmap v2
-Current version: v1.2.0 (post-MVP)
+Current sprint: 13 (Celebration & Motion Engine) — Roadmap v2
+Current version: v1.3.0 (post-MVP)
+
+**Sprint 13 done:**
+- `components/fx/Particles.jsx` (gold burst, portaled), `components/fx/CountUp.jsx` (odometer)
+- `hooks/useHaptics.js` (vibrate patterns, gated by settings.effects), `utils/sound.js` (WebAudio chime, gated by settings.sound)
+- settingsStore: effects + sound prefs; Settings → Experience toggles
+- LevelUpScreen: particles + haptics + chime
+- WorkoutPage: PR burst (particles + pr haptic + chime); success haptic on save
+- SetLogger: "+XP" float on set log + tap haptic
+- EndWorkoutModal: CountUp odometer for XP + volume
+- RestTimer: ring pulses + gold→ember in final 10s + completion haptic
+- animations.css: particleFly, floatUp, timerPulse keyframes
 
 **Sprint 12 done:**
 - DB v5: `exerciseNotes` table (sticky coaching notes). exercises.favorite/color, sets.note, workouts.color are unindexed fields.
