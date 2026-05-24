@@ -11,6 +11,37 @@ export const PR_BONUS = 50;
 export const STREAK_BONUS_PER_DAY = 10;
 export const CONSISTENCY_BONUS = 30;
 
+// The 10 named ranks with their XP thresholds.
+export const RANKS = XP_THRESHOLDS.map((xp, i) => ({ level: i + 1, title: TITLES[i + 1], xp }));
+
+// Beyond Magnum Opus (level 10 / max threshold) come prestige tiers.
+export const MAX_TITLE_XP = XP_THRESHOLDS[XP_THRESHOLDS.length - 1];
+export const PRESTIGE_STEP = 15000;
+
+const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+export function roman(n) {
+  return ROMAN[n] ?? `x${n}`;
+}
+
+// Prestige tier (0 until Magnum Opus, then 1, 2, 3… every PRESTIGE_STEP XP).
+export function getPrestige(totalXp) {
+  if (totalXp < MAX_TITLE_XP) return 0;
+  return 1 + Math.floor((totalXp - MAX_TITLE_XP) / PRESTIGE_STEP);
+}
+
+// XP threshold to reach a given prestige tier.
+export function prestigeXp(tier) {
+  return MAX_TITLE_XP + (tier - 1) * PRESTIGE_STEP;
+}
+
+// Display label: "Magnum Opus II" once prestiging, else the plain title.
+export function getRankLabel(totalXp) {
+  const level = getLevelFromTotalXP(totalXp);
+  const title = getTitle(level);
+  const p = getPrestige(totalXp);
+  return p > 0 ? `${title} ${roman(p)}` : title;
+}
+
 export function calcSetXP(weight, reps) {
   // Bodyweight sets (no external load) still earn XP from reps.
   if (!weight || weight <= 0) return Math.round((reps ?? 0));

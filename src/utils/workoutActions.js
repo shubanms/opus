@@ -1,6 +1,6 @@
 import { db } from '../db/db.js';
 import { getLevelFromTotalXP, getTitle } from './rpg.js';
-import { ACHIEVEMENTS } from './achievements.js';
+import { ACHIEVEMENTS, reconcileAchievements } from './achievements.js';
 
 // Rebuild PR records for an exercise from its remaining (non-warmup) sets.
 export async function recomputePRs(exerciseId) {
@@ -66,5 +66,6 @@ export async function deleteWorkout(workoutId) {
   await db.workouts.delete(workoutId);
 
   for (const exId of affected) await recomputePRs(exId);
+  await reconcileAchievements();
   await recomputeProfile();
 }
