@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles, TrendingDown } from 'lucide-react';
+import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles, TrendingDown, Swords } from 'lucide-react';
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js';
+import { useBossStats } from '../hooks/useBosses.js';
 import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
 import { decayInfo } from '../utils/decay.js';
+import { cappedLevel, activeBoss } from '../utils/bosses.js';
 import { fmtWeight, fmtVolume } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
@@ -34,13 +36,16 @@ export default function ProfilePage() {
   const charStats = useCharacterStats();
   const bodyweight = useCurrentBodyweight();
   const life = useLifetimeStats();
+  const bossStats = useBossStats();
   const unit = useSettingsStore((s) => s.unit);
 
   if (!loaded || !profile) return null;
 
   const totalXp = profile.totalXp ?? 0;
   const { effectiveXp, decaying, lost } = decayInfo(profile);
-  const { level } = getXPProgress(effectiveXp);
+  const { level: rawLevel } = getXPProgress(effectiveXp);
+  const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
+  const boss = bossStats ? activeBoss(rawLevel, bossStats) : null;
   const age = profile.birthYear ? new Date().getFullYear() - profile.birthYear : null;
 
   const identity = [
@@ -99,6 +104,20 @@ export default function ProfilePage() {
           <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             Rank slipping from inactivity — <span style={{ color: 'var(--color-text-primary)' }}>−{lost.toLocaleString()} XP</span>. Train to recover it.
           </span>
+        </div>
+      )}
+
+      {boss && (
+        <div className="mt-2 rounded-xl px-4 py-3" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}>
+          <div className="flex items-center gap-2">
+            <Swords size={14} style={{ color: 'var(--color-gold)' }} />
+            <span className="font-sans text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
+              Boss gate · Level {boss.gate}
+            </span>
+          </div>
+          <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-text-inverse)' }}>
+            <span className="font-semibold">{boss.title}</span> — {boss.desc} to advance past level {boss.gate}.
+          </p>
         </div>
       )}
 

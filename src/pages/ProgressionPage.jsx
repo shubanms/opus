@@ -3,6 +3,8 @@ import { ArrowLeft, Check, Lock, Star } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { RANKS, getLevelFromTotalXP, getPrestige, prestigeXp, roman, getRankLabel, PRESTIGE_STEP } from '../utils/rpg.js';
 import { decayInfo } from '../utils/decay.js';
+import { bossList } from '../utils/bosses.js';
+import { useBossStats } from '../hooks/useBosses.js';
 
 function Rung({ reached, current, left, right, sub }) {
   return (
@@ -40,6 +42,8 @@ function Rung({ reached, current, left, right, sub }) {
 export default function ProgressionPage() {
   const navigate = useNavigate();
   const { profile } = useRPG();
+  const bossStats = useBossStats();
+  const bosses = bossList(bossStats);
   const totalXp = decayInfo(profile ?? {}).effectiveXp;
   const level = getLevelFromTotalXP(totalXp);
   const prestige = getPrestige(totalXp);
@@ -76,6 +80,25 @@ export default function ProgressionPage() {
             />
           );
         })}
+      </div>
+
+      <h2 className="mb-2 mt-6 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+        Boss gates
+      </h2>
+      <p className="mb-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+        Each milestone level is sealed until you clear its challenge — XP alone won't pass it.
+      </p>
+      <div className="flex flex-col gap-2">
+        {bosses.map((b) => (
+          <Rung
+            key={b.key}
+            reached={b.cleared}
+            current={!b.cleared && level >= b.gate}
+            left={b.title}
+            sub={`Level ${b.gate} · ${b.desc}`}
+            right={b.cleared ? 'Cleared' : 'Locked'}
+          />
+        ))}
       </div>
 
       <h2 className="mb-2 mt-6 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
