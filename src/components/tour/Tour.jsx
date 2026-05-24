@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { Dumbbell, TrendingUp, Award, BookOpen, CalendarCheck, Activity, Share2, Palette } from 'lucide-react';
 import useSettingsStore from '../../store/settingsStore.js';
 
@@ -11,19 +12,21 @@ const STEPS = [
   { icon: CalendarCheck, title: 'Routines & planning', body: 'Build reusable routines with targets, assign them to weekdays, and get a "today" suggestion on Home.' },
   { icon: Activity, title: 'Track recovery & progress', body: 'See which muscles are fresh on the body map, and chart volume, PRs and body metrics in Progress.' },
   { icon: Share2, title: 'Show it off', body: 'Share customisable workout & profile cards to your friends straight from the app.' },
-  { icon: Palette, title: 'Make it yours', body: 'Dark mode, kg/lbs, effects & sound live in Settings — where you can replay this tour anytime.' },
+  { icon: Palette, title: 'Make it yours', body: 'Sound, effects, dark mode and kg/lbs all live in Settings — and most start off. Open Settings to switch on what you like (you can replay this tour there anytime).' },
 ];
 
 export default function Tour() {
   const setTourSeen = useSettingsStore((s) => s.setTourSeen);
+  const navigate = useNavigate();
   const [i, setI] = useState(0);
 
   const step = STEPS[i];
   const last = i === STEPS.length - 1;
   const Icon = step.icon;
 
-  function finish() {
+  function finish(goSettings = false) {
     setTourSeen(true);
+    if (goSettings) navigate('/settings');
   }
 
   return createPortal(
@@ -32,7 +35,7 @@ export default function Tour() {
       style={{ background: 'var(--color-obsidian)' }}
     >
       <button
-        onClick={finish}
+        onClick={() => finish(false)}
         className="absolute right-5 top-6 font-sans text-sm"
         style={{ color: 'var(--color-ash)' }}
       >
@@ -75,21 +78,31 @@ export default function Tour() {
 
       {/* Controls */}
       <div className="mt-8 flex w-full max-w-xs gap-3">
-        {i > 0 && (
+        {last ? (
           <button
-            onClick={() => setI(i - 1)}
+            onClick={() => finish(false)}
             className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
             style={{ background: 'var(--color-stone)', color: 'var(--color-text-inverse)' }}
           >
-            Back
+            Not now
           </button>
+        ) : (
+          i > 0 && (
+            <button
+              onClick={() => setI(i - 1)}
+              className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
+              style={{ background: 'var(--color-stone)', color: 'var(--color-text-inverse)' }}
+            >
+              Back
+            </button>
+          )
         )}
         <button
-          onClick={() => (last ? finish() : setI(i + 1))}
+          onClick={() => (last ? finish(true) : setI(i + 1))}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
         >
-          {last ? 'Get started' : 'Next'}
+          {last ? 'Open Settings' : 'Next'}
         </button>
       </div>
     </div>,

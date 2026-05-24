@@ -51,6 +51,7 @@ Current version: v1.7.0 (post-MVP)
 **Walkthrough tour (detour) done:**
 - `components/tour/Tour.jsx` — themed full-screen 8-step carousel (workouts, XP/ranks, achievements, library/notes, routines, recovery/progress, sharing, settings) with dots, Back/Next, Skip.
 - `settingsStore.tourSeen` + setTourSeen; shows after onboarding when unseen; Settings → Experience → "Replay walkthrough" re-runs it.
+- Final step now ends with "Open Settings" (navigates to /settings) + "Not now", since sound/effects default off — nudges users to switch on what they want.
 - CI consolidated into deploy.yml (test gates deploy; PRs run test only); test.yml removed.
 
 **Sprint 17 extension done:**
