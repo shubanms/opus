@@ -16,14 +16,15 @@ function Stat({ icon: Icon, value, label }) {
   );
 }
 
-export default function WeeklyRecap() {
+export default function WeeklyRecap({ dismissible = true }) {
   const recap = useWeeklyRecap();
   const { profile } = useRPG();
   const unit = useSettingsStore((s) => s.unit);
   const dismissedWeek = useSettingsStore((s) => s.recapDismissedWeek);
   const setDismissed = useSettingsStore((s) => s.setRecapDismissedWeek);
 
-  if (!recap.hasData || dismissedWeek === recap.weekKey) return null;
+  if (!recap.hasData) return null;
+  if (dismissible && dismissedWeek === recap.weekKey) return null;
 
   const shareData = {
     name: profile?.name || 'Athlete',
@@ -42,9 +43,11 @@ export default function WeeklyRecap() {
         <p className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
           Your week so far
         </p>
-        <button onClick={() => setDismissed(recap.weekKey)} aria-label="Dismiss recap">
-          <X size={15} style={{ color: 'var(--color-ash)' }} />
-        </button>
+        {dismissible && (
+          <button onClick={() => setDismissed(recap.weekKey)} aria-label="Dismiss recap">
+            <X size={15} style={{ color: 'var(--color-ash)' }} />
+          </button>
+        )}
       </div>
 
       <div className="flex">
