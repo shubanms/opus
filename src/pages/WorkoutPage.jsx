@@ -8,9 +8,12 @@ import RestTimer from '../components/workout/RestTimer.jsx';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal.jsx';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import LevelUpScreen from '../components/rpg/LevelUpScreen.jsx';
+import Particles from '../components/fx/Particles.jsx';
 import { useExercise } from '../hooks/useExercises.js';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
+import { useHaptics } from '../hooks/useHaptics.js';
 import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
+import { playChime } from '../utils/sound.js';
 
 function ElapsedTimer({ startedAt }) {
   const [secs, setSecs] = useState(Math.round((Date.now() - startedAt) / 1000));
@@ -51,7 +54,9 @@ export default function WorkoutPage() {
   const [showRest, setShowRest] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [levelUp, setLevelUp] = useState(null);
+  const [celebrate, setCelebrate] = useState(false);
   const nameRef = useRef();
+  const haptic = useHaptics();
 
   const alreadyAdded = activeWorkout?.exercises.map((e) => e.exerciseId) ?? [];
 
@@ -68,12 +73,20 @@ export default function WorkoutPage() {
     }
     if (result?.leveledUp) {
       setLevelUp({ level: result.newLevel, title: result.newTitle });
+    } else if (result?.prCount > 0) {
+      haptic('pr');
+      playChime('pr');
+      setCelebrate(true);
+      setTimeout(() => setCelebrate(false), 1300);
+    } else {
+      haptic('success');
     }
   }
 
   if (!activeWorkout) {
     return (
       <>
+        {celebrate && <Particles />}
         {levelUp && (
           <LevelUpScreen level={levelUp.level} title={levelUp.title} onDismiss={() => setLevelUp(null)} />
         )}

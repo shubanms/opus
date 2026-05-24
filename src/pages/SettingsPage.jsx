@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 import { useRPG } from '../hooks/useRPG.js';
@@ -51,6 +51,10 @@ export default function SettingsPage() {
   const setBarWeight = useSettingsStore((s) => s.setBarWeight);
   const unit = useSettingsStore((s) => s.unit);
   const setUnit = useSettingsStore((s) => s.setUnit);
+  const effects = useSettingsStore((s) => s.effects);
+  const setEffects = useSettingsStore((s) => s.setEffects);
+  const sound = useSettingsStore((s) => s.sound);
+  const setSound = useSettingsStore((s) => s.setSound);
   const bodyweight = useCurrentBodyweight();
   const fileRef = useRef();
   const age = profile?.birthYear ? new Date().getFullYear() - profile.birthYear : '';
@@ -237,6 +241,22 @@ export default function SettingsPage() {
             </div>
           </>
         )}
+      </section>
+
+      {/* Experience */}
+      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles size={14} style={{ color: 'var(--color-ash)' }} />
+          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            Experience
+          </span>
+        </div>
+        <Row label="Effects & haptics">
+          <Switch on={effects} onChange={setEffects} />
+        </Row>
+        <Row label="Sound">
+          <Switch on={sound} onChange={setSound} />
+        </Row>
       </section>
 
       {/* Data */}

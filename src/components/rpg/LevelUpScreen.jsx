@@ -1,14 +1,19 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import TitleBadge from './TitleBadge.jsx';
+import Particles from '../fx/Particles.jsx';
+import { useHaptics } from '../../hooks/useHaptics.js';
+import { playChime } from '../../utils/sound.js';
 
 // Full-screen gold celebration shown when the user levels up.
 export default function LevelUpScreen({ level, title, onDismiss }) {
+  const haptic = useHaptics();
   useEffect(() => {
-    navigator.vibrate?.([60, 40, 120]);
+    haptic('levelup');
+    playChime('levelup');
     const t = setTimeout(onDismiss, 4200);
     return () => clearTimeout(t);
-  }, [onDismiss]);
+  }, [onDismiss]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return createPortal(
     <div
@@ -16,6 +21,7 @@ export default function LevelUpScreen({ level, title, onDismiss }) {
       style={{ background: 'var(--color-obsidian)', animation: 'fadeIn 300ms var(--ease-out)' }}
       onClick={onDismiss}
     >
+      <Particles count={28} />
       <p
         className="font-sans text-xs font-semibold uppercase tracking-[0.3em]"
         style={{ color: 'var(--color-gold)', animation: 'fadeSlideUp 500ms var(--ease-out)' }}

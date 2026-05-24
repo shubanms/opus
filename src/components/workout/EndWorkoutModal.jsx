@@ -11,6 +11,7 @@ import useSettingsStore from '../../store/settingsStore.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import XPBar from '../rpg/XPBar.jsx';
 import ShareButton from '../share/ShareButton.jsx';
+import CountUp from '../fx/CountUp.jsx';
 
 function formatDuration(secs) {
   const m = Math.floor(secs / 60);
@@ -86,16 +87,12 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
         </div>
         <div className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
           <p className="font-sans text-xs font-medium" style={{ color: 'var(--color-ash)' }}>vol</p>
-          <p className="mt-1 font-mono text-xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
-            {fmtVolume(totalVolume, unit)}
-          </p>
+          <CountUp value={totalVolume} format={(n) => fmtVolume(n, unit)} className="mt-1 block font-mono text-xl font-medium" style={{ color: 'var(--color-text-primary)' }} />
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Total volume</p>
         </div>
         <div className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
           <Zap size={14} style={{ color: 'var(--color-gold)' }} />
-          <p className="mt-1 font-mono text-xl font-medium" style={{ color: 'var(--color-gold)' }}>
-            +{stats.xp}
-          </p>
+          <CountUp value={stats.xp} format={(n) => `+${Math.round(n)}`} className="mt-1 block font-mono text-xl font-medium" style={{ color: 'var(--color-gold)' }} />
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>XP earned</p>
         </div>
       </div>
