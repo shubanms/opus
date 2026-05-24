@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles } from 'lucide-react';
+import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import EquipmentModal from '../components/settings/EquipmentModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -10,7 +10,7 @@ import useUserStore from '../store/userStore.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
 import { NOTIF_TYPES } from '../utils/notifications.js';
-import { exportData, importData } from '../utils/dataActions.js';
+import { exportData, importData, exportSetsCsv, exportPdf } from '../utils/dataActions.js';
 import { logBodyStat } from '../utils/healthActions.js';
 import { toDisplay, toKg, unitLabel } from '../utils/units.js';
 
@@ -219,7 +219,7 @@ export default function SettingsPage() {
         </div>
         <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>OPUS</p>
         <p className="font-sans text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>Build your masterpiece.</p>
-        <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-ash)' }}>v2.0.0</p>
+        <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-ash)' }}>v3.0.0</p>
         <a
           href="https://github.com/shubanms/opus"
           target="_blank"
@@ -353,6 +353,26 @@ export default function SettingsPage() {
             <Upload size={15} /> Import
           </button>
           <input ref={fileRef} type="file" accept="application/json" onChange={handleImport} className="hidden" />
+        </div>
+
+        <p className="mb-2 mt-4 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          Or export for spreadsheets / printing:
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportSetsCsv(unit)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            <FileText size={15} /> CSV
+          </button>
+          <button
+            onClick={() => exportPdf(unit)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            <Printer size={15} /> PDF
+          </button>
         </div>
       </section>
 

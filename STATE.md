@@ -1,8 +1,14 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap v3 — S1+S2+S3+S4+S7+S8 done; S6 dropped; S5 remains
-Current version: v2.0.0 (→ v3.0.0 at v3 close)
+Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0.
+Current version: v3.0.0
+
+**Roadmap v3 S5 (Export CSV / PDF) done:**
+- Pure `utils/csv.js` (`escapeCsv`/`toCsv`/`setsToCsv`, unit-aware) + test.
+- `dataActions.exportSetsCsv(unit)` (every set joined w/ workout+exercise names) and `exportPdf(unit)` (dependency-free printable report via window.open + print CSS → Save as PDF).
+- Settings → Data: CSV + PDF buttons alongside JSON export/import.
+- Version bumped to **v3.0.0** (package.json + Settings About). Roadmap v3 complete.
 
 **Roadmap v3 S4 (Equipment / plate inventory) done:**
 - `settingsStore.inventory` { active, gym/home: { barKg, plates, unit } } + setters (setInventoryActive/Bar/Plates). Plates are display-unit numbers stamped with `unit`; barKg null → global barWeight; plates null → standard set.
