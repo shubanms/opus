@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { Flame, ChevronRight, Play, Moon, CalendarCheck } from 'lucide-react';
+import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
+import { decayInfo } from '../utils/decay.js';
 import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
@@ -51,10 +52,10 @@ export default function HomePage() {
   const recent = workouts.slice(0, 3);
 
   const effects = useSettingsStore((s) => s.effects);
-  const totalXp = profile?.totalXp ?? 0;
-  const { level } = getXPProgress(totalXp);
-  const prestige = getPrestige(totalXp);
-  const title = getRankLabel(totalXp);
+  const { effectiveXp, decaying, lost } = decayInfo(profile ?? {});
+  const { level } = getXPProgress(effectiveXp);
+  const prestige = getPrestige(effectiveXp);
+  const title = getRankLabel(effectiveXp);
 
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -112,7 +113,13 @@ export default function HomePage() {
               </span>
             )}
           </div>
-          <XPBar totalXp={totalXp} showLabel={false} />
+          <XPBar totalXp={effectiveXp} showLabel={false} />
+          {decaying && (
+            <p className="mt-2 flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
+              <TrendingDown size={12} />
+              Rank slipping — train to recover (−{lost.toLocaleString()} XP)
+            </p>
+          )}
         </div>
       )}
 

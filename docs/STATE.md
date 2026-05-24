@@ -13,7 +13,8 @@ Current version: v3.0.0
 
 **RPG expansion (phased — decided with user):**
 - **Phase 1 (50-level curve) DONE**: `rpg.js` now `xpForLevel(L)=300·(L-1)²`, `LEVEL_COUNT=50`, closed-form `getLevelFromTotalXP` (inverse sqrt). 10 named titles spread across 50 in bands of 5 (`getTitle`); `RANKS` = 10 milestone ranks at levels 1/6/11/…/46. Prestige after level 50, `PRESTIGE_STEP=30000`. Curve closely matches old thresholds → no one drops a level. ProgressionPage shows band ranges + band-based "current". Tests updated.
-- TODO Phase 2: demotion = inactivity decay + streak-break penalty. Phase 3: boss-fight HARD gates at milestone levels (10/20/30/40/50).
+- **Phase 2 (demotion) DONE**: pure `utils/decay.js` — `inactivityDecay` (grace 4d, 2.5%/day, cap 40%), `streakBreakPenalty` (gated past grace, 20 XP/streak-day, cap 1000), `decayInfo(profile,now)→{effectiveXp,lost,decaying,days}`. Display-derived only (stored totalXp never mutated → training recovers it; no recompute changes). Threaded into Home/Profile/CharacterCard/Progression level+rank+XPBar (lifetime "Total XP" stat stays earned). "Rank slipping" indicator on Home + Profile. Tests.
+- TODO Phase 3: boss-fight HARD gates at milestone levels (10/20/30/40/50).
 
 **RPG polish/bugfix (post-v3):**
 - `getXPProgress` now prestige-aware at/after max level — tracks the prestige band so "XP to next" is never negative (fixed underflow at Lv.10 / huge XP). +tests.

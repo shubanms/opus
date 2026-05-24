@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
 import { getXPProgress, getRankLabel, getPrestige } from '../../utils/rpg.js';
 import { useCharacterStats } from '../../hooks/useRPG.js';
+import { decayInfo } from '../../utils/decay.js';
 import { monthKeyOf, saveSnapshot, getSnapshots, previousSnapshot, mergeRadarSeries } from '../../utils/snapshots.js';
 import OpusMark from '../logo/OpusMark.jsx';
 import TitleBadge from './TitleBadge.jsx';
@@ -12,10 +13,10 @@ const ASH = '#8A8780';
 
 export default function CharacterCard({ profile }) {
   const stats = useCharacterStats();
-  const totalXp = profile?.totalXp ?? 0;
-  const { level } = getXPProgress(totalXp);
-  const prestige = getPrestige(totalXp);
-  const title = getRankLabel(totalXp);
+  const { effectiveXp } = decayInfo(profile ?? {});
+  const { level } = getXPProgress(effectiveXp);
+  const prestige = getPrestige(effectiveXp);
+  const title = getRankLabel(effectiveXp);
 
   // Keep this month's snapshot fresh; overlay the most recent prior month.
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function CharacterCard({ profile }) {
       </div>
 
       <div className="mt-2">
-        <XPBar totalXp={totalXp} />
+        <XPBar totalXp={effectiveXp} />
       </div>
     </div>
   );

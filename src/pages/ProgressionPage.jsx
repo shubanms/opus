@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Lock, Star } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { RANKS, getLevelFromTotalXP, getPrestige, prestigeXp, roman, getRankLabel, PRESTIGE_STEP } from '../utils/rpg.js';
+import { decayInfo } from '../utils/decay.js';
 
 function Rung({ reached, current, left, right, sub }) {
   return (
@@ -39,7 +40,7 @@ function Rung({ reached, current, left, right, sub }) {
 export default function ProgressionPage() {
   const navigate = useNavigate();
   const { profile } = useRPG();
-  const totalXp = profile?.totalXp ?? 0;
+  const totalXp = decayInfo(profile ?? {}).effectiveXp;
   const level = getLevelFromTotalXP(totalXp);
   const prestige = getPrestige(totalXp);
   const tiers = [1, 2, 3, 4, 5];
