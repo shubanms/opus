@@ -27,19 +27,22 @@ describe('calcWorkoutXP', () => {
 });
 
 describe('getLevelFromTotalXP', () => {
-  it('maps thresholds to levels and caps at 10', () => {
+  it('maps thresholds to levels and caps at 50', () => {
     expect(getLevelFromTotalXP(0)).toBe(1);
-    expect(getLevelFromTotalXP(499)).toBe(1);
-    expect(getLevelFromTotalXP(500)).toBe(2);
-    expect(getLevelFromTotalXP(25000)).toBe(10);
-    expect(getLevelFromTotalXP(999999)).toBe(10);
+    expect(getLevelFromTotalXP(299)).toBe(1);
+    expect(getLevelFromTotalXP(300)).toBe(2);
+    expect(getLevelFromTotalXP(1200)).toBe(3);
+    expect(getLevelFromTotalXP(720300)).toBe(50); // xpForLevel(50)
+    expect(getLevelFromTotalXP(9_999_999)).toBe(50);
   });
 });
 
 describe('getTitle', () => {
-  it('returns the rank title for a level', () => {
+  it('spreads the 10 titles across 50 levels (bands of 5)', () => {
     expect(getTitle(1)).toBe('First Rep');
-    expect(getTitle(10)).toBe('Magnum Opus');
+    expect(getTitle(6)).toBe('Iron Beginner');
+    expect(getTitle(46)).toBe('Magnum Opus');
+    expect(getTitle(50)).toBe('Magnum Opus');
     expect(getTitle(99)).toBe('Magnum Opus');
   });
 });
@@ -49,11 +52,11 @@ describe('getXPProgress', () => {
     const p = getXPProgress(0);
     expect(p.level).toBe(1);
     expect(p.progress).toBeGreaterThanOrEqual(0);
-    expect(p.xpToNext).toBe(500);
+    expect(p.xpToNext).toBe(300);
   });
   it('tracks the prestige band at/after max level (never negative)', () => {
     const atTier2 = getXPProgress(prestigeXp(2));
-    expect(atTier2.level).toBe(10);
+    expect(atTier2.level).toBe(50);
     expect(atTier2.prestige).toBe(2);
     expect(atTier2.progress).toBe(0);
     expect(atTier2.xpToNext).toBeGreaterThan(0);

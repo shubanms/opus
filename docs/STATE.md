@@ -11,8 +11,9 @@ Current version: v3.0.0
 - `sound.js` added cues: `tick` (set logged), `tap` (add exercise), `start` (workout start), `delete` (soft descending — deletions). All gated by settingsStore.sound.
 - Wired: SetLogger (tick), WorkoutPage start/add (start/tap), HomePage start template (start), WorkoutCard delete / ExerciseDetail delete / ResetDataModal wipe / ProgressPage body+sleep+activity deletes (delete).
 
-**RPG expansion (in progress, phased — decided with user):**
-- ~50-level steepening curve; demotion = inactivity decay + streak-break penalty; boss-fight HARD gates at milestone levels (10/20/30/40/50). Build as 3 PRs: (1) levels, (2) decay+penalty, (3) boss gates.
+**RPG expansion (phased — decided with user):**
+- **Phase 1 (50-level curve) DONE**: `rpg.js` now `xpForLevel(L)=300·(L-1)²`, `LEVEL_COUNT=50`, closed-form `getLevelFromTotalXP` (inverse sqrt). 10 named titles spread across 50 in bands of 5 (`getTitle`); `RANKS` = 10 milestone ranks at levels 1/6/11/…/46. Prestige after level 50, `PRESTIGE_STEP=30000`. Curve closely matches old thresholds → no one drops a level. ProgressionPage shows band ranges + band-based "current". Tests updated.
+- TODO Phase 2: demotion = inactivity decay + streak-break penalty. Phase 3: boss-fight HARD gates at milestone levels (10/20/30/40/50).
 
 **RPG polish/bugfix (post-v3):**
 - `getXPProgress` now prestige-aware at/after max level — tracks the prestige band so "XP to next" is never negative (fixed underflow at Lv.10 / huge XP). +tests.
