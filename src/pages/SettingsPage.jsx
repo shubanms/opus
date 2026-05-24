@@ -58,6 +58,7 @@ export default function SettingsPage() {
   const setSound = useSettingsStore((s) => s.setSound);
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
+  const setTourSeen = useSettingsStore((s) => s.setTourSeen);
   const bodyweight = useCurrentBodyweight();
   const fileRef = useRef();
   const age = profile?.birthYear ? new Date().getFullYear() - profile.birthYear : '';
@@ -270,6 +271,13 @@ export default function SettingsPage() {
         <Row label="Sound">
           <Switch on={sound} onChange={setSound} />
         </Row>
+        <button
+          onClick={() => { setTourSeen(false); navigate('/home'); }}
+          className="mt-3 w-full rounded-xl py-2.5 font-sans text-sm font-medium"
+          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+        >
+          Replay walkthrough
+        </button>
       </section>
 
       {/* Data */}
