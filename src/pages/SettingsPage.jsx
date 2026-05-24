@@ -59,6 +59,10 @@ export default function SettingsPage() {
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
   const setTourSeen = useSettingsStore((s) => s.setTourSeen);
+  const stepGoal = useSettingsStore((s) => s.stepGoal);
+  const setStepGoal = useSettingsStore((s) => s.setStepGoal);
+  const waterGoal = useSettingsStore((s) => s.waterGoal);
+  const setWaterGoal = useSettingsStore((s) => s.setWaterGoal);
   const bodyweight = useCurrentBodyweight();
   const fileRef = useRef();
   const age = profile?.birthYear ? new Date().getFullYear() - profile.birthYear : '';
@@ -165,6 +169,28 @@ export default function SettingsPage() {
             defaultValue={toDisplay(barWeight, unit)}
             onBlur={(e) => setBarWeight(toKg(Number(e.target.value) || 0, unit))}
             type="number" inputMode="decimal"
+            className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+        </Row>
+
+        <Row label="Daily step goal">
+          <input
+            key={stepGoal}
+            defaultValue={stepGoal}
+            onBlur={(e) => setStepGoal(Math.max(0, parseInt(e.target.value) || 0))}
+            type="number" inputMode="numeric"
+            className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+        </Row>
+
+        <Row label="Daily water goal (glasses)">
+          <input
+            key={waterGoal}
+            defaultValue={waterGoal}
+            onBlur={(e) => setWaterGoal(Math.max(1, parseInt(e.target.value) || 1))}
+            type="number" inputMode="numeric"
             className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
           />

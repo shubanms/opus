@@ -8,6 +8,7 @@ import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
 import RecoveryMap from '../components/progress/RecoveryMap.jsx';
+import ActivityRings from '../components/progress/ActivityRings.jsx';
 import useWorkoutStore from '../store/workoutStore.js';
 
 function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
@@ -120,6 +121,11 @@ export default function HomePage() {
       ) : (
         <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
       )}
+
+      {/* Daily activity */}
+      <div className="mb-6">
+        <ActivityRings />
+      </div>
 
       {/* Recovery body-map */}
       {workouts.length > 0 && (

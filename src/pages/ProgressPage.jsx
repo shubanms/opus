@@ -12,6 +12,7 @@ import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import {
   useWeeklyVolume, useMuscleFrequency, useWorkoutDays,
   useExerciseVolume, useExerciseMaxWeight, useBodyStats, useSleepLogs,
+  useActivityHistory,
 } from '../hooks/useProgress.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
@@ -88,10 +89,13 @@ function Body() {
   const unit = useSettingsStore((s) => s.unit);
   const stats = useBodyStats();
   const sleep = useSleepLogs();
+  const activity = useActivityHistory();
 
   const latest = stats[0];
   const weightTrend = stats.filter((s) => s.weight != null).reverse().map((s) => ({ label: s.date.slice(5), value: toDisplay(s.weight, unit) }));
   const sleepTrend = sleep.filter((s) => s.quality > 0).reverse().map((s) => ({ label: s.date.slice(5), value: s.quality }));
+  const stepTrend = activity.filter((a) => a.steps > 0).slice(-14).map((a) => ({ label: a.date.slice(5), value: a.steps }));
+  const waterTrend = activity.filter((a) => a.water > 0).slice(-14).map((a) => ({ label: a.date.slice(5), value: a.water }));
 
   const MEAS = [
     { key: 'chest', label: 'Chest' }, { key: 'waist', label: 'Waist' }, { key: 'hips', label: 'Hips' },
@@ -127,6 +131,10 @@ function Body() {
       )}
 
       <Section title="Sleep quality"><TrendChart data={sleepTrend} empty="Log sleep to track quality." /></Section>
+
+      <Section title="Daily steps"><TrendChart data={stepTrend} empty="Add steps to see your trend." /></Section>
+
+      <Section title="Water intake (glasses)"><TrendChart data={waterTrend} empty="Log water to track intake." /></Section>
 
       {stats.length > 0 && (
         <Section title="Body entries">

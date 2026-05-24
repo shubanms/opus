@@ -38,6 +38,23 @@ export function useLifetimeStats() {
   }, []) ?? { workouts: 0, totalVolume: 0, totalSets: 0, hours: 0, prCount: 0, bestStreak: 0 };
 }
 
+// Today's steps + water.
+export function useDailyActivity() {
+  return useLiveQuery(async () => {
+    const date = new Date().toISOString().slice(0, 10);
+    const e = await db.dailyLogs.where('date').equals(date).first();
+    return { steps: e?.steps ?? 0, water: e?.water ?? 0 };
+  }, []) ?? { steps: 0, water: 0 };
+}
+
+// Daily activity history (oldest→newest) for trend charts.
+export function useActivityHistory() {
+  return useLiveQuery(
+    () => db.dailyLogs.orderBy('date').toArray(),
+    []
+  ) ?? [];
+}
+
 // Current bodyweight (kg) = most recent logged body-stat weight.
 export function useCurrentBodyweight() {
   return useLiveQuery(

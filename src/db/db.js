@@ -60,6 +60,12 @@ db.version(6).stores({
     '++id, key, unlockedAt',
 });
 
+// v7: daily activity (steps + water), one row per date
+db.version(7).stores({
+  dailyLogs:
+    '++id, date, steps, water',
+});
+
 // When a newer tab/build wants to upgrade the schema, close this (older)
 // connection and reload so the upgrade isn't blocked and left stuck.
 if (typeof window !== 'undefined') {
