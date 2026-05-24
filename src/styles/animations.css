@@ -117,6 +117,30 @@
   }
 }
 
+/* Living-scene aura: a slow breathing pulse (opacity + scale). */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.anim-breathe {
+  animation: breathe 6s var(--ease-out) infinite;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-breathe {
+    animation: none !important;
+  }
+}
+
 /* Slow halo sweep for prestige marks. */
 .anim-spin-slow {
   animation: spin 9s linear infinite;

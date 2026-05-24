@@ -4,6 +4,8 @@ import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
+import { sceneParams } from '../utils/ambient.js';
+import useSettingsStore from '../store/settingsStore.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
@@ -47,10 +49,16 @@ export default function HomePage() {
   const startFromTemplate = useWorkoutStore(s => s.startFromTemplate);
   const recent = workouts.slice(0, 3);
 
+  const effects = useSettingsStore((s) => s.effects);
   const totalXp = profile?.totalXp ?? 0;
   const { level } = getXPProgress(totalXp);
   const prestige = getPrestige(totalXp);
   const title = getRankLabel(totalXp);
+
+  const reducedMotion = typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    : false;
+  const scene = sceneParams({ streak: profile?.streak ?? 0, level, prestige, reducedMotion: reducedMotion || !effects });
 
   function startTemplate() {
     startFromTemplate(today.template);
@@ -59,12 +67,27 @@ export default function HomePage() {
 
   return (
     <div className="anim-fade-slide-up px-5 pb-24 pt-8">
-      {/* Greeting */}
-      <div className="mb-6">
-        <h1 className="font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
+      {/* Greeting with a living aura that warms as you progress */}
+      <div className="relative mb-6">
+        <div
+          aria-hidden
+          className={scene.motionSpeed > 0 ? 'anim-breathe pointer-events-none' : 'pointer-events-none'}
+          style={{
+            position: 'absolute',
+            left: -48,
+            top: -56,
+            width: 240,
+            height: 240,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, rgba(201,168,76,${scene.goldShade}) 0%, rgba(201,168,76,${scene.glowAlpha}) 38%, rgba(201,168,76,0) 70%)`,
+            filter: `blur(${scene.glowBlur}px)`,
+            animationDuration: scene.motionSpeed > 0 ? `${(7 - scene.motionSpeed * 3).toFixed(1)}s` : undefined,
+          }}
+        />
+        <h1 className="relative font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
           OPUS
         </h1>
-        <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="relative mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           {profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}
         </p>
       </div>
