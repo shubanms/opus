@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown } from 'lucide-react';
+import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
-import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
+import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
 import { decayInfo } from '../utils/decay.js';
+import { cappedLevel, activeBoss } from '../utils/bosses.js';
+import { useBossStats } from '../hooks/useBosses.js';
 import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
@@ -52,10 +54,13 @@ export default function HomePage() {
   const recent = workouts.slice(0, 3);
 
   const effects = useSettingsStore((s) => s.effects);
+  const bossStats = useBossStats();
   const { effectiveXp, decaying, lost } = decayInfo(profile ?? {});
-  const { level } = getXPProgress(effectiveXp);
+  const { level: rawLevel } = getXPProgress(effectiveXp);
   const prestige = getPrestige(effectiveXp);
-  const title = getRankLabel(effectiveXp);
+  const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
+  const boss = bossStats ? activeBoss(rawLevel, bossStats) : null;
+  const title = prestige > 0 ? getRankLabel(effectiveXp) : getTitle(level);
 
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -120,6 +125,22 @@ export default function HomePage() {
               Rank slipping — train to recover (−{lost.toLocaleString()} XP)
             </p>
           )}
+        </div>
+      )}
+
+      {/* Boss gate — blocks the next milestone level until cleared */}
+      {boss && (
+        <div className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}>
+          <div className="mb-1 flex items-center gap-2">
+            <Swords size={15} style={{ color: 'var(--color-gold)' }} />
+            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
+              Boss gate · Level {boss.gate}
+            </span>
+          </div>
+          <p className="font-display text-xl font-bold" style={{ color: 'var(--color-text-inverse)' }}>{boss.title}</p>
+          <p className="mt-0.5 font-sans text-sm" style={{ color: 'var(--color-ash)' }}>
+            {boss.desc} to break past level {boss.gate}.
+          </p>
         </div>
       )}
 

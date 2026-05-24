@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
-import { getXPProgress, getRankLabel, getPrestige } from '../../utils/rpg.js';
+import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../../utils/rpg.js';
 import { useCharacterStats } from '../../hooks/useRPG.js';
+import { useBossStats } from '../../hooks/useBosses.js';
+import { cappedLevel } from '../../utils/bosses.js';
 import { decayInfo } from '../../utils/decay.js';
 import { monthKeyOf, saveSnapshot, getSnapshots, previousSnapshot, mergeRadarSeries } from '../../utils/snapshots.js';
 import OpusMark from '../logo/OpusMark.jsx';
@@ -13,10 +15,12 @@ const ASH = '#8A8780';
 
 export default function CharacterCard({ profile }) {
   const stats = useCharacterStats();
+  const bossStats = useBossStats();
   const { effectiveXp } = decayInfo(profile ?? {});
-  const { level } = getXPProgress(effectiveXp);
+  const { level: rawLevel } = getXPProgress(effectiveXp);
   const prestige = getPrestige(effectiveXp);
-  const title = getRankLabel(effectiveXp);
+  const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
+  const title = prestige > 0 ? getRankLabel(effectiveXp) : getTitle(level);
 
   // Keep this month's snapshot fresh; overlay the most recent prior month.
   useEffect(() => {
