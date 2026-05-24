@@ -1,8 +1,15 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap Sprint 19 complete (1RM + Hall of Records + supersets)
-Current version: v1.7.0 (post-MVP)
+Current sprint: Roadmap Sprint 20 (final) in progress — A: weekly recap done
+Current version: v1.7.0 (→ v2.0.0 at Sprint 20 close)
+
+**Sprint 20 part A (Weekly Recap) done:**
+- `hooks/useWeeklyRecap.js` — this week's sessions/volume/sets/PRs/XP/top-lift (Monday-aligned, reuses quests week helpers).
+- `components/share/RecapCard.jsx` — 1080×1080 shareable recap (same forwardRef/theme pattern as ShareableCard).
+- `components/progress/WeeklyRecap.jsx` — Home card (after Today's card) with stats + "Share my week" (ShareButton+RecapCard) + per-week dismiss.
+- `settingsStore.recapDismissedWeek` (+ setter) hides it once dismissed for the current week.
+- TODO Sprint 20: B = challenge card + radar-history overlay; C = coach marks + final polish + v2.0.0 bump.
 
 **Quest claims now revert on workout delete (fix):**
 - Quest *progress* was already live (useLiveQuery); the gap was claimed-quest XP not reverting on delete (inconsistent w/ achievements).

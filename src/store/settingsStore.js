@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { applyTheme } from '../utils/theme.js';
 
 const KEY = 'opus_prefs';
-const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8 };
+const DEFAULTS = { barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '' };
 
 function load() {
   try {
@@ -16,8 +16,12 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal }));
+    const { barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek }));
+  },
+  setRecapDismissedWeek(recapDismissedWeek) {
+    set({ recapDismissedWeek });
+    get().persist();
   },
   setTourSeen(tourSeen) {
     set({ tourSeen });

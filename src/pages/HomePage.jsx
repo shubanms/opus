@@ -9,6 +9,7 @@ import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
 import RecoveryMap from '../components/progress/RecoveryMap.jsx';
 import ActivityRings from '../components/progress/ActivityRings.jsx';
+import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import QuestBoard from '../components/rpg/QuestBoard.jsx';
 import useWorkoutStore from '../store/workoutStore.js';
 
@@ -123,6 +124,9 @@ export default function HomePage() {
       ) : (
         <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
       )}
+
+      {/* Weekly recap */}
+      <WeeklyRecap />
 
       {/* Weekly quests */}
       <div className="mb-6">
