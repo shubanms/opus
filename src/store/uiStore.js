@@ -1,22 +1,40 @@
 import { create } from 'zustand';
 
-const useUIStore = create((set) => ({
-  toast: null,
-  activeModal: null,
+let idSeq = 0;
 
-  showToast(message, type = 'info') {
-    set({ toast: { message, type, id: Date.now() } });
-    setTimeout(() => set(s => s.toast?.message === message ? { toast: null } : s), 3000);
+const useUIStore = create((set, get) => ({
+  toasts: [],
+  confirmState: null, // { title, message, confirmLabel, cancelLabel, danger, resolve }
+  promptState: null,  // { title, message, placeholder, defaultValue, resolve }
+
+  showToast(message, opts = {}) {
+    const id = ++idSeq;
+    set((s) => ({ toasts: [...s.toasts, { id, message, type: opts.type ?? 'info' }] }));
+    setTimeout(() => get().dismissToast(id), opts.duration ?? 3000);
+    return id;
   },
-  hideToast() {
-    set({ toast: null });
+  dismissToast(id) {
+    set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
   },
 
-  openModal(id) {
-    set({ activeModal: id });
+  // Returns a Promise<boolean>.
+  confirm(options) {
+    return new Promise((resolve) => set({ confirmState: { ...options, resolve } }));
   },
-  closeModal() {
-    set({ activeModal: null });
+  resolveConfirm(result) {
+    const st = get().confirmState;
+    set({ confirmState: null });
+    st?.resolve(result);
+  },
+
+  // Returns a Promise<string|null> (null = cancelled).
+  prompt(options) {
+    return new Promise((resolve) => set({ promptState: { ...options, resolve } }));
+  },
+  resolvePrompt(value) {
+    const st = get().promptState;
+    set({ promptState: null });
+    st?.resolve(value);
   },
 }));
 

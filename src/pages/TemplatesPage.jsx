@@ -6,6 +6,7 @@ import { deleteTemplate, duplicateTemplate } from '../utils/templateActions.js';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import TemplateBuilder from '../components/template/TemplateBuilder.jsx';
 import WeeklyPlanner from '../components/template/WeeklyPlanner.jsx';
+import useUIStore from '../store/uiStore.js';
 
 export default function TemplatesPage() {
   const navigate = useNavigate();
@@ -24,9 +25,13 @@ export default function TemplatesPage() {
   }
 
   async function handleDelete(template) {
-    if (window.confirm(`Delete "${template.name}"?`)) {
-      await deleteTemplate(template.id);
-    }
+    const ok = await useUIStore.getState().confirm({
+      title: 'Delete routine?',
+      message: `"${template.name}" will be removed.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (ok) await deleteTemplate(template.id);
   }
 
   async function handleDuplicate(template) {

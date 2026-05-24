@@ -7,6 +7,7 @@ import { useRPG } from '../hooks/useRPG.js';
 import { useCurrentBodyweight } from '../hooks/useProgress.js';
 import useUserStore from '../store/userStore.js';
 import useSettingsStore from '../store/settingsStore.js';
+import useUIStore from '../store/uiStore.js';
 import { NOTIF_TYPES } from '../utils/notifications.js';
 import { exportData, importData } from '../utils/dataActions.js';
 import { logBodyStat } from '../utils/healthActions.js';
@@ -69,7 +70,7 @@ export default function SettingsPage() {
       await importData(text);
       window.location.assign(import.meta.env.BASE_URL);
     } catch {
-      alert('Could not import this file.');
+      useUIStore.getState().showToast('Could not import this file.', { type: 'error' });
     }
   }
 

@@ -8,6 +8,7 @@ import { setWorkoutNote, setWorkoutColor } from '../../utils/noteActions.js';
 import ShareButton from '../share/ShareButton.jsx';
 import ColorPicker from '../ui/ColorPicker.jsx';
 import useWorkoutStore from '../../store/workoutStore.js';
+import useUIStore from '../../store/uiStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 
 function formatDuration(secs) {
@@ -37,9 +38,13 @@ export default function WorkoutCard({ workout }) {
 
   async function handleDelete(e) {
     e.stopPropagation();
-    if (window.confirm(`Delete "${workout.name}"? This can't be undone.`)) {
-      await deleteWorkout(workout.id);
-    }
+    const ok = await useUIStore.getState().confirm({
+      title: 'Delete workout?',
+      message: `"${workout.name}" and its sets will be removed, and the XP it earned reverted. This can't be undone.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (ok) await deleteWorkout(workout.id);
   }
 
   return (

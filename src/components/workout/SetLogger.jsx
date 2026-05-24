@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { Plus, Trash2, Flame, Dumbbell, StickyNote } from 'lucide-react';
+import { Plus, Trash2, Flame, Dumbbell, StickyNote, Info } from 'lucide-react';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
+import useUIStore from '../../store/uiStore.js';
 import { useLastSets } from '../../hooks/useWorkout.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import { calcSetXP } from '../../utils/rpg.js';
 import PlateCalculator from './PlateCalculator.jsx';
+
+const RPE_CHIPS = [6, 7, 8, 9, 10];
 
 export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = false }) {
   const { activeWorkout, logSet, removeSet, toggleWarmup, setSetNote } = useWorkoutStore();
@@ -17,8 +20,9 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
-  const [rpe, setRpe] = useState('');
+  const [rpe, setRpe] = useState(null);
   const [showRpe, setShowRpe] = useState(false);
+  const [showRpeInfo, setShowRpeInfo] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
   const [addWeight, setAddWeight] = useState(false);
   const [xpFloat, setXpFloat] = useState(null);
@@ -36,14 +40,23 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
     logSet(exerciseId, {
       weight: weightKg,
       reps: repsNum || 0,
-      rpe: showRpe ? parseInt(rpe) || null : null,
+      rpe: showRpe ? rpe : null,
       isWarmup: false,
     });
     haptic('tap');
     setXpFloat({ key: Date.now(), xp: calcSetXP(weightKg, repsNum || 0) });
     onSetLogged?.();
     setReps('');
-    setRpe('');
+    setRpe(null);
+  }
+
+  async function editNote(setNumber, current) {
+    const value = await useUIStore.getState().prompt({
+      title: 'Set note',
+      placeholder: 'e.g. last rep was a grind',
+      defaultValue: current ?? '',
+    });
+    if (value !== null) setSetNote(exerciseId, setNumber, value);
   }
 
   const fmt = (s) => (s.weight > 0 ? `${toDisplay(s.weight, unit)}${unitLabel(unit)} × ${s.reps}` : `${s.reps} reps`);
@@ -66,11 +79,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
       {/* Logged sets */}
       {exercise.sets.map((s) => (
-        <div
-          key={s.setNumber}
-          className="mb-1 rounded-xl px-3 py-2"
-          style={{ background: 'var(--color-ivory)' }}
-        >
+        <div key={s.setNumber} className="mb-1 rounded-xl px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
           <div className="flex items-center gap-2">
             <button
               onClick={() => toggleWarmup(exerciseId, s.setNumber)}
@@ -80,8 +89,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
             >
               {s.isWarmup
                 ? <Flame size={12} style={{ color: 'var(--color-ember)' }} />
-                : <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>{s.setNumber}</span>
-              }
+                : <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>{s.setNumber}</span>}
             </button>
             <span className="flex-1 font-mono text-sm" style={{ color: 'var(--color-text-primary)' }}>
               {fmt(s)}
@@ -89,10 +97,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
             {s.rpe && (
               <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>RPE {s.rpe}</span>
             )}
-            <button
-              onClick={() => setSetNote(exerciseId, s.setNumber, (window.prompt('Set note', s.note ?? '') ?? s.note) || '')}
-              aria-label="Set note"
-            >
+            <button onClick={() => editNote(s.setNumber, s.note)} aria-label="Set note">
               <StickyNote size={13} style={{ color: s.note ? 'var(--color-gold)' : 'var(--color-ash)' }} />
             </button>
             <button onClick={() => removeSet(exerciseId, s.setNumber)} aria-label="Remove set">
@@ -151,21 +156,6 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
           />
         </div>
 
-        {showRpe && (
-          <div className="w-14 rounded-xl px-2 py-2.5" style={{ background: 'var(--color-ivory)' }}>
-            <input
-              value={rpe}
-              onChange={(e) => setRpe(e.target.value)}
-              placeholder="RPE"
-              type="number"
-              min="1" max="10"
-              inputMode="numeric"
-              className="w-full bg-transparent text-center font-mono text-xs outline-none"
-              style={{ color: 'var(--color-ash)' }}
-            />
-          </div>
-        )}
-
         <button
           onClick={handleLog}
           disabled={!canLog}
@@ -177,24 +167,50 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
       </div>
 
       {/* Toggles */}
-      <div className="mt-1 flex gap-4">
-        <button
-          onClick={() => setShowRpe((v) => !v)}
-          className="font-sans text-xs"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          {showRpe ? 'Hide RPE' : '+ Add RPE'}
+      <div className="mt-1 flex items-center gap-4">
+        <button onClick={() => setShowRpe((v) => !v)} className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          {showRpe ? 'Hide effort' : '+ Add effort (RPE)'}
+        </button>
+        <button onClick={() => setShowRpeInfo((v) => !v)} aria-label="What is RPE?" className="flex items-center">
+          <Info size={13} style={{ color: 'var(--color-ash)' }} />
         </button>
         {isBodyweight && (
           <button
             onClick={() => { setAddWeight((v) => !v); setWeight(''); setShowPlates(false); }}
-            className="font-sans text-xs"
+            className="ml-auto font-sans text-xs"
             style={{ color: 'var(--color-text-secondary)' }}
           >
             {addWeight ? 'Bodyweight only' : '+ Add weight'}
           </button>
         )}
       </div>
+
+      {showRpeInfo && (
+        <p className="mt-2 rounded-xl px-3 py-2 font-sans text-xs" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }}>
+          <b style={{ color: 'var(--color-text-primary)' }}>RPE</b> = how hard the set felt, 1–10. Think "reps left in the tank":
+          10 = all-out, 9 ≈ 1 left, 8 ≈ 2 left. It's optional — it helps track intensity over time.
+        </p>
+      )}
+
+      {showRpe && (
+        <div className="mt-2">
+          <div className="flex gap-1.5">
+            {RPE_CHIPS.map((n) => (
+              <button
+                key={n}
+                onClick={() => setRpe(rpe === n ? null : n)}
+                className="h-10 flex-1 rounded-lg font-mono text-sm font-medium"
+                style={{
+                  background: rpe === n ? 'var(--color-gold)' : 'var(--color-ivory)',
+                  color: rpe === n ? 'var(--color-obsidian)' : 'var(--color-text-primary)',
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Plate calculator */}
       {showPlates && weightNum > 0 && (

@@ -4,6 +4,11 @@ Last updated: 2026-05-23
 Current sprint: 17 (Dark Mode & Theming + Transitions) — Roadmap v2
 Current version: v1.7.0 (post-MVP)
 
+**Sprint 17 extension done:**
+- Themed in-app dialogs replace all native browser dialogs: `uiStore` (toasts + promise-based `confirm()`/`prompt()`), `components/ui/UiHost.jsx` (ToastHost + ConfirmDialog + PromptDialog, portaled), mounted in AppLayout. Replaced window.confirm (WorkoutCard/Templates/ExerciseDetail), window.prompt (set notes), window.alert (import error → toast).
+- RPE UX: replaced the cramped tiny input with tappable chips (6–10) + an info (i) toggle explaining RPE; effort moved to its own row.
+- Test: `src/store/uiStore.test.js` (toasts add/dismiss/auto-expire, confirm/prompt promise resolution).
+
 **Sprint 17 done:**
 - Dark mode: `:root[data-theme='dark']` flips only chalk/ivory/text tokens. Foreground `color: chalk` usages migrated to `text-inverse` (light in both themes) so contrast holds on stone/obsidian surfaces; literal palette unchanged.
 - `settingsStore.theme` (light/dark/system) + `utils/theme.js` (applyTheme + meta theme-color); applied at boot in main.jsx, follows OS on 'system'. Settings → Experience → Theme.

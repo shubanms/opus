@@ -7,6 +7,7 @@ import { deleteCustomExercise, toggleFavorite, setExerciseColor } from '../utils
 import { setExerciseNote } from '../utils/noteActions.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
+import useUIStore from '../store/uiStore.js';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
 import ColorPicker from '../components/ui/ColorPicker.jsx';
@@ -113,7 +114,13 @@ export default function ExerciseDetailPage() {
   const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#8A8780';
 
   async function handleDelete() {
-    if (window.confirm(`Delete "${exercise.name}" and all its logged history? This can't be undone.`)) {
+    const ok = await useUIStore.getState().confirm({
+      title: 'Delete exercise?',
+      message: `"${exercise.name}" and all its logged history will be removed. This can't be undone.`,
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (ok) {
       await deleteCustomExercise(exercise.id);
       navigate('/exercises');
     }

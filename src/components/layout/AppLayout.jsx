@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import BottomNav from './BottomNav.jsx';
 import Onboarding from '../onboarding/Onboarding.jsx';
+import UiHost from '../ui/UiHost.jsx';
 import { useRPG } from '../../hooks/useRPG.js';
 import useSettingsStore from '../../store/settingsStore.js';
 
@@ -16,6 +17,7 @@ export default function AppLayout() {
       </main>
       <BottomNav />
       {loaded && !onboarded && <Onboarding />}
+      <UiHost />
     </div>
   );
 }
