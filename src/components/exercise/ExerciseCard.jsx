@@ -1,4 +1,4 @@
-import { Dumbbell, User, Zap, Settings, ChevronRight } from 'lucide-react';
+import { Dumbbell, User, Zap, Settings, ChevronRight, Star } from 'lucide-react';
 
 const EQUIP_ICON = {
   barbell:    Dumbbell,
@@ -36,19 +36,28 @@ export default function ExerciseCard({ exercise, onTap, selected = false, showAr
         transition: 'background var(--dur-micro)',
       }}
     >
-      <div
-        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-        style={{ background: hue + '22' }}
-      >
-        <Icon size={18} style={{ color: hue }} />
+      <div className="relative flex-shrink-0">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-full"
+          style={{ background: hue + '22' }}
+        >
+          <Icon size={18} style={{ color: hue }} />
+        </div>
+        {exercise.color && (
+          <span
+            className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full"
+            style={{ background: exercise.color, border: '2px solid var(--color-ivory)' }}
+          />
+        )}
       </div>
 
       <div className="min-w-0 flex-1">
         <p
-          className="truncate font-sans text-sm font-medium"
+          className="flex items-center gap-1.5 truncate font-sans text-sm font-medium"
           style={{ color: selected ? 'var(--color-text-inverse)' : 'var(--color-text-primary)' }}
         >
-          {exercise.name}
+          {exercise.favorite && <Star size={12} fill="var(--color-gold)" style={{ color: 'var(--color-gold)', flexShrink: 0 }} />}
+          <span className="truncate">{exercise.name}</span>
         </p>
         <div className="mt-0.5 flex items-center gap-2">
           <p

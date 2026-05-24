@@ -12,18 +12,19 @@ function toLinks(templateId, exercises) {
   }));
 }
 
-export async function createTemplate({ name, dayOfWeek = null, exercises = [] }) {
+export async function createTemplate({ name, dayOfWeek = null, color = null, exercises = [] }) {
   const templateId = await db.templates.add({
     name: name.trim() || 'Routine',
     dayOfWeek,
+    color,
     createdAt: Date.now(),
   });
   if (exercises.length) await db.templateExercises.bulkAdd(toLinks(templateId, exercises));
   return templateId;
 }
 
-export async function updateTemplate(templateId, { name, dayOfWeek = null, exercises = [] }) {
-  await db.templates.update(templateId, { name: name.trim() || 'Routine', dayOfWeek });
+export async function updateTemplate(templateId, { name, dayOfWeek = null, color = null, exercises = [] }) {
+  await db.templates.update(templateId, { name: name.trim() || 'Routine', dayOfWeek, color });
   await db.templateExercises.where('templateId').equals(templateId).delete();
   if (exercises.length) await db.templateExercises.bulkAdd(toLinks(templateId, exercises));
 }
@@ -64,6 +65,10 @@ export async function assignTemplateToDay(templateId, dayOfWeek) {
     if (c.id !== templateId) await db.templates.update(c.id, { dayOfWeek: null });
   }
   await db.templates.update(templateId, { dayOfWeek });
+}
+
+export async function setTemplateColor(templateId, color) {
+  await db.templates.update(templateId, { color: color ?? null });
 }
 
 export async function clearDay(dayOfWeek) {

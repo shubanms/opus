@@ -25,3 +25,11 @@ export function useExercises({ muscleGroup = null, search = '' } = {}) {
 export function useExercise(id) {
   return useLiveQuery(() => (id ? db.exercises.get(id) : null), [id]);
 }
+
+// Sticky coaching note text for an exercise ('' if none).
+export function useExerciseNote(id) {
+  return useLiveQuery(
+    () => (id ? db.exerciseNotes.where('exerciseId').equals(id).first().then((n) => n?.text ?? '') : ''),
+    [id]
+  ) ?? '';
+}

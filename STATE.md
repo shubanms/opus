@@ -1,8 +1,15 @@
 # OPUS — Project State
 
 Last updated: 2026-05-23
-Current sprint: 11 (Personal Profile, Body Metrics & Central Units) — Roadmap v2
-Current version: v1.1.0 (post-MVP)
+Current sprint: 12 (Notes & Color-Coding) — Roadmap v2
+Current version: v1.2.0 (post-MVP)
+
+**Sprint 12 done:**
+- DB v5: `exerciseNotes` table (sticky coaching notes). exercises.favorite/color, sets.note, workouts.color are unindexed fields.
+- `utils/noteActions.js` (setExerciseNote/setWorkoutNote/setWorkoutColor/setSetNote), `exerciseActions` (toggleFavorite/setExerciseColor), `templateActions.setTemplateColor`.
+- `components/ui/ColorPicker.jsx` + LABEL_COLORS (8 distinct hues).
+- Notes: sticky per-exercise coaching note (ExerciseDetailPage editor, shown in ExerciseSection during workout); per-set note (SetLogger prompt → saved on complete, shown in history); session note (WorkoutPage + WorkoutCard).
+- Marking: favorite★ + color on exercises (ExerciseCard dot+star, detail toggle, ExercisePage favorites filter); color on templates (TemplateBuilder picker, TemplateCard dot); color on workouts (WorkoutCard picker+dot).
 
 ## Roadmap v2
 See OPUS_ROADMAP.md for Sprints 11–20.

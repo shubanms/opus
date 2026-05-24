@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Flame, Dumbbell } from 'lucide-react';
+import { Plus, Trash2, Flame, Dumbbell, StickyNote } from 'lucide-react';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useLastSets } from '../../hooks/useWorkout.js';
@@ -7,7 +7,7 @@ import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import PlateCalculator from './PlateCalculator.jsx';
 
 export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = false }) {
-  const { activeWorkout, logSet, removeSet, toggleWarmup } = useWorkoutStore();
+  const { activeWorkout, logSet, removeSet, toggleWarmup, setSetNote } = useWorkoutStore();
   const unit = useSettingsStore((s) => s.unit);
   const exercise = activeWorkout?.exercises.find((e) => e.exerciseId === exerciseId);
   const lastSets = useLastSets(exerciseId);
@@ -61,29 +61,40 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
       {exercise.sets.map((s) => (
         <div
           key={s.setNumber}
-          className="mb-1 flex items-center gap-2 rounded-xl px-3 py-2"
+          className="mb-1 rounded-xl px-3 py-2"
           style={{ background: 'var(--color-ivory)' }}
         >
-          <button
-            onClick={() => toggleWarmup(exerciseId, s.setNumber)}
-            className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
-            style={{ background: s.isWarmup ? '#D4622A22' : 'transparent' }}
-            title="Toggle warmup"
-          >
-            {s.isWarmup
-              ? <Flame size={12} style={{ color: 'var(--color-ember)' }} />
-              : <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>{s.setNumber}</span>
-            }
-          </button>
-          <span className="flex-1 font-mono text-sm" style={{ color: 'var(--color-text-primary)' }}>
-            {fmt(s)}
-          </span>
-          {s.rpe && (
-            <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>RPE {s.rpe}</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => toggleWarmup(exerciseId, s.setNumber)}
+              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
+              style={{ background: s.isWarmup ? '#D4622A22' : 'transparent' }}
+              title="Toggle warmup"
+            >
+              {s.isWarmup
+                ? <Flame size={12} style={{ color: 'var(--color-ember)' }} />
+                : <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>{s.setNumber}</span>
+              }
+            </button>
+            <span className="flex-1 font-mono text-sm" style={{ color: 'var(--color-text-primary)' }}>
+              {fmt(s)}
+            </span>
+            {s.rpe && (
+              <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>RPE {s.rpe}</span>
+            )}
+            <button
+              onClick={() => setSetNote(exerciseId, s.setNumber, (window.prompt('Set note', s.note ?? '') ?? s.note) || '')}
+              aria-label="Set note"
+            >
+              <StickyNote size={13} style={{ color: s.note ? 'var(--color-gold)' : 'var(--color-ash)' }} />
+            </button>
+            <button onClick={() => removeSet(exerciseId, s.setNumber)} aria-label="Remove set">
+              <Trash2 size={13} style={{ color: 'var(--color-ash)' }} />
+            </button>
+          </div>
+          {s.note && (
+            <p className="mt-1 pl-8 font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>{s.note}</p>
           )}
-          <button onClick={() => removeSet(exerciseId, s.setNumber)}>
-            <Trash2 size={13} style={{ color: 'var(--color-ash)' }} />
-          </button>
         </div>
       ))}
 
