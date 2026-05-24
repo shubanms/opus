@@ -66,6 +66,12 @@ db.version(7).stores({
     '++id, date, steps, water',
 });
 
+// v8: claimed weekly quests (XP reward is permanent, summed in recomputeProfile)
+db.version(8).stores({
+  questClaims:
+    '++id, weekKey',
+});
+
 // When a newer tab/build wants to upgrade the schema, close this (older)
 // connection and reload so the upgrade isn't blocked and left stuck.
 if (typeof window !== 'undefined') {

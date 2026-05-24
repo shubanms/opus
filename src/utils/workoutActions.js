@@ -25,7 +25,9 @@ export async function recomputeProfile() {
   // Achievement XP is permanent (not tied to a workout) — add it back in.
   const unlocked = new Set((await db.achievements.toArray()).map((a) => a.key));
   const achievementXp = ACHIEVEMENTS.reduce((a, def) => a + (unlocked.has(def.key) ? (def.xp || 0) : 0), 0);
-  const totalXp = workoutXp + achievementXp;
+  // Claimed-quest XP is permanent too (not tied to a workout) — add it back in.
+  const questXp = (await db.questClaims.toArray()).reduce((a, c) => a + (c.xp || 0), 0);
+  const totalXp = workoutXp + achievementXp + questXp;
   const level = getLevelFromTotalXP(totalXp);
   const title = getTitle(level);
 
