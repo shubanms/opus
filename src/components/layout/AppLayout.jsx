@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import BottomNav from './BottomNav.jsx';
 import Onboarding from '../onboarding/Onboarding.jsx';
 import Tour from '../tour/Tour.jsx';
+import CoachMark from '../coach/CoachMark.jsx';
 import UiHost from '../ui/UiHost.jsx';
 import { useRPG } from '../../hooks/useRPG.js';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -20,6 +21,7 @@ export default function AppLayout() {
       <BottomNav />
       {loaded && !onboarded && <Onboarding />}
       {loaded && onboarded && !tourSeen && <Tour />}
+      {loaded && onboarded && tourSeen && <CoachMark />}
       <UiHost />
     </div>
   );

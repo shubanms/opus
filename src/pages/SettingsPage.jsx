@@ -59,6 +59,7 @@ export default function SettingsPage() {
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
   const setTourSeen = useSettingsStore((s) => s.setTourSeen);
+  const resetCoachMarks = useSettingsStore((s) => s.resetCoachMarks);
   const stepGoal = useSettingsStore((s) => s.stepGoal);
   const setStepGoal = useSettingsStore((s) => s.setStepGoal);
   const waterGoal = useSettingsStore((s) => s.waterGoal);
@@ -207,6 +208,7 @@ export default function SettingsPage() {
         </div>
         <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>OPUS</p>
         <p className="font-sans text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>Build your masterpiece.</p>
+        <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-ash)' }}>v2.0.0</p>
         <a
           href="https://github.com/shubanms/opus"
           target="_blank"
@@ -303,6 +305,13 @@ export default function SettingsPage() {
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
         >
           Replay walkthrough
+        </button>
+        <button
+          onClick={() => { resetCoachMarks(); useUIStore.getState().showToast('Tips will show again as you browse.'); }}
+          className="mt-2 w-full rounded-xl py-2.5 font-sans text-sm font-medium"
+          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+        >
+          Show tips again
         </button>
       </section>
 
