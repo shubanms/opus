@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, Plus, ChevronUp, ChevronDown, Shuffle, Pin } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import ExercisePicker from '../workout/ExercisePicker.jsx';
 import { createTemplate, updateTemplate } from '../../utils/templateActions.js';
 import { moveItem } from '../../utils/reorder.js';
+import { reshuffleRoutine, makeRng } from '../../utils/routineGenerator.js';
+import { useExercises } from '../../hooks/useExercises.js';
+import { playChime } from '../../utils/sound.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { toDisplay, toKg, unitLabel } from '../../utils/units.js';
 import ColorPicker from '../ui/ColorPicker.jsx';
@@ -17,6 +20,9 @@ function initExercises(editing, unit) {
   return (editing?.exercises ?? []).map((e) => ({
     id: e.id,
     name: e.name,
+    muscleGroup: e.muscleGroup,
+    difficulty: e.difficulty,
+    pinned: false,
     targetSets: e.targetSets ?? '',
     targetReps: e.targetReps ?? '',
     targetWeight: e.targetWeight != null ? toDisplay(e.targetWeight, unit) : '',
@@ -25,6 +31,7 @@ function initExercises(editing, unit) {
 
 export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
   const unit = useSettingsStore((s) => s.unit);
+  const allExercises = useExercises();
   const [name, setName] = useState(editing?.name ?? '');
   const [day, setDay] = useState(editing?.dayOfWeek ?? null);
   const [color, setColor] = useState(editing?.color ?? null);
@@ -35,8 +42,29 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
     setExercises((prev) =>
       prev.some((e) => e.id === ex.id)
         ? prev
-        : [...prev, { id: ex.id, name: ex.name, targetSets: '', targetReps: '', targetWeight: '' }]
+        : [...prev, { id: ex.id, name: ex.name, muscleGroup: ex.muscleGroup, difficulty: ex.difficulty, pinned: false, targetSets: '', targetReps: '', targetWeight: '' }]
     );
+  }
+
+  function togglePin(id) {
+    setExercises((prev) => prev.map((e) => (e.id === id ? { ...e, pinned: !e.pinned } : e)));
+  }
+
+  function shuffleBuilder(intensity) {
+    const slots = exercises.map((e) => ({
+      exerciseId: e.id, muscleGroup: e.muscleGroup, difficulty: e.difficulty,
+      targetSets: e.targetSets, targetReps: e.targetReps, targetWeight: e.targetWeight,
+    }));
+    const pinnedIds = exercises.filter((e) => e.pinned).map((e) => e.id);
+    const next = reshuffleRoutine({ slots, intensity, pinnedIds, pool: allExercises, rng: makeRng(Date.now()) });
+    const byId = Object.fromEntries(allExercises.map((x) => [x.id, x]));
+    setExercises((prev) => next.map((s, i) => {
+      const old = prev[i];
+      if (s.exerciseId === old.id) return old;
+      const ex = byId[s.exerciseId];
+      return { id: s.exerciseId, name: ex?.name ?? old.name, muscleGroup: s.muscleGroup, difficulty: s.difficulty, pinned: old.pinned, targetSets: old.targetSets, targetReps: old.targetReps, targetWeight: old.targetWeight };
+    }));
+    playChime('start');
   }
 
   function setField(id, field, value) {
@@ -113,7 +141,25 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
         <ColorPicker value={color} onChange={setColor} />
       </div>
 
-      <div className="mt-4 max-h-64 overflow-y-auto">
+      {exercises.length > 0 && (
+        <div className="mt-4 flex items-center gap-2">
+          <span className="flex items-center gap-1 font-sans text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+            <Shuffle size={13} /> Shuffle
+          </span>
+          {['light', 'medium', 'full'].map((lvl) => (
+            <button
+              key={lvl}
+              onClick={() => shuffleBuilder(lvl)}
+              className="rounded-full px-3 py-1 font-sans text-xs font-medium capitalize"
+              style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            >
+              {lvl}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-3 max-h-64 overflow-y-auto">
         {exercises.map((ex, i) => (
           <div key={ex.id} className="mb-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
             <div className="flex items-center justify-between">
@@ -121,6 +167,9 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
                 {ex.name}
               </span>
               <div className="ml-2 flex flex-shrink-0 items-center gap-1.5">
+                <button onClick={() => togglePin(ex.id)} aria-label={ex.pinned ? 'Unpin (allow shuffle)' : 'Pin (keep on shuffle)'}>
+                  <Pin size={14} fill={ex.pinned ? 'var(--color-gold)' : 'none'} style={{ color: ex.pinned ? 'var(--color-gold)' : 'var(--color-ash)' }} />
+                </button>
                 <div className="flex flex-col">
                   <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" style={{ opacity: i === 0 ? 0.25 : 1 }}>
                     <ChevronUp size={15} style={{ color: 'var(--color-ash)' }} />

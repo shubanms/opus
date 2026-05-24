@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
-import { deleteTemplate, duplicateTemplate } from '../utils/templateActions.js';
+import { useExercises } from '../hooks/useExercises.js';
+import { deleteTemplate, duplicateTemplate, updateTemplate } from '../utils/templateActions.js';
+import { reshuffleRoutine, makeRng } from '../utils/routineGenerator.js';
+import { playChime } from '../utils/sound.js';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import TemplateBuilder from '../components/template/TemplateBuilder.jsx';
 import RoutineGeneratorModal from '../components/template/RoutineGeneratorModal.jsx';
@@ -12,6 +15,7 @@ import useUIStore from '../store/uiStore.js';
 export default function TemplatesPage() {
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
+  const allExercises = useExercises();
   const [builderOpen, setBuilderOpen] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -38,6 +42,26 @@ export default function TemplatesPage() {
 
   async function handleDuplicate(template) {
     await duplicateTemplate(template.id);
+  }
+
+  // One-tap "medium" re-roll from the card: keep the routine's shape, swap ~half.
+  async function handleShuffle(template) {
+    const slots = template.exercises.map((e) => ({
+      exerciseId: e.id,
+      muscleGroup: e.muscleGroup,
+      difficulty: e.difficulty,
+      targetSets: e.targetSets,
+      targetReps: e.targetReps,
+      targetWeight: e.targetWeight,
+    }));
+    const next = reshuffleRoutine({ slots, intensity: 'medium', pool: allExercises, rng: makeRng(Date.now()) });
+    playChime('start');
+    await updateTemplate(template.id, {
+      name: template.name,
+      dayOfWeek: template.dayOfWeek,
+      color: template.color,
+      exercises: next.map((s) => ({ exerciseId: s.exerciseId, targetSets: s.targetSets, targetReps: s.targetReps, targetWeight: s.targetWeight })),
+    });
   }
 
   return (
@@ -104,7 +128,7 @@ export default function TemplatesPage() {
         </div>
       ) : (
         templates.map((t) => (
-          <TemplateCard key={t.id} template={t} onEdit={openEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} />
+          <TemplateCard key={t.id} template={t} onEdit={openEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} onShuffle={handleShuffle} />
         ))
       )}
 

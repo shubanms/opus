@@ -1,4 +1,4 @@
-import { Play, Pencil, Trash2, Copy } from 'lucide-react';
+import { Play, Pencil, Trash2, Copy, Shuffle } from 'lucide-react';
 
 const DAY_LABEL = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
 
@@ -9,7 +9,7 @@ const MUSCLE_HUE = {
   quadriceps: '#8A8780', hamstring: '#8A8780', gluteal: '#8A8780', calves: '#8A8780',
 };
 
-export default function TemplateCard({ template, onStart, onEdit, onDelete, onDuplicate }) {
+export default function TemplateCard({ template, onStart, onEdit, onDelete, onDuplicate, onShuffle }) {
   const muscleGroups = [...new Set(template.exercises.map((e) => e.muscleGroup))].slice(0, 4);
 
   return (
@@ -36,6 +36,11 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
         </div>
 
         <div className="ml-2 flex flex-shrink-0 gap-1.5">
+          {onShuffle && (
+            <button onClick={() => onShuffle(template)} className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }} aria-label="Shuffle exercises">
+              <Shuffle size={13} style={{ color: 'var(--color-ash)' }} />
+            </button>
+          )}
           {onDuplicate && (
             <button onClick={() => onDuplicate(template)} className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }} aria-label="Duplicate routine">
               <Copy size={13} style={{ color: 'var(--color-ash)' }} />

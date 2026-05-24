@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { makeRng, generateRoutine, pickForGroup, defaultCount, LEVEL_DEFAULTS } from './routineGenerator.js';
+import { makeRng, generateRoutine, pickForGroup, defaultCount, LEVEL_DEFAULTS, reshuffleRoutine } from './routineGenerator.js';
 
 // Small fixture pool. ids unique; muscleGroup + difficulty drive selection.
 const POOL = [
@@ -59,5 +59,42 @@ describe('pickForGroup', () => {
   it('ranks exact difficulty before adjacent', () => {
     const ranked = pickForGroup(POOL, 'chest', 'advanced', makeRng(2));
     expect(ranked[0].difficulty).toBe('advanced');
+  });
+});
+
+describe('reshuffleRoutine', () => {
+  // a 3-slot chest routine using ids 1,2,3 — pool has 5 chest exercises to swap from
+  const slots = [
+    { exerciseId: 1, muscleGroup: 'chest', difficulty: 'beginner', targetSets: 3, targetReps: 10, targetWeight: 40 },
+    { exerciseId: 2, muscleGroup: 'chest', difficulty: 'beginner', targetSets: 3, targetReps: 10, targetWeight: null },
+    { exerciseId: 3, muscleGroup: 'chest', difficulty: 'intermediate', targetSets: 4, targetReps: 8, targetWeight: null },
+  ];
+  const changed = (a, b) => a.filter((s, i) => s.exerciseId !== b[i].exerciseId).length;
+
+  it('light swaps exactly one exercise', () => {
+    const out = reshuffleRoutine({ slots, intensity: 'light', pool: POOL, rng: makeRng(1) });
+    expect(changed(slots, out)).toBe(1);
+  });
+  it('full swaps every (unpinned) exercise', () => {
+    const out = reshuffleRoutine({ slots, intensity: 'full', pool: POOL, rng: makeRng(1) });
+    expect(changed(slots, out)).toBe(3);
+  });
+  it('never swaps pinned exercises', () => {
+    const out = reshuffleRoutine({ slots, intensity: 'full', pinnedIds: [1], pool: POOL, rng: makeRng(2) });
+    expect(out.find((s) => s.exerciseId === 1)).toBeTruthy();
+    expect(changed(slots, out)).toBe(2);
+  });
+  it('preserves targets', () => {
+    const out = reshuffleRoutine({ slots, intensity: 'full', pool: POOL, rng: makeRng(3) });
+    out.forEach((s, i) => {
+      expect(s.targetSets).toBe(slots[i].targetSets);
+      expect(s.targetReps).toBe(slots[i].targetReps);
+      expect(s.targetWeight).toBe(slots[i].targetWeight);
+    });
+  });
+  it('produces no duplicate exercises', () => {
+    const out = reshuffleRoutine({ slots, intensity: 'full', pool: POOL, rng: makeRng(9) });
+    const ids = out.map((s) => s.exerciseId);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
