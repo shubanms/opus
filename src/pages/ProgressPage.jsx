@@ -9,6 +9,7 @@ import Heatmap from '../components/progress/Heatmap.jsx';
 import BodyStatsForm from '../components/progress/BodyStatsForm.jsx';
 import SleepForm from '../components/progress/SleepForm.jsx';
 import ActivityForm from '../components/progress/ActivityForm.jsx';
+import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import {
   useWeeklyVolume, useMuscleFrequency, useWorkoutDays,
@@ -39,6 +40,7 @@ function Overview() {
   const days = useWorkoutDays();
   return (
     <>
+      <WeeklyRecap dismissible={false} />
       <Section title="Weekly volume (8 weeks)"><VolumeChart data={weekly} unit={unitLabel(unit)} /></Section>
       <Section title="Muscle focus"><MuscleFrequency data={muscles} /></Section>
       <Section title="Training calendar"><Heatmap days={days} /></Section>

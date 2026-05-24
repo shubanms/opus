@@ -4,6 +4,8 @@ Last updated: 2026-05-24
 Current sprint: Roadmap v2 COMPLETE (Sprints 11–20). App at v2.0.0.
 Current version: v2.0.0
 
+**Post-v2 fix:** WeeklyRecap now takes `dismissible` — Home stays dismissible (per-week), and Progress → Overview shows an always-visible copy so "Share my week" is reachable after the Home card is dismissed.
+
 **Sprint 20 part C (Coach marks + final polish + v2.0.0) done:**
 - `components/coach/CoachMark.jsx` — per-tab first-use tip (home/progress/workout/exercises/profile), portaled above the bottom nav, "Got it" to dismiss. Gated in AppLayout to after onboarding + tour.
 - `settingsStore.coachMarksSeen` (per-route seen-state) + `markCoachSeen`/`resetCoachMarks`. Settings → Experience adds "Show tips again".
