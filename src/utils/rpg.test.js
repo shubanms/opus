@@ -51,6 +51,18 @@ describe('getXPProgress', () => {
     expect(p.progress).toBeGreaterThanOrEqual(0);
     expect(p.xpToNext).toBe(500);
   });
+  it('tracks the prestige band at/after max level (never negative)', () => {
+    const atTier2 = getXPProgress(prestigeXp(2));
+    expect(atTier2.level).toBe(10);
+    expect(atTier2.prestige).toBe(2);
+    expect(atTier2.progress).toBe(0);
+    expect(atTier2.xpToNext).toBeGreaterThan(0);
+  });
+  it('never returns negative xpToNext for absurdly large XP', () => {
+    const p = getXPProgress(66_666_665_332);
+    expect(p.xpToNext).toBeGreaterThanOrEqual(0);
+    expect(p.progress).toBeLessThanOrEqual(1);
+  });
 });
 
 describe('prestige', () => {

@@ -7,6 +7,11 @@ Current version: v3.0.0
 > Docs reorganized into `docs/` (this file moved here). Index: `docs/README.md`. Map: `docs/ARCHITECTURE.md`.
 > Rules: `docs/GUIDELINES.md`. Per-version features: `docs/RELEASES.md`. Entry point: root `CLAUDE.md`.
 
+**RPG polish/bugfix (post-v3):**
+- `getXPProgress` now prestige-aware at/after max level — tracks the prestige band so "XP to next" is never negative (fixed underflow at Lv.10 / huge XP). +tests.
+- `OpusMark` halo clamped (prestige→0..5, smaller blur/alpha) so it no longer balloons into a giant gold smear at high prestige.
+- PENDING (design with user): more levels (extend curve), XP demotion/decay, boss-fight gates past milestone levels.
+
 **Roadmap v3 S5 (Export CSV / PDF) done:**
 - Pure `utils/csv.js` (`escapeCsv`/`toCsv`/`setsToCsv`, unit-aware) + test.
 - `dataActions.exportSetsCsv(unit)` (every set joined w/ workout+exercise names) and `exportPdf(unit)` (dependency-free printable report via window.open + print CSS → Save as PDF).

@@ -27,11 +27,12 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
   const bg = dark ? 'var(--color-obsidian)' : 'var(--color-chalk)';
 
   const lv = Math.max(0, Math.min(level, 10));
+  const p = Math.max(0, Math.min(prestige, 5)); // clamp so the halo stays tasteful
   const ringWidth = 4 + (lv >= 4 ? 1 : 0) + (lv >= 8 ? 1 : 0);
-  const glowAlpha = lv >= 3 ? Math.min(0.12 + (lv - 2) * 0.05 + prestige * 0.12, 0.6) : 0;
-  const glowBlur = 8 + lv * 2 + prestige * 6;
+  const glowAlpha = lv >= 3 ? Math.min(0.1 + (lv - 3) * 0.03 + p * 0.05, 0.4) : 0;
+  const glowBlur = Math.round(6 + lv * 1.3 + p * 2.2);
   const studs = lv >= 2 ? Array.from({ length: lv }, (_, i) => pointAt((i * 360) / lv, 90)) : [];
-  const gems = Math.min(prestige, 5);
+  const gems = p;
 
   return (
     <div

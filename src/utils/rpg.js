@@ -87,13 +87,29 @@ export function getCharacterStats({
   ];
 }
 
-// Returns { level, progress (0-1), xpToNext, currentLevelXP, nextLevelXP }
+// Returns { level, prestige, progress (0-1), xpToNext, currentLevelXP, nextLevelXP }.
+// At/beyond max level, progress tracks the current prestige band (so xpToNext
+// stays positive and meaningful instead of underflowing past the last level).
 export function getXPProgress(totalXp) {
   const level = getLevelFromTotalXP(totalXp);
+  if (totalXp >= MAX_TITLE_XP) {
+    const p = getPrestige(totalXp);
+    const floor = prestigeXp(p);
+    const next = prestigeXp(p + 1);
+    return {
+      level, prestige: p,
+      progress: Math.min((totalXp - floor) / (next - floor), 1),
+      xpToNext: Math.max(0, next - totalXp),
+      currentLevelXP: floor, nextLevelXP: next,
+    };
+  }
   const idx = level - 1;
   const currentFloor = XP_THRESHOLDS[idx] ?? 0;
-  const nextFloor =
-    XP_THRESHOLDS[level] ?? (XP_THRESHOLDS[XP_THRESHOLDS.length - 1] + level * 3000);
-  const progress = Math.min((totalXp - currentFloor) / (nextFloor - currentFloor), 1);
-  return { level, progress, xpToNext: nextFloor - totalXp, currentLevelXP: currentFloor, nextLevelXP: nextFloor };
+  const nextFloor = XP_THRESHOLDS[level] ?? MAX_TITLE_XP;
+  return {
+    level, prestige: 0,
+    progress: Math.min((totalXp - currentFloor) / (nextFloor - currentFloor), 1),
+    xpToNext: Math.max(0, nextFloor - totalXp),
+    currentLevelXP: currentFloor, nextLevelXP: nextFloor,
+  };
 }
