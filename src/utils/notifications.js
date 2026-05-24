@@ -11,6 +11,7 @@ export const NOTIF_TYPES = [
   { key: 'streakRisk', label: 'Streak at risk' },
   { key: 'gymNudge', label: 'Daily gym reminder' },
   { key: 'weeklySummary', label: 'Weekly summary' },
+  { key: 'staleRoutine', label: 'Switch up a stale routine' },
 ];
 
 const DEFAULTS = {
@@ -19,6 +20,7 @@ const DEFAULTS = {
   streakRisk: true,
   gymNudge: true,
   weeklySummary: true,
+  staleRoutine: true,
   dndStart: 22,
   dndEnd: 7,
 };

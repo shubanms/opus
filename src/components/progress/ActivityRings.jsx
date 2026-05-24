@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { Footprints, Droplet, Plus, Minus } from 'lucide-react';
 import { useDailyActivity } from '../../hooks/useProgress.js';
 import { setSteps, addWater } from '../../utils/healthActions.js';
+import { crossedGoal } from '../../utils/goals.js';
+import { playChime } from '../../utils/sound.js';
+import { useHaptics } from '../../hooks/useHaptics.js';
+import Particles from '../fx/Particles.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
 import useUIStore from '../../store/uiStore.js';
 
@@ -47,6 +51,15 @@ export default function ActivityRings() {
   const { steps, water } = useDailyActivity();
   const stepGoal = useSettingsStore((s) => s.stepGoal);
   const waterGoal = useSettingsStore((s) => s.waterGoal);
+  const haptic = useHaptics();
+  const [burst, setBurst] = useState(false);
+
+  function celebrateGoal() {
+    haptic('pr');
+    playChime('goal');
+    setBurst(true);
+    setTimeout(() => setBurst(false), 1300);
+  }
 
   async function editSteps() {
     const v = await useUIStore.getState().prompt({
@@ -54,11 +67,21 @@ export default function ActivityRings() {
       placeholder: 'e.g. 8000',
       defaultValue: steps ? String(steps) : '',
     });
-    if (v !== null && v !== '') setSteps(Math.max(0, parseInt(v) || 0));
+    if (v !== null && v !== '') {
+      const next = Math.max(0, parseInt(v) || 0);
+      if (crossedGoal(steps, next, stepGoal)) celebrateGoal();
+      setSteps(next);
+    }
+  }
+
+  function addGlass() {
+    if (crossedGoal(water, water + 1, waterGoal)) celebrateGoal();
+    addWater(1);
   }
 
   return (
     <div className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      {burst && <Particles count={16} />
       <p className="mb-3 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
         Today's activity
       </p>
@@ -85,7 +108,7 @@ export default function ActivityRings() {
           <Minus size={15} style={{ color: 'var(--color-ash)' }} />
         </button>
         <button
-          onClick={() => addWater(1)}
+          onClick={addGlass}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
           style={{ background: 'var(--color-sage)', color: 'var(--color-text-inverse)' }}
         >
