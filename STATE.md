@@ -1,8 +1,13 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap v3 in progress (see OPUS_ROADMAP_V3.md) — S1 done; S8 next
+Current sprint: Roadmap v3 in progress (see OPUS_ROADMAP_V3.md) — S1 + S8 done
 Current version: v2.0.0 (→ v3.0.0 at v3 close)
+
+**Roadmap v3 S8 (Living home scene + animated reveals) done:**
+- Pure `utils/ambient.js` `sceneParams({streak,level,prestige,reducedMotion})` → {intensity, glowAlpha, goldShade, glowBlur, motionSpeed} (monotonic, clamped, motionSpeed 0 when reduced/effects-off). Tested.
+- HomePage greeting gets a radial gold aura that warms/brightens with progression + a slow `breathe` pulse (`animations.css`), gated by `settingsStore.effects` + `prefers-reduced-motion`.
+- Animated stat reveals: `CountUp` wired into ProfilePage lifetime tiles (workouts/sets/PRs/best+current streak/total XP) and WeeklyRecap (sessions/PRs/XP), gated by effects.
 
 **Roadmap v3 S1 (Resume in-progress workout) done:**
 - `activeWorkout` mirrored to localStorage (`opus_active_workout`): boot-hydrate via `loadActive()` in `workoutStore.js`, write-through via `useWorkoutStore.subscribe`, cleared on complete/discard.

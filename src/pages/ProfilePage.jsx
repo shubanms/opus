@@ -11,12 +11,16 @@ import TrophyCase from '../components/rpg/TrophyCase.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
 import ProfileCard from '../components/share/ProfileCard.jsx';
 import ChallengeCard from '../components/share/ChallengeCard.jsx';
+import CountUp from '../components/fx/CountUp.jsx';
 
-function StatTile({ icon: Icon, value, label, accent }) {
+function StatTile({ icon: Icon, value, label, accent, countTo }) {
+  const effects = useSettingsStore((s) => s.effects);
   return (
     <div className="rounded-xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
       <Icon size={14} style={{ color: accent ?? 'var(--color-ash)' }} />
-      <p className="mt-1 font-mono text-lg font-semibold" style={{ color: accent ?? 'var(--color-text-primary)' }}>{value}</p>
+      <p className="mt-1 font-mono text-lg font-semibold" style={{ color: accent ?? 'var(--color-text-primary)' }}>
+        {countTo != null && effects ? <CountUp value={countTo} /> : value}
+      </p>
       <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{label}</p>
     </div>
   );
@@ -114,18 +118,18 @@ export default function ProfilePage() {
         Lifetime
       </h2>
       <div className="grid grid-cols-3 gap-3">
-        <StatTile icon={Dumbbell} value={life.workouts} label="Workouts" />
-        <StatTile icon={Layers} value={life.totalSets.toLocaleString()} label="Sets" />
-        <StatTile icon={Trophy} value={life.prCount} label="PRs" accent="var(--color-gold)" />
+        <StatTile icon={Dumbbell} value={life.workouts} countTo={life.workouts} label="Workouts" />
+        <StatTile icon={Layers} value={life.totalSets.toLocaleString()} countTo={life.totalSets} label="Sets" />
+        <StatTile icon={Trophy} value={life.prCount} countTo={life.prCount} label="PRs" accent="var(--color-gold)" />
         <StatTile icon={Zap} value={fmtVolume(life.totalVolume, unit)} label="Volume" />
         <StatTile icon={Clock} value={`${Math.round(life.hours)}h`} label="Trained" />
-        <StatTile icon={Flame} value={life.bestStreak} label="Best streak" accent={life.bestStreak > 0 ? 'var(--color-ember)' : undefined} />
+        <StatTile icon={Flame} value={life.bestStreak} countTo={life.bestStreak} label="Best streak" accent={life.bestStreak > 0 ? 'var(--color-ember)' : undefined} />
       </div>
 
       {/* Current streak + XP */}
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <StatTile icon={Flame} value={profile.streak ?? 0} label="Current streak" accent={(profile.streak ?? 0) > 0 ? 'var(--color-ember)' : undefined} />
-        <StatTile icon={Zap} value={totalXp.toLocaleString()} label="Total XP" accent="var(--color-gold)" />
+        <StatTile icon={Flame} value={profile.streak ?? 0} countTo={profile.streak ?? 0} label="Current streak" accent={(profile.streak ?? 0) > 0 ? 'var(--color-ember)' : undefined} />
+        <StatTile icon={Zap} value={totalXp.toLocaleString()} countTo={totalXp} label="Total XP" accent="var(--color-gold)" />
       </div>
 
       {/* Member since */}
