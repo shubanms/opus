@@ -1,4 +1,4 @@
-import { X, StickyNote, Link2 } from 'lucide-react';
+import { X, StickyNote, Link2, ChevronUp, ChevronDown } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -13,7 +13,7 @@ const MUSCLE_HUE = {
   abs: '#C9A84C', obliques: '#C9A84C',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove, canLink, linked, onToggleSuperset }) {
+export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
@@ -43,6 +43,24 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
           )}
         </div>
         <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+          <div className="flex flex-col">
+            <button
+              onClick={onMoveUp}
+              disabled={!canMoveUp}
+              aria-label="Move exercise up"
+              style={{ opacity: canMoveUp ? 1 : 0.25 }}
+            >
+              <ChevronUp size={16} style={{ color: 'var(--color-ash)' }} />
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={!canMoveDown}
+              aria-label="Move exercise down"
+              style={{ opacity: canMoveDown ? 1 : 0.25 }}
+            >
+              <ChevronDown size={16} style={{ color: 'var(--color-ash)' }} />
+            </button>
+          </div>
           {canLink && (
             <button
               onClick={onToggleSuperset}

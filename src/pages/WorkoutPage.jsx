@@ -33,7 +33,7 @@ function ElapsedTimer({ startedAt }) {
   );
 }
 
-function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, onToggleSuperset }) {
+function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const exerciseData = useExercise(ex.exerciseId);
   const muscleGroup = exerciseData?.muscleGroup ?? null;
   return (
@@ -46,12 +46,16 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, on
       canLink={canLink}
       linked={linked}
       onToggleSuperset={onToggleSuperset}
+      onMoveUp={onMoveUp}
+      onMoveDown={onMoveDown}
+      canMoveUp={canMoveUp}
+      canMoveDown={canMoveDown}
     />
   );
 }
 
 export default function WorkoutPage() {
-  const { activeWorkout, resumed, dismissResumed, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset } = useWorkoutStore();
+  const { activeWorkout, resumed, dismissResumed, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset, moveExercise } = useWorkoutStore();
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
 
@@ -272,6 +276,10 @@ export default function WorkoutPage() {
               onSetLogged={handleSetLogged}
               onRemove={() => removeExercise(ex.exerciseId)}
               onToggleSuperset={() => toggleSuperset(ex.exerciseId)}
+              onMoveUp={() => moveExercise(ex.exerciseId, -1)}
+              onMoveDown={() => moveExercise(ex.exerciseId, 1)}
+              canMoveUp={idx > 0}
+              canMoveDown={idx < exercises.length - 1}
             />
           );
         };

@@ -1,8 +1,13 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap v3 — S1+S2+S7+S8 done; S6 dropped; S3/S4/S5 remain
+Current sprint: Roadmap v3 — S1+S2+S3+S7+S8 done; S6 dropped; S4/S5 remain
 Current version: v2.0.0 (→ v3.0.0 at v3 close)
+
+**Roadmap v3 S3 (Reorder exercises) done:**
+- Pure `utils/reorder.js` `moveItem(arr,index,dir)` (swap neighbour; same-ref no-op at bounds) + test.
+- `workoutStore.moveExercise(id,dir)` (supersets re-derive from new order → moving a member out breaks the link). Up/down chevrons in `ExerciseSection` header; threaded via WorkoutPage renderEx (canMoveUp/Down by index).
+- Routine builder `TemplateBuilder`: per-row up/down via `moveItem`; `updateTemplate` already rewrites `orderIndex` from array order (no migration).
 
 **Roadmap v3 S2 (On-open reminders) done:**
 - Pure `utils/reminders.js` `pickReminders({settings,now,today,weekKey,lastWorkoutDate,streak,markers})` → in-app toasts: weeklySummary (once/ISO week), one daily nudge (streakRisk in evening if streak>0 else gymNudge), suppressed in quiet hours / when trained today / already shown. Tested.

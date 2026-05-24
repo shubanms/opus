@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import ExercisePicker from '../workout/ExercisePicker.jsx';
 import { createTemplate, updateTemplate } from '../../utils/templateActions.js';
+import { moveItem } from '../../utils/reorder.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { toDisplay, toKg, unitLabel } from '../../utils/units.js';
 import ColorPicker from '../ui/ColorPicker.jsx';
@@ -44,6 +45,10 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
 
   function removeExercise(id) {
     setExercises((prev) => prev.filter((e) => e.id !== id));
+  }
+
+  function move(index, dir) {
+    setExercises((prev) => moveItem(prev, index, dir));
   }
 
   function reset() {
@@ -109,15 +114,25 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
       </div>
 
       <div className="mt-4 max-h-64 overflow-y-auto">
-        {exercises.map((ex) => (
+        {exercises.map((ex, i) => (
           <div key={ex.id} className="mb-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
             <div className="flex items-center justify-between">
               <span className="truncate font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
                 {ex.name}
               </span>
-              <button onClick={() => removeExercise(ex.id)} className="ml-2 flex-shrink-0" aria-label="Remove">
-                <X size={15} style={{ color: 'var(--color-ash)' }} />
-              </button>
+              <div className="ml-2 flex flex-shrink-0 items-center gap-1.5">
+                <div className="flex flex-col">
+                  <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" style={{ opacity: i === 0 ? 0.25 : 1 }}>
+                    <ChevronUp size={15} style={{ color: 'var(--color-ash)' }} />
+                  </button>
+                  <button onClick={() => move(i, 1)} disabled={i === exercises.length - 1} aria-label="Move down" style={{ opacity: i === exercises.length - 1 ? 0.25 : 1 }}>
+                    <ChevronDown size={15} style={{ color: 'var(--color-ash)' }} />
+                  </button>
+                </div>
+                <button onClick={() => removeExercise(ex.id)} aria-label="Remove">
+                  <X size={15} style={{ color: 'var(--color-ash)' }} />
+                </button>
+              </div>
             </div>
             <div className="mt-2 flex items-center gap-2">
               <input value={ex.targetSets} onChange={(e) => setField(ex.id, 'targetSets', e.target.value)}
