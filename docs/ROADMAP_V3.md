@@ -1,6 +1,6 @@
 # OPUS — Roadmap v3
 
-Living plan for the post-v2.0.0 feature wave. Like `OPUS_ROADMAP.md`, this is
+Living plan for the post-v2.0.0 feature wave. Like the other docs here, this is
 committed so it survives session refreshes; `STATE.md` tracks live status.
 
 ## Context
