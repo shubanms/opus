@@ -7,6 +7,10 @@ Current version: v3.0.0
 > Docs reorganized into `docs/` (this file moved here). Index: `docs/README.md`. Map: `docs/ARCHITECTURE.md`.
 > Rules: `docs/GUIDELINES.md`. Per-version features: `docs/RELEASES.md`. Entry point: root `CLAUDE.md`.
 
+**New-ideas wave (post-v3) — auto-routines / shuffle / stale-nudge (4 PRs):**
+- **PR 1 (auto-generate) DONE**: pure `utils/routineGenerator.js` — `makeRng` (mulberry32), `LEVEL_DEFAULTS` (count+targets: beg 4/3×10, int 6/4×8, adv 7/4×6), `pickForGroup` (difficulty-proximity ranking = thin-advanced fallback), `defaultCount`, `generateRoutine({exercises,groups,level,count,rng})` (round-robin, no dupes) + tests. `RoutineGeneratorModal.jsx` (group chips from ALL_MUSCLES, level segmented, auto name, day, preview, Particles+chime) → `createTemplate`. "Auto" button + empty-state CTA on TemplatesPage. Assume full gym (no equipment UI).
+- TODO PR 2: shuffle/re-roll (3 intensity, pin, reuse generator). PR 3: stale nudge (~4wk AND ≥8 sessions, toast+chip). PR 4: goal sound + test-notification + preview + ~4–6s anthem cue.
+
 **More sound cues (post-v3):**
 - `sound.js` added cues: `tick` (set logged), `tap` (add exercise), `start` (workout start), `delete` (soft descending — deletions). All gated by settingsStore.sound.
 - Wired: SetLogger (tick), WorkoutPage start/add (start/tap), HomePage start template (start), WorkoutCard delete / ExerciseDetail delete / ResetDataModal wipe / ProgressPage body+sleep+activity deletes (delete).
