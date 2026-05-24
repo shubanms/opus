@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { wipeAllData } from '../../utils/dataActions.js';
+import { playChime } from '../../utils/sound.js';
 
 const PHRASE = 'DELETE';
 
@@ -11,6 +12,7 @@ export default function ResetDataModal({ isOpen, onClose }) {
 
   async function confirm() {
     setBusy(true);
+    playChime('delete');
     await wipeAllData();
     window.location.assign(import.meta.env.BASE_URL);
   }

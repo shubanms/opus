@@ -6,6 +6,7 @@ import { usePRs, useExerciseVolume, useExerciseOneRepMax } from '../hooks/usePro
 import { deleteCustomExercise, toggleFavorite, setExerciseColor } from '../utils/exerciseActions.js';
 import { setExerciseNote } from '../utils/noteActions.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
+import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
@@ -125,6 +126,7 @@ export default function ExerciseDetailPage() {
       danger: true,
     });
     if (ok) {
+      playChime('delete');
       await deleteCustomExercise(exercise.id);
       navigate('/exercises');
     }

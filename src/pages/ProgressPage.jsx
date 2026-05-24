@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Plus, ChevronRight, Trash2, Pencil, Footprints, Droplet } from 'lucide-react';
 import { deleteBodyStat, deleteSleep, deleteActivity } from '../utils/healthActions.js';
+import { playChime } from '../utils/sound.js';
+
+const del = (fn, id) => { playChime('delete'); fn(id); };
 import PageWrapper from '../components/layout/PageWrapper.jsx';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
 import TrendChart from '../components/progress/TrendChart.jsx';
@@ -173,7 +176,7 @@ function Body() {
                   <button onClick={() => { setEditEntry(a); setActForm(true); }} aria-label="Edit entry">
                     <Pencil size={13} style={{ color: 'var(--color-ash)' }} />
                   </button>
-                  <button onClick={() => deleteActivity(a.id)} aria-label="Delete entry">
+                  <button onClick={() => del(deleteActivity, a.id)} aria-label="Delete entry">
                     <Trash2 size={13} style={{ color: 'var(--color-ember)' }} />
                   </button>
                 </span>
@@ -191,7 +194,7 @@ function Body() {
                 <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>{s.date}</span>
                 <span className="flex items-center gap-3">
                   {s.weight != null && <span className="font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>{toDisplay(s.weight, unit)} {unitLabel(unit)}</span>}
-                  <button onClick={() => deleteBodyStat(s.id)} aria-label="Delete entry">
+                  <button onClick={() => del(deleteBodyStat, s.id)} aria-label="Delete entry">
                     <Trash2 size={13} style={{ color: 'var(--color-ember)' }} />
                   </button>
                 </span>
@@ -211,7 +214,7 @@ function Body() {
                   <span className="font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>
                     {s.hours != null ? `${s.hours}h` : ''}{s.quality ? ` ★${s.quality}` : ''}
                   </span>
-                  <button onClick={() => deleteSleep(s.id)} aria-label="Delete entry">
+                  <button onClick={() => del(deleteSleep, s.id)} aria-label="Delete entry">
                     <Trash2 size={13} style={{ color: 'var(--color-ember)' }} />
                   </button>
                 </span>

@@ -5,6 +5,7 @@ import useSettingsStore from '../../store/settingsStore.js';
 import useUIStore from '../../store/uiStore.js';
 import { useLastSets } from '../../hooks/useWorkout.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
+import { playChime } from '../../utils/sound.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import { calcSetXP } from '../../utils/rpg.js';
 import PlateCalculator from './PlateCalculator.jsx';
@@ -44,6 +45,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
       isWarmup: false,
     });
     haptic('tap');
+    playChime('tick');
     setXpFloat({ key: Date.now(), xp: calcSetXP(weightKg, repsNum || 0) });
     onSetLogged?.();
     setReps('');

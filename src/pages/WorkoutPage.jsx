@@ -132,7 +132,7 @@ export default function WorkoutPage() {
         </p>
 
         <button
-          onClick={() => startWorkout()}
+          onClick={() => { playChime('start'); startWorkout(); }}
           className="mt-6 w-full rounded-2xl py-4 font-sans text-base font-semibold"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
         >
@@ -162,7 +162,7 @@ export default function WorkoutPage() {
           </button>
         ) : (
           templates.map((t) => (
-            <TemplateCard key={t.id} template={t} onStart={startFromTemplate} />
+            <TemplateCard key={t.id} template={t} onStart={(tpl) => { playChime('start'); startFromTemplate(tpl); }} />
           ))
         )}
         </div>
@@ -320,7 +320,7 @@ export default function WorkoutPage() {
       <ExercisePicker
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        onSelect={addExercise}
+        onSelect={(ex) => { playChime('tap'); addExercise(ex); }}
         alreadyAdded={alreadyAdded}
       />
 

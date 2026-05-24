@@ -65,7 +65,7 @@ function note(freq, t0, dur, opts = {}) {
 }
 
 // Notes (Hz).
-const C5 = 523.25, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.0, B5 = 987.77;
+const E4 = 329.63, A4 = 440.0, C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.0, B5 = 987.77;
 const C6 = 1046.5, E6 = 1318.51, G6 = 1567.98;
 
 const CUES = {
@@ -101,6 +101,24 @@ const CUES = {
     const chord = t + 0.5;
     [C5, E5, G5, C6].forEach((f) => note(f, chord, 0.95, { peak: 0.12, release: 0.9 }));
     note(G6, chord + 0.05, 0.9, { peak: 0.07, type: 'sine', release: 0.9 });
+  },
+  // Subtle tick when a set is logged (frequent → very quiet/short).
+  tick(t) {
+    note(A5, t, 0.05, { type: 'sine', peak: 0.06, release: 0.1 });
+  },
+  // Light confirming pop for adds / toggles.
+  tap(t) {
+    note(D5, t, 0.06, { type: 'sine', peak: 0.07, release: 0.12 });
+  },
+  // Rising kickoff when a workout starts.
+  start(t) {
+    note(C5, t, 0.1, { peak: 0.1 });
+    note(G5, t + 0.08, 0.2, { peak: 0.12 });
+  },
+  // Soft descending "removed" cue for deletions (not harsh).
+  delete(t) {
+    note(A4, t, 0.12, { type: 'triangle', peak: 0.1 });
+    note(E4, t + 0.1, 0.3, { type: 'triangle', peak: 0.1, release: 0.4 });
   },
 };
 

@@ -5,6 +5,7 @@ import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
+import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
@@ -61,6 +62,7 @@ export default function HomePage() {
   const scene = sceneParams({ streak: profile?.streak ?? 0, level, prestige, reducedMotion: reducedMotion || !effects });
 
   function startTemplate() {
+    playChime('start');
     startFromTemplate(today.template);
     navigate('/workout');
   }

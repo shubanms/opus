@@ -6,6 +6,7 @@ import { deleteWorkout } from '../../utils/workoutActions.js';
 import { fmtVolume, toDisplay } from '../../utils/units.js';
 import { avgRest, avgRestAcross, formatRest } from '../../utils/restStats.js';
 import { setWorkoutNote, setWorkoutColor } from '../../utils/noteActions.js';
+import { playChime } from '../../utils/sound.js';
 import ShareButton from '../share/ShareButton.jsx';
 import ColorPicker from '../ui/ColorPicker.jsx';
 import useWorkoutStore from '../../store/workoutStore.js';
@@ -45,7 +46,10 @@ export default function WorkoutCard({ workout }) {
       confirmLabel: 'Delete',
       danger: true,
     });
-    if (ok) await deleteWorkout(workout.id);
+    if (ok) {
+      playChime('delete');
+      await deleteWorkout(workout.id);
+    }
   }
 
   return (
