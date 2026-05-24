@@ -1,8 +1,15 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: 17 (Dark Mode & Theming + Transitions) — Roadmap v2
+Current sprint: Roadmap Sprint 15 (Quests & Weekly Goals) done — back from detours
 Current version: v1.7.0 (post-MVP)
+
+**Quests & Weekly Goals (Roadmap Sprint 15) done:**
+- `utils/quests.js` (pure, tested): QUEST_POOL (8 defs across 6 metrics), Monday-aligned `weekKeyOf`/`weekStartMs`/`weekIndex`, deterministic `weeklyQuests()` picking 3 distinct-metric quests per week (rotates Mondays, no backend). `quests.test.js`.
+- `hooks/useQuests.js`: live progress from this-week's workouts/sets/PRs (sessions, volumeKg, sets, muscleVariety, legsSessions, prs) + claimed state.
+- `utils/questActions.js` `claimQuest`: one claim per quest per week → DB `questClaims` + `addXP`.
+- DB v8 `questClaims` (`++id, weekKey`). XP is permanent: `recomputeProfile` now sums questClaims XP (survives workout deletes). Auto-covered by export/import/wipe.
+- `components/rpg/QuestBoard.jsx` on Home: progress bars, "+XP" claim button (goldPulse) → Particles + haptic + chime; volume targets unit-aware.
 
 **Daily activity (steps + water) (detour) done:**
 - DB v7 `dailyLogs` (`++id, date, steps, water`), one row per date. `utils/healthActions.js` setSteps/addWater (upsert today).
