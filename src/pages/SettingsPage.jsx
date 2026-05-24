@@ -9,7 +9,8 @@ import { useCurrentBodyweight } from '../hooks/useProgress.js';
 import useUserStore from '../store/userStore.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
-import { NOTIF_TYPES } from '../utils/notifications.js';
+import { NOTIF_TYPES, requestPermission } from '../utils/notifications.js';
+import { playChime } from '../utils/sound.js';
 import { exportData, importData, exportSetsCsv, exportPdf } from '../utils/dataActions.js';
 import { logBodyStat } from '../utils/healthActions.js';
 import { toDisplay, toKg, unitLabel } from '../utils/units.js';
@@ -284,6 +285,37 @@ export default function SettingsPage() {
             </div>
           </>
         )}
+
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={async () => {
+              const p = await requestPermission();
+              if (p === 'granted') {
+                try {
+                  new Notification('OPUS', { body: "Test notification ✓ you're all set.", icon: `${import.meta.env.BASE_URL}lifter.png` });
+                } catch {
+                  useUIStore.getState().showToast('Test sent — your OS shows it.', { type: 'info' });
+                }
+              } else {
+                useUIStore.getState().showToast('Allow notifications in your browser/OS to test.', { type: 'info' });
+              }
+            }}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-xs font-medium"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            <Bell size={14} /> Test notification
+          </button>
+          <button
+            onClick={() => { playChime('goal', { force: true }); setTimeout(() => playChime('anthem', { force: true }), 1000); }}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-xs font-medium"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            <Sparkles size={14} /> Preview sounds
+          </button>
+        </div>
+        <p className="mt-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          Notifications show while OPUS is open or installed; a static app can't push in the background.
+        </p>
       </section>
 
       {/* Experience */}

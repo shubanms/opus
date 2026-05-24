@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useExercises } from '../hooks/useExercises.js';
+import { useWorkouts } from '../hooks/useWorkout.js';
 import { deleteTemplate, duplicateTemplate, updateTemplate } from '../utils/templateActions.js';
 import { reshuffleRoutine, makeRng } from '../utils/routineGenerator.js';
+import { sessionCounts, isStaleRoutine } from '../utils/staleRoutine.js';
 import { playChime } from '../utils/sound.js';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import TemplateBuilder from '../components/template/TemplateBuilder.jsx';
@@ -16,6 +18,8 @@ export default function TemplatesPage() {
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
   const allExercises = useExercises();
+  const workouts = useWorkouts();
+  const counts = sessionCounts(workouts);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -128,7 +132,7 @@ export default function TemplatesPage() {
         </div>
       ) : (
         templates.map((t) => (
-          <TemplateCard key={t.id} template={t} onEdit={openEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} onShuffle={handleShuffle} />
+          <TemplateCard key={t.id} template={t} onEdit={openEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} onShuffle={handleShuffle} stale={isStaleRoutine(t, counts[t.id] ?? 0)} />
         ))
       )}
 

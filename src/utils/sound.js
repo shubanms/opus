@@ -65,7 +65,8 @@ function note(freq, t0, dur, opts = {}) {
 }
 
 // Notes (Hz).
-const E4 = 329.63, A4 = 440.0, C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.0, B5 = 987.77;
+const A3 = 220.0, C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.0;
+const A4 = 440.0, C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.0, B5 = 987.77;
 const C6 = 1046.5, E6 = 1318.51, G6 = 1567.98;
 
 const CUES = {
@@ -120,11 +121,29 @@ const CUES = {
     note(A4, t, 0.12, { type: 'triangle', peak: 0.1 });
     note(E4, t + 0.1, 0.3, { type: 'triangle', peak: 0.1, release: 0.4 });
   },
+  // Bright ~1s celebration when a daily goal (steps/water) is reached.
+  goal(t) {
+    [C5, E5, G5].forEach((f, i) => note(f, t + i * 0.08, 0.2, { peak: 0.11 }));
+    note(C6, t + 0.24, 0.5, { peak: 0.1, type: 'sine', release: 0.5 });
+    note(E6, t + 0.3, 0.45, { peak: 0.06, type: 'sine', release: 0.5 });
+  },
+  // ~5s "calling you back" anthem: a yearning minor build resolving to major.
+  // i (Am) → VI (F) → VII (G) → I (C), slow and swelling.
+  anthem(t) {
+    const chord = (root, notes, at, dur) => {
+      notes.forEach((f) => note(f, at, dur, { type: 'triangle', peak: 0.06, attack: 0.08, release: 0.7 }));
+    };
+    note(A3, t, 4.8, { type: 'sine', peak: 0.05, attack: 0.3, release: 1 }); // sustained low call
+    chord('Am', [A4, C5, E5], t + 0.1, 1.5);
+    chord('F', [F4, A4, C6], t + 1.7, 1.5);
+    chord('G', [G4, B5, D5], t + 3.0, 1.0);
+    chord('C', [C5, E5, G5, C6], t + 4.0, 1.6); // resolve — "come home"
+  },
 };
 
-// Plays a layered cue (only when the sound pref is on).
-export function playChime(kind = 'success') {
-  if (!useSettingsStore.getState().sound) return;
+// Plays a layered cue (only when the sound pref is on; `force` previews it anyway).
+export function playChime(kind = 'success', { force = false } = {}) {
+  if (!force && !useSettingsStore.getState().sound) return;
   try {
     if (!ensureCtx()) return;
     (CUES[kind] ?? CUES.success)(ctx.currentTime + 0.02);

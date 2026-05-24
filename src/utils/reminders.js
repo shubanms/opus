@@ -4,9 +4,19 @@ import { inQuietHours } from './notifications.js';
 // the hook supplies current state and persists the returned markers so each
 // reminder fires at most once per its period. Respects per-type toggles and
 // quiet hours. (In-app toasts only — a static PWA can't push in the background.)
-export function pickReminders({ settings, now, today, weekKey, lastWorkoutDate, streak = 0, markers = {} }) {
+export function pickReminders({ settings, now, today, weekKey, lastWorkoutDate, streak = 0, staleRoutine = null, markers = {} }) {
   const out = [];
   if (inQuietHours(settings, now)) return out;
+
+  // Stale routine — once per ISO week.
+  if (settings.staleRoutine && staleRoutine && markers.lastStaleWeek !== weekKey) {
+    out.push({
+      type: 'staleRoutine',
+      title: 'Switch it up',
+      body: `You've run "${staleRoutine.name}" for a while — open it to shuffle in fresh moves.`,
+      marker: { lastStaleWeek: weekKey },
+    });
+  }
 
   // Weekly summary — once per ISO week.
   if (settings.weeklySummary && markers.lastSummaryWeek !== weekKey) {

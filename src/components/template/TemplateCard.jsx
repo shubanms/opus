@@ -9,7 +9,7 @@ const MUSCLE_HUE = {
   quadriceps: '#8A8780', hamstring: '#8A8780', gluteal: '#8A8780', calves: '#8A8780',
 };
 
-export default function TemplateCard({ template, onStart, onEdit, onDelete, onDuplicate, onShuffle }) {
+export default function TemplateCard({ template, onStart, onEdit, onDelete, onDuplicate, onShuffle, stale }) {
   const muscleGroups = [...new Set(template.exercises.map((e) => e.muscleGroup))].slice(0, 4);
 
   return (
@@ -75,6 +75,16 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
             );
           })}
         </div>
+      )}
+
+      {stale && onShuffle && (
+        <button
+          onClick={() => onShuffle(template)}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 font-sans text-xs font-medium"
+          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+        >
+          <Shuffle size={13} /> You've run this a while — shuffle it up?
+        </button>
       )}
     </div>
   );
