@@ -3,8 +3,19 @@ import lifter from '../../assets/lifter.png';
 
 // Gold ring + lifter image. r=90 in a 200x200 viewBox → circumference ≈ 565.
 const CIRCUMFERENCE = 565;
+const BRIGHT_GOLD = '#E8D48A';
 
-export default function OpusMark({ size = 200, dark = true, animate = false }) {
+// Point on the ring at a clock angle (0 = 12 o'clock), given a radius.
+function pointAt(angleDeg, radius) {
+  const a = ((angleDeg - 90) * Math.PI) / 180;
+  return [100 + radius * Math.cos(a), 100 + radius * Math.sin(a)];
+}
+
+// The character mark evolves with `level` (1–10) and `prestige` (0+):
+// the ring gains studs (one per level), a brightening halo, and — once
+// prestiging — a slow rotating sweep plus a row of gems. Passing no level
+// (the default) renders the plain branding mark used on loading/onboarding.
+export default function OpusMark({ size = 200, dark = true, animate = false, level = 0, prestige = 0 }) {
   const [showImage, setShowImage] = useState(!animate);
 
   useEffect(() => {
@@ -15,10 +26,24 @@ export default function OpusMark({ size = 200, dark = true, animate = false }) {
 
   const bg = dark ? 'var(--color-obsidian)' : 'var(--color-chalk)';
 
+  const lv = Math.max(0, Math.min(level, 10));
+  const ringWidth = 4 + (lv >= 4 ? 1 : 0) + (lv >= 8 ? 1 : 0);
+  const glowAlpha = lv >= 3 ? Math.min(0.12 + (lv - 2) * 0.05 + prestige * 0.12, 0.6) : 0;
+  const glowBlur = 8 + lv * 2 + prestige * 6;
+  const studs = lv >= 2 ? Array.from({ length: lv }, (_, i) => pointAt((i * 360) / lv, 90)) : [];
+  const gems = Math.min(prestige, 5);
+
   return (
     <div
       className="relative"
-      style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', background: bg }}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        background: bg,
+        boxShadow: glowAlpha > 0 ? `0 0 ${glowBlur}px rgba(201,168,76,${glowAlpha})` : undefined,
+      }}
     >
       <img
         src={lifter}
@@ -47,7 +72,7 @@ export default function OpusMark({ size = 200, dark = true, animate = false }) {
           r="90"
           fill="none"
           stroke="var(--color-gold)"
-          strokeWidth="4"
+          strokeWidth={ringWidth}
           strokeLinecap="round"
           transform="rotate(-90 100 100)"
           style={
@@ -60,6 +85,43 @@ export default function OpusMark({ size = 200, dark = true, animate = false }) {
               : undefined
           }
         />
+
+        {/* Prestige: a slow rotating bright sweep over the ring. */}
+        {prestige > 0 && (
+          <g className="anim-spin-slow" style={{ transformOrigin: '100px 100px' }}>
+            <circle
+              cx="100"
+              cy="100"
+              r="90"
+              fill="none"
+              stroke={BRIGHT_GOLD}
+              strokeWidth={ringWidth}
+              strokeLinecap="round"
+              strokeDasharray={`${Math.round(CIRCUMFERENCE * 0.18)} ${CIRCUMFERENCE}`}
+            />
+          </g>
+        )}
+
+        {/* Level studs around the ring (one per level). */}
+        {studs.map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r={ringWidth >= 5 ? 3.4 : 3} fill="var(--color-gold)" />
+        ))}
+
+        {/* Prestige gems — a small crown at the top. */}
+        {Array.from({ length: gems }, (_, i) => {
+          const cx = 100 + (i - (gems - 1) / 2) * 15;
+          return (
+            <rect
+              key={`g${i}`}
+              x={cx - 3.2}
+              y={16.8}
+              width={6.4}
+              height={6.4}
+              fill={BRIGHT_GOLD}
+              transform={`rotate(45 ${cx} 20)`}
+            />
+          );
+        })}
       </svg>
     </div>
   );

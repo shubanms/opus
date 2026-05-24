@@ -6,6 +6,7 @@ const ProfileCard = forwardRef(function ProfileCard({ data, theme = DEFAULT_THEM
   const d = data ?? {};
   const { bg, text, sub, accent } = theme;
   const stats = d.stats ?? [];
+  const prestige = Math.min(d.prestige ?? 0, 5);
 
   const tile = (value, label) => (
     <div style={{ flex: 1 }}>
@@ -22,6 +23,13 @@ const ProfileCard = forwardRef(function ProfileCard({ data, theme = DEFAULT_THEM
             <div style={{ width: 18, height: 18, borderRadius: '50%', background: accent }} />
           </div>
           <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 52, fontWeight: 700, letterSpacing: 8, color: text }}>OPUS</span>
+          {prestige > 0 && (
+            <div style={{ display: 'flex', gap: 8, marginLeft: 4 }}>
+              {Array.from({ length: prestige }, (_, i) => (
+                <div key={i} style={{ width: 16, height: 16, background: accent, transform: 'rotate(45deg)' }} />
+              ))}
+            </div>
+          )}
         </div>
         <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 30, fontWeight: 600, color: text }}>{d.name || 'ATHLETE'}</span>
       </div>

@@ -3,7 +3,7 @@ import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, Ch
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js';
-import { getXPProgress, getTitle } from '../utils/rpg.js';
+import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
 import { fmtWeight, fmtVolume } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
@@ -46,7 +46,8 @@ export default function ProfilePage() {
   const profileShareData = {
     name: profile.name,
     level,
-    title: getTitle(level),
+    prestige: getPrestige(totalXp),
+    title: getRankLabel(totalXp),
     stats: charStats,
     workouts: workouts.length,
     streak: profile.streak ?? 0,

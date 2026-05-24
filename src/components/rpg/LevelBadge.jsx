@@ -1,5 +1,6 @@
-// Compact level chip for top bars / cards.
-export default function LevelBadge({ level, size = 'md' }) {
+// Compact level chip for top bars / cards. A prestige tier (> 0) adds a
+// bright outer halo ring so it reads as "ascended".
+export default function LevelBadge({ level, size = 'md', prestige = 0 }) {
   const dim = size === 'sm' ? 28 : 36;
   const font = size === 'sm' ? 12 : 15;
   return (
@@ -11,6 +12,7 @@ export default function LevelBadge({ level, size = 'md' }) {
         fontSize: font,
         background: 'var(--color-gold)',
         color: 'var(--color-obsidian)',
+        boxShadow: prestige > 0 ? '0 0 0 2px var(--color-stone), 0 0 0 3.5px #E8D48A' : undefined,
       }}
     >
       {level}
