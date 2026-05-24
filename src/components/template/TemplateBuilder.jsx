@@ -5,6 +5,7 @@ import ExercisePicker from '../workout/ExercisePicker.jsx';
 import { createTemplate, updateTemplate } from '../../utils/templateActions.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { toDisplay, toKg, unitLabel } from '../../utils/units.js';
+import ColorPicker from '../ui/ColorPicker.jsx';
 
 const DAYS = [
   { v: null, l: 'Any' }, { v: 1, l: 'Mon' }, { v: 2, l: 'Tue' }, { v: 3, l: 'Wed' },
@@ -25,6 +26,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
   const unit = useSettingsStore((s) => s.unit);
   const [name, setName] = useState(editing?.name ?? '');
   const [day, setDay] = useState(editing?.dayOfWeek ?? null);
+  const [color, setColor] = useState(editing?.color ?? null);
   const [exercises, setExercises] = useState(() => initExercises(editing, unit));
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -47,6 +49,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
   function reset() {
     setName('');
     setDay(null);
+    setColor(null);
     setExercises([]);
     setPickerOpen(false);
   }
@@ -55,6 +58,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
     const payload = {
       name,
       dayOfWeek: day,
+      color,
       exercises: exercises.map((e) => ({
         exerciseId: e.id,
         targetSets: e.targetSets === '' ? null : Number(e.targetSets),
@@ -98,6 +102,10 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
             {d.l}
           </button>
         ))}
+      </div>
+
+      <div className="mt-3">
+        <ColorPicker value={color} onChange={setColor} />
       </div>
 
       <div className="mt-4 max-h-64 overflow-y-auto">

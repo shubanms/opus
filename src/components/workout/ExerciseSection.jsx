@@ -1,7 +1,8 @@
-import { X } from 'lucide-react';
+import { X, StickyNote } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
+import { useExerciseNote } from '../../hooks/useExercises.js';
 import { toDisplay, unitLabel } from '../../utils/units.js';
 
 const MUSCLE_HUE = {
@@ -15,6 +16,7 @@ const MUSCLE_HUE = {
 export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
   const unit = useSettingsStore((s) => s.unit);
+  const note = useExerciseNote(exercise.exerciseId);
 
   return (
     <div
@@ -49,6 +51,13 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
           <X size={13} style={{ color: 'var(--color-ash)' }} />
         </button>
       </div>
+
+      {note && (
+        <div className="mt-3 flex items-start gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
+          <StickyNote size={13} style={{ color: 'var(--color-ash)', marginTop: 1, flexShrink: 0 }} />
+          <p className="font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>{note}</p>
+        </div>
+      )}
 
       <div className="mt-3">
         <OverloadNudge exerciseId={exercise.exerciseId} />

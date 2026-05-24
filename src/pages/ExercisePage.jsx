@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import { useExercises } from '../hooks/useExercises.js';
 import BodyPicker from '../components/exercise/BodyPicker.jsx';
 import ExerciseSearch from '../components/exercise/ExerciseSearch.jsx';
@@ -13,12 +13,14 @@ export default function ExercisePage() {
   const [search, setSearch] = useState('');
   const [selectedMuscle, setSelectedMuscle] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   // When searching: ignore muscle filter so results span all groups
-  const exercises = useExercises({
+  const all = useExercises({
     muscleGroup: search ? null : selectedMuscle,
     search,
   });
+  const exercises = favoritesOnly ? all.filter((e) => e.favorite) : all;
 
   const subtitle =
     selectedMuscle && !search
@@ -47,8 +49,20 @@ export default function ExercisePage() {
         </button>
       </div>
 
-      {/* Search */}
-      <ExerciseSearch value={search} onChange={setSearch} />
+      {/* Search + favorites */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <ExerciseSearch value={search} onChange={setSearch} />
+        </div>
+        <button
+          onClick={() => setFavoritesOnly((v) => !v)}
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl"
+          style={{ background: favoritesOnly ? 'var(--color-gold)' : 'var(--color-ivory)' }}
+          aria-label="Show favorites only"
+        >
+          <Star size={18} fill={favoritesOnly ? 'var(--color-obsidian)' : 'none'} style={{ color: favoritesOnly ? 'var(--color-obsidian)' : 'var(--color-ash)' }} />
+        </button>
+      </div>
 
       {/* Muscle filter — compact, hidden while searching */}
       {!search && (

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube } from 'lucide-react';
-import { useExercise } from '../hooks/useExercises.js';
+import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote } from 'lucide-react';
+import { useExercise, useExerciseNote } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume } from '../hooks/useProgress.js';
-import { deleteCustomExercise } from '../utils/exerciseActions.js';
+import { deleteCustomExercise, toggleFavorite, setExerciseColor } from '../utils/exerciseActions.js';
+import { setExerciseNote } from '../utils/noteActions.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import VolumeChart from '../components/progress/VolumeChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
+import ColorPicker from '../components/ui/ColorPicker.jsx';
 
 const DIFFICULTY_COLOR = {
   beginner:     '#6B8F71',
@@ -54,6 +56,7 @@ export default function ExerciseDetailPage() {
   const exercise = useExercise(Number(id));
   const prs = usePRs(Number(id));
   const volumeRaw = useExerciseVolume(Number(id));
+  const note = useExerciseNote(Number(id));
   const unit = useSettingsStore((s) => s.unit);
   const volume = volumeRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
   const [demoUrl, setDemoUrl] = useState(null);
@@ -124,9 +127,19 @@ export default function ExerciseDetailPage() {
       </button>
 
       {/* Title + badges */}
-      <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-        {exercise.name}
-      </h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
+          {exercise.name}
+        </h1>
+        <button
+          onClick={() => toggleFavorite(exercise.id)}
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+          style={{ background: 'var(--color-ivory)' }}
+          aria-label="Toggle favorite"
+        >
+          <Star size={18} fill={exercise.favorite ? 'var(--color-gold)' : 'none'} style={{ color: exercise.favorite ? 'var(--color-gold)' : 'var(--color-ash)' }} />
+        </button>
+      </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <p className="font-sans text-sm capitalize" style={{ color: 'var(--color-text-secondary)' }}>
           {exercise.muscleGroup.replace(/-/g, ' ')} · {exercise.equipment}
@@ -144,6 +157,29 @@ export default function ExerciseDetailPage() {
             Custom
           </span>
         )}
+      </div>
+
+      {/* Marking + coaching note */}
+      <div className="mt-5 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+        <div className="mb-2 flex items-center gap-2">
+          <StickyNote size={14} style={{ color: 'var(--color-ash)' }} />
+          <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            Coaching note
+          </span>
+        </div>
+        <textarea
+          key={note}
+          defaultValue={note}
+          onBlur={(e) => setExerciseNote(exercise.id, e.target.value)}
+          placeholder="Cues you want every session — e.g. elbows tucked, brace, full ROM."
+          rows={2}
+          className="w-full resize-none rounded-xl px-3 py-2 font-sans text-sm outline-none"
+          style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
+        />
+        <p className="mb-2 mt-3 font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+          Label colour
+        </p>
+        <ColorPicker value={exercise.color ?? null} onChange={(c) => setExerciseColor(exercise.id, c)} />
       </div>
 
       {/* How to do it — always available via video; image when Wger has one */}

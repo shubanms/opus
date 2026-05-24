@@ -30,6 +30,11 @@ const useWorkoutStore = create((set, get) => ({
     if (w) set({ activeWorkout: { ...w, energy: level } });
   },
 
+  setWorkoutNotes(notes) {
+    const w = get().activeWorkout;
+    if (w) set({ activeWorkout: { ...w, notes } });
+  },
+
   startFromTemplate(template) {
     set({
       activeWorkout: {
@@ -110,6 +115,21 @@ const useWorkoutStore = create((set, get) => ({
     });
   },
 
+  setSetNote(exerciseId, setNumber, note) {
+    const w = get().activeWorkout;
+    if (!w) return;
+    set({
+      activeWorkout: {
+        ...w,
+        exercises: w.exercises.map(e =>
+          e.exerciseId !== exerciseId
+            ? e
+            : { ...e, sets: e.sets.map(s => (s.setNumber === setNumber ? { ...s, note } : s)) }
+        ),
+      },
+    });
+  },
+
   removeSet(exerciseId, setNumber) {
     const w = get().activeWorkout;
     if (!w) return;
@@ -176,7 +196,7 @@ const useWorkoutStore = create((set, get) => ({
       name: w.name,
       status: 'completed',
       duration,
-      notes: '',
+      notes: w.notes ?? '',
       xpEarned,
       totalVolume,
       totalSets,
@@ -194,6 +214,7 @@ const useWorkoutStore = create((set, get) => ({
           weight: s.weight ?? 0,
           rpe: s.rpe ?? null,
           isWarmup: s.isWarmup ?? false,
+          note: s.note ?? null,
           completedAt: s.completedAt,
         });
       }

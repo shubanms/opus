@@ -46,3 +46,10 @@ db.version(4).stores({
   templateExercises:
     '++id, templateId, exerciseId, orderIndex, targetSets, targetReps, targetWeight',
 });
+
+// v5: sticky per-exercise coaching notes. (exercises.favorite/color, sets.note,
+// workouts.color are unindexed fields — no schema change needed for those.)
+db.version(5).stores({
+  exerciseNotes:
+    '++id, exerciseId, text, updatedAt',
+});

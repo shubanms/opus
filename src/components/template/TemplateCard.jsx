@@ -20,6 +20,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
+            {template.color && <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: template.color }} />}
             <p className="truncate font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
               {template.name}
             </p>

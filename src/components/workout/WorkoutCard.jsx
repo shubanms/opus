@@ -4,7 +4,9 @@ import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucid
 import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
 import { deleteWorkout } from '../../utils/workoutActions.js';
 import { fmtVolume, toDisplay } from '../../utils/units.js';
+import { setWorkoutNote, setWorkoutColor } from '../../utils/noteActions.js';
 import ShareButton from '../share/ShareButton.jsx';
+import ColorPicker from '../ui/ColorPicker.jsx';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 
@@ -48,7 +50,8 @@ export default function WorkoutCard({ workout }) {
       <button onClick={() => setExpanded((v) => !v)} className="w-full text-left">
         <div className="flex items-start justify-between">
           <div>
-            <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+            <p className="flex items-center gap-2 font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {workout.color && <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: workout.color }} />}
               {workout.name}
             </p>
             <p className="mt-0.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -104,8 +107,34 @@ export default function WorkoutCard({ workout }) {
                   </span>
                 ))}
               </div>
+              {ex.sets.some((s) => s.note) && (
+                <div className="mt-1">
+                  {ex.sets.filter((s) => s.note).map((s) => (
+                    <p key={s.id} className="font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>
+                      · {s.note}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
+
+          {/* Session note */}
+          <textarea
+            key={workout.notes}
+            defaultValue={workout.notes ?? ''}
+            onBlur={(e) => setWorkoutNote(workout.id, e.target.value)}
+            placeholder="Add a note…"
+            rows={2}
+            className="mb-3 mt-1 w-full resize-none rounded-xl px-3 py-2 font-sans text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+
+          {/* Colour label */}
+          <div className="mb-3">
+            <ColorPicker value={workout.color ?? null} onChange={(c) => setWorkoutColor(workout.id, c)} />
+          </div>
+
           <div className="mt-2 flex gap-2">
             <button
               onClick={handleRepeat}

@@ -42,7 +42,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove }) {
 }
 
 export default function WorkoutPage() {
-  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy } = useWorkoutStore();
+  const { activeWorkout, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes } = useWorkoutStore();
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
 
@@ -217,6 +217,16 @@ export default function WorkoutPage() {
       >
         <Plus size={16} /> Add exercise
       </button>
+
+      {/* Session note */}
+      <textarea
+        value={activeWorkout.notes ?? ''}
+        onChange={(e) => setWorkoutNotes(e.target.value)}
+        placeholder="Session notes — how it felt, what to change next time…"
+        rows={2}
+        className="mt-4 w-full resize-none rounded-2xl px-4 py-3 font-sans text-sm outline-none"
+        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)', color: 'var(--color-text-primary)' }}
+      />
 
       <ExercisePicker
         isOpen={pickerOpen}

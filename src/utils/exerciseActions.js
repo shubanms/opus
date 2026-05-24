@@ -1,6 +1,15 @@
 import { db } from '../db/db.js';
 import { computeVolume } from './volume.js';
 
+export async function toggleFavorite(exerciseId) {
+  const ex = await db.exercises.get(exerciseId);
+  if (ex) await db.exercises.update(exerciseId, { favorite: !ex.favorite });
+}
+
+export async function setExerciseColor(exerciseId, color) {
+  await db.exercises.update(exerciseId, { color: color ?? null });
+}
+
 async function recomputeWorkoutTotals(workoutId) {
   const workout = await db.workouts.get(workoutId);
   const sets = (await db.sets.where('workoutId').equals(workoutId).toArray()).filter((s) => !s.isWarmup);
