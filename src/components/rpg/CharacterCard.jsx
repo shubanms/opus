@@ -1,6 +1,7 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
-import { getXPProgress, getRankLabel } from '../../utils/rpg.js';
+import { getXPProgress, getRankLabel, getPrestige } from '../../utils/rpg.js';
 import { useCharacterStats } from '../../hooks/useRPG.js';
+import OpusMark from '../logo/OpusMark.jsx';
 import TitleBadge from './TitleBadge.jsx';
 import XPBar from './XPBar.jsx';
 
@@ -11,6 +12,7 @@ export default function CharacterCard({ profile }) {
   const stats = useCharacterStats();
   const totalXp = profile?.totalXp ?? 0;
   const { level } = getXPProgress(totalXp);
+  const prestige = getPrestige(totalXp);
   const title = getRankLabel(totalXp);
 
   return (
@@ -27,6 +29,7 @@ export default function CharacterCard({ profile }) {
             <TitleBadge title={title} />
           </div>
         </div>
+        <OpusMark size={72} level={level} prestige={prestige} />
       </div>
 
       <div className="mt-2">

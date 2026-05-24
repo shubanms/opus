@@ -110,3 +110,20 @@
 .anim-tick-up {
   animation: tickUp var(--dur-standard) var(--ease-out) both;
 }
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Slow halo sweep for prestige marks. */
+.anim-spin-slow {
+  animation: spin 9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-spin-slow {
+    animation: none;
+  }
+}

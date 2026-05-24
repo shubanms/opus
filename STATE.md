@@ -1,8 +1,15 @@
 # OPUS — Project State
 
 Last updated: 2026-05-24
-Current sprint: Roadmap Sprint 15 (Quests & Weekly Goals) done — back from detours
+Current sprint: Roadmap Sprint 16 (Evolving Character Mark) done — back on roadmap
 Current version: v1.7.0 (post-MVP)
+
+**Evolving Character Mark (Roadmap Sprint 16 visual) done:**
+- `components/logo/OpusMark.jsx` now prop-driven by `level` (1–10) + `prestige`: ring thickens, gains one stud per level, a brightening gold halo (boxShadow), and — once prestiging — a slow rotating bright sweep (`.anim-spin-slow`, reduced-motion off) + a crown of gem pips. `level=0` default keeps the plain branding mark (LoadingScreen/Onboarding unchanged).
+- `animations.css`: `spin` keyframe + `.anim-spin-slow` (9s linear) with reduced-motion guard.
+- `CharacterCard` renders the evolving mark; `LevelBadge` gains optional bright halo ring at prestige; Home strip + Profile now show the prestige rank label (getRankLabel) and pass prestige.
+- Share `ProfileCard`: prestige gems beside the OPUS logo + rank label (incl. tier) in share data.
+- (Prestige logic getPrestige/prestigeXp/getRankLabel was already shipped + tested.)
 
 **Quests & Weekly Goals (Roadmap Sprint 15) done:**
 - `utils/quests.js` (pure, tested): QUEST_POOL (8 defs across 6 metrics), Monday-aligned `weekKeyOf`/`weekStartMs`/`weekIndex`, deterministic `weeklyQuests()` picking 3 distinct-metric quests per week (rotates Mondays, no backend). `quests.test.js`.

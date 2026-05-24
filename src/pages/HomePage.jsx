@@ -3,7 +3,7 @@ import { Flame, ChevronRight, Play, Moon, CalendarCheck } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
-import { getXPProgress, getTitle } from '../utils/rpg.js';
+import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
@@ -48,7 +48,8 @@ export default function HomePage() {
 
   const totalXp = profile?.totalXp ?? 0;
   const { level } = getXPProgress(totalXp);
-  const title = getTitle(level);
+  const prestige = getPrestige(totalXp);
+  const title = getRankLabel(totalXp);
 
   function startTemplate() {
     startFromTemplate(today.template);
@@ -74,7 +75,7 @@ export default function HomePage() {
           style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
         >
           <div className="mb-3 flex items-center gap-3">
-            <LevelBadge level={level} size="sm" />
+            <LevelBadge level={level} size="sm" prestige={prestige} />
             <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
               {title}
             </span>
