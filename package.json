@@ -11,6 +11,9 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
     "@react-three/fiber": "^8.18.0",
     "dexie": "^3.2.4",
     "dexie-react-hooks": "^1.1.7",

@@ -2,8 +2,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Capacitor's WebView serves assets at the file:// root, so it needs base: '/'.
+// GitHub Pages serves under /opus/, so the normal build keeps that. Toggle via
+// CAPACITOR_BUILD=true npm run build (used by the android-release workflow).
 export default defineConfig({
-  base: '/opus/',
+  base: process.env.CAPACITOR_BUILD === 'true' ? '/' : '/opus/',
   plugins: [
     react(),
     VitePWA({

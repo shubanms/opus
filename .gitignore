@@ -148,5 +148,3 @@ vite.config.ts.timestamp-*
 /playwright/.cache/
 /audit-shots/
 
-# npm lockfile (project tracks package.json only)
-package-lock.json
