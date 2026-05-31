@@ -2,6 +2,17 @@
 // (e.g. PR celebrations) and store scheduling preferences, but true background
 // delivery (gym nudge, weekly summary) needs push infrastructure we don't have.
 // Those toggles are preference-ready and fire on the relevant in-app event.
+//
+// Two delivery paths, transparent to callers:
+// - PWA / browser: navigator.serviceWorker.ready.showNotification(...) (required
+//   on Android; the `new Notification(...)` constructor is forbidden there).
+// - Capacitor APK: @capacitor/local-notifications via the native bridge —
+//   Service Workers don't register inside the WebView so the SW path hangs.
+
+import { Capacitor } from '@capacitor/core';
+
+const isNative = () => Capacitor?.isNativePlatform?.() ?? false;
+const loadLN = () => import('@capacitor/local-notifications').then((m) => m.LocalNotifications);
 
 const SETTINGS_KEY = 'opus_notif_settings';
 const PROMPTED_KEY = 'opus_notif_prompted';
@@ -37,11 +48,23 @@ export function saveSettings(s) {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 }
 
+// Synchronous best-effort — used by the Settings UI to decide whether to
+// show the "Blocked in browser settings" hint. On native, we can't check
+// synchronously; assume 'default' so the toggle is usable. The actual
+// permission is requested at request/show time.
 export function permission() {
+  if (isNative()) return 'default';
   return typeof Notification !== 'undefined' ? Notification.permission : 'unsupported';
 }
 
 export async function requestPermission() {
+  if (isNative()) {
+    const LN = await loadLN();
+    const res = await LN.requestPermissions();
+    return res.display === 'granted' ? 'granted'
+         : res.display === 'denied'  ? 'denied'
+         : 'default';
+  }
   if (typeof Notification === 'undefined') return 'unsupported';
   if (Notification.permission !== 'default') return Notification.permission;
   return Notification.requestPermission();
@@ -61,11 +84,24 @@ function inDND(s) {
   return inQuietHours(s);
 }
 
-// Routes through the registered Service Worker's showNotification when
-// available — this is the *only* path that works on Android (Chrome blocks
-// `new Notification(...)` from a page context, and installed PWAs likewise).
-// Falls back to the constructor for desktop browsers without a SW.
+// Sends one notification through the right runtime:
+// - Native (Capacitor): @capacitor/local-notifications schedules immediately
+//   via Android NotificationManager. No SW, no constructor.
+// - PWA / browser: navigator.serviceWorker.ready.showNotification(...). Falls
+//   back to the constructor for desktop browsers without a SW.
 export async function showNotification(title, opts = {}) {
+  if (isNative()) {
+    const LN = await loadLN();
+    // Permissions are user-driven on native; if denied, schedule() will reject.
+    await LN.schedule({
+      notifications: [{
+        id: Math.floor(Math.random() * 2147483647),
+        title,
+        body: opts.body ?? '',
+      }],
+    });
+    return;
+  }
   if (typeof Notification === 'undefined') throw new Error('unsupported');
   if (Notification.permission !== 'granted') throw new Error('not-granted');
   const full = { icon: `${import.meta.env.BASE_URL}lifter.png`, ...opts };
