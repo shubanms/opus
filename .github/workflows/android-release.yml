@@ -37,7 +37,10 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          # Capacitor Android (current version) compiles against Java 21
+          # ('error: invalid source release: 21' on Java 17). Local builds
+          # confirmed working on JDK 21.
+          java-version: '21'
 
       - uses: android-actions/setup-android@v3
         with:
