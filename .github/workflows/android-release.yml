@@ -57,15 +57,20 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Build release APK
+      - name: Build debug-signed APK
         working-directory: android
+        # assembleDebug auto-signs with the SDK debug keystore, which is
+        # required for sideload-install on modern Android. assembleRelease
+        # produces an *unsigned* APK that the OS rejects with
+        # "package appears to be invalid". Keeping it debug-signed avoids
+        # any keystore-management overhead while still being installable.
         run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK
         run: |
-          mv android/app/build/outputs/apk/release/app-release-unsigned.apk \
+          mv android/app/build/outputs/apk/debug/app-debug.apk \
              opus-${{ env.VERSION }}.apk
 
       - name: Create GitHub Release
