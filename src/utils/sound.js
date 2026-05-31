@@ -68,6 +68,7 @@ function note(freq, t0, dur, opts = {}) {
 const A3 = 220.0, C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.0;
 const A4 = 440.0, C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.0, B5 = 987.77;
 const C6 = 1046.5, E6 = 1318.51, G6 = 1567.98;
+const C3 = 130.81, G3 = 196.0;
 
 const CUES = {
   // Frequent + gentle.
@@ -127,6 +128,71 @@ const CUES = {
     note(C6, t + 0.24, 0.5, { peak: 0.1, type: 'sine', release: 0.5 });
     note(E6, t + 0.3, 0.45, { peak: 0.06, type: 'sine', release: 0.5 });
   },
+  // ~8.5s cinematic app-open intro — sub-bass slide into a brooding Am
+  // orchestral hit, dark choir pad with a tense bell descent, swelling build,
+  // then a triumphant C-major resolution with octave-stacked pad and bell
+  // shimmer overhead. Plays on cold start (gated by sound + themeOnOpen).
+  themeOpen(t) {
+    // Sub-bass slide (cinematic horn opener) — detuned saws through a low LPF.
+    const slide = (f1, f2, t0, dur, peak = 0.18) => {
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 420;
+      filter.Q.value = 1.2;
+      const g = ctx.createGain();
+      const end = t0 + dur + 0.4;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(peak, t0 + 0.06);
+      g.gain.exponentialRampToValueAtTime(peak * 0.35, t0 + dur);
+      g.gain.exponentialRampToValueAtTime(0.0001, end);
+      filter.connect(g); g.connect(master);
+      for (const dt of [0, 5, -5]) {
+        const osc = ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.detune.value = dt;
+        osc.frequency.setValueAtTime(f1, t0);
+        osc.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+        osc.connect(filter);
+        osc.start(t0); osc.stop(end);
+      }
+    };
+
+    // 1. Sub-bass slide up.
+    slide(45, 110, t, 0.7, 0.2);
+    // 2. Brassy Am stab on the downbeat (octaves + power).
+    [55, 110, 164.8, 220, 261.6].forEach((f) =>
+      note(f, t + 0.32, 0.45, { type: 'sawtooth', peak: 0.09, attack: 0.005, release: 0.55, detune: 12 })
+    );
+    // 3. Dark choir pad sustaining the minor mood.
+    [A3, C4, E4, A4].forEach((f) =>
+      note(f, t + 0.5, 3.2, { type: 'triangle', peak: 0.07, attack: 0.4, release: 1.4, detune: 18 })
+    );
+    // 4. Tense bell descent (A→E→C→A in upper octave).
+    [A5, E5, C5, A4].forEach((f, i) =>
+      note(f, t + 1.5 + i * 0.2, 0.55, { type: 'sine', peak: 0.08, attack: 0.005, release: 0.7 })
+    );
+    // 5. Building low rumble before the lift.
+    note(55, t + 2.6, 1.4, { type: 'sawtooth', peak: 0.08, attack: 0.45, release: 0.45 });
+    note(82.4, t + 2.6, 1.4, { type: 'sawtooth', peak: 0.06, attack: 0.45, release: 0.45 });
+    // 6. F-major lift at 4.0s — colour shifts brighter.
+    [F4, A4, C5].forEach((f) =>
+      note(f, t + 4.0, 1.1, { type: 'triangle', peak: 0.09, attack: 0.1, release: 0.85, detune: 12 })
+    );
+    // 7. Heroic bell flourish (G chord into the resolution).
+    [G4, B5, D5, G5].forEach((f, i) =>
+      note(f, t + 4.6 + i * 0.13, 0.5, { type: 'sine', peak: 0.1, attack: 0.005, release: 0.6 })
+    );
+    // 8. Final triumphant C-major chord — octave-stacked pad, ~2.5s tail.
+    [C3, G3, C4, E4, G4, C5, E5, G5].forEach((f) =>
+      note(f, t + 5.6, 2.4, { type: 'triangle', peak: 0.07, attack: 0.08, release: 1.7, detune: 10 })
+    );
+    // 9. Sub-octave drone underneath for weight.
+    note(C3, t + 5.6, 2.6, { type: 'sawtooth', peak: 0.08, attack: 0.06, release: 1.4 });
+    // 10. Bell shimmer above the chord.
+    [C6, E6, G6].forEach((f, i) =>
+      note(f, t + 6.1 + i * 0.18, 0.7, { type: 'sine', peak: 0.06, release: 1.0 })
+    );
+  },
   // ~5s "calling you back" anthem: a yearning minor build resolving to major.
   // i (Am) → VI (F) → VII (G) → I (C), slow and swelling.
   anthem(t) {
@@ -140,6 +206,28 @@ const CUES = {
     chord('C', [C5, E5, G5, C6], t + 4.0, 1.6); // resolve — "come home"
   },
 };
+
+// Cinematic intro — fires once per cold start. Tries immediately (installed
+// PWAs allow autoplay), and on a browser tab where autoplay is blocked, defers
+// to the first user gesture so it kicks in when they tap. Gated by the sound
+// preference at call sites.
+let introPlayed = false;
+export function playIntro() {
+  if (introPlayed) return;
+  const tryGo = () => {
+    if (introPlayed) return true;
+    try {
+      const c = ensureCtx();
+      if (!c || c.state !== 'running') return false;
+      introPlayed = true;
+      CUES.themeOpen(c.currentTime + 0.02);
+      return true;
+    } catch { return false; }
+  };
+  if (tryGo()) return;
+  const onGesture = () => { tryGo(); };
+  document.addEventListener('pointerdown', onGesture, { once: true, passive: true });
+}
 
 // Plays a layered cue (only when the sound pref is on; `force` previews it anyway).
 export function playChime(kind = 'success', { force = false } = {}) {

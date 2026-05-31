@@ -9,7 +9,7 @@ import { useCurrentBodyweight } from '../hooks/useProgress.js';
 import useUserStore from '../store/userStore.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
-import { NOTIF_TYPES, requestPermission } from '../utils/notifications.js';
+import { NOTIF_TYPES, requestPermission, showNotification } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
 import { exportData, importData, exportSetsCsv, exportPdf } from '../utils/dataActions.js';
 import { logBodyStat } from '../utils/healthActions.js';
@@ -59,6 +59,8 @@ export default function SettingsPage() {
   const setEffects = useSettingsStore((s) => s.setEffects);
   const sound = useSettingsStore((s) => s.sound);
   const setSound = useSettingsStore((s) => s.setSound);
+  const themeOnOpen = useSettingsStore((s) => s.themeOnOpen);
+  const setThemeOnOpen = useSettingsStore((s) => s.setThemeOnOpen);
   const theme = useSettingsStore((s) => s.theme);
   const setTheme = useSettingsStore((s) => s.setTheme);
   const setTourSeen = useSettingsStore((s) => s.setTourSeen);
@@ -290,14 +292,14 @@ export default function SettingsPage() {
           <button
             onClick={async () => {
               const p = await requestPermission();
-              if (p === 'granted') {
-                try {
-                  new Notification('OPUS', { body: "Test notification ✓ you're all set.", icon: `${import.meta.env.BASE_URL}lifter.png` });
-                } catch {
-                  useUIStore.getState().showToast('Test sent — your OS shows it.', { type: 'info' });
-                }
-              } else {
+              if (p !== 'granted') {
                 useUIStore.getState().showToast('Allow notifications in your browser/OS to test.', { type: 'info' });
+                return;
+              }
+              try {
+                await showNotification('OPUS', { body: "Test notification — you're all set." });
+              } catch {
+                useUIStore.getState().showToast("Couldn't send a notification — check OS settings.", { type: 'error' });
               }
             }}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-xs font-medium"
@@ -341,6 +343,9 @@ export default function SettingsPage() {
         </Row>
         <Row label="Sound">
           <Switch on={sound} onChange={setSound} />
+        </Row>
+        <Row label="Opening theme music">
+          <Switch on={themeOnOpen} onChange={setThemeOnOpen} disabled={!sound} />
         </Row>
         <button
           onClick={() => { setTourSeen(false); navigate('/home'); }}

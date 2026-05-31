@@ -61,16 +61,29 @@ function inDND(s) {
   return inQuietHours(s);
 }
 
-export function notify(type, { title, body }) {
+// Routes through the registered Service Worker's showNotification when
+// available — this is the *only* path that works on Android (Chrome blocks
+// `new Notification(...)` from a page context, and installed PWAs likewise).
+// Falls back to the constructor for desktop browsers without a SW.
+export async function showNotification(title, opts = {}) {
+  if (typeof Notification === 'undefined') throw new Error('unsupported');
+  if (Notification.permission !== 'granted') throw new Error('not-granted');
+  const full = { icon: `${import.meta.env.BASE_URL}lifter.png`, ...opts };
+  if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, full);
+      return;
+    } catch { /* fall through to direct constructor */ }
+  }
+  new Notification(title, full);
+}
+
+export async function notify(type, { title, body }) {
   const s = getSettings();
   if (!s.enabled || !s[type]) return;
-  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   if (inDND(s)) return;
-  try {
-    new Notification(title, { body, icon: `${import.meta.env.BASE_URL}lifter.png` });
-  } catch {
-    /* ignore */
-  }
+  try { await showNotification(title, { body }); } catch { /* ignore */ }
 }
 
 export function notifyPR(text) {
