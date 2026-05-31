@@ -37,5 +37,8 @@ export const router = createBrowserRouter(
       ],
     },
   ],
-  { basename: '/opus' }
+  // Basename mirrors Vite's BASE_URL so Capacitor's WebView (base '/') and
+  // GitHub Pages ('/opus/') both match. createBrowserRouter wants the leading
+  // '/' but no trailing slash; '/' alone is fine.
+  { basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/' }
 );
