@@ -128,10 +128,13 @@ const CUES = {
     note(C6, t + 0.24, 0.5, { peak: 0.1, type: 'sine', release: 0.5 });
     note(E6, t + 0.3, 0.45, { peak: 0.06, type: 'sine', release: 0.5 });
   },
-  // ~8.5s cinematic app-open intro — sub-bass slide into a brooding Am
-  // orchestral hit, dark choir pad with a tense bell descent, swelling build,
-  // then a triumphant C-major resolution with octave-stacked pad and bell
-  // shimmer overhead. Plays on cold start (gated by sound + themeOnOpen).
+  // ~8.5s cinematic app-open intro — sustained dark / minor throughout
+  // (no major lift, à la Type Shit). Sub-bass slide → brooding Am orchestral
+  // hit → dark choir pad sustained underneath the whole piece → tense bell
+  // descent → low building rumble → Dm (iv) brooding swell → Phrygian bell
+  // motif (E-F-E-A) → 808-style slide down (V → i) → impact Am stab on the
+  // drop → sustained Am octave-stack with sub-A drone → A-minor bell shimmer.
+  // Stays in A-minor end to end. Plays on cold start (gated by sound + themeOnOpen).
   themeOpen(t) {
     // Sub-bass slide (cinematic horn opener) — detuned saws through a low LPF.
     const slide = (f1, f2, t0, dur, peak = 0.18) => {
@@ -163,9 +166,9 @@ const CUES = {
     [55, 110, 164.8, 220, 261.6].forEach((f) =>
       note(f, t + 0.32, 0.45, { type: 'sawtooth', peak: 0.09, attack: 0.005, release: 0.55, detune: 12 })
     );
-    // 3. Dark choir pad sustaining the minor mood.
+    // 3. Dark choir pad sustained through the whole piece — locks the mood.
     [A3, C4, E4, A4].forEach((f) =>
-      note(f, t + 0.5, 3.2, { type: 'triangle', peak: 0.07, attack: 0.4, release: 1.4, detune: 18 })
+      note(f, t + 0.5, 6.5, { type: 'triangle', peak: 0.06, attack: 0.4, release: 1.4, detune: 18 })
     );
     // 4. Tense bell descent (A→E→C→A in upper octave).
     [A5, E5, C5, A4].forEach((f, i) =>
@@ -174,23 +177,32 @@ const CUES = {
     // 5. Building low rumble before the lift.
     note(55, t + 2.6, 1.4, { type: 'sawtooth', peak: 0.08, attack: 0.45, release: 0.45 });
     note(82.4, t + 2.6, 1.4, { type: 'sawtooth', peak: 0.06, attack: 0.45, release: 0.45 });
-    // 6. F-major lift at 4.0s — colour shifts brighter.
-    [F4, A4, C5].forEach((f) =>
-      note(f, t + 4.0, 1.1, { type: 'triangle', peak: 0.09, attack: 0.1, release: 0.85, detune: 12 })
+    // 6. Dm (iv) brooding swell — keeps minor; the only chord change is to
+    //    another minor, so the mood never brightens.
+    [D4, F4, A4].forEach((f) =>
+      note(f, t + 4.0, 1.1, { type: 'triangle', peak: 0.09, attack: 0.15, release: 0.85, detune: 14 })
     );
-    // 7. Heroic bell flourish (G chord into the resolution).
-    [G4, B5, D5, G5].forEach((f, i) =>
-      note(f, t + 4.6 + i * 0.13, 0.5, { type: 'sine', peak: 0.1, attack: 0.005, release: 0.6 })
+    // 7. Tense bell motif in E Phrygian (E → F → E → A) — the minor 2nd
+    //    is the darkest possible interval; reads "menacing", not heroic.
+    [E5, F5, E5, A5].forEach((f, i) =>
+      note(f, t + 4.6 + i * 0.14, 0.5, { type: 'sine', peak: 0.1, attack: 0.005, release: 0.6 })
     );
-    // 8. Final triumphant C-major chord — octave-stacked pad, ~2.5s tail.
-    [C3, G3, C4, E4, G4, C5, E5, G5].forEach((f) =>
-      note(f, t + 5.6, 2.4, { type: 'triangle', peak: 0.07, attack: 0.08, release: 1.7, detune: 10 })
+    // 8. 808-style sub-bass slide DOWN (E2 → A1, V → i) — trap-style drop.
+    slide(82.4, 55, t + 5.3, 0.55, 0.2);
+    // 9. Impact stab on the drop — Am, mirrors the opening hit.
+    [55, 110, 164.8, 220, 329.6].forEach((f) =>
+      note(f, t + 5.85, 0.5, { type: 'sawtooth', peak: 0.1, attack: 0.005, release: 0.6, detune: 12 })
     );
-    // 9. Sub-octave drone underneath for weight.
-    note(C3, t + 5.6, 2.6, { type: 'sawtooth', peak: 0.08, attack: 0.06, release: 1.4 });
-    // 10. Bell shimmer above the chord.
-    [C6, E6, G6].forEach((f, i) =>
-      note(f, t + 6.1 + i * 0.18, 0.7, { type: 'sine', peak: 0.06, release: 1.0 })
+    // 10. Final sustained Am chord — octave-stacked low-to-high. Stays
+    //     minor; no "sunshine and rainbows" major lift.
+    [55, 82.4, 110, A3, C4, E4, A4, C5, E5].forEach((f) =>
+      note(f, t + 5.9, 2.3, { type: 'triangle', peak: 0.07, attack: 0.08, release: 1.7, detune: 10 })
+    );
+    // 11. Sub-A drone underneath for weight.
+    note(55, t + 5.9, 2.5, { type: 'sawtooth', peak: 0.08, attack: 0.06, release: 1.4 });
+    // 12. Bell shimmer in A-minor pentatonic (A, C, E) — keeps the colour dark.
+    [A5, C6, E6].forEach((f, i) =>
+      note(f, t + 6.4 + i * 0.2, 0.7, { type: 'sine', peak: 0.06, release: 1.0 })
     );
   },
   // ~5s "calling you back" anthem: a yearning minor build resolving to major.
