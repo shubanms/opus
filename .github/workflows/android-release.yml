@@ -30,7 +30,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Capacitor CLI 7+ requires Node >= 22 (the existing deploy.yml
+          # is unaffected — it doesn't shell out to @capacitor/cli).
+          node-version: 22
 
       - uses: actions/setup-java@v4
         with:
