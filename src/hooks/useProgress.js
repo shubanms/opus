@@ -199,6 +199,31 @@ export function useExerciseOneRepMax(exerciseId, limit = 10) {
   }, [exerciseId]) ?? [];
 }
 
+// Top exercises by lifetime working-set volume, with set count + muscle group
+// joined in. Powers the Progress > By Exercise default view. Volume here is a
+// simple weight×reps ranking metric (not bodyweight-adjusted) — consistent
+// across exercises for ordering.
+export function useTopExercises(limit = 12) {
+  return useLiveQuery(async () => {
+    const sets = (await db.sets.toArray()).filter((s) => !s.isWarmup);
+    if (!sets.length) return [];
+    const byEx = {};
+    for (const s of sets) {
+      const e = (byEx[s.exerciseId] ??= { exerciseId: s.exerciseId, sets: 0, volume: 0 });
+      e.sets += 1;
+      e.volume += (s.weight || 0) * (s.reps || 0);
+    }
+    for (const id of Object.keys(byEx).map(Number)) {
+      const ex = await db.exercises.get(id);
+      byEx[id].name = ex?.name ?? 'Unknown exercise';
+      byEx[id].muscleGroup = ex?.muscleGroup ?? null;
+    }
+    return Object.values(byEx)
+      .sort((a, b) => b.volume - a.volume || b.sets - a.sets)
+      .slice(0, limit);
+  }, [limit]) ?? [];
+}
+
 // Every personal record across all exercises, newest first, with the
 // exercise name joined in — powers the Hall of Records timeline.
 export function useAllPRs() {
