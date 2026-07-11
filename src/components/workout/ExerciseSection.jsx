@@ -3,7 +3,7 @@ import SetLogger from './SetLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useExerciseNote } from '../../hooks/useExercises.js';
-import { toDisplay, unitLabel } from '../../utils/units.js';
+import { toDisplay, unitLabel, fmtVolume } from '../../utils/units.js';
 
 const MUSCLE_HUE = {
   chest: '#D4622A', triceps: '#D4622A', 'front-deltoids': '#D4622A',
@@ -17,6 +17,14 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
+
+  // Live per-exercise tally for this session.
+  const working = exercise.sets.filter((s) => !s.isWarmup);
+  const setCount = working.length;
+  const totalReps = working.reduce((a, s) => a + (s.reps || 0), 0);
+  const volKg = working.reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
+  const targetSets = exercise.targetSets || null;
+  const progress = targetSets ? Math.min(setCount / targetSets, 1) : null;
 
   return (
     <div
@@ -89,6 +97,24 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
         <div className="mt-3 flex items-start gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
           <StickyNote size={13} style={{ color: 'var(--color-ash)', marginTop: 1, flexShrink: 0 }} />
           <p className="font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>{note}</p>
+        </div>
+      )}
+
+      {(setCount > 0 || targetSets) && (
+        <div className="mt-3">
+          <p className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            {setCount} set{setCount === 1 ? '' : 's'}{targetSets ? ` / ${targetSets}` : ''}
+            {totalReps > 0 ? ` · ${totalReps} reps` : ''}
+            {volKg > 0 ? ` · ${fmtVolume(volKg, unit)}` : ''}
+          </p>
+          {progress != null && (
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--color-ivory)' }}>
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${progress * 100}%`, background: progress >= 1 ? 'var(--color-sage)' : 'var(--color-gold)', transition: 'width .4s var(--ease-out)' }}
+              />
+            </div>
+          )}
         </div>
       )}
 

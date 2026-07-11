@@ -5,12 +5,14 @@ import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js';
 import { useBossStats } from '../hooks/useBosses.js';
-import { getXPProgress, getRankLabel, getPrestige } from '../utils/rpg.js';
+import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { decayInfo } from '../utils/decay.js';
 import { cappedLevel, activeBoss } from '../utils/bosses.js';
 import { fmtWeight, fmtVolume } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
+import LevelBadge from '../components/rpg/LevelBadge.jsx';
+import XPBar from '../components/rpg/XPBar.jsx';
 import TrophyCase from '../components/rpg/TrophyCase.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
 import ProfileCard from '../components/share/ProfileCard.jsx';
@@ -49,6 +51,8 @@ export default function ProfilePage() {
   const { level: rawLevel } = getXPProgress(effectiveXp);
   const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
   const boss = bossStats ? activeBoss(rawLevel, bossStats) : null;
+  const prestige = getPrestige(effectiveXp);
+  const rankTitle = prestige > 0 ? getRankLabel(effectiveXp) : getTitle(level);
   const age = profile.birthYear ? new Date().getFullYear() - profile.birthYear : null;
 
   const identity = [
@@ -81,23 +85,40 @@ export default function ProfilePage() {
 
   return (
     <div className="anim-fade-slide-up px-5 pb-8 pt-8">
-      {/* Header */}
-      <div className="mb-1 flex items-start justify-between">
-        <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-          {profile.name || 'Profile'}
-        </h1>
-        <button
-          onClick={() => navigate('/settings')}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-ivory)' }}
-          aria-label="Settings"
-        >
-          <Settings size={18} style={{ color: 'var(--color-text-secondary)' }} />
-        </button>
+      {/* Identity + progression hero */}
+      <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="flex items-start justify-between">
+          <div className="min-w-0">
+            <h1 className="truncate font-display text-3xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
+              {profile.name || 'Profile'}
+            </h1>
+            <p className="mt-1.5 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+              {identity.length ? identity.join('  ·  ') : `Member since ${profile.joinDate}`}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+            style={{ background: 'var(--color-ivory)' }}
+            aria-label="Settings"
+          >
+            <Settings size={18} style={{ color: 'var(--color-text-secondary)' }} />
+          </button>
+        </div>
+
+        <div className="mt-4 flex items-center gap-2.5">
+          <LevelBadge level={level} size="sm" prestige={prestige} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{rankTitle}</p>
+            <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              Level {level}{prestige > 0 ? ` · Prestige ${prestige}` : ''}
+            </p>
+          </div>
+        </div>
+        <div className="mt-3">
+          <XPBar totalXp={effectiveXp} showLabel={false} />
+        </div>
       </div>
-      <p className="mb-5 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        {identity.length ? identity.join('  ·  ') : `Member since ${profile.joinDate}`}
-      </p>
 
       <Suspense fallback={<div style={{ height: 150 }} />}>
         <Companion autoGreet={false} />
@@ -128,38 +149,25 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <button
-        onClick={() => navigate('/progression')}
-        className="mt-3 flex w-full items-center justify-between rounded-xl px-4 py-3"
-        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-      >
-        <span className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-          View ranks & prestige
-        </span>
-        <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
-      </button>
-
-      <button
-        onClick={() => navigate('/records')}
-        className="mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3"
-        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-      >
-        <span className="flex items-center gap-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-          <Trophy size={15} style={{ color: 'var(--color-gold)' }} /> Hall of Records
-        </span>
-        <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
-      </button>
-
-      <button
-        onClick={() => navigate('/wrapped')}
-        className="mt-2 flex w-full items-center justify-between rounded-xl px-4 py-3"
-        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-      >
-        <span className="flex items-center gap-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-          <Sparkles size={15} style={{ color: 'var(--color-gold)' }} /> Wrapped — monthly & yearly
-        </span>
-        <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
-      </button>
+      <div className="mt-3 overflow-hidden rounded-xl" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        {[
+          { to: '/progression', icon: Swords, iconColor: 'var(--color-ash)', label: 'Ranks & prestige' },
+          { to: '/records', icon: Trophy, iconColor: 'var(--color-gold)', label: 'Hall of Records' },
+          { to: '/wrapped', icon: Sparkles, iconColor: 'var(--color-gold)', label: 'Wrapped — monthly & yearly' },
+        ].map((row, i) => (
+          <button
+            key={row.to}
+            onClick={() => navigate(row.to)}
+            className="flex w-full items-center justify-between px-4 py-3"
+            style={{ borderTop: i > 0 ? '1px solid var(--color-ivory)' : 'none' }}
+          >
+            <span className="flex items-center gap-2.5 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              <row.icon size={15} style={{ color: row.iconColor }} /> {row.label}
+            </span>
+            <ChevronRight size={16} style={{ color: 'var(--color-ash)' }} />
+          </button>
+        ))}
+      </div>
 
       {/* Lifetime stats */}
       <h2 className="mb-3 mt-6 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
