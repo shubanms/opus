@@ -15,8 +15,10 @@ import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useHaptics } from '../hooks/useHaptics.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
+import { saveWorkoutAsRoutine } from '../utils/templateActions.js';
 import { playChime } from '../utils/sound.js';
 import { supersetRuns, noRestIds } from '../utils/supersets.js';
+import useUIStore from '../store/uiStore.js';
 
 function ElapsedTimer({ startedAt }) {
   const [secs, setSecs] = useState(Math.round((Date.now() - startedAt) / 1000));
@@ -92,10 +94,22 @@ export default function WorkoutPage() {
     setShowRest(!(exerciseId != null && noRest.has(exerciseId)));
   }
 
-  async function handleSave(xp) {
+  async function handleSave(xp, routine) {
+    const snapshot = activeWorkout; // completeWorkout clears the store — capture first
     const result = await completeWorkout(xp);
     setEndOpen(false);
     if (result?.discarded) return; // empty session — nothing saved or rewarded
+
+    // Keep an ad-hoc session as a routine if the user opted in.
+    if (routine?.saveRoutine) {
+      try {
+        const savedName = await saveWorkoutAsRoutine({ ...routine, name: routine.routineName, workout: snapshot });
+        if (savedName) useUIStore.getState().showToast(`Saved as "${savedName}"`, { type: 'success' });
+      } catch (e) {
+        console.error('Save-as-routine failed (workout still saved):', e);
+      }
+    }
+
     await maybePromptPermission();
     if (result?.prCount > 0) {
       notifyPR(`You set ${result.prCount} new record${result.prCount === 1 ? '' : 's'} this session.`);
