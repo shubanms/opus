@@ -2,16 +2,23 @@ import { X, Dumbbell, Zap, Trophy, Layers } from 'lucide-react';
 import { useWeeklyRecap } from '../../hooks/useWeeklyRecap.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import useSettingsStore from '../../store/settingsStore.js';
-import { fmtVolume } from '../../utils/units.js';
+import { toDisplay, unitLabel } from '../../utils/units.js';
+
+// Compact volume for the tight 4-across stat row: abbreviate ≥10k as "11.0k".
+function compactVolume(kg, unit) {
+  const v = toDisplay(kg, unit);
+  const u = unitLabel(unit);
+  return v >= 10000 ? `${(v / 1000).toFixed(1)}k ${u}` : `${Math.round(v).toLocaleString()} ${u}`;
+}
 import ShareButton from '../share/ShareButton.jsx';
 import RecapCard from '../share/RecapCard.jsx';
 import CountUp from '../fx/CountUp.jsx';
 
 function Stat({ icon: Icon, value, label, countTo, effects }) {
   return (
-    <div className="flex-1">
+    <div className="min-w-0 flex-1">
       <Icon size={14} style={{ color: 'var(--color-gold)' }} />
-      <p className="mt-1 font-mono text-lg font-semibold" style={{ color: 'var(--color-text-inverse)' }}>
+      <p className="mt-1 truncate font-mono text-base font-semibold" style={{ color: 'var(--color-text-inverse)' }}>
         {countTo != null && effects ? <CountUp value={countTo} /> : value}
       </p>
       <p className="font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>{label}</p>
@@ -54,9 +61,9 @@ export default function WeeklyRecap({ dismissible = true }) {
         )}
       </div>
 
-      <div className="flex">
+      <div className="flex gap-2">
         <Stat icon={Dumbbell} value={recap.sessions} countTo={recap.sessions} effects={effects} label="Sessions" />
-        <Stat icon={Layers} value={fmtVolume(recap.volumeKg, unit)} label="Volume" />
+        <Stat icon={Layers} value={compactVolume(recap.volumeKg, unit)} label="Volume" />
         <Stat icon={Trophy} value={recap.prCount} countTo={recap.prCount} effects={effects} label="PRs" />
         <Stat icon={Zap} value={recap.xp.toLocaleString()} countTo={recap.xp} effects={effects} label="XP" />
       </div>

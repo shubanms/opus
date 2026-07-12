@@ -1,5 +1,9 @@
 {
   "appId": "com.shubanms.opus",
   "appName": "Opus",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "url": "https://shubanms.github.io/opus/",
+    "cleartext": false
+  }
 }

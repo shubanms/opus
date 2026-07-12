@@ -16,7 +16,17 @@ export default function AppLayout() {
   useOnOpenReminders();
 
   return (
-    <div className="min-h-full" style={{ background: 'var(--color-chalk)' }}>
+    <div
+      className="min-h-full"
+      style={{
+        background: 'var(--color-chalk)',
+        // Clear the status bar / notch on edge-to-edge devices (Android 15+,
+        // iOS notch). Zero on platforms that don't report insets.
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}
+    >
       <main className="mx-auto w-full max-w-md pb-24">
         <Outlet />
       </main>

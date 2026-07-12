@@ -13,6 +13,10 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- targetSdk 35+ forces edge-to-edge (web content drawn under the
+             status bar). Opt out so the status bar stays a normal bar and the
+             WebView starts below it. The CSS safe-area padding covers the rest. -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
 
