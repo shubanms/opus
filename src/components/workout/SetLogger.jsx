@@ -149,7 +149,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
       ))}
 
       {/* Input row */}
-      <div className="relative mt-2 flex items-center gap-2">
+      <div className="relative mt-2 flex items-center gap-1.5">
         {xpFloat && (xpFloat.xp > 0 || xpFloat.pr) && (
           <span
             key={xpFloat.key}
@@ -163,7 +163,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         )}
         {showWeight && (
           <>
-            <div className="flex flex-1 items-center gap-1 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
+            <div className="flex min-w-0 flex-1 items-center gap-1 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
               <input
                 value={weight}
                 onChange={(e) => { setWeight(e.target.value); setShowPlates(false); }}
@@ -183,8 +183,8 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
           </>
         )}
 
-        <div className="flex flex-1 items-center rounded-xl" style={{ background: 'var(--color-ivory)' }}>
-          <button onClick={() => stepReps(-1)} className="flex h-full items-center px-2.5 py-2.5" aria-label="Fewer reps">
+        <div className="flex min-w-0 flex-1 items-center rounded-xl" style={{ background: 'var(--color-ivory)' }}>
+          <button onClick={() => stepReps(-1)} className="flex h-full flex-shrink-0 items-center px-2 py-2.5" aria-label="Fewer reps">
             <Minus size={14} style={{ color: 'var(--color-ash)' }} />
           </button>
           <input
@@ -196,7 +196,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
             className="min-w-0 flex-1 bg-transparent text-center font-mono text-sm outline-none"
             style={{ color: 'var(--color-text-primary)' }}
           />
-          <button onClick={() => stepReps(1)} className="flex h-full items-center px-2.5 py-2.5" aria-label="More reps">
+          <button onClick={() => stepReps(1)} className="flex h-full flex-shrink-0 items-center px-2 py-2.5" aria-label="More reps">
             <Plus size={14} style={{ color: 'var(--color-ash)' }} />
           </button>
         </div>
