@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from './theme';
+import { initDb } from './native/db';
 import HomeScreen from './screens/HomeScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import ProgressScreen from './screens/ProgressScreen';
@@ -36,6 +38,15 @@ const ICON = {
 };
 
 export default function App() {
+  useEffect(() => {
+    try {
+      initDb();
+    } catch (e) {
+      // Non-fatal: screens guard their own reads and show empty states.
+      console.warn('DB init failed', e);
+    }
+  }, []);
+
   return (
     <NavigationContainer theme={navTheme}>
       <StatusBar style="light" />

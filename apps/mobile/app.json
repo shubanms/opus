@@ -30,6 +30,17 @@
               "description": "Start a workout",
               "previewImage": "./assets/widget-preview.png",
               "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Today",
+              "label": "OPUS Streak",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "description": "Your streak & workouts",
+              "previewImage": "./assets/widget-preview.png",
+              "updatePeriodMillis": 1800000
             }
           ]
         }
