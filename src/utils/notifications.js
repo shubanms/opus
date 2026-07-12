@@ -57,6 +57,26 @@ export function permission() {
   return typeof Notification !== 'undefined' ? Notification.permission : 'unsupported';
 }
 
+// Async, accurate current permission — on native the sync `permission()` can't
+// read the real state (it returns 'default'), which left the Settings toggle
+// stuck off even when Android had already granted it. Callers resolve this on
+// mount to reflect the true state. No prompt is shown.
+export async function currentPermission() {
+  if (isNative()) {
+    try {
+      const LN = await loadLN();
+      const res = await LN.checkPermissions();
+      return res?.display === 'granted' ? 'granted'
+           : res?.display === 'denied'  ? 'denied'
+           : 'default';
+    } catch {
+      return 'default';
+    }
+  }
+  if (typeof Notification === 'undefined') return 'unsupported';
+  return Notification.permission;
+}
+
 export async function requestPermission() {
   if (isNative()) {
     try {

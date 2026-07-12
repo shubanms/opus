@@ -15,6 +15,7 @@
     "@capacitor/cli": "^8.3.4",
     "@capacitor/core": "^8.3.4",
     "@capacitor/local-notifications": "^8.2.0",
+    "@devmaxime/capacitor-health-connect": "^1.1.0",
     "@react-three/fiber": "^8.18.0",
     "dexie": "^3.2.4",
     "dexie-react-hooks": "^1.1.7",
