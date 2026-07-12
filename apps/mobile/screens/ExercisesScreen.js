@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, FlatList, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import seedExercises from '@opus/core/seedExercises';
+import { seedExercises } from '@opus/core';
 import { Screen, Label } from '../ui';
 import { colors, radius, space } from '../theme';
 import { getExercises } from '../native/db';

@@ -4,8 +4,7 @@
 // numbers (XP, PRs, streak, volume) are computed from these rows using the
 // shared @opus/core logic, so web and native agree on the math.
 import * as SQLite from 'expo-sqlite';
-import { rpg, oneRepMax, dateKey } from '@opus/core';
-import seedExercises from '@opus/core/seedExercises';
+import { rpg, oneRepMax, dateKey, seedExercises } from '@opus/core';
 
 let db = null;
 
