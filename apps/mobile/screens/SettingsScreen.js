@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { Screen, H1, Card, Label, Body } from '../ui';
 import { colors, radius, space } from '../theme';
 import { enableNotifications, testNotification, scheduleDailyReminder } from '../native/notifications';
+import { connectAndReadSteps, healthAvailability } from '../native/healthConnect';
 
 function Button({ label, onPress, primary }) {
   return (
@@ -14,6 +15,30 @@ function Button({ label, onPress, primary }) {
 
 export default function SettingsScreen() {
   const [notif, setNotif] = useState(false);
+  const [steps, setSteps] = useState(null);
+
+  const onConnectHealth = async () => {
+    try {
+      const avail = await healthAvailability();
+      if (avail === 'NotInstalled') {
+        Alert.alert('Health Connect', 'Install Health Connect from the Play Store, then retry.');
+        return;
+      }
+      if (avail !== 'Available') {
+        Alert.alert('Health Connect', "Not supported on this device.");
+        return;
+      }
+      const res = await connectAndReadSteps();
+      if (res.ok) {
+        setSteps(res.steps);
+        Alert.alert('Imported', `${res.steps.toLocaleString()} steps today.`);
+      } else {
+        Alert.alert('Health Connect', 'Could not read steps.');
+      }
+    } catch (e) {
+      Alert.alert('Error', String(e?.message || e));
+    }
+  };
 
   const onEnableNotif = async () => {
     try {
@@ -50,8 +75,10 @@ export default function SettingsScreen() {
 
       <Card>
         <Label>Health Connect</Label>
-        <Body style={{ marginVertical: space(2) }}>Auto-import steps, weight and sleep from Android Health Connect.</Body>
-        <Button label="Connect Health Connect" onPress={() => Alert.alert('Health Connect', 'Wired in the next build step.')} />
+        <Body style={{ marginVertical: space(2) }}>
+          {steps != null ? `${steps.toLocaleString()} steps imported today.` : 'Auto-import steps, weight and sleep from Android Health Connect.'}
+        </Body>
+        <Button label="Connect & import today's steps" onPress={onConnectHealth} primary />
       </Card>
 
       <Card>

@@ -7,9 +7,15 @@
     "userInterfaceStyle": "dark",
     "scheme": "opus",
     "android": {
-      "package": "com.shubanms.opus.mobile"
+      "package": "com.shubanms.opus.mobile",
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_SLEEP"
+      ]
     },
     "plugins": [
+      "react-native-health-connect",
       [
         "expo-build-properties",
         {
