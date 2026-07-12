@@ -1,0 +1,62 @@
+name: Mobile APK
+
+# Builds the React Native (Expo) app into an installable debug APK WITHOUT EAS:
+# npm install -> expo prebuild -> gradle assembleDebug. Runs on PRs touching the
+# mobile app so the native build can be iterated to green before merge.
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - '.github/workflows/mobile-apk.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/core/**'
+      - '.github/workflows/mobile-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+
+      - name: Install shared core
+        working-directory: packages/core
+        run: npm install --no-audit --no-fund
+
+      - name: Install mobile app
+        working-directory: apps/mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Expo prebuild (android)
+        working-directory: apps/mobile
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Assemble debug APK
+        working-directory: apps/mobile/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: opus-mobile-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
