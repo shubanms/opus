@@ -17,6 +17,9 @@ on:
       - '.github/workflows/mobile-apk.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -54,9 +57,31 @@ jobs:
           chmod +x ./gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: opus-mobile-apk
           path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # On merges to main (or manual dispatch), publish the native APK as a
+      # directly-downloadable GitHub Release asset — no login needed to install
+      # on a phone. assembleDebug is debug-signed, so it sideloads fine.
+      - name: Rename APK for release
+        if: github.event_name != 'pull_request'
+        run: |
+          mv apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk \
+             opus-mobile-build-${{ github.run_number }}.apk
+
+      - name: Publish GitHub Release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mobile-build-${{ github.run_number }}
+          name: OPUS Mobile (native) build-${{ github.run_number }}
+          body: >-
+            Native React Native + Expo build of OPUS. Download the APK below and
+            install on Android (enable "install from unknown sources"). Features:
+            offline workout logging (SQLite), streak/XP/PRs, notifications,
+            Health Connect step import, and home-screen widgets.
+          files: opus-mobile-build-${{ github.run_number }}.apk
