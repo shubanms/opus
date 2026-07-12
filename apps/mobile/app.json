@@ -17,6 +17,24 @@
     "plugins": [
       "react-native-health-connect",
       [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "QuickStart",
+              "label": "OPUS Quick Start",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "description": "Start a workout",
+              "previewImage": "./assets/widget-preview.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "android": {
