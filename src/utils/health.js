@@ -7,17 +7,35 @@ import { Capacitor } from '@capacitor/core';
 const isNative = () => Capacitor?.isNativePlatform?.() ?? false;
 const loadHC = () => import('@devmaxime/capacitor-health-connect').then((m) => m.HealthConnect);
 
+// Guard every native call: if the bridge is misbehaving and a call never
+// resolves, fail with `fallback` instead of hanging the UI forever (the
+// symptom that left the card stuck on "Connecting…").
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 export function isHealthSupported() {
   return isNative();
 }
 
-// 'Available' | 'NotInstalled' | 'NotSupported' — or 'Unsupported' off-device.
+// The running platform ('android' | 'ios' | 'web') — used to confirm the native
+// bridge is actually connected.
+export function platform() {
+  return Capacitor?.getPlatform?.() ?? 'web';
+}
+
+// 'Available' | 'NotInstalled' | 'NotSupported' — or 'Unsupported' off-device,
+// 'Timeout' if the bridge never answers.
 export async function healthAvailability() {
   if (!isNative()) return 'Unsupported';
   try {
-    const HC = await loadHC();
-    const { availability } = await HC.checkAvailability();
-    return availability;
+    const HC = await withTimeout(loadHC(), 8000, null);
+    if (!HC) return 'Timeout';
+    const res = await withTimeout(HC.checkAvailability(), 8000, null);
+    return res?.availability ?? 'Timeout';
   } catch {
     return 'NotSupported';
   }
@@ -29,8 +47,10 @@ export async function healthAvailability() {
 export async function requestHealthRead(types = ['Steps']) {
   if (!isNative()) return false;
   try {
-    const HC = await loadHC();
-    const res = await HC.requestPermissions({ read: types, write: [] });
+    const HC = await withTimeout(loadHC(), 8000, null);
+    if (!HC) return false;
+    // The permission dialog is user-driven, so allow much longer here.
+    const res = await withTimeout(HC.requestPermissions({ read: types, write: [] }), 120000, null);
     const granted = res?.read ?? [];
     return types.every((t) => granted.includes(t));
   } catch {
@@ -43,17 +63,19 @@ export async function requestHealthRead(types = ['Steps']) {
 export async function readTodaySteps() {
   if (!isNative()) return null;
   try {
-    const HC = await loadHC();
+    const HC = await withTimeout(loadHC(), 8000, null);
+    if (!HC) return null;
     const now = new Date();
     const start = new Date(now);
     start.setHours(0, 0, 0, 0);
-    const { aggregates } = await HC.aggregateRecords({
+    const res = await withTimeout(HC.aggregateRecords({
       start: start.toISOString(),
       end: now.toISOString(),
       type: 'Steps',
       groupBy: 'day',
-    });
-    return (aggregates ?? []).reduce((sum, a) => sum + (a.value || 0), 0);
+    }), 10000, null);
+    if (!res) return null;
+    return (res.aggregates ?? []).reduce((sum, a) => sum + (a.value || 0), 0);
   } catch {
     return null;
   }
