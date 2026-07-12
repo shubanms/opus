@@ -4,26 +4,53 @@
     "slug": "opus",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "scheme": "opus",
     "android": {
-      "package": "com.shubanms.opus",
+      "package": "com.shubanms.opus.mobile",
       "permissions": [
-        "android.permission.POST_NOTIFICATIONS",
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_WEIGHT",
-        "android.permission.health.READ_SLEEP_SESSION",
-        "android.permission.health.READ_HYDRATION"
+        "android.permission.health.READ_SLEEP"
       ]
     },
     "plugins": [
+      "react-native-health-connect",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "QuickStart",
+              "label": "OPUS Quick Start",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "description": "Start a workout",
+              "previewImage": "./assets/widget-preview.png",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "Today",
+              "label": "OPUS Streak",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "description": "Your streak & workouts",
+              "previewImage": "./assets/widget-preview.png",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ],
       [
         "expo-build-properties",
         {
           "android": {
             "minSdkVersion": 26,
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "kotlinVersion": "1.9.25"
           }
         }
       ]

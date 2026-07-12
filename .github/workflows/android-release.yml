@@ -1,9 +1,13 @@
-name: Android Release
+name: Android Release (Capacitor — deprecated)
 
+# DEPRECATED: this builds the old Capacitor WebView APK, which is being replaced
+# by the native React Native app (see .github/workflows/mobile-apk.yml, which
+# publishes the native APK to Releases on merge to main). The main-branch
+# auto-release trigger is removed so it no longer publishes the superseded
+# Capacitor APK on every merge; kept on-demand (tags / manual dispatch) only.
 on:
   push:
     tags: ['v*']
-    branches: ['main']
   workflow_dispatch:
     inputs:
       version:
