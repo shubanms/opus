@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "OPUS",
+    "slug": "opus",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "opus",
+    "android": {
+      "package": "com.shubanms.opus",
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_SLEEP_SESSION",
+        "android.permission.health.READ_HYDRATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
+    ]
+  }
+}
