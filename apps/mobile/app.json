@@ -8,6 +8,17 @@
     "scheme": "opus",
     "android": {
       "package": "com.shubanms.opus.mobile"
-    }
+    },
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26,
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ]
+    ]
   }
 }
