@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, HeartPulse, Footprints } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
@@ -13,7 +13,7 @@ import { NOTIF_TYPES, requestPermission, showNotification } from '../utils/notif
 import { playChime } from '../utils/sound.js';
 import { exportData, importData, exportSetsCsv, exportPdf } from '../utils/dataActions.js';
 import { logBodyStat, logActivity } from '../utils/healthActions.js';
-import { isHealthSupported, healthAvailability, requestHealthRead, readTodaySteps } from '../utils/health.js';
+import { isHealthSupported, healthAvailability, requestHealthRead, readTodaySteps, platform } from '../utils/health.js';
 import { todayKey } from '../utils/dateKey.js';
 import { toDisplay, toKg, unitLabel } from '../utils/units.js';
 
@@ -51,8 +51,18 @@ export default function SettingsPage() {
   const [reset, setReset] = useState(false);
   const [equip, setEquip] = useState(false);
   const [health, setHealth] = useState({ busy: false, msg: null });
+  const [hcStatus, setHcStatus] = useState(null); // { platform, availability } — confirms the bridge
   const { settings, perm, update, toggleType, setMaster } = useNotifications();
   const { profile } = useRPG();
+
+  // Probe Health Connect on mount so we can show whether the native bridge is
+  // alive (platform android + availability) instead of guessing.
+  useEffect(() => {
+    let alive = true;
+    if (!isHealthSupported()) { setHcStatus({ platform: platform(), availability: 'Unsupported' }); return; }
+    healthAvailability().then((availability) => { if (alive) setHcStatus({ platform: platform(), availability }); });
+    return () => { alive = false; };
+  }, []);
 
   // Health Connect POC: request read access + import today's steps.
   async function connectHealthSteps() {
@@ -65,6 +75,10 @@ export default function SettingsPage() {
     if (avail === 'NotInstalled') {
       setHealth({ busy: false, msg: 'Install Health Connect from the Play Store, then try again.' });
       try { window.open('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata', '_blank'); } catch { /* ignore */ }
+      return;
+    }
+    if (avail === 'Timeout') {
+      setHealth({ busy: false, msg: "Health Connect didn't respond — fully close and reopen the app, then retry." });
       return;
     }
     if (avail !== 'Available') {
@@ -377,6 +391,11 @@ export default function SettingsPage() {
         </button>
         {health.msg && (
           <p className="mt-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{health.msg}</p>
+        )}
+        {hcStatus && (
+          <p className="mt-2 font-mono text-[11px]" style={{ color: 'var(--color-ash)' }}>
+            bridge: {hcStatus.platform} · {hcStatus.availability}
+          </p>
         )}
       </section>
 
