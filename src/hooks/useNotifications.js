@@ -16,13 +16,17 @@ export function useNotifications() {
   }, [update]);
 
   const setMaster = useCallback(async (on) => {
-    if (on) {
-      const p = await requestPermission();
-      setPerm(p);
-      update({ enabled: p === 'granted' });
-    } else {
+    if (!on) {
       update({ enabled: false });
+      return;
     }
+    let p = 'default';
+    try { p = await requestPermission(); } catch { /* don't leave the toggle stuck */ }
+    setPerm(p);
+    // Enable the preference unless the OS *explicitly* denied it. Native delivery
+    // is governed by the plugin; requiring an exact 'granted' string left the
+    // toggle stuck off when the platform reported 'default'/'unsupported'.
+    update({ enabled: p !== 'denied' });
   }, [update]);
 
   return { settings, perm, update, toggleType, setMaster };

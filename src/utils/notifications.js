@@ -59,15 +59,22 @@ export function permission() {
 
 export async function requestPermission() {
   if (isNative()) {
-    const LN = await loadLN();
-    const res = await LN.requestPermissions();
-    return res.display === 'granted' ? 'granted'
-         : res.display === 'denied'  ? 'denied'
-         : 'default';
+    try {
+      const LN = await loadLN();
+      // If the OS already granted it, checkPermissions returns 'granted' without
+      // a dialog — so an already-allowed app enables cleanly instead of stalling.
+      let res = await LN.checkPermissions();
+      if (res?.display !== 'granted') res = await LN.requestPermissions();
+      return res?.display === 'granted' ? 'granted'
+           : res?.display === 'denied'  ? 'denied'
+           : 'default';
+    } catch {
+      return 'default'; // plugin hiccup — don't hard-block the toggle
+    }
   }
   if (typeof Notification === 'undefined') return 'unsupported';
   if (Notification.permission !== 'default') return Notification.permission;
-  return Notification.requestPermission();
+  try { return await Notification.requestPermission(); } catch { return 'default'; }
 }
 
 // Whether `now` falls in the do-not-disturb window (handles midnight wrap).
