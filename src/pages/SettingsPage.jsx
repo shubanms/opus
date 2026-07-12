@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, HeartPulse, Footprints } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import EquipmentModal from '../components/settings/EquipmentModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -12,7 +12,9 @@ import useUIStore from '../store/uiStore.js';
 import { NOTIF_TYPES, requestPermission, showNotification } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
 import { exportData, importData, exportSetsCsv, exportPdf } from '../utils/dataActions.js';
-import { logBodyStat } from '../utils/healthActions.js';
+import { logBodyStat, logActivity } from '../utils/healthActions.js';
+import { isHealthSupported, healthAvailability, requestHealthRead, readTodaySteps } from '../utils/health.js';
+import { todayKey } from '../utils/dateKey.js';
 import { toDisplay, toKg, unitLabel } from '../utils/units.js';
 
 const SEXES = ['Male', 'Female', 'Other'];
@@ -48,8 +50,42 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [reset, setReset] = useState(false);
   const [equip, setEquip] = useState(false);
+  const [health, setHealth] = useState({ busy: false, msg: null });
   const { settings, perm, update, toggleType, setMaster } = useNotifications();
   const { profile } = useRPG();
+
+  // Health Connect POC: request read access + import today's steps.
+  async function connectHealthSteps() {
+    if (!isHealthSupported()) {
+      setHealth({ busy: false, msg: 'Only available in the Android app.' });
+      return;
+    }
+    setHealth({ busy: true, msg: 'Connecting…' });
+    const avail = await healthAvailability();
+    if (avail === 'NotInstalled') {
+      setHealth({ busy: false, msg: 'Install Health Connect from the Play Store, then try again.' });
+      try { window.open('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata', '_blank'); } catch { /* ignore */ }
+      return;
+    }
+    if (avail !== 'Available') {
+      setHealth({ busy: false, msg: "Health Connect isn't supported on this device." });
+      return;
+    }
+    const granted = await requestHealthRead(['Steps']);
+    if (!granted) {
+      setHealth({ busy: false, msg: 'Steps permission was not granted.' });
+      return;
+    }
+    const steps = await readTodaySteps();
+    if (steps == null) {
+      setHealth({ busy: false, msg: "Couldn't read steps from Health Connect." });
+      return;
+    }
+    await logActivity({ date: todayKey(), steps });
+    setHealth({ busy: false, msg: `Imported ${steps.toLocaleString()} steps for today.` });
+    useUIStore.getState().showToast(`Imported ${steps.toLocaleString()} steps`, { type: 'success' });
+  }
+
   const updateProfile = useUserStore((s) => s.updateProfile);
   const barWeight = useSettingsStore((s) => s.barWeight);
   const setBarWeight = useSettingsStore((s) => s.setBarWeight);
@@ -318,6 +354,30 @@ export default function SettingsPage() {
         <p className="mt-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
           Notifications show while OPUS is open or installed; a static app can't push in the background.
         </p>
+      </section>
+
+      {/* Health Connect (Android app only) — POC: import today's steps */}
+      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="mb-3 flex items-center gap-2">
+          <HeartPulse size={14} style={{ color: 'var(--color-ash)' }} />
+          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            Health Connect
+          </span>
+        </div>
+        <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          Pull your step count from Android Health Connect so you don't have to type it in.
+        </p>
+        <button
+          onClick={connectHealthSteps}
+          disabled={health.busy}
+          className="flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
+          style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)', opacity: health.busy ? 0.5 : 1 }}
+        >
+          <Footprints size={15} /> {health.busy ? 'Connecting…' : "Connect & import today's steps"}
+        </button>
+        {health.msg && (
+          <p className="mt-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{health.msg}</p>
+        )}
       </section>
 
       {/* Experience */}
