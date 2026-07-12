@@ -1,40 +1,62 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-// Proof that the shared @opus/core package works unchanged inside React Native.
-import { dateKey, oneRepMax, rpg } from '@opus/core';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from './theme';
+import HomeScreen from './screens/HomeScreen';
+import WorkoutScreen from './screens/WorkoutScreen';
+import ProgressScreen from './screens/ProgressScreen';
+import ExercisesScreen from './screens/ExercisesScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import SettingsScreen from './screens/SettingsScreen';
+
+const Tab = createBottomTabNavigator();
+
+const navTheme = {
+  ...DefaultTheme,
+  dark: true,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: colors.gold,
+    background: colors.bg,
+    card: colors.obsidian,
+    text: colors.textPrimary,
+    border: colors.ivory,
+    notification: colors.ember,
+  },
+};
+
+const ICON = {
+  Home: 'home',
+  Progress: 'stats-chart',
+  Workout: 'add-circle',
+  Exercises: 'barbell',
+  Profile: 'person',
+  Settings: 'settings',
+};
 
 export default function App() {
-  const today = dateKey.todayKey();
-  const e1rm = Math.round(oneRepMax.epley1RM(100, 5));
-  const title = rpg.getTitle ? rpg.getTitle(rpg.getLevelFromTotalXP?.(8000) ?? 1) : '—';
-
   return (
-    <View style={styles.container}>
+    <NavigationContainer theme={navTheme}>
       <StatusBar style="light" />
-      <Text style={styles.brand}>OPUS</Text>
-      <Text style={styles.sub}>native · React Native + Expo</Text>
-
-      <View style={styles.card}>
-        <Text style={styles.label}>Shared @opus/core is running:</Text>
-        <Text style={styles.row}>todayKey() → {today}</Text>
-        <Text style={styles.row}>epley1RM(100, 5) → {e1rm} kg</Text>
-        <Text style={styles.row}>title @ 8000 XP → {title}</Text>
-      </View>
-
-      <Text style={styles.note}>
-        Phase A scaffold. Build out screens, SQLite, Health Connect and notifications per
-        docs/NATIVE_PORT.md.
-      </Text>
-    </View>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: colors.gold,
+          tabBarInactiveTintColor: colors.ash,
+          tabBarStyle: { backgroundColor: colors.obsidian, borderTopColor: colors.ivory },
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name={ICON[route.name] || 'ellipse'} size={size} color={color} />
+          ),
+        })}
+      >
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Progress" component={ProgressScreen} />
+        <Tab.Screen name="Workout" component={WorkoutScreen} />
+        <Tab.Screen name="Exercises" component={ExercisesScreen} />
+        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Settings" component={SettingsScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111010', alignItems: 'center', justifyContent: 'center', padding: 24 },
-  brand: { color: '#F5F3EF', fontSize: 44, fontWeight: '700', letterSpacing: 1 },
-  sub: { color: '#8A8780', fontSize: 13, marginTop: 4 },
-  card: { backgroundColor: '#1A1917', borderColor: '#2A2825', borderWidth: 1, borderRadius: 16, padding: 16, marginTop: 28, width: '100%' },
-  label: { color: '#C9A84C', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-  row: { color: '#F5F3EF', fontSize: 15, fontFamily: 'monospace', marginTop: 4 },
-  note: { color: '#8A8780', fontSize: 12, textAlign: 'center', marginTop: 28, lineHeight: 18 },
-});
