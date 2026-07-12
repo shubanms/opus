@@ -1,9 +1,18 @@
-import { useState, useCallback } from 'react';
-import { getSettings, saveSettings, permission, requestPermission } from '../utils/notifications.js';
+import { useState, useCallback, useEffect } from 'react';
+import { getSettings, saveSettings, permission, currentPermission, requestPermission } from '../utils/notifications.js';
 
 export function useNotifications() {
   const [settings, setSettings] = useState(getSettings);
   const [perm, setPerm] = useState(permission);
+
+  // The sync `permission()` returns 'default' on native, so refresh with the
+  // real OS state once mounted — otherwise the toggle (gated on 'granted') can
+  // never show on even after Android grants the permission.
+  useEffect(() => {
+    let alive = true;
+    currentPermission().then((p) => { if (alive) setPerm(p); });
+    return () => { alive = false; };
+  }, []);
 
   const update = useCallback((patch) => {
     const next = { ...getSettings(), ...patch };
