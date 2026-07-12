@@ -13,7 +13,9 @@
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "expo": "~52.0.0",
+    "expo-asset": "~11.0.1",
     "expo-build-properties": "~0.13.1",
+    "expo-font": "~13.0.0",
     "expo-notifications": "~0.29.11",
     "expo-sqlite": "~15.0.3",
     "expo-status-bar": "~2.0.0",
@@ -25,6 +27,7 @@
     "react-native-screens": "~4.4.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.0"
+    "@babel/core": "^7.25.0",
+    "babel-preset-expo": "~12.0.0"
   }
 }

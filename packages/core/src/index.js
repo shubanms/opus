@@ -22,4 +22,9 @@ export * as workoutSession from './workoutSession.js';
 export * as units from './units.js';
 export * as routineGenerator from './routineGenerator.js';
 export * as goals from './goals.js';
-export * as seedExercises from './seedExercises.js';
+// seedExercises has a single default export (the array), so re-export it as a
+// named binding — this lets consumers use the bare `import { seedExercises }
+// from '@opus/core'` (resolved via the package main field) instead of the
+// `@opus/core/seedExercises` subpath, which Metro (SDK 52, package `exports`
+// off by default) can't resolve.
+export { default as seedExercises } from './seedExercises.js';
