@@ -9,7 +9,7 @@ const MUSCLE_HUE = {
   quadriceps: '#8A8780', hamstring: '#8A8780', gluteal: '#8A8780', calves: '#8A8780',
 };
 
-export default function TemplateCard({ template, onStart, onEdit, onDelete, onDuplicate, onShuffle, stale }) {
+export default function TemplateCard({ template, onStart, onEdit, onDelete, onDuplicate, onShuffle, onRename, stale }) {
   const muscleGroups = [...new Set(template.exercises.map((e) => e.muscleGroup))].slice(0, 4);
 
   return (
@@ -21,9 +21,15 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             {template.color && <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: template.color }} />}
-            <p className="truncate font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              {template.name}
-            </p>
+            {onRename ? (
+              <button onClick={() => onRename(template)} className="min-w-0 truncate text-left font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }} aria-label="Rename routine">
+                {template.name}
+              </button>
+            ) : (
+              <p className="truncate font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                {template.name}
+              </p>
+            )}
             {template.dayOfWeek != null && (
               <span className="flex-shrink-0 rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }}>
                 {DAY_LABEL[template.dayOfWeek]}

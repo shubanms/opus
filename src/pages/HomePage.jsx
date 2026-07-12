@@ -1,6 +1,6 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords } from 'lucide-react';
+import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords, Activity, Droplet, Target } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
@@ -26,7 +26,7 @@ function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="mb-6 flex w-full items-center justify-between rounded-2xl px-5 py-4"
+      className="flex w-full items-center justify-between rounded-2xl px-5 py-4"
       style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-stone)' }}
     >
       <div className="min-w-0 text-left">
@@ -47,6 +47,42 @@ function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
   );
 }
 
+// Consolidates the three heavy stacked widgets (activity / recovery / quests)
+// into one swappable deck so the home feed stays short. Each keeps its full UI.
+function SecondaryDeck({ hasWorkouts }) {
+  const tabs = [
+    { key: 'activity', label: 'Activity', icon: Droplet },
+    ...(hasWorkouts ? [{ key: 'recovery', label: 'Recovery', icon: Activity }] : []),
+    { key: 'quests', label: 'Quests', icon: Target },
+  ];
+  const [tab, setTab] = useState(tabs[0].key);
+
+  return (
+    <div>
+      <div className="mb-3 flex gap-1.5 overflow-hidden rounded-xl p-1" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        {tabs.map((t) => {
+          const active = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => { setTab(t.key); playChime('tap'); }}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 font-sans text-xs font-semibold transition-colors"
+              style={{ background: active ? 'var(--color-obsidian)' : 'transparent', color: active ? 'var(--color-text-inverse)' : 'var(--color-ash)' }}
+            >
+              <t.icon size={13} />{t.label}
+            </button>
+          );
+        })}
+      </div>
+      <div key={tab} className="anim-fade-in">
+        {tab === 'activity' && <ActivityRings />}
+        {tab === 'recovery' && <RecoveryMap />}
+        {tab === 'quests' && <QuestBoard />}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { profile } = useRPG();
@@ -54,7 +90,7 @@ export default function HomePage() {
   const today = useToday();
   const activeWorkout = useWorkoutStore(s => s.activeWorkout);
   const startFromTemplate = useWorkoutStore(s => s.startFromTemplate);
-  const recent = workouts.slice(0, 3);
+  const recent = workouts.slice(0, 2);
 
   const effects = useSettingsStore((s) => s.effects);
   const bossStats = useBossStats();
@@ -77,9 +113,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="anim-fade-slide-up px-5 pb-24 pt-8">
-      {/* Greeting with a living aura that warms as you progress */}
-      <div className="relative mb-6">
+    <div className="anim-fade-slide-up px-5 pb-24 pt-6">
+      {/* Compact hero — greeting + level/XP merged into one card (declutters
+          three former full-width strips into one), over a living aura. */}
+      <div className="relative mb-4">
         <div
           aria-hidden
           className={scene.motionSpeed > 0 ? 'anim-breathe pointer-events-none' : 'pointer-events-none'}
@@ -95,50 +132,51 @@ export default function HomePage() {
             animationDuration: scene.motionSpeed > 0 ? `${(7 - scene.motionSpeed * 3).toFixed(1)}s` : undefined,
           }}
         />
-        <h1 className="relative font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-          OPUS
-        </h1>
-        <p className="relative mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          {profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}
-        </p>
-      </div>
-
-      {/* Magnus — 3D training companion */}
-      <Suspense fallback={<div style={{ height: 150 }} />}>
-        <Companion />
-      </Suspense>
-
-      {/* Level / XP strip */}
-      {profile && (
-        <div
-          className="mb-5 rounded-2xl px-4 py-3"
-          style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-        >
-          <div className="mb-3 flex items-center gap-3">
-            <LevelBadge level={level} size="sm" prestige={prestige} />
-            <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              {title}
-            </span>
-            {profile.streak > 0 && (
-              <span className="ml-auto flex items-center gap-1 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
-                <Flame size={12} />
-                {profile.streak} day streak
+        <div className="relative rounded-2xl px-4 py-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+          <div className="flex items-start justify-between">
+            <div className="min-w-0">
+              <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
+                OPUS
+              </h1>
+              <p className="mt-1 truncate font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                {profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}
+              </p>
+            </div>
+            {profile?.streak > 0 && (
+              <span className="flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold" style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}>
+                <Flame size={12} />{profile.streak}
               </span>
             )}
           </div>
-          <XPBar totalXp={effectiveXp} showLabel={false} />
-          {decaying && (
-            <p className="mt-2 flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
-              <TrendingDown size={12} />
-              Rank slipping — train to recover (−{lost.toLocaleString()} XP)
-            </p>
+
+          {profile && (
+            <div className="mt-4">
+              <div className="mb-2 flex items-center gap-2.5">
+                <LevelBadge level={level} size="sm" prestige={prestige} />
+                <span className="truncate font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                  {title}
+                </span>
+              </div>
+              <XPBar totalXp={effectiveXp} showLabel={false} />
+              {decaying && (
+                <p className="mt-2 flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
+                  <TrendingDown size={12} />
+                  Rank slipping — train to recover (−{lost.toLocaleString()} XP)
+                </p>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
+
+      {/* Magnus — 3D training companion */}
+      <Suspense fallback={<div style={{ height: 130 }} />}>
+        <Companion />
+      </Suspense>
 
       {/* Boss gate — blocks the next milestone level until cleared */}
       {boss && (
-        <div className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}>
+        <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}>
           <div className="mb-1 flex items-center gap-2">
             <Swords size={15} style={{ color: 'var(--color-gold)' }} />
             <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
@@ -152,59 +190,49 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Today's workout */}
-      {activeWorkout ? (
-        <TodayCard
-          title="Continue workout"
-          subtitle={`${activeWorkout.name} in progress`}
-          onClick={() => navigate('/workout')}
-        />
-      ) : today.type === 'template' ? (
-        <TodayCard
-          icon={CalendarCheck}
-          title={today.template.name}
-          subtitle={`${today.reason} · ${today.template.exercises.length} exercises`}
-          onClick={startTemplate}
-        />
-      ) : today.type === 'rest' ? (
-        <div
-          className="mb-6 flex items-center gap-3 rounded-2xl px-5 py-4"
-          style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-        >
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
-            <Moon size={16} style={{ color: 'var(--color-sage)' }} />
+      {/* Today's workout — primary action */}
+      <div className="mb-5">
+        {activeWorkout ? (
+          <TodayCard
+            title="Continue workout"
+            subtitle={`${activeWorkout.name} in progress`}
+            onClick={() => navigate('/workout')}
+          />
+        ) : today.type === 'template' ? (
+          <TodayCard
+            icon={CalendarCheck}
+            title={today.template.name}
+            subtitle={`${today.reason} · ${today.template.exercises.length} exercises`}
+            onClick={startTemplate}
+          />
+        ) : today.type === 'rest' ? (
+          <div
+            className="flex items-center gap-3 rounded-2xl px-5 py-4"
+            style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
+          >
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
+              <Moon size={16} style={{ color: 'var(--color-sage)' }} />
+            </div>
+            <div className="flex-1">
+              <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Rest day</p>
+              <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{today.reason}</p>
+            </div>
+            <button onClick={() => navigate('/workout')} className="font-sans text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
+              Train anyway
+            </button>
           </div>
-          <div className="flex-1">
-            <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Rest day</p>
-            <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{today.reason}</p>
-          </div>
-          <button onClick={() => navigate('/workout')} className="font-sans text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
-            Train anyway
-          </button>
-        </div>
-      ) : (
-        <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
-      )}
+        ) : (
+          <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
+        )}
+      </div>
 
-      {/* Weekly recap */}
+      {/* Weekly recap — compact, auto-hides when no data / dismissed */}
       <WeeklyRecap />
 
-      {/* Weekly quests */}
+      {/* Secondary widgets collapsed into one tabbed deck */}
       <div className="mb-6">
-        <QuestBoard />
+        <SecondaryDeck hasWorkouts={workouts.length > 0} />
       </div>
-
-      {/* Daily activity */}
-      <div className="mb-6">
-        <ActivityRings />
-      </div>
-
-      {/* Recovery body-map */}
-      {workouts.length > 0 && (
-        <div className="mb-6">
-          <RecoveryMap />
-        </div>
-      )}
 
       {/* Recent workouts */}
       {recent.length > 0 ? (

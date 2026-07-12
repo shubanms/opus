@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
+import { todayKey, daysBetween } from '../utils/dateKey.js';
 
 export const ALL_MUSCLES = [
   'chest', 'triceps', 'biceps', 'front-deltoids', 'back-deltoids',
@@ -9,6 +10,12 @@ export const ALL_MUSCLES = [
 
 // Per-muscle days-since-last-trained + the most neglected muscle.
 export function useRecovery() {
+  // `today` is computed OUTSIDE the live query and passed as a dependency, so
+  // day-counts advance across midnight even without a new DB write. Parsing is
+  // done in local-calendar terms (dateKey.js) to match how dates are stored —
+  // mixing local/UTC previously made a fresh workout read "today" for an extra
+  // full day for any non-UTC user.
+  const today = todayKey();
   return useLiveQuery(async () => {
     const sets = (await db.sets.toArray()).filter((s) => !s.isWarmup);
     const workouts = await db.workouts.toArray();
@@ -24,12 +31,10 @@ export function useRecovery() {
       if (!last[m] || d > last[m]) last[m] = d;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     const byMuscle = {};
     for (const m of ALL_MUSCLES) {
       if (last[m]) {
-        const days = Math.max(0, Math.floor((today - new Date(last[m])) / 86400000));
+        const days = daysBetween(last[m], today) ?? 0;
         byMuscle[m] = { daysSince: days, lastDate: last[m] };
       } else {
         byMuscle[m] = { daysSince: null, lastDate: null };
@@ -43,5 +48,5 @@ export function useRecovery() {
     }
 
     return { byMuscle, neglected };
-  }, []) ?? { byMuscle: {}, neglected: null };
+  }, [today]) ?? { byMuscle: {}, neglected: null };
 }

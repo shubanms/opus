@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Trophy, Clock, Zap } from 'lucide-react';
+import { Trophy, Clock, Zap, BookmarkPlus, Check } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { db } from '../../db/db.js';
 import { calcWorkoutXP } from '../../utils/rpg.js';
 import { computeVolume } from '../../utils/volume.js';
 import { getCurrentBodyweight } from '../../utils/healthActions.js';
+import { deriveRoutineName } from '../../utils/routineName.js';
 import { fmtVolume } from '../../utils/units.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useRPG } from '../../hooks/useRPG.js';
@@ -41,17 +42,40 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
     return computeVolume(flat, bw);
   }, [activeWorkout]) ?? 0;
 
-  const muscles = useLiveQuery(async () => {
-    if (!activeWorkout) return [];
-    const set = new Set();
+  // Per-muscle working-set counts drive both the share card's muscle list and
+  // the auto-routine name.
+  const muscleCounts = useLiveQuery(async () => {
+    if (!activeWorkout) return {};
+    const counts = {};
     for (const ex of activeWorkout.exercises) {
       const e = await db.exercises.get(ex.exerciseId);
-      if (e?.muscleGroup) set.add(e.muscleGroup);
+      if (!e?.muscleGroup) continue;
+      const working = ex.sets.filter((s) => !s.isWarmup).length || ex.sets.length;
+      counts[e.muscleGroup] = (counts[e.muscleGroup] ?? 0) + working;
     }
-    return [...set];
-  }, [activeWorkout]) ?? [];
+    return counts;
+  }, [activeWorkout]) ?? {};
+  const muscles = Object.keys(muscleCounts);
+
+  // Offer to keep an ad-hoc (non-template) session with ≥2 exercises as a routine.
+  const canSaveRoutine = !!activeWorkout && activeWorkout.templateId == null && activeWorkout.exercises.length >= 2;
+  const derived = useMemo(() => deriveRoutineName(muscleCounts), [muscleCounts]);
+  const [saveRoutine, setSaveRoutine] = useState(true);
+  const [routineName, setRoutineName] = useState('');
+  const [touched, setTouched] = useState(false);
+  useEffect(() => {
+    if (!touched && derived.name) setRoutineName(derived.name);
+  }, [derived.name, touched]);
 
   if (!stats) return null;
+
+  const handleSave = () => {
+    const trimmed = routineName.trim();
+    const routine = canSaveRoutine && saveRoutine
+      ? { saveRoutine: true, routineName: trimmed || derived.name, autoKey: derived.autoKey, nameEdited: trimmed !== derived.name }
+      : null;
+    onSave(stats.xp, routine);
+  };
 
   const shareData = {
     name: activeWorkout.name,
@@ -104,6 +128,36 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
         </div>
       )}
 
+      {/* Save this ad-hoc session as a reusable routine */}
+      {canSaveRoutine && (
+        <div className="mb-5 rounded-2xl p-3" style={{ background: 'var(--color-ivory)' }}>
+          <button
+            onClick={() => setSaveRoutine((v) => !v)}
+            className="flex w-full items-center gap-2.5"
+          >
+            <span
+              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
+              style={{ background: saveRoutine ? 'var(--color-gold)' : 'var(--color-chalk)', border: saveRoutine ? 'none' : '1px solid var(--color-ash)' }}
+            >
+              {saveRoutine && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />}
+            </span>
+            <BookmarkPlus size={15} style={{ color: 'var(--color-gold)' }} />
+            <span className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+              Save as routine
+            </span>
+          </button>
+          {saveRoutine && (
+            <input
+              value={routineName}
+              onChange={(e) => { setRoutineName(e.target.value); setTouched(true); }}
+              placeholder="Routine name"
+              className="mt-2.5 w-full rounded-xl px-3 py-2.5 font-sans text-sm outline-none"
+              style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            />
+          )}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex gap-3">
         <button
@@ -114,7 +168,7 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
           Keep going
         </button>
         <button
-          onClick={() => onSave(stats.xp)}
+          onClick={handleSave}
           disabled={!stats || stats.sets === 0}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: !stats || stats.sets === 0 ? 0.35 : 1 }}

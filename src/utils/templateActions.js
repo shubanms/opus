@@ -12,21 +12,80 @@ function toLinks(templateId, exercises) {
   }));
 }
 
-export async function createTemplate({ name, dayOfWeek = null, color = null, exercises = [] }) {
+// `autoKey` (unindexed) marks auto-generated routines and carries the muscle
+// signature used to re-match a later same-group session. Stored freely by Dexie
+// — no schema migration needed.
+export async function createTemplate({ name, dayOfWeek = null, color = null, autoKey = null, exercises = [] }) {
   const templateId = await db.templates.add({
     name: name.trim() || 'Routine',
     dayOfWeek,
     color,
+    autoKey,
     createdAt: Date.now(),
   });
   if (exercises.length) await db.templateExercises.bulkAdd(toLinks(templateId, exercises));
   return templateId;
 }
 
-export async function updateTemplate(templateId, { name, dayOfWeek = null, color = null, exercises = [] }) {
-  await db.templates.update(templateId, { name: name.trim() || 'Routine', dayOfWeek, color });
+export async function updateTemplate(templateId, { name, dayOfWeek = null, color = null, autoKey, exercises = [] }) {
+  // Only touch autoKey when the caller passes it, so a manual edit from the
+  // builder (which never sends it) preserves any existing signature.
+  const patch = { name: name.trim() || 'Routine', dayOfWeek, color };
+  if (autoKey !== undefined) patch.autoKey = autoKey;
+  await db.templates.update(templateId, patch);
   await db.templateExercises.where('templateId').equals(templateId).delete();
   if (exercises.length) await db.templateExercises.bulkAdd(toLinks(templateId, exercises));
+}
+
+// Derive per-exercise targets from a finished session's logged working sets:
+// targetSets = working-set count, targetReps = median reps, targetWeight = top
+// working-set weight (kg).
+function targetsFromExercise(ex) {
+  const working = (ex.sets ?? []).filter((s) => !s.isWarmup);
+  const reps = working.map((s) => s.reps ?? 0).filter((n) => n > 0).sort((a, b) => a - b);
+  const median = reps.length ? reps[Math.floor(reps.length / 2)] : null;
+  const maxWeight = working.reduce((m, s) => Math.max(m, s.weight ?? 0), 0);
+  return {
+    exerciseId: ex.exerciseId,
+    targetSets: working.length || null,
+    targetReps: median,
+    targetWeight: maxWeight > 0 ? maxWeight : null,
+  };
+}
+
+// Save a finished (quick-start) workout as a routine. If an auto-routine with
+// the same `autoKey` exists, update it in place (keeping its name unless the
+// user edited it) so re-training a group refreshes rather than duplicates.
+// Returns the saved routine's name, or null when there's nothing to save.
+export async function saveWorkoutAsRoutine({ name, autoKey = null, nameEdited = false, workout }) {
+  const exercises = (workout?.exercises ?? [])
+    .map(targetsFromExercise)
+    .filter((e) => e.exerciseId != null);
+  if (!exercises.length) return null;
+
+  const existing = autoKey
+    ? (await db.templates.filter((t) => t.autoKey === autoKey).toArray())[0] ?? null
+    : null;
+
+  if (existing) {
+    const finalName = nameEdited ? name : existing.name;
+    await updateTemplate(existing.id, {
+      name: finalName,
+      dayOfWeek: existing.dayOfWeek ?? null,
+      color: existing.color ?? null,
+      autoKey,
+      exercises,
+    });
+    return (finalName || existing.name || 'Routine').trim();
+  }
+
+  await createTemplate({ name, autoKey, exercises });
+  return (name || 'Routine').trim();
+}
+
+// Quick name-only rename (leaves exercises/targets untouched).
+export async function renameTemplate(templateId, name) {
+  await db.templates.update(templateId, { name: (name ?? '').trim() || 'Routine' });
 }
 
 export async function deleteTemplate(templateId) {

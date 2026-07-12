@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Plus, Trash2, Flame, Dumbbell, StickyNote, Info } from 'lucide-react';
+import { Plus, Minus, Trash2, Flame, Dumbbell, StickyNote, Info, Trophy } from 'lucide-react';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import useUIStore from '../../store/uiStore.js';
 import { useLastSets } from '../../hooks/useWorkout.js';
+import { usePRs } from '../../hooks/useProgress.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
@@ -18,6 +19,14 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   const haptic = useHaptics();
   const exercise = activeWorkout?.exercises.find((e) => e.exerciseId === exerciseId);
   const lastSets = useLastSets(exerciseId);
+  const prs = usePRs(exerciseId);
+  // When following a routine, surface the best PR to chase instead of the last
+  // session's numbers.
+  const fromTemplate = activeWorkout?.templateId != null;
+  const weightPR = prs.find((p) => p.type === 'weight');
+  const repsPR = prs.find((p) => p.type === 'reps');
+  const volPR = prs.find((p) => p.type === 'volume');
+  const showPR = fromTemplate && (weightPR || repsPR);
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
@@ -35,18 +44,32 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   const repsNum = parseInt(reps);
   const canLog = showWeight ? (weightNum > 0 || repsNum > 0) : repsNum > 0;
 
+  function stepReps(d) {
+    setReps((r) => String(Math.max(0, (parseInt(r) || 0) + d)));
+  }
+
   function handleLog() {
     if (!canLog) return;
     const weightKg = showWeight ? toKg(weightNum || 0, unit) : 0;
+    const r = repsNum || 0;
+
+    // A working set beats a PR when it exceeds both the stored record and the
+    // best already hit this session (so we celebrate once per genuine new high).
+    const working = exercise.sets.filter((s) => !s.isWarmup);
+    const bestWeight = Math.max(weightPR?.value ?? 0, ...working.map((s) => s.weight), 0);
+    const bestReps = Math.max(repsPR?.value ?? 0, ...working.map((s) => s.reps), 0);
+    const bestVol = Math.max(volPR?.value ?? 0, ...working.map((s) => s.weight * s.reps), 0);
+    const isPR = (weightKg > 0 || r > 0) && (weightKg > bestWeight || r > bestReps || weightKg * r > bestVol);
+
     logSet(exerciseId, {
       weight: weightKg,
-      reps: repsNum || 0,
+      reps: r,
       rpe: showRpe ? rpe : null,
       isWarmup: false,
     });
-    haptic('tap');
-    playChime('tick');
-    setXpFloat({ key: Date.now(), xp: calcSetXP(weightKg, repsNum || 0) });
+    haptic(isPR ? 'pr' : 'tap');
+    playChime(isPR ? 'pr' : 'tick');
+    setXpFloat({ key: Date.now(), xp: calcSetXP(weightKg, r), pr: isPR });
     onSetLogged?.();
     setReps('');
     setRpe(null);
@@ -65,8 +88,21 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
   return (
     <div className="mt-3">
-      {/* Previous session ghost */}
-      {lastSets.length > 0 && (
+      {/* Reference line: your best PR when following a routine, else the ghost
+          of last session's sets. */}
+      {showPR ? (
+        <div className="mb-2 flex items-center gap-1.5">
+          <Trophy size={12} style={{ color: 'var(--color-gold)' }} />
+          <span className="font-mono text-xs font-semibold" style={{ color: 'var(--color-gold)' }}>
+            {weightPR ? `${toDisplay(weightPR.value, unit)}${unitLabel(unit)}` : ''}
+            {weightPR && repsPR ? ' · ' : ''}
+            {repsPR ? `${repsPR.value} reps` : ''}
+          </span>
+          <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)', opacity: 0.7 }}>
+            your best
+          </span>
+        </div>
+      ) : lastSets.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-3">
           {lastSets.map((s) => (
             <span key={s.id} className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -114,14 +150,15 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
       {/* Input row */}
       <div className="relative mt-2 flex items-center gap-2">
-        {xpFloat && xpFloat.xp > 0 && (
+        {xpFloat && (xpFloat.xp > 0 || xpFloat.pr) && (
           <span
             key={xpFloat.key}
-            className="pointer-events-none absolute right-1 top-0 font-mono text-sm font-bold"
+            className="pointer-events-none absolute right-1 top-0 flex items-center gap-1 font-mono text-sm font-bold"
             style={{ color: 'var(--color-gold)', animation: 'floatUp 900ms var(--ease-out) forwards' }}
             onAnimationEnd={() => setXpFloat(null)}
           >
-            +{xpFloat.xp} XP
+            {xpFloat.pr && <Trophy size={13} />}
+            {xpFloat.pr ? 'PR! ' : ''}{xpFloat.xp > 0 ? `+${xpFloat.xp} XP` : ''}
           </span>
         )}
         {showWeight && (
@@ -146,16 +183,22 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
           </>
         )}
 
-        <div className="flex-1 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
+        <div className="flex flex-1 items-center rounded-xl" style={{ background: 'var(--color-ivory)' }}>
+          <button onClick={() => stepReps(-1)} className="flex h-full items-center px-2.5 py-2.5" aria-label="Fewer reps">
+            <Minus size={14} style={{ color: 'var(--color-ash)' }} />
+          </button>
           <input
             value={reps}
             onChange={(e) => setReps(e.target.value)}
             placeholder="reps"
             type="number"
             inputMode="numeric"
-            className="w-full bg-transparent text-center font-mono text-sm outline-none"
+            className="min-w-0 flex-1 bg-transparent text-center font-mono text-sm outline-none"
             style={{ color: 'var(--color-text-primary)' }}
           />
+          <button onClick={() => stepReps(1)} className="flex h-full items-center px-2.5 py-2.5" aria-label="More reps">
+            <Plus size={14} style={{ color: 'var(--color-ash)' }} />
+          </button>
         </div>
 
         <button

@@ -4,7 +4,7 @@ import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useExercises } from '../hooks/useExercises.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
-import { deleteTemplate, duplicateTemplate, updateTemplate } from '../utils/templateActions.js';
+import { deleteTemplate, duplicateTemplate, updateTemplate, renameTemplate } from '../utils/templateActions.js';
 import { reshuffleRoutine, makeRng } from '../utils/routineGenerator.js';
 import { sessionCounts, isStaleRoutine } from '../utils/staleRoutine.js';
 import { playChime } from '../utils/sound.js';
@@ -46,6 +46,17 @@ export default function TemplatesPage() {
 
   async function handleDuplicate(template) {
     await duplicateTemplate(template.id);
+  }
+
+  async function handleRename(template) {
+    const name = await useUIStore.getState().prompt({
+      title: 'Rename routine',
+      placeholder: 'Routine name',
+      defaultValue: template.name,
+    });
+    if (name != null && name.trim() && name.trim() !== template.name) {
+      await renameTemplate(template.id, name);
+    }
   }
 
   // One-tap "medium" re-roll from the card: keep the routine's shape, swap ~half.
@@ -132,7 +143,7 @@ export default function TemplatesPage() {
         </div>
       ) : (
         templates.map((t) => (
-          <TemplateCard key={t.id} template={t} onEdit={openEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} onShuffle={handleShuffle} stale={isStaleRoutine(t, counts[t.id] ?? 0)} />
+          <TemplateCard key={t.id} template={t} onEdit={openEdit} onRename={handleRename} onDelete={handleDelete} onDuplicate={handleDuplicate} onShuffle={handleShuffle} stale={isStaleRoutine(t, counts[t.id] ?? 0)} />
         ))
       )}
 

@@ -1,11 +1,20 @@
 # OPUS — Project State
 
-Last updated: 2026-05-24
+Last updated: 2026-07-11
 Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0.
 Current version: v3.0.0
 
 > Docs reorganized into `docs/` (this file moved here). Index: `docs/README.md`. Map: `docs/ARCHITECTURE.md`.
 > Rules: `docs/GUIDELINES.md`. Per-version features: `docs/RELEASES.md`. Entry point: root `CLAUDE.md`.
+
+**UX redesign pass + auto-routine (post-v3, grouped PRs on one branch):**
+- **Recovery bugfix**: muscle recovery lagged a full day for non-UTC users — `completeWorkout` wrote `workout.date` as a UTC calendar date but `useRecovery` compared it to *local* midnight (bare `YYYY-MM-DD` parses as UTC). Added pure `utils/dateKey.js` (`todayKey`/`parseKey`/`daysBetween`, local-calendar, +test); `useRecovery` now parses via it and keys the live query on `todayKey()` so counts advance across midnight without a DB write; `completeWorkout` writes date + streak via `todayKey()`.
+- **Home declutter** (`HomePage.jsx`): greeting + level/XP merged into one compact hero card; the three heavy widgets (Activity/Recovery/Quests) collapsed into a single tabbed `SecondaryDeck` (recovery tab only once there's history); WeeklyRecap kept compact; Recent trimmed to 2. All widgets/Companion/theme preserved.
+- **Progress redesign** (`ProgressPage.jsx`): Overview gained a lifetime KPI bento (CountUp), a week-over-week volume delta, and a Recent PRs list (`useLifetimeStats`/`useAllPRs`, previously unused here). By-Exercise replaced the blank "pick an exercise" gate with a default view — interactive muscle map (tap to filter), Top exercises list, recent PRs; selecting any opens per-exercise detail (PR badges + 1RM/max-weight/volume charts). `RecoveryMap` made prop-driven (`data/onSelect/legend/title/icon`; falls back to `useRecovery`). New hook `useTopExercises`.
+- **Auto-routine on finish**: pure `utils/routineName.js` (`deriveRoutineName` → Chest/Push/Pull/Leg/Upper/Full/Core Day + stable `autoKey`, +test). `EndWorkoutModal` offers a default-on "Save as routine" (auto name, editable) for ad-hoc sessions (no template, ≥2 exercises). `templateActions`: templates carry unindexed `autoKey` (**no migration**); `saveWorkoutAsRoutine` derives targets from logged working sets and **updates the autoKey-matched routine in place** instead of duplicating; `renameTemplate` (name-only) + tap-to-rename on `TemplateCard`.
+- **Logging polish** (`SetLogger`/`ExerciseSection`): per-exercise session tally + progress-vs-target bar; best-PR reference instead of last-session when following a routine; live PR-beat (haptic/chime + "PR!" float) on a record-topping set; rep ± steppers. All prior behaviour intact.
+- **Profile polish** (`ProfilePage.jsx`): name+identity+level/rank+XP condensed into one hero card; ranks/records/wrapped grouped into a single divided card.
+- New tested utils: `dateKey`, `routineName`. Full suite green (191 tests).
 
 **Bug fixes (post-wave):**
 - Build break: `ActivityRings.jsx` had `{burst && <Particles/>` missing `}` → fixed (#65). (node-env tests + node --check don't parse JSX, so JSX errors only fail the production build; consider adding a build step to the CI test job.)

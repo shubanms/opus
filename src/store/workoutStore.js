@@ -5,6 +5,7 @@ import { computeVolume } from '../utils/volume.js';
 import { getCurrentBodyweight } from '../utils/healthActions.js';
 import { serialize, deserialize, isStale } from '../utils/workoutSession.js';
 import { moveItem } from '../utils/reorder.js';
+import { todayKey } from '../utils/dateKey.js';
 
 const ACTIVE_KEY = 'opus_active_workout';
 
@@ -242,7 +243,7 @@ const useWorkoutStore = create((set, get) => ({
     const allSets = w.exercises.flatMap(e => e.sets);
     const workingSets = allSets.filter(s => !s.isWarmup);
     const totalSets = workingSets.length;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayKey();
 
     // Don't save (or reward) an empty session — discard it instead. Prevents
     // farming XP by finishing a workout with nothing logged.
@@ -328,7 +329,7 @@ const useWorkoutStore = create((set, get) => ({
     };
 
     if (profile) {
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const yesterday = todayKey(new Date(Date.now() - 86400000));
       let streak = profile.streak ?? 0;
       if (profile.lastWorkoutDate !== today) {
         streak = profile.lastWorkoutDate === yesterday ? streak + 1 : 1;
