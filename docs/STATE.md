@@ -1,13 +1,17 @@
 # OPUS — Project State
 
-Last updated: 2026-07-11
-Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0.
+Last updated: 2026-07-13
+Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0. + Native app → PWA parity program (Phase 1 done).
 Current version: v3.0.0
 
 > Docs reorganized into `docs/` (this file moved here). Index: `docs/README.md`. Map: `docs/ARCHITECTURE.md`.
 > Rules: `docs/GUIDELINES.md`. Per-version features: `docs/RELEASES.md`. Entry point: root `CLAUDE.md`.
 
-**Native port — React Native + Expo (in progress, monorepo):** Capacitor abandoned (notifications + Health Connect never worked; the WebView/service-worker bridge was the wall). Building a real native app under `apps/mobile` (Expo SDK 52, RN 0.76), sharing pure logic via `packages/core` (`@opus/core`, 22 utils, 158 tests). Blueprint: `docs/NATIVE_PORT.md`.
+**Native app → PWA parity program (in progress):** goal is full 1:1 parity between the Expo native app (`apps/mobile`) and the web PWA, delivered in phases (one PR each). Plan: 9 phases — (1) fix the broken look, (2) data + core foundation, (3) workout flow, (4) progress/charts, (5) RPG/profile, (6) home, (7) templates, (8) settings+onboarding, (9) extras/polish.
+- **Phase 1 (fix the broken look) DONE**: root-caused two on-device bugs — (a) `@expo/vector-icons` was imported for every tab/in-screen icon but **absent from `apps/mobile/package.json`** and its glyph font never preloaded → blank tofu in release APKs; fixed by adding the dep + spreading `Ionicons.font` into `App.js` `useFonts`. (b) `app.json` had **no launcher icon / adaptive icon / splash** (and `apps/mobile/assets` had no icon PNG) → default blank Expo identity; fixed by copying the prepared 1024² `/assets/icon-*.png` into `apps/mobile/assets` and wiring `expo.icon` (icon-only), `android.adaptiveIcon` (foreground + obsidian bg), and the `expo-splash-screen` plugin (icon-only on `#111010`). Jest smoke stays green (mocks expo-font/vector-icons; `{...undefined}` spreads harmlessly). On-device: tab icons visible, themed launcher + obsidian splash.
+- **Dark mode**: deferred to its own PR — a real runtime toggle needs a ThemeProvider/`useColors()` refactor across 17 files that build `StyleSheet.create` at module load; folding that into the icon/splash fix risked a half-threaded result. In-app palette already matches web 1:1.
+
+**Native port — React Native + Expo (monorepo scaffold):** Capacitor abandoned (notifications + Health Connect never worked; the WebView/service-worker bridge was the wall). Real native app under `apps/mobile` (Expo SDK 52, RN 0.76), sharing pure logic via `packages/core` (`@opus/core`, 22 utils, 158 tests). Blueprint: `docs/NATIVE_PORT.md`.
 - **APK pipeline**: `.github/workflows/mobile-apk.yml` builds a debug APK without EAS (prebuild + `gradlew assembleDebug`), uploaded as artifact. Kotlin pinned 1.9.25 + minSdk 26 via `expo-build-properties` (fixed a Compose-compiler mismatch). Web CI stays isolated (mobile work under `apps/mobile`/`packages/core`).
 - **App**: React Navigation bottom-tabs (Home/Progress/Workout/Exercises/Profile/Settings), theme tokens ported from the web CSS vars, StyleSheet UI primitives.
 - **Data layer** (`apps/mobile/native/db.js`): persistent `expo-sqlite` (sync API) — `exercises`/`workouts`/`sets` tables, seeded from `@opus/core/seedExercises`. Repo: active-workout get/create, add/delete set, finish (discards empty), discard; derived **from rows** via `@opus/core` — streak, totals, XP (`rpg.calcSetXP` + COMPLETE_BONUS), best est-1RM per exercise (`oneRepMax.epley1RM`). Deletable per data-integrity rule.
