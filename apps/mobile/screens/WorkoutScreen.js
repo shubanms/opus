@@ -1,8 +1,13 @@
 import { useCallback, useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Screen, H1, Label } from '../ui';
-import { colors, radius, space } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { oneRepMax } from '@opus/core';
+import { Screen, H1, H2, Label, Mono } from '../ui';
+import { colors, radius, space, fonts } from '../theme';
+import PressScale from '../components/PressScale';
+import { GoldButton } from '../components/Button';
+import Particles from '../components/fx/Particles';
 import {
   getActiveWorkout,
   getOrCreateActiveWorkout,
@@ -11,8 +16,11 @@ import {
   getSets,
   finishWorkout,
   discardWorkout,
+  priorBestE1rm,
 } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
+import { playCue } from '../native/sound';
+import { success as hSuccess, warning as hWarning } from '../native/haptics';
 
 export default function WorkoutScreen({ navigation, route }) {
   const [workout, setWorkout] = useState(null);
@@ -20,9 +28,8 @@ export default function WorkoutScreen({ navigation, route }) {
   const [exercise, setExercise] = useState('');
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
+  const [burst, setBurst] = useState(0); // increment to fire a particle burst
 
-  // Re-read the active workout (if any) each time the tab gains focus, and
-  // pick up an exercise passed from the Exercises tab.
   useFocusEffect(
     useCallback(() => {
       try {
@@ -51,6 +58,7 @@ export default function WorkoutScreen({ navigation, route }) {
       dbAddSet(wk.id, { exerciseName: exercise.trim(), weight: w, reps: r });
       setSets(getSets(wk.id));
       setReps('');
+      playCue('tick');
     } catch (e) {
       Alert.alert('Error', String(e?.message || e));
     }
@@ -60,21 +68,41 @@ export default function WorkoutScreen({ navigation, route }) {
     try {
       dbDeleteSet(id);
       setSets(workout ? getSets(workout.id) : []);
+      playCue('delete');
     } catch {}
   };
 
   const finish = () => {
     if (!workout) return;
+    // PR check: did any exercise in this session beat its prior best e1rm?
+    let pr = false;
+    try {
+      const byEx = {};
+      for (const st of sets) {
+        if (!st.exerciseName || !st.weight) continue;
+        const e = oneRepMax.epley1RM(st.weight, st.reps);
+        byEx[st.exerciseName] = Math.max(byEx[st.exerciseName] || 0, e);
+      }
+      for (const [name, e] of Object.entries(byEx)) {
+        if (e > priorBestE1rm(name, workout.id) + 0.01) { pr = true; break; }
+      }
+    } catch {}
+
     const kept = finishWorkout(workout.id);
     setWorkout(null);
     setSets([]);
     setExercise('');
     refreshWidgets();
+    if (kept) {
+      hSuccess();
+      playCue(pr ? 'chime' : 'success');
+      setBurst((b) => b + 1);
+    }
     Alert.alert(
-      kept ? 'Workout saved' : 'Nothing to save',
-      kept ? 'Great work — your stats updated.' : 'No sets were logged.'
+      kept ? (pr ? 'New PR! 🏆' : 'Workout saved') : 'Nothing to save',
+      kept ? (pr ? 'You beat a personal best — stats updated.' : 'Great work — your stats updated.') : 'No sets were logged.'
     );
-    navigation.navigate('Home');
+    if (kept) setTimeout(() => navigation.navigate('Home'), 350);
   };
 
   const discard = () => {
@@ -88,25 +116,27 @@ export default function WorkoutScreen({ navigation, route }) {
           discardWorkout(workout.id);
           setWorkout(null);
           setSets([]);
+          hWarning();
+          playCue('delete');
         },
       },
     ]);
   };
 
-  const volume = sets.reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
+  const volume = sets.reduce((a, st) => a + (st.weight || 0) * (st.reps || 0), 0);
 
   return (
     <Screen scroll={false}>
       <View style={{ padding: space(5), gap: space(4), flex: 1 }}>
-        <View style={styles.head}>
+        <View style={s.head}>
           <View>
             <H1>Workout</H1>
             <Label style={{ marginTop: 4 }}>{sets.length} sets · {Math.round(volume)} kg volume</Label>
           </View>
           {sets.length > 0 && (
-            <Pressable style={styles.finish} onPress={finish}>
-              <Text style={styles.finishText}>Finish</Text>
-            </Pressable>
+            <PressScale sound="success" onPress={finish} style={s.finish}>
+              <Text style={s.finishText}>Finish</Text>
+            </PressScale>
           )}
         </View>
 
@@ -115,58 +145,60 @@ export default function WorkoutScreen({ navigation, route }) {
           onChangeText={setExercise}
           placeholder="Exercise (e.g. Bench Press)"
           placeholderTextColor={colors.ash}
-          style={styles.exercise}
+          style={s.exercise}
         />
 
-        <View style={styles.inputRow}>
-          <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder="kg" placeholderTextColor={colors.ash} style={styles.input} />
-          <Text style={styles.x}>×</Text>
-          <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" placeholder="reps" placeholderTextColor={colors.ash} style={styles.input} />
-          <Pressable style={styles.add} onPress={log}><Text style={styles.addText}>+</Text></Pressable>
+        <View style={s.inputRow}>
+          <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder="kg" placeholderTextColor={colors.ash} style={s.input} />
+          <Text style={s.x}>×</Text>
+          <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" placeholder="reps" placeholderTextColor={colors.ash} style={s.input} />
+          <PressScale onPress={log} style={s.add}><Ionicons name="add" size={26} color={colors.obsidian} /></PressScale>
         </View>
 
         <FlatList
           data={[...sets].reverse()}
-          keyExtractor={(s) => String(s.id)}
+          keyExtractor={(st) => String(st.id)}
           contentContainerStyle={{ gap: space(2), paddingBottom: space(4) }}
           renderItem={({ item, index }) => (
-            <View style={styles.set}>
-              <Text style={styles.setNum}>{sets.length - index}</Text>
+            <View style={s.set}>
+              <Mono style={s.setNum}>{sets.length - index}</Mono>
               <View style={{ flex: 1 }}>
-                {!!item.exerciseName && <Text style={styles.setName}>{item.exerciseName}</Text>}
-                <Text style={styles.setVal}>{item.weight > 0 ? `${item.weight} kg × ${item.reps}` : `${item.reps} reps`}</Text>
+                {!!item.exerciseName && <Text style={s.setName}>{item.exerciseName}</Text>}
+                <Mono style={s.setVal}>{item.weight > 0 ? `${item.weight} kg × ${item.reps}` : `${item.reps} reps`}</Mono>
               </View>
-              <Pressable hitSlop={10} onPress={() => removeSet(item.id)}>
-                <Text style={styles.del}>✕</Text>
-              </Pressable>
+              <PressScale hitSlop={10} onPress={() => removeSet(item.id)}>
+                <Ionicons name="close" size={18} color={colors.ash} />
+              </PressScale>
             </View>
           )}
-          ListEmptyComponent={<Text style={styles.empty}>Log your first set above.</Text>}
+          ListEmptyComponent={<H2 style={s.empty}>Log your first set.</H2>}
         />
 
         {sets.length > 0 && (
-          <Pressable onPress={discard}><Text style={styles.discard}>Discard workout</Text></Pressable>
+          <>
+            <GoldButton label="Finish workout" icon="checkmark" sound="success" onPress={finish} />
+            <PressScale onPress={discard}><Text style={s.discard}>Discard workout</Text></PressScale>
+          </>
         )}
       </View>
+      {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   finish: { backgroundColor: colors.sage, borderRadius: radius.lg, paddingHorizontal: space(5), paddingVertical: space(3) },
-  finishText: { color: colors.obsidian, fontWeight: '700', fontSize: 14 },
-  exercise: { backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3), color: colors.textPrimary, fontSize: 15 },
+  finishText: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },
+  exercise: { backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 15 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
-  input: { flex: 1, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3), color: colors.textPrimary, fontSize: 15, textAlign: 'center' },
+  input: { flex: 1, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.mono, fontSize: 15, textAlign: 'center' },
   x: { color: colors.ash, fontSize: 16 },
-  add: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center' },
-  addText: { color: colors.obsidian, fontSize: 24, fontWeight: '700' },
+  add: { width: 50, height: 50, borderRadius: 25, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center' },
   set: { flexDirection: 'row', alignItems: 'center', gap: space(3), backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space(4), paddingVertical: space(3) },
-  setNum: { color: colors.ash, fontVariant: ['tabular-nums'], width: 20 },
-  setName: { color: colors.textPrimary, fontSize: 14, fontWeight: '600' },
-  setVal: { color: colors.textSecondary, fontVariant: ['tabular-nums'], fontSize: 14, marginTop: 1 },
-  del: { color: colors.ash, fontSize: 16, paddingHorizontal: space(1) },
-  empty: { color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: space(6) },
-  discard: { color: colors.ember, fontSize: 13, textAlign: 'center', paddingVertical: space(2) },
+  setNum: { color: colors.ash, width: 20, fontSize: 14 },
+  setName: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
+  setVal: { color: colors.textSecondary, fontSize: 14, marginTop: 1 },
+  empty: { color: colors.textSecondary, textAlign: 'center', marginTop: space(6) },
+  discard: { color: colors.ember, fontFamily: fonts.sansMedium, fontSize: 13, textAlign: 'center', paddingVertical: space(2) },
 });

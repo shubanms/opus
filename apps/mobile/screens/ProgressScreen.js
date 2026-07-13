@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Screen, H1, Card, Label, Body } from '../ui';
-import { colors, space } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Screen, H1, H2, Label, Body, Mono } from '../ui';
+import { colors, radius, space, fonts } from '../theme';
+import Card from '../components/Card';
+import StatTile from '../components/StatTile';
 import { getBestByExercise, getTotals } from '../native/db';
 
 export default function ProgressScreen() {
@@ -20,48 +23,42 @@ export default function ProgressScreen() {
 
   return (
     <Screen>
-      <H1>Progress</H1>
+      <View>
+        <H1>Progress</H1>
+        <Label style={{ marginTop: 4 }}>Charts & stats</Label>
+      </View>
 
-      <View style={styles.stats}>
-        <Stat label="Workouts" value={totals.workouts} />
-        <Stat label="Sets" value={totals.sets} />
-        <Stat label="Volume" value={`${Math.round(totals.totalVolume / 1000)}k`} />
+      <View style={s.bento}>
+        <StatTile icon="barbell" value={totals.workouts} label="Workouts" />
+        <StatTile icon="repeat" value={totals.sets} label="Sets" />
+        <StatTile icon="trending-up" value={Math.round(totals.totalVolume / 1000)} suffix="k" label="Volume kg" />
       </View>
 
       <Card>
         <Label>Best est. 1RM (Epley)</Label>
         {best.length === 0 ? (
-          <Body style={{ marginTop: 6 }}>Log a few weighted sets with an exercise name and your personal bests appear here.</Body>
+          <Body style={{ marginTop: space(2) }}>Log a few weighted sets with an exercise name and your personal bests appear here.</Body>
         ) : (
-          <View style={{ marginTop: space(3), gap: space(2) }}>
+          <View style={{ marginTop: space(3) }}>
             {best.map((d) => (
-              <View key={d.name} style={styles.row}>
-                <Text style={styles.lift} numberOfLines={1}>{d.name}</Text>
-                <Text style={styles.val}>{Math.round(d.e1rm)} kg</Text>
+              <View key={d.name} style={s.prRow}>
+                <Ionicons name="trophy" size={15} color={colors.gold} style={{ marginRight: space(3) }} />
+                <Text style={s.prName} numberOfLines={1}>{d.name}</Text>
+                <Mono style={s.prVal}>{Math.round(d.e1rm)} kg</Mono>
               </View>
             ))}
           </View>
         )}
       </Card>
+
+      <Body style={{ textAlign: 'center' }}>Trend charts land in the next update.</Body>
     </Screen>
   );
 }
 
-function Stat({ label, value }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statVal}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  stats: { flexDirection: 'row', gap: space(3) },
-  stat: { flex: 1, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: 14, paddingVertical: space(4), alignItems: 'center' },
-  statVal: { color: colors.gold, fontSize: 20, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  statLabel: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space(3) },
-  lift: { color: colors.textPrimary, fontSize: 15, flex: 1 },
-  val: { color: colors.gold, fontVariant: ['tabular-nums'], fontSize: 15, fontWeight: '600' },
+const s = StyleSheet.create({
+  bento: { flexDirection: 'row', gap: space(3) },
+  prRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(2.5), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
+  prName: { flex: 1, color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 15 },
+  prVal: { color: colors.gold, fontFamily: fonts.monoMedium, fontSize: 15 },
 });

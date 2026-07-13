@@ -1,17 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, Pressable } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { seedExercises } from '@opus/core';
-import { Screen, Label } from '../ui';
-import { colors, radius, space } from '../theme';
+import { H1, Label } from '../ui';
+import { colors, radius, space, fonts } from '../theme';
+import PressScale from '../components/PressScale';
 import { getExercises } from '../native/db';
 
 export default function ExercisesScreen({ navigation }) {
   const [q, setQ] = useState('');
   const [all, setAll] = useState([]);
 
-  // Prefer the seeded DB catalog; fall back to the bundled seed list if the DB
-  // isn't ready yet (first frame before init completes).
   useFocusEffect(
     useCallback(() => {
       try {
@@ -31,44 +31,47 @@ export default function ExercisesScreen({ navigation }) {
   const pick = (name) => navigation.navigate('Workout', { exercise: name });
 
   return (
-    <Screen scroll={false}>
-      <View style={{ padding: space(5), paddingBottom: 0 }}>
-        <Text style={styles.h1}>Exercises</Text>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <View style={{ paddingHorizontal: space(5), paddingTop: space(14) }}>
+        <H1>Exercises</H1>
         <Label style={{ marginTop: 4 }}>{data.length} moves · tap to log</Label>
-        <TextInput
-          value={q}
-          onChangeText={setQ}
-          placeholder="Search exercises…"
-          placeholderTextColor={colors.ash}
-          style={styles.search}
-        />
+        <View style={s.search}>
+          <Ionicons name="search" size={16} color={colors.ash} />
+          <TextInput
+            value={q}
+            onChangeText={setQ}
+            placeholder="Search exercises…"
+            placeholderTextColor={colors.ash}
+            style={s.searchInput}
+          />
+        </View>
       </View>
       <FlatList
         data={data}
         keyExtractor={(item, i) => String(item.name ?? i)}
         contentContainerStyle={{ padding: space(5), paddingTop: space(3), gap: space(2) }}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <Pressable style={styles.row} onPress={() => pick(item.name)}>
+          <PressScale sound="tap" onPress={() => pick(item.name)} style={s.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.meta}>
+              <Text style={s.name}>{item.name}</Text>
+              <Text style={s.meta}>
                 {(item.muscleGroup || '').replace(/-/g, ' ')}
                 {item.equipment ? ` · ${item.equipment}` : ''}
               </Text>
             </View>
-            <Text style={styles.plus}>＋</Text>
-          </Pressable>
+            <Ionicons name="add-circle" size={24} color={colors.gold} />
+          </PressScale>
         )}
       />
-    </Screen>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  h1: { color: colors.textPrimary, fontSize: 34, fontWeight: '700' },
-  search: { marginTop: space(4), backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3), color: colors.textPrimary, fontSize: 15 },
+const s = StyleSheet.create({
+  search: { flexDirection: 'row', alignItems: 'center', gap: space(2), marginTop: space(4), backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4) },
+  searchInput: { flex: 1, paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 15 },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, padding: space(3.5) },
-  name: { color: colors.textPrimary, fontSize: 15, fontWeight: '600' },
-  meta: { color: colors.textSecondary, fontSize: 12, marginTop: 3, textTransform: 'capitalize' },
-  plus: { color: colors.gold, fontSize: 22, fontWeight: '700', paddingHorizontal: space(2) },
+  name: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 15 },
+  meta: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, marginTop: 3, textTransform: 'capitalize' },
 });

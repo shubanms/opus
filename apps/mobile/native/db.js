@@ -42,6 +42,15 @@ export function initDb() {
     );
     CREATE INDEX IF NOT EXISTS idx_sets_workout ON sets(workoutId);
     CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts(dateKey);
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+    CREATE TABLE IF NOT EXISTS health (
+      dateKey TEXT PRIMARY KEY,
+      steps INTEGER,
+      updatedAt INTEGER
+    );
   `);
 
   const row = d.getFirstSync('SELECT COUNT(*) AS n FROM exercises');
@@ -223,4 +232,53 @@ export function getBestByExercise(limit = 8) {
     if (!prev || e1rm > prev.e1rm) best.set(s.name, { name: s.name, e1rm, weight: s.weight, reps: s.reps });
   }
   return [...best.values()].sort((a, b) => b.e1rm - a.e1rm).slice(0, limit);
+}
+
+// Best estimated 1RM for an exercise across finished workouts EXCLUDING one
+// workout — used to detect whether the just-finished session set a new PR.
+export function priorBestE1rm(exerciseName, excludeWorkoutId) {
+  if (!exerciseName) return 0;
+  const d = conn();
+  const rows = d.getAllSync(
+    `SELECT s.weight AS weight, s.reps AS reps
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+      WHERE w.finishedAt IS NOT NULL AND s.exerciseName = ? AND s.workoutId != ? AND s.weight > 0`,
+    exerciseName,
+    excludeWorkoutId ?? -1
+  );
+  let best = 0;
+  for (const s of rows) best = Math.max(best, oneRepMax.epley1RM(s.weight, s.reps));
+  return best;
+}
+
+// ── Settings (key/value) ─────────────────────────────────────────────────────
+export function getAllSettings() {
+  const out = {};
+  try {
+    for (const r of conn().getAllSync('SELECT key, value FROM settings')) out[r.key] = r.value;
+  } catch {}
+  return out;
+}
+
+export function setSetting(key, value) {
+  conn().runSync(
+    'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+    key,
+    String(value)
+  );
+}
+
+// ── Health (daily steps) ─────────────────────────────────────────────────────
+export function setSteps(day, steps) {
+  conn().runSync(
+    'INSERT INTO health (dateKey, steps, updatedAt) VALUES (?, ?, ?) ON CONFLICT(dateKey) DO UPDATE SET steps = excluded.steps, updatedAt = excluded.updatedAt',
+    day,
+    Math.round(Number(steps) || 0),
+    Date.now()
+  );
+}
+
+export function getSteps(day) {
+  const r = conn().getFirstSync('SELECT steps FROM health WHERE dateKey = ?', day);
+  return r ? r.steps : null;
 }

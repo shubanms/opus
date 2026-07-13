@@ -1,11 +1,19 @@
 import { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { dateKey } from '@opus/core';
-import { Screen, Card, H1, Label, Body } from '../ui';
-import { colors, radius, space } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { rpg, dateKey } from '@opus/core';
+import { Screen, Wordmark, H1, H2, Label, Body, Mono } from '../ui';
+import { colors, radius, space, fonts } from '../theme';
+import Card from '../components/Card';
+import StatTile from '../components/StatTile';
+import LevelBadge from '../components/rpg/LevelBadge';
+import XPBar from '../components/rpg/XPBar';
+import GoldAura from '../components/fx/GoldAura';
+import PressScale from '../components/PressScale';
 import { getTotals, getRecentWorkouts, getActiveWorkout } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
+import { useSettings } from '../native/settings';
 
 function relDay(key) {
   const gap = dateKey.daysBetween(key, dateKey.todayKey());
@@ -16,7 +24,7 @@ function relDay(key) {
 }
 
 export default function HomeScreen({ navigation }) {
-  const today = dateKey.todayKey();
+  const { settings } = useSettings();
   const [totals, setTotals] = useState({ workouts: 0, totalVolume: 0, streak: 0, totalXP: 0 });
   const [recent, setRecent] = useState([]);
   const [active, setActive] = useState(null);
@@ -25,44 +33,79 @@ export default function HomeScreen({ navigation }) {
     useCallback(() => {
       try {
         setTotals(getTotals());
-        setRecent(getRecentWorkouts(5));
+        setRecent(getRecentWorkouts(3));
         setActive(getActiveWorkout());
         refreshWidgets();
       } catch {}
     }, [])
   );
 
+  const level = rpg.getLevelFromTotalXP(totals.totalXP);
+  const rank = rpg.getRankLabel(totals.totalXP);
+  const prog = rpg.getXPProgress(totals.totalXP);
+
   return (
     <Screen>
+      {/* Hero */}
       <View>
-        <H1>OPUS</H1>
-        <Body style={{ marginTop: 4 }}>Build your masterpiece.</Body>
+        <GoldAura size={340} intensity={0.5} />
+        <Card style={{ overflow: 'hidden' }}>
+          <View style={s.heroTop}>
+            <View style={{ flex: 1 }}>
+              <Wordmark size={38} style={{ color: colors.textPrimary }} />
+              <Body style={{ marginTop: 2 }}>Welcome back, {settings.name}.</Body>
+            </View>
+            {totals.streak > 0 && (
+              <View style={s.streakPill}>
+                <Ionicons name="flame" size={14} color={colors.ember} />
+                <Mono style={s.streakText}>{totals.streak}</Mono>
+              </View>
+            )}
+          </View>
+
+          <View style={s.rankRow}>
+            <LevelBadge level={level} size={30} />
+            <Text style={s.rankTitle}>{rank}</Text>
+          </View>
+
+          <View style={{ marginTop: space(3) }}>
+            <XPBar progress={prog.progress} level={level} xpToNext={prog.xpToNext} showLabel />
+          </View>
+        </Card>
       </View>
 
-      <View style={styles.stats}>
-        <Stat label="Streak" value={`${totals.streak}`} suffix={totals.streak === 1 ? 'day' : 'days'} />
-        <Stat label="Workouts" value={`${totals.workouts}`} />
-        <Stat label="Volume" value={`${Math.round(totals.totalVolume / 1000)}k`} suffix="kg" />
+      {/* Stat bento */}
+      <View style={s.bento}>
+        <StatTile icon="flame" accent={colors.ember} value={totals.streak} label={totals.streak === 1 ? 'Day streak' : 'Day streak'} />
+        <StatTile icon="barbell" value={totals.workouts} label="Workouts" />
+        <StatTile icon="trending-up" value={Math.round(totals.totalVolume / 1000)} suffix="k" label="Volume kg" />
       </View>
 
-      <Card style={{ backgroundColor: colors.obsidian, borderColor: colors.stone }}>
-        <Label style={{ color: colors.gold }}>Today · {today}</Label>
-        <Text style={styles.cardTitle}>{active ? 'Workout in progress' : 'Ready to train?'}</Text>
-        <Pressable style={styles.cta} onPress={() => navigation.navigate('Workout')}>
-          <Text style={styles.ctaText}>{active ? 'Resume workout' : 'Start workout'}</Text>
-        </Pressable>
+      {/* Today / start */}
+      <Card variant="feature">
+        <Label style={{ color: colors.gold }}>Today · {dateKey.todayKey()}</Label>
+        <View style={s.todayRow}>
+          <View style={{ flex: 1 }}>
+            <H2 style={{ color: colors.textInverse, marginTop: 4 }}>{active ? 'Workout in progress' : 'Ready to train?'}</H2>
+            <Body style={{ marginTop: 2 }}>{active ? 'Pick up where you left off.' : 'Log a session and earn XP.'}</Body>
+          </View>
+          <PressScale sound="start" onPress={() => navigation.navigate('Workout')} style={s.playBtn}>
+            <Ionicons name={active ? 'play' : 'add'} size={24} color={colors.obsidian} />
+          </PressScale>
+        </View>
       </Card>
 
+      {/* Recent */}
       <Card>
         <Label>Recent</Label>
         {recent.length === 0 ? (
-          <Body style={{ marginTop: 6 }}>No workouts yet — your finished sessions show up here.</Body>
+          <H1 style={{ marginTop: space(2), fontSize: 26 }}>Your legacy starts here.</H1>
         ) : (
           <View style={{ marginTop: space(2) }}>
             {recent.map((w) => (
-              <View key={w.id} style={styles.recentRow}>
-                <Text style={styles.recentDay}>{relDay(w.dateKey)}</Text>
-                <Text style={styles.recentMeta}>{w.setCount} sets · {Math.round(w.volume)} kg</Text>
+              <View key={w.id} style={s.recentRow}>
+                <Text style={s.recentDay}>{relDay(w.dateKey)}</Text>
+                <Mono style={s.recentMeta}>{w.setCount} sets · {Math.round(w.volume)} kg</Mono>
               </View>
             ))}
           </View>
@@ -72,25 +115,16 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-function Stat({ label, value, suffix }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statVal}>{value}<Text style={styles.statSuffix}>{suffix ? ` ${suffix}` : ''}</Text></Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  stats: { flexDirection: 'row', gap: space(3) },
-  stat: { flex: 1, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingVertical: space(4), paddingHorizontal: space(3), alignItems: 'center' },
-  statVal: { color: colors.gold, fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  statSuffix: { color: colors.ash, fontSize: 12, fontWeight: '600' },
-  statLabel: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
-  cardTitle: { color: '#F5F3EF', fontSize: 20, fontWeight: '600', marginTop: 6, marginBottom: space(3) },
-  cta: { backgroundColor: colors.gold, borderRadius: radius.lg, paddingVertical: space(3.5), alignItems: 'center' },
-  ctaText: { color: colors.obsidian, fontSize: 16, fontWeight: '700' },
-  recentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: space(2), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
-  recentDay: { color: colors.textPrimary, fontSize: 14, fontWeight: '600' },
-  recentMeta: { color: colors.textSecondary, fontSize: 13, fontVariant: ['tabular-nums'] },
+const s = StyleSheet.create({
+  heroTop: { flexDirection: 'row', alignItems: 'flex-start' },
+  streakPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.ivory, borderRadius: radius.full, paddingHorizontal: space(3), paddingVertical: space(1.5) },
+  streakText: { color: colors.ember, fontFamily: fonts.monoMedium, fontSize: 13, marginLeft: 4 },
+  rankRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(4) },
+  rankTitle: { color: colors.textPrimary, fontFamily: fonts.displaySemi, fontSize: 22, marginLeft: space(3) },
+  bento: { flexDirection: 'row', gap: space(3) },
+  todayRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(2) },
+  playBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center', marginLeft: space(3) },
+  recentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: space(2.5), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
+  recentDay: { color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 14 },
+  recentMeta: { color: colors.textSecondary, fontSize: 13 },
 });
