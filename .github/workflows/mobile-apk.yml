@@ -21,6 +21,25 @@ permissions:
   contents: write
 
 jobs:
+  # Fast JS render smoke tests — mount <App/> + every screen in Node and assert
+  # no render crash. Catches blank-screen/undefined-import bugs before the APK.
+  jest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install shared core
+        working-directory: packages/core
+        run: npm install --no-audit --no-fund
+      - name: Install mobile app
+        working-directory: apps/mobile
+        run: npm install --no-audit --no-fund
+      - name: Render smoke tests
+        working-directory: apps/mobile
+        run: npm test -- --ci
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -91,3 +110,59 @@ jobs:
             offline workout logging (SQLite), streak/XP/PRs, notifications,
             Health Connect step import, and home-screen widgets.
           files: opus-mobile-build-${{ github.run_number }}.apk
+
+  # Real Android runtime test: boot an emulator, install the built APK, and run a
+  # Maestro flow that proves the app launches PAST the splash to the Home screen
+  # (the build-17 failure was an infinite splash). logcat + screenshots captured
+  # on failure so the actual runtime error is visible.
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM (hardware acceleration for the emulator)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Download built APK
+        uses: actions/download-artifact@v4
+        with:
+          name: opus-mobile-apk
+          path: apk
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Boot emulator + run Maestro launch flow
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r apk/app-release.apk
+            maestro test apps/mobile/.maestro/launch.yaml || TEST_FAILED=1
+            adb logcat -d > "$GITHUB_WORKSPACE/logcat.txt" 2>&1 || true
+            if [ "$TEST_FAILED" = "1" ]; then exit 1; fi
+
+      - name: Upload logcat + Maestro artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-debug
+          path: |
+            logcat.txt
+            /home/runner/.maestro/tests
+          if-no-files-found: ignore
