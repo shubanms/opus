@@ -4,11 +4,14 @@
     "slug": "opus",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#111010",
     "scheme": "opus",
     "android": {
       "package": "com.shubanms.opus.mobile",
       "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_WEIGHT",
         "android.permission.health.READ_SLEEP"

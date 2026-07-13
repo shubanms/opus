@@ -1,10 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from './theme';
+import { useFonts } from 'expo-font';
+import { CormorantGaramond_600SemiBold, CormorantGaramond_700Bold } from '@expo-google-fonts/cormorant-garamond';
+import { DMSans_300Light, DMSans_400Regular, DMSans_500Medium, DMSans_600SemiBold } from '@expo-google-fonts/dm-sans';
+import { DMMono_400Regular, DMMono_500Medium } from '@expo-google-fonts/dm-mono';
+import { colors, fonts } from './theme';
 import { initDb } from './native/db';
+import { loadSettings } from './native/settings';
 import HomeScreen from './screens/HomeScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import ProgressScreen from './screens/ProgressScreen';
@@ -22,8 +28,8 @@ const navTheme = {
     primary: colors.gold,
     background: colors.bg,
     card: colors.obsidian,
-    text: colors.textPrimary,
-    border: colors.ivory,
+    text: colors.textInverse,
+    border: '#221F1C',
     notification: colors.ember,
   },
 };
@@ -37,15 +43,38 @@ const ICON = {
   Settings: 'settings',
 };
 
+function Splash() {
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.obsidian, alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator color={colors.gold} />
+    </View>
+  );
+}
+
 export default function App() {
+  const [ready, setReady] = useState(false);
+  const [fontsLoaded] = useFonts({
+    CormorantGaramond_700Bold,
+    CormorantGaramond_600SemiBold,
+    DMSans_300Light,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMMono_400Regular,
+    DMMono_500Medium,
+  });
+
   useEffect(() => {
     try {
       initDb();
+      loadSettings();
     } catch (e) {
-      // Non-fatal: screens guard their own reads and show empty states.
-      console.warn('DB init failed', e);
+      console.warn('init failed', e);
     }
+    setReady(true);
   }, []);
+
+  if (!fontsLoaded || !ready) return <Splash />;
 
   return (
     <NavigationContainer theme={navTheme}>
@@ -55,7 +84,8 @@ export default function App() {
           headerShown: false,
           tabBarActiveTintColor: colors.gold,
           tabBarInactiveTintColor: colors.ash,
-          tabBarStyle: { backgroundColor: colors.obsidian, borderTopColor: colors.ivory },
+          tabBarLabelStyle: { fontFamily: fonts.sansMedium, fontSize: 10 },
+          tabBarStyle: { backgroundColor: colors.obsidian, borderTopColor: '#221F1C', height: 60, paddingBottom: 8, paddingTop: 6 },
           tabBarIcon: ({ color, size }) => (
             <Ionicons name={ICON[route.name] || 'ellipse'} size={size} color={color} />
           ),
