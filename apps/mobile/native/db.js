@@ -547,6 +547,36 @@ export function computeAchievementStats() {
   return achievements.computeStats({ workouts, sets, prs, exercises, level });
 }
 
+// Re-lock achievements whose condition no longer holds (e.g. after a workout
+// delete) so their XP reverts — the data-integrity rule. Uses core staleKeys.
+export function reconcileAchievements() {
+  const stats = computeAchievementStats();
+  const stale = achievements.staleKeys(stats, unlockedAchievementKeys());
+  if (stale.length) {
+    const d = conn();
+    for (const k of stale) {
+      try { d.runSync('DELETE FROM achievements WHERE key = ?', k); } catch {}
+    }
+    touch();
+  }
+  return stale;
+}
+
+// Delete a workout and everything derived from it (sets, energy logs, and PRs
+// scoped to it), then re-lock any achievements that no longer hold. XP/level
+// revert automatically because getTotals recomputes from remaining rows.
+export function deleteWorkout(workoutId) {
+  const d = conn();
+  d.withTransactionSync(() => {
+    d.runSync('DELETE FROM sets WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM energyLogs WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM prs WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM workouts WHERE id = ?', workoutId);
+  });
+  reconcileAchievements();
+  touch();
+}
+
 // Detect + persist newly-earned achievements. Returns the new defs (for a toast).
 export function syncAchievements() {
   const stats = computeAchievementStats();

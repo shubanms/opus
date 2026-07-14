@@ -39,6 +39,8 @@ jest.mock('./native/db', () => ({
   discardWorkout: jest.fn(),
   priorBestE1rm: jest.fn(() => 0),
   getRecentWorkouts: jest.fn(() => [{ id: 1, dateKey: '2026-07-13', setCount: 5, volume: 4200 }]),
+  deleteWorkout: jest.fn(),
+  reconcileAchievements: jest.fn(() => []),
   getStreak: jest.fn(() => 3),
   getTotals: jest.fn(() => ({ workouts: 12, sets: 84, totalVolume: 42000, totalXP: 5200, streak: 3 })),
   getBestByExercise: jest.fn(() => [{ name: 'Bench Press', e1rm: 110, weight: 100, reps: 5 }]),

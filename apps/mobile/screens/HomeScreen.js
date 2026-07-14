@@ -12,6 +12,7 @@ import XPBar from '../components/rpg/XPBar';
 import GoldAura from '../components/fx/GoldAura';
 import PressScale from '../components/PressScale';
 import QuestBoard from '../components/home/QuestBoard';
+import HistoryModal from '../components/home/HistoryModal';
 import { getTotals, getRecentWorkouts, getActiveWorkout } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
 import { useSettings } from '../native/settings';
@@ -29,6 +30,7 @@ export default function HomeScreen({ navigation }) {
   const [totals, setTotals] = useState({ workouts: 0, totalVolume: 0, streak: 0, totalXP: 0 });
   const [recent, setRecent] = useState([]);
   const [active, setActive] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -101,7 +103,14 @@ export default function HomeScreen({ navigation }) {
 
       {/* Recent */}
       <Card>
-        <Label>Recent</Label>
+        <View style={s.recentHead}>
+          <Label>Recent</Label>
+          {recent.length > 0 && (
+            <PressScale hitSlop={8} onPress={() => setHistoryOpen(true)}>
+              <Text style={s.seeAll}>See all</Text>
+            </PressScale>
+          )}
+        </View>
         {recent.length === 0 ? (
           <H1 style={{ marginTop: space(2), fontSize: 26 }}>Your legacy starts here.</H1>
         ) : (
@@ -115,6 +124,8 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
       </Card>
+
+      <HistoryModal visible={historyOpen} onClose={() => setHistoryOpen(false)} />
     </Screen>
   );
 }
@@ -128,6 +139,8 @@ const s = StyleSheet.create({
   bento: { flexDirection: 'row', gap: space(3) },
   todayRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(2) },
   playBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center', marginLeft: space(3) },
+  recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  seeAll: { color: colors.gold, fontFamily: fonts.sansMedium, fontSize: 13 },
   recentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: space(2.5), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
   recentDay: { color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 14 },
   recentMeta: { color: colors.textSecondary, fontSize: 13 },

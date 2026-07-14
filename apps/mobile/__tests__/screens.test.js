@@ -24,6 +24,7 @@ import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
 import WrappedModal from '../components/profile/WrappedModal';
 import QuestBoard from '../components/home/QuestBoard';
+import HistoryModal from '../components/home/HistoryModal';
 
 const Tab = createBottomTabNavigator();
 
@@ -131,5 +132,12 @@ describe('home quest board', () => {
   it('renders this week\'s quests', () => {
     const { getByText } = render(<QuestBoard />);
     expect(getByText("This week's quests")).toBeTruthy();
+  });
+});
+
+describe('history sheet', () => {
+  it('lists finished workouts', () => {
+    const { getByText } = render(<HistoryModal visible onClose={() => {}} />);
+    expect(getByText('History')).toBeTruthy();
   });
 });

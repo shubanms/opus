@@ -106,14 +106,6 @@ export default function SettingsScreen() {
             onChange={(v) => update('unit', v)}
           />
         </View>
-        <Label style={{ marginTop: space(4) }}>Theme</Label>
-        <View style={{ marginTop: space(2) }}>
-          <Segmented
-            options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }, { value: 'system', label: 'System' }]}
-            value={settings.theme || 'system'}
-            onChange={(v) => update('theme', v)}
-          />
-        </View>
       </Card>
 
       {/* Profile */}
