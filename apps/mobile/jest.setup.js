@@ -71,6 +71,12 @@ jest.mock('./native/db', () => ({
   getQuestClaims: jest.fn(() => []),
   claimQuest: jest.fn(() => true),
   questClaimXP: jest.fn(() => 0),
+  getWrappedInputs: jest.fn(() => ({
+    workouts: [{ id: 1, date: '2026-07-02', status: 'completed', totalVolume: 4200, xpEarned: 120, duration: 3600 }],
+    sets: [{ workoutId: 1, exerciseId: 1, weight: 100, reps: 5 }],
+    prs: [{ achievedAt: new Date('2026-07-02').getTime() }],
+    exName: { 1: 'Bench Press' },
+  })),
 }));
 
 jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn() }));

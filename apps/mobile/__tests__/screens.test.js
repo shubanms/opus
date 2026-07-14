@@ -22,6 +22,7 @@ import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
 import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
+import WrappedModal from '../components/profile/WrappedModal';
 import QuestBoard from '../components/home/QuestBoard';
 
 const Tab = createBottomTabNavigator();
@@ -111,6 +112,18 @@ describe('profile modals render without crashing', () => {
     const prs = [{ id: 1, exerciseName: 'Deadlift', type: 'e1rm', value: 180, achievedAt: Date.now() }];
     const { getByText } = render(<HallOfRecordsModal visible prs={prs} onClose={() => {}} />);
     expect(getByText('Deadlift')).toBeTruthy();
+  });
+  it('WrappedModal aggregates a period', () => {
+    const inputs = {
+      workouts: [{ id: 1, date: '2026-07-02', status: 'completed', totalVolume: 4200, xpEarned: 120, duration: 3600 }],
+      sets: [{ workoutId: 1, exerciseId: 1, weight: 100, reps: 5 }],
+      prs: [{ achievedAt: new Date('2026-07-02').getTime() }],
+      exName: { 1: 'Bench Press' },
+    };
+    const { getByText } = render(<WrappedModal visible inputs={inputs} onClose={() => {}} />);
+    // Title + Month/Year toggle are always present (period contents depend on the clock).
+    expect(getByText('Wrapped')).toBeTruthy();
+    expect(getByText('Month')).toBeTruthy();
   });
 });
 

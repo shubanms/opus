@@ -14,9 +14,10 @@ import PressScale from '../components/PressScale';
 import { SecondaryButton } from '../components/Button';
 import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
+import WrappedModal from '../components/profile/WrappedModal';
 import { useSettings } from '../native/settings';
 import { useDbQuery } from '../native/useDbQuery';
-import { getTotals, unlockedAchievementKeys, computeAchievementStats, getAllPRs } from '../native/db';
+import { getTotals, unlockedAchievementKeys, computeAchievementStats, getAllPRs, getWrappedInputs } from '../native/db';
 
 export default function ProfileScreen() {
   const { settings } = useSettings();
@@ -25,6 +26,7 @@ export default function ProfileScreen() {
   const unlockedKeys = useDbQuery(() => unlockedAchievementKeys(), [], []);
   const stats = useDbQuery(() => computeAchievementStats(), [], null);
   const prs = useDbQuery(() => getAllPRs(200), [], []);
+  const wrappedInputs = useDbQuery(() => getWrappedInputs(), [], { workouts: [], sets: [], prs: [], exName: {} });
   const unlocked = new Set(unlockedKeys);
 
   const rawLevel = rpg.getLevelFromTotalXP(totals.totalXP);
@@ -81,6 +83,7 @@ export default function ProfileScreen() {
         <SecondaryButton label="Ranks & bosses" icon="ribbon" onPress={() => setSheet('ranks')} style={{ flex: 1 }} />
         <SecondaryButton label="Hall of Records" icon="trophy" onPress={() => setSheet('records')} style={{ flex: 1 }} />
       </View>
+      <SecondaryButton label="Your Wrapped" icon="sparkles" tone="sage" onPress={() => setSheet('wrapped')} />
 
       {/* Lifetime bento */}
       <Label>Lifetime</Label>
@@ -124,6 +127,7 @@ export default function ProfileScreen() {
 
       <ProgressionModal visible={sheet === 'ranks'} onClose={() => setSheet(null)} level={rawLevel} stats={stats} />
       <HallOfRecordsModal visible={sheet === 'records'} onClose={() => setSheet(null)} prs={prs} />
+      <WrappedModal visible={sheet === 'wrapped'} onClose={() => setSheet(null)} inputs={wrappedInputs} />
     </Screen>
   );
 }

@@ -459,6 +459,39 @@ export function questClaimXP() {
   return xp;
 }
 
+// ── Wrapped inputs (shared engine: @opus/core/wrapped) ───────────────────────
+// Shapes finished-workout rows for wrapped.buildWrapped. Native keys exercises
+// by name, but buildWrapped resolves the top lift via a numeric id → we remap
+// names to synthetic ids and return the matching exName map.
+export function getWrappedInputs() {
+  const d = conn();
+  const workouts = d
+    .getAllSync(
+      `SELECT id, dateKey AS date, COALESCE(totalVolume,0) AS totalVolume,
+              COALESCE(xpEarned,0) AS xpEarned, COALESCE(duration,0) AS duration
+         FROM workouts WHERE finishedAt IS NOT NULL`
+    )
+    .map((w) => ({ ...w, status: 'completed' }));
+
+  const exId = new Map();
+  const exName = {};
+  const idOf = (name) => {
+    if (!name) return 0;
+    if (!exId.has(name)) {
+      const id = exId.size + 1;
+      exId.set(name, id);
+      exName[id] = name;
+    }
+    return exId.get(name);
+  };
+  const sets = d
+    .getAllSync('SELECT workoutId, COALESCE(exerciseId, exerciseName) AS name, weight, reps, isWarmup FROM sets')
+    .map((s) => ({ workoutId: s.workoutId, exerciseId: idOf(s.name), weight: s.weight, reps: s.reps, isWarmup: s.isWarmup }));
+
+  const prs = d.getAllSync('SELECT achievedAt FROM prs');
+  return { workouts, sets, prs, exName };
+}
+
 // ── Achievements (shared engine: @opus/core/achievements) ────────────────────
 export function unlockedAchievements() {
   return conn().getAllSync('SELECT key, unlockedAt FROM achievements');
