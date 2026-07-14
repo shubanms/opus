@@ -20,6 +20,8 @@ import ExercisePicker from '../components/workout/ExercisePicker';
 import PlateCalculator from '../components/workout/PlateCalculator';
 import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
+import ProgressionModal from '../components/profile/ProgressionModal';
+import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
 
 const Tab = createBottomTabNavigator();
 
@@ -94,5 +96,19 @@ describe('progress charts render without crashing', () => {
   });
   it('BarChart draws bars', () => {
     expect(() => render(<BarChart data={[500, 800, 1200]} width={280} />)).not.toThrow();
+  });
+});
+
+describe('profile modals render without crashing', () => {
+  const stats = { totalVolume: 42000, bestStreak: 5, prCount: 3, muscleVariety: 6 };
+  it('ProgressionModal shows boss gates + rank ladder', () => {
+    const { getByText } = render(<ProgressionModal visible level={12} stats={stats} onClose={() => {}} />);
+    expect(getByText('Ranks & bosses')).toBeTruthy();
+    expect(getByText('Boss gates')).toBeTruthy();
+  });
+  it('HallOfRecordsModal groups PRs by day', () => {
+    const prs = [{ id: 1, exerciseName: 'Deadlift', type: 'e1rm', value: 180, achievedAt: Date.now() }];
+    const { getByText } = render(<HallOfRecordsModal visible prs={prs} onClose={() => {}} />);
+    expect(getByText('Deadlift')).toBeTruthy();
   });
 });

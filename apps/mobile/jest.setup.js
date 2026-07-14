@@ -63,6 +63,10 @@ jest.mock('./native/db', () => ({
   currentBodyweight: jest.fn(() => null),
   unlockedAchievementKeys: jest.fn(() => ['first']),
   syncAchievements: jest.fn(() => []),
+  computeAchievementStats: jest.fn(() => ({
+    workouts: 12, totalVolume: 42000, totalSets: 84, bestStreak: 5,
+    muscleVariety: 6, prCount: 3, level: 6, earlyBird: false, nightOwl: false, customExercises: 0,
+  })),
 }));
 
 jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn() }));
