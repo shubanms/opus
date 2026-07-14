@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { seedExercises } from '@opus/core';
@@ -10,6 +10,7 @@ import { getExercises } from '../native/db';
 
 export default function ExercisesScreen({ navigation }) {
   const [q, setQ] = useState('');
+  const [group, setGroup] = useState(null); // selected muscle-group filter (null = all)
   const [all, setAll] = useState([]);
 
   useFocusEffect(
@@ -23,10 +24,20 @@ export default function ExercisesScreen({ navigation }) {
     }, [])
   );
 
+  const groups = useMemo(() => {
+    const set = new Set();
+    for (const e of all) if (e.muscleGroup) set.add(e.muscleGroup);
+    return [...set].sort();
+  }, [all]);
+
   const data = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return t ? all.filter((e) => (e.name || '').toLowerCase().includes(t)) : all;
-  }, [q, all]);
+    return all.filter(
+      (e) =>
+        (!group || e.muscleGroup === group) &&
+        (!t || (e.name || '').toLowerCase().includes(t))
+    );
+  }, [q, group, all]);
 
   const pick = (name) => navigation.navigate('Workout', { exercise: name });
 
@@ -46,6 +57,23 @@ export default function ExercisesScreen({ navigation }) {
           />
         </View>
       </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={s.chips}
+        style={{ flexGrow: 0 }}
+      >
+        {[null, ...groups].map((g) => {
+          const active = group === g;
+          return (
+            <PressScale key={g || 'all'} sound="tap" onPress={() => setGroup(g)} style={[s.chip, active && s.chipActive]}>
+              <Text style={[s.chipText, active && s.chipTextActive]}>
+                {g ? g.replace(/-/g, ' ') : 'All'}
+              </Text>
+            </PressScale>
+          );
+        })}
+      </ScrollView>
       <FlatList
         data={data}
         keyExtractor={(item, i) => String(item.name ?? i)}
@@ -74,4 +102,9 @@ const s = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, padding: space(3.5) },
   name: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 15 },
   meta: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, marginTop: 3, textTransform: 'capitalize' },
+  chips: { paddingHorizontal: space(5), paddingTop: space(3), gap: space(2) },
+  chip: { paddingHorizontal: space(4), paddingVertical: space(2), borderRadius: radius.full, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1 },
+  chipActive: { backgroundColor: colors.gold, borderColor: colors.gold },
+  chipText: { color: colors.textSecondary, fontFamily: fonts.sansMedium, fontSize: 13, textTransform: 'capitalize' },
+  chipTextActive: { color: colors.obsidian },
 });
