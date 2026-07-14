@@ -4,7 +4,7 @@
 // ExercisePicker. Live search via getExercises(query).
 import { useState } from 'react';
 import { Modal, View, Text, TextInput, FlatList, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../Icon';
 import { H2, Label } from '../../ui';
 import { colors, radius, space, fonts } from '../../theme';
 import PressScale from '../PressScale';
@@ -27,11 +27,11 @@ export default function ExercisePicker({ visible, onClose, onPick }) {
         <View style={s.sheet}>
           <View style={s.header}>
             <H2>Choose exercise</H2>
-            <PressScale hitSlop={10} onPress={onClose}><Ionicons name="close" size={24} color={colors.ash} /></PressScale>
+            <PressScale hitSlop={10} onPress={onClose}><Icon name="close" size={24} color={colors.ash} /></PressScale>
           </View>
 
           <View style={s.searchRow}>
-            <Ionicons name="search" size={18} color={colors.ash} />
+            <Icon name="search" size={18} color={colors.ash} />
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -55,7 +55,7 @@ export default function ExercisePicker({ visible, onClose, onPick }) {
                     {[item.muscleGroup, item.equipment].filter(Boolean).join(' · ')}
                   </Label>
                 </View>
-                <Ionicons name="add-circle" size={24} color={colors.gold} />
+                <Icon name="add-circle" size={24} color={colors.gold} />
               </PressScale>
             )}
             ListEmptyComponent={<Text style={s.empty}>No matches.</Text>}

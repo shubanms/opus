@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, FlatList, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { oneRepMax, units } from '@opus/core';
 import { useSettings } from '../native/settings';
 import { Screen, H1, H2, Label, Mono } from '../ui';
@@ -178,7 +178,7 @@ export default function WorkoutScreen({ navigation, route }) {
             style={[s.exercise, { flex: 1 }]}
           />
           <PressScale onPress={() => setPickerOpen(true)} sound="tap" style={s.browse}>
-            <Ionicons name="list" size={22} color={colors.textPrimary} />
+            <Icon name="list" size={22} color={colors.textPrimary} />
           </PressScale>
         </View>
 
@@ -186,7 +186,7 @@ export default function WorkoutScreen({ navigation, route }) {
           <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder={units.unitLabel(unit)} placeholderTextColor={colors.ash} style={s.input} />
           <Text style={s.x}>×</Text>
           <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" placeholder="reps" placeholderTextColor={colors.ash} style={s.input} />
-          <PressScale onPress={log} style={s.add}><Ionicons name="add" size={26} color={colors.obsidian} /></PressScale>
+          <PressScale onPress={log} style={s.add}><Icon name="add" size={26} color={colors.obsidian} /></PressScale>
         </View>
 
         {parseFloat(weight) > 0 && <PlateCalculator weight={units.toKg(parseFloat(weight), unit)} />}
@@ -205,7 +205,7 @@ export default function WorkoutScreen({ navigation, route }) {
                 <Mono style={s.setVal}>{item.weight > 0 ? `${units.toDisplay(item.weight, unit)} ${units.unitLabel(unit)} × ${item.reps}` : `${item.reps} reps`}</Mono>
               </View>
               <PressScale hitSlop={10} onPress={() => removeSet(item.id)}>
-                <Ionicons name="close" size={18} color={colors.ash} />
+                <Icon name="close" size={18} color={colors.ash} />
               </PressScale>
             </View>
           )}

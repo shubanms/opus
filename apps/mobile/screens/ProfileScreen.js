@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { rpg, achievements as ach, bosses } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
 import { colors, radius, space, fonts } from '../theme';
@@ -73,12 +73,12 @@ export default function ProfileScreen() {
       {/* Boss gate callout — level is held at the gate until the feat is done */}
       {activeBoss && (
         <PressScale onPress={() => setSheet('ranks')} style={s.bossCallout}>
-          <Ionicons name="flame" size={20} color={colors.ember} style={{ marginRight: space(3) }} />
+          <Icon name="flame" size={20} color={colors.ember} style={{ marginRight: space(3) }} />
           <View style={{ flex: 1 }}>
             <Text style={s.bossTitle}>Boss gate · Lv.{activeBoss.gate} {activeBoss.title}</Text>
             <Text style={s.bossDesc}>{activeBoss.desc}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.ash} />
+          <Icon name="chevron-forward" size={18} color={colors.ash} />
         </PressScale>
       )}
 
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
         <SecondaryButton label="Ranks & bosses" icon="ribbon" onPress={() => setSheet('ranks')} style={{ flex: 1 }} />
         <SecondaryButton label="Hall of Records" icon="trophy" onPress={() => setSheet('records')} style={{ flex: 1 }} />
       </View>
-      <SecondaryButton label="Your Wrapped" icon="sparkles" tone="sage" onPress={() => setSheet('wrapped')} />
+      <SecondaryButton label="Your Wrapped" icon="sparkles" onPress={() => setSheet('wrapped')} />
 
       {/* Lifetime bento */}
       <Label>Lifetime</Label>
@@ -97,7 +97,7 @@ export default function ProfileScreen() {
         <StatTile icon="flame" accent={colors.ember} value={totals.streak} label="Streak" />
       </View>
       <View style={s.bento}>
-        <StatTile icon="trending-up" value={Math.round(totals.totalVolume / 1000)} suffix="k" label="Volume kg" />
+        <StatTile icon="trending-up" value={totals.totalVolume} compact label="Volume kg" />
         <StatTile icon="flash" value={Math.round(totals.totalXP)} label="Total XP" />
         <StatTile icon="ribbon" accent={colors.sage} value={level} label="Level" />
       </View>

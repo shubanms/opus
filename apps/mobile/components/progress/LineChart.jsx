@@ -15,7 +15,7 @@ export default function LineChart({ data = [], height = 120, color = colors.gold
 
   if (values.length < 2) {
     return (
-      <View style={{ height, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ height: 44, alignItems: 'center', justifyContent: 'center' }}>
         <Label>Not enough data yet</Label>
       </View>
     );

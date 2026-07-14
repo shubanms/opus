@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, FlatList, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { seedExercises } from '@opus/core';
 import { H1, Label } from '../ui';
 import { colors, radius, space, fonts } from '../theme';
@@ -47,7 +47,7 @@ export default function ExercisesScreen({ navigation }) {
         <H1>Exercises</H1>
         <Label style={{ marginTop: 4 }}>{data.length} moves · tap to log</Label>
         <View style={s.search}>
-          <Ionicons name="search" size={16} color={colors.ash} />
+          <Icon name="search" size={16} color={colors.ash} />
           <TextInput
             value={q}
             onChangeText={setQ}
@@ -88,7 +88,7 @@ export default function ExercisesScreen({ navigation }) {
                 {item.equipment ? ` · ${item.equipment}` : ''}
               </Text>
             </View>
-            <Ionicons name="add-circle" size={24} color={colors.gold} />
+            <Icon name="add-circle" size={24} color={colors.gold} />
           </PressScale>
         )}
       />
@@ -105,6 +105,6 @@ const s = StyleSheet.create({
   chips: { paddingHorizontal: space(5), paddingTop: space(3), gap: space(2) },
   chip: { paddingHorizontal: space(4), paddingVertical: space(2), borderRadius: radius.full, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1 },
   chipActive: { backgroundColor: colors.gold, borderColor: colors.gold },
-  chipText: { color: colors.textSecondary, fontFamily: fonts.sansMedium, fontSize: 13, textTransform: 'capitalize' },
+  chipText: { color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 13, textTransform: 'capitalize' },
   chipTextActive: { color: colors.obsidian },
 });

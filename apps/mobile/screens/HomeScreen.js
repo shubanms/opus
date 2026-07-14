@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { rpg, dateKey } from '@opus/core';
 import { Screen, Wordmark, H1, H2, Label, Body, Mono } from '../ui';
 import { colors, radius, space, fonts } from '../theme';
@@ -61,7 +61,7 @@ export default function HomeScreen({ navigation }) {
             </View>
             {totals.streak > 0 && (
               <View style={s.streakPill}>
-                <Ionicons name="flame" size={14} color={colors.ember} />
+                <Icon name="flame" size={14} color={colors.ember} />
                 <Mono style={s.streakText}>{totals.streak}</Mono>
               </View>
             )}
@@ -82,7 +82,7 @@ export default function HomeScreen({ navigation }) {
       <View style={s.bento}>
         <StatTile icon="flame" accent={colors.ember} value={totals.streak} label={totals.streak === 1 ? 'Day streak' : 'Day streak'} />
         <StatTile icon="barbell" value={totals.workouts} label="Workouts" />
-        <StatTile icon="trending-up" value={Math.round(totals.totalVolume / 1000)} suffix="k" label="Volume kg" />
+        <StatTile icon="trending-up" value={totals.totalVolume} compact label="Volume kg" />
       </View>
 
       {/* Today / start */}
@@ -94,7 +94,7 @@ export default function HomeScreen({ navigation }) {
             <Body style={{ marginTop: 2 }}>{active ? 'Pick up where you left off.' : 'Log a session and earn XP.'}</Body>
           </View>
           <PressScale sound="start" onPress={() => navigation.navigate('Workout')} style={s.playBtn}>
-            <Ionicons name={active ? 'play' : 'add'} size={24} color={colors.obsidian} />
+            <Icon name={active ? 'play' : 'add'} size={24} color={colors.obsidian} />
           </PressScale>
         </View>
       </Card>

@@ -3,7 +3,7 @@
 // the PWA history list. Opened as a sheet from Home's Recent card.
 import { useState } from 'react';
 import { Modal, View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../Icon';
 import { dateKey, units } from '@opus/core';
 import { H2, Label, Body, Mono } from '../../ui';
 import { colors, radius, space, fonts } from '../../theme';
@@ -41,7 +41,7 @@ export default function HistoryModal({ visible, onClose }) {
         <View style={s.sheet}>
           <View style={s.header}>
             <H2>History</H2>
-            <PressScale hitSlop={10} onPress={onClose}><Ionicons name="close" size={24} color={colors.ash} /></PressScale>
+            <PressScale hitSlop={10} onPress={onClose}><Icon name="close" size={24} color={colors.ash} /></PressScale>
           </View>
 
           {(!workouts || workouts.length === 0) ? (
@@ -58,7 +58,7 @@ export default function HistoryModal({ visible, onClose }) {
                         <Text style={s.day}>{label(w.dateKey)}</Text>
                         <Mono style={s.meta}>{w.setCount} sets · {units.fmtVolume(w.volume || 0, unit)}</Mono>
                       </View>
-                      <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.ash} />
+                      <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.ash} />
                     </PressScale>
                     {open && (
                       <View style={s.detail}>
@@ -69,7 +69,7 @@ export default function HistoryModal({ visible, onClose }) {
                           </View>
                         ))}
                         <PressScale onPress={() => confirmDelete(w)} style={s.delRow}>
-                          <Ionicons name="trash" size={15} color={colors.ember} />
+                          <Icon name="trash" size={15} color={colors.ember} />
                           <Text style={s.delText}> Delete workout</Text>
                         </PressScale>
                       </View>

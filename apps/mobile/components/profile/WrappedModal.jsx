@@ -2,7 +2,7 @@
 // from @opus/core/wrapped; the caller passes shaped rows (getWrappedInputs).
 import { useMemo, useState } from 'react';
 import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../Icon';
 import { wrapped as coreWrapped } from '@opus/core';
 import { H1, H2, Label, Body, Mono } from '../../ui';
 import { colors, radius, space, fonts } from '../../theme';
@@ -43,7 +43,7 @@ export default function WrappedModal({ visible, onClose, inputs }) {
         <View style={s.sheet}>
           <View style={s.header}>
             <H2>Wrapped</H2>
-            <PressScale hitSlop={10} onPress={onClose}><Ionicons name="close" size={24} color={colors.ash} /></PressScale>
+            <PressScale hitSlop={10} onPress={onClose}><Icon name="close" size={24} color={colors.ash} /></PressScale>
           </View>
 
           <View style={s.toggle}>
@@ -56,11 +56,11 @@ export default function WrappedModal({ visible, onClose, inputs }) {
 
           <View style={s.stepper}>
             <PressScale hitSlop={10} onPress={() => step(1)} disabled={idx >= list.length - 1}>
-              <Ionicons name="chevron-back" size={22} color={idx >= list.length - 1 ? colors.ivory : colors.textPrimary} />
+              <Icon name="chevron-back" size={22} color={idx >= list.length - 1 ? colors.ivory : colors.textPrimary} />
             </PressScale>
             <Text style={s.period}>{data?.label || period?.label || '—'}</Text>
             <PressScale hitSlop={10} onPress={() => step(-1)} disabled={idx <= 0}>
-              <Ionicons name="chevron-forward" size={22} color={idx <= 0 ? colors.ivory : colors.textPrimary} />
+              <Icon name="chevron-forward" size={22} color={idx <= 0 ? colors.ivory : colors.textPrimary} />
             </PressScale>
           </View>
 
@@ -84,12 +84,12 @@ export default function WrappedModal({ visible, onClose, inputs }) {
 
                 <View style={s.chips}>
                   {data.topLift && (
-                    <View style={s.chip}><Ionicons name="barbell" size={14} color={colors.gold} /><Text style={s.chipText}> Top lift · {data.topLift}</Text></View>
+                    <View style={s.chip}><Icon name="barbell" size={14} color={colors.gold} /><Text style={s.chipText}> Top lift · {data.topLift}</Text></View>
                   )}
                   {data.busiestDay && (
-                    <View style={s.chip}><Ionicons name="calendar" size={14} color={colors.sage} /><Text style={s.chipText}> Busiest · {data.busiestDay}</Text></View>
+                    <View style={s.chip}><Icon name="calendar" size={14} color={colors.sage} /><Text style={s.chipText}> Busiest · {data.busiestDay}</Text></View>
                   )}
-                  <View style={s.chip}><Ionicons name="time" size={14} color={colors.ember} /><Text style={s.chipText}> {data.hours.toFixed(1)} h trained</Text></View>
+                  <View style={s.chip}><Icon name="time" size={14} color={colors.ember} /><Text style={s.chipText}> {data.hours.toFixed(1)} h trained</Text></View>
                 </View>
               </>
             )}

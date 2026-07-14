@@ -233,6 +233,40 @@ export function getExercises(query = '') {
   return d.getAllSync('SELECT * FROM exercises ORDER BY name');
 }
 
+// ── Templates / routines ─────────────────────────────────────────────────────
+export function createTemplate(name, exerciseNames = []) {
+  const d = conn();
+  let id;
+  d.withTransactionSync(() => {
+    const res = d.runSync('INSERT INTO templates (name, createdAt) VALUES (?, ?)', name, Date.now());
+    id = res.lastInsertRowId;
+    exerciseNames.forEach((n, i) =>
+      d.runSync('INSERT INTO templateExercises (templateId, exerciseName, orderIndex) VALUES (?, ?, ?)', id, n, i)
+    );
+  });
+  touch();
+  return id;
+}
+
+export function getTemplates() {
+  const d = conn();
+  return d.getAllSync('SELECT * FROM templates ORDER BY createdAt DESC').map((t) => ({
+    ...t,
+    exercises: d
+      .getAllSync('SELECT exerciseName FROM templateExercises WHERE templateId = ? ORDER BY orderIndex', t.id)
+      .map((r) => r.exerciseName),
+  }));
+}
+
+export function deleteTemplate(id) {
+  const d = conn();
+  d.withTransactionSync(() => {
+    d.runSync('DELETE FROM templateExercises WHERE templateId = ?', id);
+    d.runSync('DELETE FROM templates WHERE id = ?', id);
+  });
+  touch();
+}
+
 // ── Active workout ───────────────────────────────────────────────────────────
 // The in-progress workout is simply the newest row with finishedAt IS NULL.
 export function getActiveWorkout() {
