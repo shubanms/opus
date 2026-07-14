@@ -13,6 +13,7 @@ const DEFAULTS = {
   notifPR: true,
   name: 'Athlete',
   restDuration: 90, // seconds — remembered rest-timer preset
+  barWeight: 20, // kg — Olympic barbell (used by the plate calculator)
 };
 
 // In-memory cache kept in sync with the DB, readable imperatively.

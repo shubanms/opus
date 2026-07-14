@@ -10,6 +10,8 @@ import { GoldButton } from '../components/Button';
 import Particles from '../components/fx/Particles';
 import RestTimer from '../components/workout/RestTimer';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal';
+import ExercisePicker from '../components/workout/ExercisePicker';
+import PlateCalculator from '../components/workout/PlateCalculator';
 import {
   getActiveWorkout,
   getOrCreateActiveWorkout,
@@ -35,6 +37,7 @@ export default function WorkoutScreen({ navigation, route }) {
   const [burst, setBurst] = useState(0); // increment to fire a particle burst
   const [restKey, setRestKey] = useState(0); // >0 shows the rest timer (remounts per rest)
   const [end, setEnd] = useState(null); // { summary, prs } → end-of-workout modal
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -159,13 +162,18 @@ export default function WorkoutScreen({ navigation, route }) {
           )}
         </View>
 
-        <TextInput
-          value={exercise}
-          onChangeText={setExercise}
-          placeholder="Exercise (e.g. Bench Press)"
-          placeholderTextColor={colors.ash}
-          style={s.exercise}
-        />
+        <View style={s.exerciseRow}>
+          <TextInput
+            value={exercise}
+            onChangeText={setExercise}
+            placeholder="Exercise (e.g. Bench Press)"
+            placeholderTextColor={colors.ash}
+            style={[s.exercise, { flex: 1 }]}
+          />
+          <PressScale onPress={() => setPickerOpen(true)} sound="tap" style={s.browse}>
+            <Ionicons name="list" size={22} color={colors.textPrimary} />
+          </PressScale>
+        </View>
 
         <View style={s.inputRow}>
           <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder="kg" placeholderTextColor={colors.ash} style={s.input} />
@@ -173,6 +181,8 @@ export default function WorkoutScreen({ navigation, route }) {
           <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" placeholder="reps" placeholderTextColor={colors.ash} style={s.input} />
           <PressScale onPress={log} style={s.add}><Ionicons name="add" size={26} color={colors.obsidian} /></PressScale>
         </View>
+
+        {parseFloat(weight) > 0 && <PlateCalculator weight={parseFloat(weight)} />}
 
         {restKey > 0 && <RestTimer key={restKey} onDone={() => setRestKey(0)} />}
 
@@ -204,6 +214,7 @@ export default function WorkoutScreen({ navigation, route }) {
       </View>
       {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
       <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} onClose={closeEnd} />
+      <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={setExercise} />
     </Screen>
   );
 }
@@ -212,7 +223,9 @@ const s = StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   finish: { backgroundColor: colors.sage, borderRadius: radius.lg, paddingHorizontal: space(5), paddingVertical: space(3) },
   finishText: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },
+  exerciseRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   exercise: { backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 15 },
+  browse: { width: 50, height: 50, borderRadius: radius.lg, backgroundColor: colors.ivory, alignItems: 'center', justifyContent: 'center' },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   input: { flex: 1, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.mono, fontSize: 15, textAlign: 'center' },
   x: { color: colors.ash, fontSize: 16 },

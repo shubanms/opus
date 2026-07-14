@@ -16,6 +16,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import RestTimer from '../components/workout/RestTimer';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal';
+import ExercisePicker from '../components/workout/ExercisePicker';
+import PlateCalculator from '../components/workout/PlateCalculator';
 
 const Tab = createBottomTabNavigator();
 
@@ -68,5 +70,14 @@ describe('workout components render without crashing', () => {
       />
     );
     expect(getByText('New PR! 🏆')).toBeTruthy();
+  });
+  it('ExercisePicker lists catalog exercises', () => {
+    const { getByText } = render(<ExercisePicker visible onClose={() => {}} onPick={() => {}} />);
+    expect(getByText('Bench Press')).toBeTruthy();
+  });
+  it('PlateCalculator shows plates per side (100kg on a 20kg bar)', () => {
+    const { getByText } = render(<PlateCalculator weight={100} />);
+    expect(getByText('1×25')).toBeTruthy(); // 40/side = 25 + 15
+    expect(getByText('1×15')).toBeTruthy();
   });
 });
