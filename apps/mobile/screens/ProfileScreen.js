@@ -10,6 +10,7 @@ import LevelBadge from '../components/rpg/LevelBadge';
 import TitleBadge from '../components/rpg/TitleBadge';
 import XPBar from '../components/rpg/XPBar';
 import OpusMark from '../components/OpusMark';
+import RadarCard from '../components/rpg/RadarCard';
 import PressScale from '../components/PressScale';
 import { SecondaryButton } from '../components/Button';
 import ProgressionModal from '../components/profile/ProgressionModal';
@@ -62,9 +63,12 @@ export default function ProfileScreen() {
           <OpusMark size={78} level={level} prestige={prestige} />
         </View>
         <Body style={{ marginTop: space(3), color: colors.ash }}>
-          {Math.round(totals.totalXP).toLocaleString()} XP earned · radar chart coming next update.
+          {Math.round(totals.totalXP).toLocaleString()} XP earned
         </Body>
       </Card>
+
+      {/* Character radar */}
+      <RadarCard />
 
       {/* Boss gate callout — level is held at the gate until the feat is done */}
       {activeBoss && (

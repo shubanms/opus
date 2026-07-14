@@ -8,6 +8,7 @@ import StatTile from '../components/StatTile';
 import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
 import BodyWeightCard from '../components/progress/BodyWeightCard';
+import RecoveryCard from '../components/progress/RecoveryCard';
 import { useDbQuery } from '../native/useDbQuery';
 import { getBestByExercise, getTotals, getWeeklyVolume, getRecentWorkouts, getAllPRs } from '../native/db';
 
@@ -64,6 +65,8 @@ export default function ProgressScreen() {
           <BarChart data={sessionValues} width={chartW} height={120} />
         </View>
       </Card>
+
+      <RecoveryCard />
 
       <BodyWeightCard width={chartW} />
 

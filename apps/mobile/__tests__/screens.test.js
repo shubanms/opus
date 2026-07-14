@@ -27,6 +27,8 @@ import QuestBoard from '../components/home/QuestBoard';
 import HistoryModal from '../components/home/HistoryModal';
 import ActivityRings from '../components/home/ActivityRings';
 import BodyWeightCard from '../components/progress/BodyWeightCard';
+import RadarCard from '../components/rpg/RadarCard';
+import RecoveryCard from '../components/progress/RecoveryCard';
 
 const Tab = createBottomTabNavigator();
 
@@ -152,5 +154,14 @@ describe('activity + body', () => {
   it('BodyWeightCard renders a logger', () => {
     const { getByText } = render(<BodyWeightCard width={280} />);
     expect(getByText('Bodyweight')).toBeTruthy();
+  });
+  it('RadarCard renders the character radar', () => {
+    const { getByText } = render(<RadarCard />);
+    expect(getByText('Character')).toBeTruthy();
+    expect(getByText('Strength')).toBeTruthy();
+  });
+  it('RecoveryCard lists muscle recovery', () => {
+    const { getByText } = render(<RecoveryCard />);
+    expect(getByText('Muscle recovery')).toBeTruthy();
   });
 });

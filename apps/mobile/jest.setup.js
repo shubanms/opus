@@ -74,6 +74,12 @@ jest.mock('./native/db', () => ({
   getQuestClaims: jest.fn(() => []),
   claimQuest: jest.fn(() => true),
   questClaimXP: jest.fn(() => 0),
+  getRadarInputs: jest.fn(() => ({ maxWeight: 140, avgVolume: 5000, avgSets: 18, streak: 3, workoutsPerWeek: 3, muscleVariety: 6 })),
+  getMuscleRecovery: jest.fn(() => [
+    { muscle: 'chest', daysSince: 0 },
+    { muscle: 'back', daysSince: 2 },
+    { muscle: 'quadriceps', daysSince: null },
+  ]),
   getWrappedInputs: jest.fn(() => ({
     workouts: [{ id: 1, date: '2026-07-02', status: 'completed', totalVolume: 4200, xpEarned: 120, duration: 3600 }],
     sets: [{ workoutId: 1, exerciseId: 1, weight: 100, reps: 5 }],
