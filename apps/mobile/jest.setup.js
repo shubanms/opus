@@ -67,6 +67,10 @@ jest.mock('./native/db', () => ({
     workouts: 12, totalVolume: 42000, totalSets: 84, bestStreak: 5,
     muscleVariety: 6, prCount: 3, level: 6, earlyBird: false, nightOwl: false, customExercises: 0,
   })),
+  getWeekQuestStats: jest.fn(() => ({ sessions: 2, volumeKg: 6000, sets: 20, muscleVariety: 4, legsSessions: 1, prs: 1 })),
+  getQuestClaims: jest.fn(() => []),
+  claimQuest: jest.fn(() => true),
+  questClaimXP: jest.fn(() => 0),
 }));
 
 jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn() }));

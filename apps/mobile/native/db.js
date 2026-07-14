@@ -4,7 +4,7 @@
 // numbers (XP, PRs, streak, volume) are computed from these rows using the
 // shared @opus/core logic, so web and native agree on the math.
 import * as SQLite from 'expo-sqlite';
-import { rpg, oneRepMax, dateKey, seedExercises, achievements } from '@opus/core';
+import { rpg, oneRepMax, dateKey, seedExercises, achievements, quests } from '@opus/core';
 
 let db = null;
 
@@ -395,9 +395,9 @@ export function getTotals() {
     totalVolume += (s.weight || 0) * (s.reps || 0);
     setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0);
   }
-  // XP = per-set + per-session bonus + unlocked-achievement rewards (matches the
-  // web, where achievement XP counts toward level/rank).
-  const totalXP = setXP + wCount * rpg.COMPLETE_BONUS + achievementXP();
+  // XP = per-set + per-session bonus + achievement rewards + claimed-quest XP
+  // (matches the web, where both count toward level/rank).
+  const totalXP = setXP + wCount * rpg.COMPLETE_BONUS + achievementXP() + questClaimXP();
 
   return {
     workouts: wCount,
@@ -406,6 +406,57 @@ export function getTotals() {
     totalXP,
     streak: getStreak(),
   };
+}
+
+// ── Weekly quests (shared engine: @opus/core/quests) ─────────────────────────
+// This week's per-metric progress, computed from completed workouts in the
+// Monday-aligned week window.
+export function getWeekQuestStats() {
+  const d = conn();
+  const startMs = quests.weekStartMs();
+  const endMs = startMs + 7 * 86400000;
+  const workouts = d.getAllSync(
+    `SELECT w.id AS id,
+            COALESCE(SUM(CASE WHEN COALESCE(s.isWarmup,0)=0 THEN s.weight * s.reps ELSE 0 END), 0) AS totalVolume
+       FROM workouts w
+       LEFT JOIN sets s ON s.workoutId = w.id
+      WHERE w.finishedAt IS NOT NULL AND w.finishedAt >= ? AND w.finishedAt < ?
+      GROUP BY w.id`,
+    startMs,
+    endMs
+  );
+  const sets = d.getAllSync(
+    `SELECT s.workoutId AS workoutId, COALESCE(s.exerciseId, s.exerciseName) AS exerciseId
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+      WHERE w.finishedAt IS NOT NULL AND w.finishedAt >= ? AND w.finishedAt < ? AND COALESCE(s.isWarmup,0) = 0`,
+    startMs,
+    endMs
+  );
+  const prs = d.getAllSync('SELECT id FROM prs WHERE achievedAt >= ? AND achievedAt < ?', startMs, endMs);
+  const exRows = d.getAllSync('SELECT name, muscleGroup FROM exercises');
+  const exMuscle = Object.fromEntries(exRows.map((e) => [e.name, e.muscleGroup]));
+  return quests.computeQuestStats({ workouts, sets, prs, exMuscle });
+}
+
+export function getQuestClaims(weekKey = quests.weekKeyOf()) {
+  return conn().getAllSync('SELECT questId FROM questClaims WHERE weekKey = ?', weekKey).map((r) => r.questId);
+}
+
+// Claim a quest once per week (idempotent). XP counts toward totalXP.
+export function claimQuest(questId, xp) {
+  const weekKey = quests.weekKeyOf();
+  const d = conn();
+  const existing = d.getFirstSync('SELECT id FROM questClaims WHERE weekKey = ? AND questId = ?', weekKey, questId);
+  if (existing) return false;
+  d.runSync('INSERT INTO questClaims (weekKey, questId, xp, claimedAt) VALUES (?, ?, ?, ?)', weekKey, questId, Number(xp) || 0, Date.now());
+  touch();
+  return true;
+}
+
+export function questClaimXP() {
+  let xp = 0;
+  for (const r of conn().getAllSync('SELECT xp FROM questClaims')) xp += r.xp || 0;
+  return xp;
 }
 
 // ── Achievements (shared engine: @opus/core/achievements) ────────────────────

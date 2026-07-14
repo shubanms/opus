@@ -22,6 +22,7 @@ import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
 import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
+import QuestBoard from '../components/home/QuestBoard';
 
 const Tab = createBottomTabNavigator();
 
@@ -110,5 +111,12 @@ describe('profile modals render without crashing', () => {
     const prs = [{ id: 1, exerciseName: 'Deadlift', type: 'e1rm', value: 180, achievedAt: Date.now() }];
     const { getByText } = render(<HallOfRecordsModal visible prs={prs} onClose={() => {}} />);
     expect(getByText('Deadlift')).toBeTruthy();
+  });
+});
+
+describe('home quest board', () => {
+  it('renders this week\'s quests', () => {
+    const { getByText } = render(<QuestBoard />);
+    expect(getByText("This week's quests")).toBeTruthy();
   });
 });
