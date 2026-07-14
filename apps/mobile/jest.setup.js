@@ -45,6 +45,22 @@ jest.mock('./native/db', () => ({
   setSetting: jest.fn(),
   setSteps: jest.fn(),
   getSteps: jest.fn(() => null),
+  // Reactive layer + parity accessors
+  subscribeDb: jest.fn(() => () => {}),
+  dbVersion: jest.fn(() => 0),
+  getWeeklyVolume: jest.fn(() => [
+    { weekStartMs: 1, volume: 3000 },
+    { weekStartMs: 2, volume: 4200 },
+    { weekStartMs: 3, volume: 3800 },
+  ]),
+  getAllPRs: jest.fn(() => [{ id: 1, exerciseName: 'Bench Press', type: 'e1rm', value: 110, achievedAt: Date.now() }]),
+  addPR: jest.fn(),
+  getWorkoutSummary: jest.fn(() => ({ totalSets: 12, totalVolume: 4200, xpEarned: 120, durationSec: 1800 })),
+  setWater: jest.fn(),
+  getWater: jest.fn(() => null),
+  logBodyStat: jest.fn(),
+  getBodyStats: jest.fn(() => []),
+  currentBodyweight: jest.fn(() => null),
 }));
 
 jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn() }));

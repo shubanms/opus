@@ -406,6 +406,30 @@ export function getTotals() {
   };
 }
 
+// Volume per Monday-aligned week (oldest→newest, last `weeks` buckets) computed
+// from working sets — robust even for rows saved before totals were stored.
+export function getWeeklyVolume(weeks = 8) {
+  const d = conn();
+  const rows = d.getAllSync(
+    `SELECT w.dateKey AS dateKey, COALESCE(SUM(s.weight * s.reps), 0) AS volume
+       FROM workouts w
+       LEFT JOIN sets s ON s.workoutId = w.id AND COALESCE(s.isWarmup, 0) = 0
+      WHERE w.finishedAt IS NOT NULL
+      GROUP BY w.id`
+  );
+  const byWeek = new Map();
+  for (const r of rows) {
+    if (!r.dateKey) continue;
+    const dt = new Date(`${r.dateKey}T00:00:00`);
+    dt.setHours(0, 0, 0, 0);
+    dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7)); // back to Monday
+    const k = dt.getTime();
+    byWeek.set(k, (byWeek.get(k) || 0) + (r.volume || 0));
+  }
+  const keys = [...byWeek.keys()].sort((a, b) => a - b).slice(-weeks);
+  return keys.map((k) => ({ weekStartMs: k, volume: Math.round(byWeek.get(k)) }));
+}
+
 // Best estimated 1RM per exercise (top movers first).
 export function getBestByExercise(limit = 8) {
   const d = conn();

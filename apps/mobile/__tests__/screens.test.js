@@ -18,6 +18,8 @@ import RestTimer from '../components/workout/RestTimer';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal';
 import ExercisePicker from '../components/workout/ExercisePicker';
 import PlateCalculator from '../components/workout/PlateCalculator';
+import LineChart from '../components/progress/LineChart';
+import BarChart from '../components/progress/BarChart';
 
 const Tab = createBottomTabNavigator();
 
@@ -79,5 +81,18 @@ describe('workout components render without crashing', () => {
     const { getByText } = render(<PlateCalculator weight={100} />);
     expect(getByText('1×25')).toBeTruthy(); // 40/side = 25 + 15
     expect(getByText('1×15')).toBeTruthy();
+  });
+});
+
+describe('progress charts render without crashing', () => {
+  it('LineChart draws a series', () => {
+    expect(() => render(<LineChart data={[1000, 2000, 1500, 3000]} width={280} />)).not.toThrow();
+  });
+  it('LineChart shows a hint with too few points', () => {
+    const { getByText } = render(<LineChart data={[100]} width={280} />);
+    expect(getByText('Not enough data yet')).toBeTruthy();
+  });
+  it('BarChart draws bars', () => {
+    expect(() => render(<BarChart data={[500, 800, 1200]} width={280} />)).not.toThrow();
   });
 });
