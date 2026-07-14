@@ -45,6 +45,38 @@ jest.mock('./native/db', () => ({
   setSetting: jest.fn(),
   setSteps: jest.fn(),
   getSteps: jest.fn(() => null),
+  // Reactive layer + parity accessors
+  subscribeDb: jest.fn(() => () => {}),
+  dbVersion: jest.fn(() => 0),
+  getWeeklyVolume: jest.fn(() => [
+    { weekStartMs: 1, volume: 3000 },
+    { weekStartMs: 2, volume: 4200 },
+    { weekStartMs: 3, volume: 3800 },
+  ]),
+  getAllPRs: jest.fn(() => [{ id: 1, exerciseName: 'Bench Press', type: 'e1rm', value: 110, achievedAt: Date.now() }]),
+  addPR: jest.fn(),
+  getWorkoutSummary: jest.fn(() => ({ totalSets: 12, totalVolume: 4200, xpEarned: 120, durationSec: 1800 })),
+  setWater: jest.fn(),
+  getWater: jest.fn(() => null),
+  logBodyStat: jest.fn(),
+  getBodyStats: jest.fn(() => []),
+  currentBodyweight: jest.fn(() => null),
+  unlockedAchievementKeys: jest.fn(() => ['first']),
+  syncAchievements: jest.fn(() => []),
+  computeAchievementStats: jest.fn(() => ({
+    workouts: 12, totalVolume: 42000, totalSets: 84, bestStreak: 5,
+    muscleVariety: 6, prCount: 3, level: 6, earlyBird: false, nightOwl: false, customExercises: 0,
+  })),
+  getWeekQuestStats: jest.fn(() => ({ sessions: 2, volumeKg: 6000, sets: 20, muscleVariety: 4, legsSessions: 1, prs: 1 })),
+  getQuestClaims: jest.fn(() => []),
+  claimQuest: jest.fn(() => true),
+  questClaimXP: jest.fn(() => 0),
+  getWrappedInputs: jest.fn(() => ({
+    workouts: [{ id: 1, date: '2026-07-02', status: 'completed', totalVolume: 4200, xpEarned: 120, duration: 3600 }],
+    sets: [{ workoutId: 1, exerciseId: 1, weight: 100, reps: 5 }],
+    prs: [{ achievedAt: new Date('2026-07-02').getTime() }],
+    exName: { 1: 'Bench Press' },
+  })),
 }));
 
 jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn() }));

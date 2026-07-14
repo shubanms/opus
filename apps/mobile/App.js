@@ -57,6 +57,10 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
+    // Bundle the Ionicons glyph font so tab-bar + in-screen icons actually
+    // render in a release APK (transitive resolution isn't enough — without
+    // this the bottom nav shows blank tofu boxes).
+    ...Ionicons.font,
     CormorantGaramond_700Bold,
     CormorantGaramond_600SemiBold,
     DMSans_300Light,

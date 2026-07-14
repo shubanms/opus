@@ -35,9 +35,16 @@ modules. The web PWA + its Capacitor Android shell are web-only and stay with th
   APK pipeline stay green. `packages/core` + `apps/mobile` are additive, isolated, and NOT yet npm
   workspaces (kept that way on purpose so the web CI can't be destabilized).
 
+### Extracted to core (parity Phase 2)
+`volume` (pure `setLoad`/`computeVolume` — caller passes an `isBodyweight` predicate instead of a DB
+lookup), `snapshots` (pure `monthKeyOf`/`previousSnapshot`/`mergeRadarSeries`; localStorage half stays
+per-platform), `wrapped` (verbatim, now importing the core `snapshots`), and `achievements` (`ACHIEVEMENTS`
+defs + pure `computeStats`/`earned`/`newlyUnlocked`/`staleKeys`/`xpFor` taking already-loaded rows).
+Also added `packages/core/vitest.config.js` so `cd packages/core && npm test` runs standalone.
+
 ### Not yet extracted to core (need their impure deps split first)
-`wrapped` (→ `snapshots`) and `reminders` (→ `notifications`); and the MIXED utils `volume`,
-`achievements`, `snapshots` — extract the pure half to core, adapter-wrap the DB/storage half.
+`reminders` (→ `notifications`) and `share` (card `data` builders + `themes.js`) — still to pull the
+pure half into core; DB/storage/render halves stay adapter-wrapped per platform.
 
 ## Reuse map (what moves vs gets rewritten)
 - **Reuse as-is → `packages/core`:** the 22 pure utils above (+ the pure halves of volume/achievements/

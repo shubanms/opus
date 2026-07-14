@@ -11,6 +11,7 @@ import LevelBadge from '../components/rpg/LevelBadge';
 import XPBar from '../components/rpg/XPBar';
 import GoldAura from '../components/fx/GoldAura';
 import PressScale from '../components/PressScale';
+import QuestBoard from '../components/home/QuestBoard';
 import { getTotals, getRecentWorkouts, getActiveWorkout } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
 import { useSettings } from '../native/settings';
@@ -94,6 +95,9 @@ export default function HomeScreen({ navigation }) {
           </PressScale>
         </View>
       </Card>
+
+      {/* Weekly quests */}
+      <QuestBoard />
 
       {/* Recent */}
       <Card>
