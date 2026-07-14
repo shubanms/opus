@@ -14,7 +14,46 @@ function conn() {
   return db;
 }
 
+// ── Reactive layer ───────────────────────────────────────────────────────────
+// The web app gets live UI via Dexie's useLiveQuery; expo-sqlite is synchronous
+// with no observers, so we emulate it with a version counter. Every mutation
+// calls touch(); the useDbQuery hook (native/useDbQuery.js) re-runs its query on
+// each bump. Coarse-grained (any write refreshes every subscriber) but the data
+// set is tiny, so it's cheap and keeps every screen consistent.
+let _version = 0;
+const _listeners = new Set();
+
+export function dbVersion() {
+  return _version;
+}
+
+export function subscribeDb(fn) {
+  _listeners.add(fn);
+  return () => _listeners.delete(fn);
+}
+
+// Bump the version and notify subscribers. Called after every write.
+function touch() {
+  _version += 1;
+  for (const fn of _listeners) {
+    try { fn(_version); } catch {}
+  }
+}
+
+// Add a column to a table only if it's missing (SQLite has no ADD COLUMN IF NOT
+// EXISTS). Lets us widen shipped tables toward the web v8 schema without a
+// destructive migration — existing rows keep working, new columns are nullable.
+function ensureColumn(d, table, column, decl) {
+  const cols = d.getAllSync(`PRAGMA table_info(${table})`);
+  if (!cols.some((c) => c.name === column)) {
+    d.execSync(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`);
+  }
+}
+
 // Create tables + seed the exercise catalog on first run. Idempotent.
+// Schema mirrors the web Dexie DB (v1–v8, src/db/db.js) so web and native model
+// the same domain. Native keys exercises by `name` (its PK) rather than a
+// numeric id; feature code stores the name in both exerciseName and exerciseId.
 export function initDb() {
   const d = conn();
   d.execSync(`
@@ -51,7 +90,105 @@ export function initDb() {
       steps INTEGER,
       updatedAt INTEGER
     );
+
+    -- ── Parity tables (mirror web Dexie v1–v8) ──────────────────────────────
+    CREATE TABLE IF NOT EXISTS prs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      exerciseName TEXT NOT NULL,
+      type TEXT NOT NULL,            -- 'weight' | 'reps' | 'volume' | 'e1rm'
+      value REAL NOT NULL,
+      achievedAt INTEGER NOT NULL,
+      workoutId INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS idx_prs_ex ON prs(exerciseName);
+
+    CREATE TABLE IF NOT EXISTS templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      dayOfWeek INTEGER,
+      color TEXT,
+      autoKey TEXT,                 -- muscle signature for auto-routine re-match
+      createdAt INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS templateExercises (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      templateId INTEGER NOT NULL,
+      exerciseName TEXT NOT NULL,
+      orderIndex INTEGER NOT NULL DEFAULT 0,
+      targetSets INTEGER,
+      targetReps INTEGER,
+      targetWeight REAL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tex_template ON templateExercises(templateId);
+
+    CREATE TABLE IF NOT EXISTS achievements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      key TEXT NOT NULL UNIQUE,
+      unlockedAt INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS questClaims (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      weekKey TEXT NOT NULL,
+      questId TEXT NOT NULL,
+      xp REAL NOT NULL DEFAULT 0,
+      claimedAt INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_quest_week ON questClaims(weekKey);
+
+    CREATE TABLE IF NOT EXISTS dailyLogs (
+      dateKey TEXT PRIMARY KEY,     -- one row per date (steps live in the health table)
+      water REAL
+    );
+    CREATE TABLE IF NOT EXISTS bodyStats (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      weight REAL,
+      bodyFat REAL
+    );
+    CREATE INDEX IF NOT EXISTS idx_body_date ON bodyStats(date);
+    CREATE TABLE IF NOT EXISTS sleepLogs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      date TEXT NOT NULL,
+      hours REAL,
+      quality INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS energyLogs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workoutId INTEGER NOT NULL,
+      level INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS exerciseNotes (
+      exerciseName TEXT PRIMARY KEY,
+      text TEXT,
+      updatedAt INTEGER
+    );
+    CREATE TABLE IF NOT EXISTS userProfile (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      name TEXT,
+      height REAL,
+      sex TEXT,
+      birthYear INTEGER,
+      joinDate INTEGER
+    );
   `);
+
+  // Widen the originally-shipped tables toward the web schema (idempotent).
+  ensureColumn(d, 'sets', 'exerciseId', 'TEXT');       // mirrors exerciseName
+  ensureColumn(d, 'sets', 'setNumber', 'INTEGER');
+  ensureColumn(d, 'sets', 'isWarmup', 'INTEGER DEFAULT 0');
+  ensureColumn(d, 'sets', 'rpe', 'REAL');
+  ensureColumn(d, 'sets', 'note', 'TEXT');
+  ensureColumn(d, 'workouts', 'status', "TEXT");        // 'active' | 'completed'
+  ensureColumn(d, 'workouts', 'duration', 'INTEGER');
+  ensureColumn(d, 'workouts', 'totalVolume', 'REAL');
+  ensureColumn(d, 'workouts', 'totalSets', 'INTEGER');
+  ensureColumn(d, 'workouts', 'xpEarned', 'REAL');
+  ensureColumn(d, 'workouts', 'templateId', 'INTEGER');
+  ensureColumn(d, 'workouts', 'energy', 'INTEGER');
+  ensureColumn(d, 'workouts', 'notes', 'TEXT');
+  ensureColumn(d, 'workouts', 'color', 'TEXT');
+  ensureColumn(d, 'workouts', 'bodyweightKg', 'REAL');
+  ensureColumn(d, 'workouts', 'createdAt', 'INTEGER');
 
   const row = d.getFirstSync('SELECT COUNT(*) AS n FROM exercises');
   if (!row || row.n === 0) {
@@ -101,29 +238,36 @@ export function getOrCreateActiveWorkout(name = 'Workout') {
   const d = conn();
   const now = Date.now();
   const res = d.runSync(
-    'INSERT INTO workouts (dateKey, startedAt, name) VALUES (?, ?, ?)',
+    'INSERT INTO workouts (dateKey, startedAt, name, status) VALUES (?, ?, ?, ?)',
     dateKey.todayKey(),
     now,
-    name
+    name,
+    'active'
   );
+  touch();
   return { id: res.lastInsertRowId, dateKey: dateKey.todayKey(), startedAt: now, finishedAt: null, name };
 }
 
-export function addSet(workoutId, { exerciseName = '', weight = 0, reps = 0 }) {
+export function addSet(workoutId, { exerciseName = '', weight = 0, reps = 0, isWarmup = false, rpe = null } = {}) {
   const d = conn();
   const res = d.runSync(
-    'INSERT INTO sets (workoutId, exerciseName, weight, reps, createdAt) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO sets (workoutId, exerciseName, exerciseId, weight, reps, isWarmup, rpe, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     workoutId,
     exerciseName || null,
+    exerciseName || null, // native keys exercises by name; mirror into exerciseId
     Number(weight) || 0,
     Number(reps) || 0,
+    isWarmup ? 1 : 0,
+    rpe == null ? null : Number(rpe),
     Date.now()
   );
+  touch();
   return res.lastInsertRowId;
 }
 
 export function deleteSet(id) {
   conn().runSync('DELETE FROM sets WHERE id = ?', id);
+  touch();
 }
 
 export function getSets(workoutId) {
@@ -138,9 +282,28 @@ export function finishWorkout(workoutId) {
   const cnt = d.getFirstSync('SELECT COUNT(*) AS n FROM sets WHERE workoutId = ?', workoutId);
   if (!cnt || cnt.n === 0) {
     d.runSync('DELETE FROM workouts WHERE id = ?', workoutId);
+    touch();
     return false;
   }
-  d.runSync('UPDATE workouts SET finishedAt = ? WHERE id = ?', Date.now(), workoutId);
+  // Snapshot totals + status onto the row (mirrors the web schema so Progress /
+  // Wrapped / achievements can read them without recomputing every time).
+  const agg = d.getFirstSync(
+    'SELECT COUNT(*) AS sets, COALESCE(SUM(weight * reps), 0) AS volume FROM sets WHERE workoutId = ? AND COALESCE(isWarmup, 0) = 0',
+    workoutId
+  );
+  const now = Date.now();
+  const started = d.getFirstSync('SELECT startedAt FROM workouts WHERE id = ?', workoutId)?.startedAt ?? now;
+  d.runSync(
+    'UPDATE workouts SET finishedAt = ?, status = ?, createdAt = COALESCE(createdAt, ?), duration = ?, totalSets = ?, totalVolume = ? WHERE id = ?',
+    now,
+    'completed',
+    now,
+    Math.round((now - started) / 1000),
+    agg?.sets ?? 0,
+    Math.round(agg?.volume ?? 0),
+    workoutId
+  );
+  touch();
   return true;
 }
 
@@ -148,8 +311,11 @@ export function discardWorkout(workoutId) {
   const d = conn();
   d.withTransactionSync(() => {
     d.runSync('DELETE FROM sets WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM energyLogs WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM prs WHERE workoutId = ?', workoutId);
     d.runSync('DELETE FROM workouts WHERE id = ?', workoutId);
   });
+  touch();
 }
 
 // ── Derived stats (all from rows, via @opus/core) ────────────────────────────
@@ -266,6 +432,7 @@ export function setSetting(key, value) {
     key,
     String(value)
   );
+  touch();
 }
 
 // ── Health (daily steps) ─────────────────────────────────────────────────────
@@ -276,9 +443,63 @@ export function setSteps(day, steps) {
     Math.round(Number(steps) || 0),
     Date.now()
   );
+  touch();
 }
 
 export function getSteps(day) {
   const r = conn().getFirstSync('SELECT steps FROM health WHERE dateKey = ?', day);
   return r ? r.steps : null;
+}
+
+// ── Water intake (dailyLogs) ─────────────────────────────────────────────────
+export function setWater(day, glasses) {
+  conn().runSync(
+    'INSERT INTO dailyLogs (dateKey, water) VALUES (?, ?) ON CONFLICT(dateKey) DO UPDATE SET water = excluded.water',
+    day,
+    Number(glasses) || 0
+  );
+  touch();
+}
+
+export function getWater(day) {
+  const r = conn().getFirstSync('SELECT water FROM dailyLogs WHERE dateKey = ?', day);
+  return r ? r.water : null;
+}
+
+// ── Body stats (weight / body fat) ───────────────────────────────────────────
+export function logBodyStat({ date, weight, bodyFat = null }) {
+  const d = conn();
+  const existing = d.getFirstSync('SELECT id FROM bodyStats WHERE date = ?', date);
+  if (existing) {
+    d.runSync('UPDATE bodyStats SET weight = ?, bodyFat = ? WHERE id = ?', weight ?? null, bodyFat, existing.id);
+  } else {
+    d.runSync('INSERT INTO bodyStats (date, weight, bodyFat) VALUES (?, ?, ?)', date, weight ?? null, bodyFat);
+  }
+  touch();
+}
+
+export function getBodyStats(limit = 60) {
+  return conn().getAllSync('SELECT * FROM bodyStats ORDER BY date DESC LIMIT ?', limit);
+}
+
+export function currentBodyweight() {
+  const r = conn().getFirstSync('SELECT weight FROM bodyStats WHERE weight IS NOT NULL ORDER BY date DESC LIMIT 1');
+  return r ? r.weight : null;
+}
+
+// ── PRs (personal records) ───────────────────────────────────────────────────
+export function addPR({ exerciseName, type, value, workoutId = null, achievedAt = Date.now() }) {
+  conn().runSync(
+    'INSERT INTO prs (exerciseName, type, value, achievedAt, workoutId) VALUES (?, ?, ?, ?, ?)',
+    exerciseName,
+    type,
+    Number(value) || 0,
+    achievedAt,
+    workoutId
+  );
+  touch();
+}
+
+export function getAllPRs(limit = 100) {
+  return conn().getAllSync('SELECT * FROM prs ORDER BY achievedAt DESC LIMIT ?', limit);
 }
