@@ -285,26 +285,49 @@ export function finishWorkout(workoutId) {
     touch();
     return false;
   }
-  // Snapshot totals + status onto the row (mirrors the web schema so Progress /
-  // Wrapped / achievements can read them without recomputing every time).
-  const agg = d.getFirstSync(
-    'SELECT COUNT(*) AS sets, COALESCE(SUM(weight * reps), 0) AS volume FROM sets WHERE workoutId = ? AND COALESCE(isWarmup, 0) = 0',
+  // Snapshot totals + status + earned XP onto the row (mirrors the web schema so
+  // Progress / Wrapped / achievements can read them without recomputing).
+  const working = d.getAllSync(
+    'SELECT weight, reps FROM sets WHERE workoutId = ? AND COALESCE(isWarmup, 0) = 0',
     workoutId
   );
+  let volume = 0;
+  let setXP = 0;
+  for (const st of working) {
+    volume += (st.weight || 0) * (st.reps || 0);
+    setXP += rpg.calcSetXP(st.weight || 0, st.reps || 0);
+  }
+  const xpEarned = Math.round(setXP + rpg.COMPLETE_BONUS);
   const now = Date.now();
   const started = d.getFirstSync('SELECT startedAt FROM workouts WHERE id = ?', workoutId)?.startedAt ?? now;
   d.runSync(
-    'UPDATE workouts SET finishedAt = ?, status = ?, createdAt = COALESCE(createdAt, ?), duration = ?, totalSets = ?, totalVolume = ? WHERE id = ?',
+    'UPDATE workouts SET finishedAt = ?, status = ?, createdAt = COALESCE(createdAt, ?), duration = ?, totalSets = ?, totalVolume = ?, xpEarned = ? WHERE id = ?',
     now,
     'completed',
     now,
     Math.round((now - started) / 1000),
-    agg?.sets ?? 0,
-    Math.round(agg?.volume ?? 0),
+    working.length,
+    Math.round(volume),
+    xpEarned,
     workoutId
   );
   touch();
   return true;
+}
+
+// Stored per-workout summary (after finishWorkout). Used by the end-of-workout
+// modal and history without re-deriving from sets.
+export function getWorkoutSummary(workoutId) {
+  const r = conn().getFirstSync(
+    'SELECT totalSets, totalVolume, xpEarned, duration FROM workouts WHERE id = ?',
+    workoutId
+  );
+  return {
+    totalSets: r?.totalSets ?? 0,
+    totalVolume: Math.round(r?.totalVolume ?? 0),
+    xpEarned: Math.round(r?.xpEarned ?? 0),
+    durationSec: r?.duration ?? 0,
+  };
 }
 
 export function discardWorkout(workoutId) {

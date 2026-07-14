@@ -8,6 +8,8 @@ import { colors, radius, space, fonts } from '../theme';
 import PressScale from '../components/PressScale';
 import { GoldButton } from '../components/Button';
 import Particles from '../components/fx/Particles';
+import RestTimer from '../components/workout/RestTimer';
+import EndWorkoutModal from '../components/workout/EndWorkoutModal';
 import {
   getActiveWorkout,
   getOrCreateActiveWorkout,
@@ -17,6 +19,8 @@ import {
   finishWorkout,
   discardWorkout,
   priorBestE1rm,
+  addPR,
+  getWorkoutSummary,
 } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
 import { playCue } from '../native/sound';
@@ -29,6 +33,8 @@ export default function WorkoutScreen({ navigation, route }) {
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
   const [burst, setBurst] = useState(0); // increment to fire a particle burst
+  const [restKey, setRestKey] = useState(0); // >0 shows the rest timer (remounts per rest)
+  const [end, setEnd] = useState(null); // { summary, prs } → end-of-workout modal
 
   useFocusEffect(
     useCallback(() => {
@@ -59,6 +65,7 @@ export default function WorkoutScreen({ navigation, route }) {
       setSets(getSets(wk.id));
       setReps('');
       playCue('tick');
+      setRestKey((k) => k + 1); // start/restart the rest timer
     } catch (e) {
       Alert.alert('Error', String(e?.message || e));
     }
@@ -74,8 +81,10 @@ export default function WorkoutScreen({ navigation, route }) {
 
   const finish = () => {
     if (!workout) return;
-    // PR check: did any exercise in this session beat its prior best e1rm?
-    let pr = false;
+    const workoutId = workout.id;
+    // PR check: best e1rm per exercise this session vs its prior best. Compute
+    // from the in-memory sets BEFORE finishing (priorBestE1rm excludes this id).
+    const prs = [];
     try {
       const byEx = {};
       for (const st of sets) {
@@ -84,25 +93,35 @@ export default function WorkoutScreen({ navigation, route }) {
         byEx[st.exerciseName] = Math.max(byEx[st.exerciseName] || 0, e);
       }
       for (const [name, e] of Object.entries(byEx)) {
-        if (e > priorBestE1rm(name, workout.id) + 0.01) { pr = true; break; }
+        if (e > priorBestE1rm(name, workoutId) + 0.01) prs.push({ exerciseName: name, value: e });
       }
     } catch {}
 
-    const kept = finishWorkout(workout.id);
+    const kept = finishWorkout(workoutId);
     setWorkout(null);
     setSets([]);
     setExercise('');
+    setRestKey(0);
     refreshWidgets();
-    if (kept) {
-      hSuccess();
-      playCue(pr ? 'chime' : 'success');
-      setBurst((b) => b + 1);
+
+    if (!kept) {
+      Alert.alert('Nothing to save', 'No sets were logged.');
+      return;
     }
-    Alert.alert(
-      kept ? (pr ? 'New PR! 🏆' : 'Workout saved') : 'Nothing to save',
-      kept ? (pr ? 'You beat a personal best — stats updated.' : 'Great work — your stats updated.') : 'No sets were logged.'
-    );
-    if (kept) setTimeout(() => navigation.navigate('Home'), 350);
+
+    // Persist each PR (so Hall of Records / Progress show them), then celebrate.
+    try {
+      for (const p of prs) addPR({ exerciseName: p.exerciseName, type: 'e1rm', value: p.value, workoutId });
+    } catch {}
+    hSuccess();
+    playCue(prs.length ? 'chime' : 'success');
+    setBurst((b) => b + 1);
+    setEnd({ summary: getWorkoutSummary(workoutId), prs });
+  };
+
+  const closeEnd = () => {
+    setEnd(null);
+    navigation.navigate('Home');
   };
 
   const discard = () => {
@@ -155,6 +174,8 @@ export default function WorkoutScreen({ navigation, route }) {
           <PressScale onPress={log} style={s.add}><Ionicons name="add" size={26} color={colors.obsidian} /></PressScale>
         </View>
 
+        {restKey > 0 && <RestTimer key={restKey} onDone={() => setRestKey(0)} />}
+
         <FlatList
           data={[...sets].reverse()}
           keyExtractor={(st) => String(st.id)}
@@ -182,6 +203,7 @@ export default function WorkoutScreen({ navigation, route }) {
         )}
       </View>
       {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
+      <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} onClose={closeEnd} />
     </Screen>
   );
 }

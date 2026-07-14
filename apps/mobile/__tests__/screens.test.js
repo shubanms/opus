@@ -14,6 +14,8 @@ import ProgressScreen from '../screens/ProgressScreen';
 import ExercisesScreen from '../screens/ExercisesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import RestTimer from '../components/workout/RestTimer';
+import EndWorkoutModal from '../components/workout/EndWorkoutModal';
 
 const Tab = createBottomTabNavigator();
 
@@ -49,4 +51,22 @@ describe('OPUS screens render without crashing', () => {
       expect(() => renderScreen(Comp)).not.toThrow();
     });
   }
+});
+
+describe('workout components render without crashing', () => {
+  it('RestTimer mounts (and cleans up its interval)', () => {
+    const { unmount } = render(<RestTimer onDone={() => {}} />);
+    unmount();
+  });
+  it('EndWorkoutModal renders a PR summary', () => {
+    const { getByText } = render(
+      <EndWorkoutModal
+        visible
+        summary={{ xpEarned: 120, totalVolume: 4200, totalSets: 12, durationSec: 1800 }}
+        prs={[{ exerciseName: 'Bench Press', value: 110 }]}
+        onClose={() => {}}
+      />
+    );
+    expect(getByText('New PR! 🏆')).toBeTruthy();
+  });
 });
