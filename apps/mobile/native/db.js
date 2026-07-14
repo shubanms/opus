@@ -208,6 +208,18 @@ export function initDb() {
   }
 }
 
+// Wipe all user data (keeps the seeded exercise catalog + settings). Every
+// screen re-queries via touch(), so no app reload is needed.
+export function wipeAllData() {
+  const d = conn();
+  d.withTransactionSync(() => {
+    for (const t of ['sets', 'workouts', 'prs', 'templates', 'templateExercises', 'achievements', 'questClaims', 'dailyLogs', 'bodyStats', 'sleepLogs', 'energyLogs', 'exerciseNotes', 'health', 'userProfile']) {
+      try { d.runSync(`DELETE FROM ${t}`); } catch {}
+    }
+  });
+  touch();
+}
+
 // ── Exercises ──────────────────────────────────────────────────────────────
 export function getExercises(query = '') {
   const d = conn();

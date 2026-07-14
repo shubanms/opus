@@ -25,6 +25,7 @@ jest.mock('@expo/vector-icons', () => {
 // Data layer — canned values covering both empty and populated states.
 jest.mock('./native/db', () => ({
   initDb: jest.fn(),
+  wipeAllData: jest.fn(),
   getExercises: jest.fn(() => [
     { name: 'Bench Press', muscleGroup: 'chest', equipment: 'barbell' },
     { name: 'Back Squat', muscleGroup: 'quadriceps', equipment: 'barbell' },

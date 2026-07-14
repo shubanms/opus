@@ -1,6 +1,6 @@
 # OPUS — Project State
 
-Last updated: 2026-07-13
+Last updated: 2026-07-14
 Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0. + Native app → PWA parity program (Phase 1 done).
 Current version: v3.0.0
 

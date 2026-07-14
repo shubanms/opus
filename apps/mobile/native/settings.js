@@ -14,6 +14,11 @@ const DEFAULTS = {
   name: 'Athlete',
   restDuration: 90, // seconds — remembered rest-timer preset
   barWeight: 20, // kg — Olympic barbell (used by the plate calculator)
+  unit: 'kg', // 'kg' | 'lbs' — display unit (weights always stored in kg)
+  theme: 'system', // 'light' | 'dark' | 'system'
+  stepGoal: 8000,
+  waterGoal: 8,
+  onboarded: false,
 };
 
 // In-memory cache kept in sync with the DB, readable imperatively.
