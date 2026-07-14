@@ -23,6 +23,7 @@ import {
   priorBestE1rm,
   addPR,
   getWorkoutSummary,
+  syncAchievements,
 } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
 import { playCue } from '../native/sound';
@@ -112,14 +113,17 @@ export default function WorkoutScreen({ navigation, route }) {
       return;
     }
 
-    // Persist each PR (so Hall of Records / Progress show them), then celebrate.
+    // Persist each PR (so Hall of Records / Progress show them), then detect any
+    // newly-earned achievements (persist + award XP), then celebrate.
+    let newAchievements = [];
     try {
       for (const p of prs) addPR({ exerciseName: p.exerciseName, type: 'e1rm', value: p.value, workoutId });
+      newAchievements = syncAchievements();
     } catch {}
     hSuccess();
-    playCue(prs.length ? 'chime' : 'success');
+    playCue(prs.length || newAchievements.length ? 'chime' : 'success');
     setBurst((b) => b + 1);
-    setEnd({ summary: getWorkoutSummary(workoutId), prs });
+    setEnd({ summary: getWorkoutSummary(workoutId), prs, achievements: newAchievements });
   };
 
   const closeEnd = () => {
@@ -213,7 +217,7 @@ export default function WorkoutScreen({ navigation, route }) {
         )}
       </View>
       {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
-      <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} onClose={closeEnd} />
+      <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} achievements={end?.achievements || []} onClose={closeEnd} />
       <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={setExercise} />
     </Screen>
   );

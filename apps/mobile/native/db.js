@@ -4,7 +4,7 @@
 // numbers (XP, PRs, streak, volume) are computed from these rows using the
 // shared @opus/core logic, so web and native agree on the math.
 import * as SQLite from 'expo-sqlite';
-import { rpg, oneRepMax, dateKey, seedExercises } from '@opus/core';
+import { rpg, oneRepMax, dateKey, seedExercises, achievements } from '@opus/core';
 
 let db = null;
 
@@ -395,7 +395,9 @@ export function getTotals() {
     totalVolume += (s.weight || 0) * (s.reps || 0);
     setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0);
   }
-  const totalXP = setXP + wCount * rpg.COMPLETE_BONUS;
+  // XP = per-set + per-session bonus + unlocked-achievement rewards (matches the
+  // web, where achievement XP counts toward level/rank).
+  const totalXP = setXP + wCount * rpg.COMPLETE_BONUS + achievementXP();
 
   return {
     workouts: wCount,
@@ -404,6 +406,64 @@ export function getTotals() {
     totalXP,
     streak: getStreak(),
   };
+}
+
+// ── Achievements (shared engine: @opus/core/achievements) ────────────────────
+export function unlockedAchievements() {
+  return conn().getAllSync('SELECT key, unlockedAt FROM achievements');
+}
+
+export function unlockedAchievementKeys() {
+  return unlockedAchievements().map((r) => r.key);
+}
+
+// Total XP from unlocked achievements (used inside getTotals).
+export function achievementXP() {
+  let xp = 0;
+  for (const r of unlockedAchievements()) {
+    xp += achievements.ACHIEVEMENT_BY_KEY[r.key]?.xp || 0;
+  }
+  return xp;
+}
+
+// Assemble the lifetime aggregates the achievement predicates need, from rows.
+export function computeAchievementStats() {
+  const d = conn();
+  const workouts = d.getAllSync(
+    'SELECT dateKey AS date, totalVolume, totalSets, createdAt FROM workouts WHERE finishedAt IS NOT NULL'
+  );
+  const sets = d.getAllSync(
+    'SELECT COALESCE(exerciseId, exerciseName) AS exerciseId, isWarmup FROM sets'
+  );
+  const prs = d.getAllSync('SELECT id FROM prs');
+  const exercises = d.getAllSync('SELECT name AS id, muscleGroup FROM exercises');
+  // Level from XP excluding achievement XP, to avoid a self-referential gate.
+  const base = d.getFirstSync(
+    `SELECT COUNT(*) AS n FROM workouts WHERE finishedAt IS NOT NULL`
+  )?.n || 0;
+  const setXpRows = d.getAllSync(
+    `SELECT s.weight AS weight, s.reps AS reps FROM sets s
+       JOIN workouts w ON w.id = s.workoutId WHERE w.finishedAt IS NOT NULL`
+  );
+  let setXP = 0;
+  for (const s of setXpRows) setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0);
+  const level = rpg.getLevelFromTotalXP(setXP + base * rpg.COMPLETE_BONUS + achievementXP());
+  return achievements.computeStats({ workouts, sets, prs, exercises, level });
+}
+
+// Detect + persist newly-earned achievements. Returns the new defs (for a toast).
+export function syncAchievements() {
+  const stats = computeAchievementStats();
+  const newly = achievements.newlyUnlocked(stats, unlockedAchievementKeys());
+  if (newly.length) {
+    const now = Date.now();
+    const d = conn();
+    for (const a of newly) {
+      try { d.runSync('INSERT OR IGNORE INTO achievements (key, unlockedAt) VALUES (?, ?)', a.key, now); } catch {}
+    }
+    touch();
+  }
+  return newly;
 }
 
 // Volume per Monday-aligned week (oldest→newest, last `weeks` buckets) computed

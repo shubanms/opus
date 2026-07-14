@@ -61,6 +61,8 @@ jest.mock('./native/db', () => ({
   logBodyStat: jest.fn(),
   getBodyStats: jest.fn(() => []),
   currentBodyweight: jest.fn(() => null),
+  unlockedAchievementKeys: jest.fn(() => ['first']),
+  syncAchievements: jest.fn(() => []),
 }));
 
 jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn() }));

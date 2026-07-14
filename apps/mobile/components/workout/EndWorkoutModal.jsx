@@ -17,7 +17,7 @@ function Stat({ label, value, suffix, accent }) {
   );
 }
 
-export default function EndWorkoutModal({ visible, summary, prs = [], onClose }) {
+export default function EndWorkoutModal({ visible, summary, prs = [], achievements = [], onClose }) {
   const prCount = prs.length;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -47,6 +47,20 @@ export default function EndWorkoutModal({ visible, summary, prs = [], onClose })
             </View>
           )}
 
+          {achievements.length > 0 && (
+            <View style={s.achList}>
+              {achievements.map((a) => (
+                <View key={a.key} style={s.achRow}>
+                  <Text style={s.achIcon}>🏅</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.achTitle}>{a.title}</Text>
+                    <Text style={s.achDesc}>{a.desc}{a.xp ? ` · +${a.xp} XP` : ''}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
           <GoldButton label="Done" icon="checkmark" sound="success" onPress={onClose} style={{ marginTop: space(2) }} />
         </View>
       </View>
@@ -66,4 +80,9 @@ const s = StyleSheet.create({
   prRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.ivory, borderRadius: radius.md, paddingHorizontal: space(4), paddingVertical: space(3) },
   prName: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
   prVal: { color: colors.gold, fontSize: 14 },
+  achList: { gap: space(2), marginTop: space(1) },
+  achRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), backgroundColor: colors.stone, borderRadius: radius.md, paddingHorizontal: space(4), paddingVertical: space(3) },
+  achIcon: { fontSize: 22 },
+  achTitle: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },
+  achDesc: { color: colors.ash, fontFamily: fonts.sans, fontSize: 12, marginTop: 1 },
 });

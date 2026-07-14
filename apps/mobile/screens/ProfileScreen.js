@@ -1,7 +1,5 @@
-import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { rpg } from '@opus/core';
+import { rpg, achievements as ach } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
 import { colors, radius, space, fonts } from '../theme';
 import Card from '../components/Card';
@@ -11,19 +9,14 @@ import TitleBadge from '../components/rpg/TitleBadge';
 import XPBar from '../components/rpg/XPBar';
 import OpusMark from '../components/OpusMark';
 import { useSettings } from '../native/settings';
-import { getTotals } from '../native/db';
+import { useDbQuery } from '../native/useDbQuery';
+import { getTotals, unlockedAchievementKeys } from '../native/db';
 
 export default function ProfileScreen() {
   const { settings } = useSettings();
-  const [totals, setTotals] = useState({ totalXP: 0, workouts: 0, sets: 0, streak: 0, totalVolume: 0 });
-
-  useFocusEffect(
-    useCallback(() => {
-      try {
-        setTotals(getTotals());
-      } catch {}
-    }, [])
-  );
+  const totals = useDbQuery(() => getTotals(), [], { totalXP: 0, workouts: 0, sets: 0, streak: 0, totalVolume: 0 });
+  const unlockedKeys = useDbQuery(() => unlockedAchievementKeys(), [], []);
+  const unlocked = new Set(unlockedKeys);
 
   const level = rpg.getLevelFromTotalXP(totals.totalXP);
   const rank = rpg.getRankLabel(totals.totalXP);
@@ -73,8 +66,32 @@ export default function ProfileScreen() {
         <StatTile icon="ribbon" accent={colors.sage} value={level} label="Level" />
       </View>
 
-      <Body>XP is earned from finished workouts — {rpg.COMPLETE_BONUS} per session plus per-set XP,
-        computed by the shared @opus/core engine so web and native agree.</Body>
+      {/* Achievements / trophy case */}
+      <View style={s.achHead}>
+        <Label>Achievements</Label>
+        <Mono style={s.achCount}>{unlocked.size}/{ach.ACHIEVEMENTS.length}</Mono>
+      </View>
+      <Card>
+        <View style={{ gap: space(1) }}>
+          {ach.ACHIEVEMENTS.map((a) => {
+            const earned = unlocked.has(a.key);
+            const masked = a.hidden && !earned;
+            return (
+              <View key={a.key} style={s.achRow}>
+                <Text style={[s.achIcon, !earned && { opacity: 0.3 }]}>{earned ? '🏅' : '🔒'}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.achTitle, !earned && s.achLocked]}>{masked ? 'Hidden achievement' : a.title}</Text>
+                  <Text style={s.achDesc}>{masked ? 'Keep training to reveal this one.' : a.desc}</Text>
+                </View>
+                {a.xp > 0 && earned && <Mono style={s.achXp}>+{a.xp}</Mono>}
+              </View>
+            );
+          })}
+        </View>
+      </Card>
+
+      <Body>XP is earned from finished workouts — {rpg.COMPLETE_BONUS} per session plus per-set XP
+        and achievement rewards, computed by the shared @opus/core engine so web and native agree.</Body>
     </Screen>
   );
 }
@@ -86,4 +103,13 @@ const s = StyleSheet.create({
   charTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   lvl: { color: colors.textInverse, fontFamily: fonts.monoMedium, fontSize: 28 },
   bento: { flexDirection: 'row', gap: space(3) },
+  achHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  achCount: { color: colors.gold, fontFamily: fonts.monoMedium, fontSize: 14 },
+  achRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), paddingVertical: space(2.5), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
+  achIcon: { fontSize: 20 },
+  achTitle: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
+  achLocked: { color: colors.textSecondary },
+  achDesc: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, marginTop: 1 },
+  achXp: { color: colors.gold, fontFamily: fonts.mono, fontSize: 12 },
 });
+
