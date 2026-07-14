@@ -13,6 +13,7 @@ import GoldAura from '../components/fx/GoldAura';
 import PressScale from '../components/PressScale';
 import QuestBoard from '../components/home/QuestBoard';
 import HistoryModal from '../components/home/HistoryModal';
+import ActivityRings from '../components/home/ActivityRings';
 import { getTotals, getRecentWorkouts, getActiveWorkout } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
 import { useSettings } from '../native/settings';
@@ -97,6 +98,9 @@ export default function HomeScreen({ navigation }) {
           </PressScale>
         </View>
       </Card>
+
+      {/* Daily activity */}
+      <ActivityRings />
 
       {/* Weekly quests */}
       <QuestBoard />

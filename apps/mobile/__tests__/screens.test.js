@@ -25,6 +25,8 @@ import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
 import WrappedModal from '../components/profile/WrappedModal';
 import QuestBoard from '../components/home/QuestBoard';
 import HistoryModal from '../components/home/HistoryModal';
+import ActivityRings from '../components/home/ActivityRings';
+import BodyWeightCard from '../components/progress/BodyWeightCard';
 
 const Tab = createBottomTabNavigator();
 
@@ -139,5 +141,16 @@ describe('history sheet', () => {
   it('lists finished workouts', () => {
     const { getByText } = render(<HistoryModal visible onClose={() => {}} />);
     expect(getByText('History')).toBeTruthy();
+  });
+});
+
+describe('activity + body', () => {
+  it('ActivityRings renders steps + water', () => {
+    const { getByText } = render(<ActivityRings />);
+    expect(getByText("Today's activity")).toBeTruthy();
+  });
+  it('BodyWeightCard renders a logger', () => {
+    const { getByText } = render(<BodyWeightCard width={280} />);
+    expect(getByText('Bodyweight')).toBeTruthy();
   });
 });
