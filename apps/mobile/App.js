@@ -3,7 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 import { useFonts } from 'expo-font';
 import { CormorantGaramond_600SemiBold, CormorantGaramond_700Bold } from '@expo-google-fonts/cormorant-garamond';
 import { DMSans_300Light, DMSans_400Regular, DMSans_500Medium, DMSans_600SemiBold } from '@expo-google-fonts/dm-sans';
@@ -57,10 +57,6 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const [fontsLoaded, fontError] = useFonts({
-    // Bundle the Ionicons glyph font so tab-bar + in-screen icons actually
-    // render in a release APK (transitive resolution isn't enough — without
-    // this the bottom nav shows blank tofu boxes).
-    ...Ionicons.font,
     CormorantGaramond_700Bold,
     CormorantGaramond_600SemiBold,
     DMSans_300Light,
@@ -99,7 +95,7 @@ export default function App() {
             tabBarLabelStyle: { fontFamily: fontsLoaded ? fonts.sansMedium : undefined, fontSize: 10 },
             tabBarStyle: { backgroundColor: colors.obsidian, borderTopColor: '#221F1C', height: 60, paddingBottom: 8, paddingTop: 6 },
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name={ICON[route.name] || 'ellipse'} size={size} color={color} />
+              <Icon name={ICON[route.name] || 'ellipse'} size={size} color={color} />
             ),
           })}
         >

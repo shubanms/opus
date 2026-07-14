@@ -9,7 +9,7 @@ export default function BarChart({ data = [], height = 120, width = 300, color =
   const values = data.map((d) => (typeof d === 'number' ? d : d?.value || 0));
   if (values.length === 0) {
     return (
-      <View style={{ height, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ height: 44, alignItems: 'center', justifyContent: 'center' }}>
         <Label>No sessions yet</Label>
       </View>
     );

@@ -24,6 +24,11 @@ import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
 import WrappedModal from '../components/profile/WrappedModal';
 import QuestBoard from '../components/home/QuestBoard';
+import HistoryModal from '../components/home/HistoryModal';
+import ActivityRings from '../components/home/ActivityRings';
+import BodyWeightCard from '../components/progress/BodyWeightCard';
+import RadarCard from '../components/rpg/RadarCard';
+import RecoveryCard from '../components/progress/RecoveryCard';
 
 const Tab = createBottomTabNavigator();
 
@@ -131,5 +136,32 @@ describe('home quest board', () => {
   it('renders this week\'s quests', () => {
     const { getByText } = render(<QuestBoard />);
     expect(getByText("This week's quests")).toBeTruthy();
+  });
+});
+
+describe('history sheet', () => {
+  it('lists finished workouts', () => {
+    const { getByText } = render(<HistoryModal visible onClose={() => {}} />);
+    expect(getByText('History')).toBeTruthy();
+  });
+});
+
+describe('activity + body', () => {
+  it('ActivityRings renders steps + water', () => {
+    const { getByText } = render(<ActivityRings />);
+    expect(getByText("Today's activity")).toBeTruthy();
+  });
+  it('BodyWeightCard renders a logger', () => {
+    const { getByText } = render(<BodyWeightCard width={280} />);
+    expect(getByText('Bodyweight')).toBeTruthy();
+  });
+  it('RadarCard renders the character radar', () => {
+    const { getByText } = render(<RadarCard />);
+    expect(getByText('Character')).toBeTruthy();
+    expect(getByText('Strength')).toBeTruthy();
+  });
+  it('RecoveryCard lists muscle recovery', () => {
+    const { getByText } = render(<RecoveryCard />);
+    expect(getByText('Muscle recovery')).toBeTruthy();
   });
 });

@@ -208,6 +208,18 @@ export function initDb() {
   }
 }
 
+// Wipe all user data (keeps the seeded exercise catalog + settings). Every
+// screen re-queries via touch(), so no app reload is needed.
+export function wipeAllData() {
+  const d = conn();
+  d.withTransactionSync(() => {
+    for (const t of ['sets', 'workouts', 'prs', 'templates', 'templateExercises', 'achievements', 'questClaims', 'dailyLogs', 'bodyStats', 'sleepLogs', 'energyLogs', 'exerciseNotes', 'health', 'userProfile']) {
+      try { d.runSync(`DELETE FROM ${t}`); } catch {}
+    }
+  });
+  touch();
+}
+
 // ── Exercises ──────────────────────────────────────────────────────────────
 export function getExercises(query = '') {
   const d = conn();
@@ -219,6 +231,40 @@ export function getExercises(query = '') {
     );
   }
   return d.getAllSync('SELECT * FROM exercises ORDER BY name');
+}
+
+// ── Templates / routines ─────────────────────────────────────────────────────
+export function createTemplate(name, exerciseNames = []) {
+  const d = conn();
+  let id;
+  d.withTransactionSync(() => {
+    const res = d.runSync('INSERT INTO templates (name, createdAt) VALUES (?, ?)', name, Date.now());
+    id = res.lastInsertRowId;
+    exerciseNames.forEach((n, i) =>
+      d.runSync('INSERT INTO templateExercises (templateId, exerciseName, orderIndex) VALUES (?, ?, ?)', id, n, i)
+    );
+  });
+  touch();
+  return id;
+}
+
+export function getTemplates() {
+  const d = conn();
+  return d.getAllSync('SELECT * FROM templates ORDER BY createdAt DESC').map((t) => ({
+    ...t,
+    exercises: d
+      .getAllSync('SELECT exerciseName FROM templateExercises WHERE templateId = ? ORDER BY orderIndex', t.id)
+      .map((r) => r.exerciseName),
+  }));
+}
+
+export function deleteTemplate(id) {
+  const d = conn();
+  d.withTransactionSync(() => {
+    d.runSync('DELETE FROM templateExercises WHERE templateId = ?', id);
+    d.runSync('DELETE FROM templates WHERE id = ?', id);
+  });
+  touch();
 }
 
 // ── Active workout ───────────────────────────────────────────────────────────
@@ -408,6 +454,57 @@ export function getTotals() {
   };
 }
 
+// Inputs for rpg.getCharacterStats (the radar). Derived from finished workouts.
+export function getRadarInputs() {
+  const d = conn();
+  const wCount = d.getFirstSync('SELECT COUNT(*) AS n FROM workouts WHERE finishedAt IS NOT NULL')?.n || 0;
+  const maxW = d.getFirstSync(
+    'SELECT MAX(s.weight) AS m FROM sets s JOIN workouts w ON w.id = s.workoutId WHERE w.finishedAt IS NOT NULL'
+  )?.m || 0;
+  const agg = d.getFirstSync(
+    `SELECT COALESCE(SUM(s.weight * s.reps),0) AS v, COUNT(*) AS c
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+      WHERE w.finishedAt IS NOT NULL AND COALESCE(s.isWarmup,0) = 0`
+  );
+  const muscles = d.getAllSync(
+    `SELECT DISTINCT e.muscleGroup AS mg FROM sets s
+       JOIN workouts w ON w.id = s.workoutId
+       JOIN exercises e ON e.name = COALESCE(s.exerciseId, s.exerciseName)
+      WHERE w.finishedAt IS NOT NULL AND e.muscleGroup IS NOT NULL`
+  );
+  const span = d.getFirstSync('SELECT MIN(dateKey) AS mn, MAX(dateKey) AS mx FROM workouts WHERE finishedAt IS NOT NULL');
+  let weeks = 1;
+  if (span?.mn && span?.mx) {
+    const days = dateKey.daysBetween(span.mn, span.mx) || 0;
+    weeks = Math.max(1, (days + 1) / 7);
+  }
+  return {
+    maxWeight: maxW,
+    avgVolume: wCount ? (agg?.v || 0) / wCount : 0,
+    avgSets: wCount ? (agg?.c || 0) / wCount : 0,
+    streak: getStreak(),
+    workoutsPerWeek: wCount / weeks,
+    muscleVariety: muscles.length,
+  };
+}
+
+// Per-muscle recovery: days since each muscle group was last trained (most
+// neglected first). null daysSince = never trained.
+export function getMuscleRecovery() {
+  const d = conn();
+  const rows = d.getAllSync(
+    `SELECT e.muscleGroup AS mg, MAX(w.dateKey) AS last
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+       JOIN exercises e ON e.name = COALESCE(s.exerciseId, s.exerciseName)
+      WHERE w.finishedAt IS NOT NULL AND e.muscleGroup IS NOT NULL
+      GROUP BY e.muscleGroup`
+  );
+  const today = dateKey.todayKey();
+  return rows
+    .map((r) => ({ muscle: r.mg, daysSince: r.last ? dateKey.daysBetween(r.last, today) : null }))
+    .sort((a, b) => (b.daysSince ?? 999) - (a.daysSince ?? 999));
+}
+
 // ── Weekly quests (shared engine: @opus/core/quests) ─────────────────────────
 // This week's per-metric progress, computed from completed workouts in the
 // Monday-aligned week window.
@@ -533,6 +630,36 @@ export function computeAchievementStats() {
   for (const s of setXpRows) setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0);
   const level = rpg.getLevelFromTotalXP(setXP + base * rpg.COMPLETE_BONUS + achievementXP());
   return achievements.computeStats({ workouts, sets, prs, exercises, level });
+}
+
+// Re-lock achievements whose condition no longer holds (e.g. after a workout
+// delete) so their XP reverts — the data-integrity rule. Uses core staleKeys.
+export function reconcileAchievements() {
+  const stats = computeAchievementStats();
+  const stale = achievements.staleKeys(stats, unlockedAchievementKeys());
+  if (stale.length) {
+    const d = conn();
+    for (const k of stale) {
+      try { d.runSync('DELETE FROM achievements WHERE key = ?', k); } catch {}
+    }
+    touch();
+  }
+  return stale;
+}
+
+// Delete a workout and everything derived from it (sets, energy logs, and PRs
+// scoped to it), then re-lock any achievements that no longer hold. XP/level
+// revert automatically because getTotals recomputes from remaining rows.
+export function deleteWorkout(workoutId) {
+  const d = conn();
+  d.withTransactionSync(() => {
+    d.runSync('DELETE FROM sets WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM energyLogs WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM prs WHERE workoutId = ?', workoutId);
+    d.runSync('DELETE FROM workouts WHERE id = ?', workoutId);
+  });
+  reconcileAchievements();
+  touch();
 }
 
 // Detect + persist newly-earned achievements. Returns the new defs (for a toast).

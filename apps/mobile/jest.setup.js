@@ -25,6 +25,7 @@ jest.mock('@expo/vector-icons', () => {
 // Data layer — canned values covering both empty and populated states.
 jest.mock('./native/db', () => ({
   initDb: jest.fn(),
+  wipeAllData: jest.fn(),
   getExercises: jest.fn(() => [
     { name: 'Bench Press', muscleGroup: 'chest', equipment: 'barbell' },
     { name: 'Back Squat', muscleGroup: 'quadriceps', equipment: 'barbell' },
@@ -38,6 +39,8 @@ jest.mock('./native/db', () => ({
   discardWorkout: jest.fn(),
   priorBestE1rm: jest.fn(() => 0),
   getRecentWorkouts: jest.fn(() => [{ id: 1, dateKey: '2026-07-13', setCount: 5, volume: 4200 }]),
+  deleteWorkout: jest.fn(),
+  reconcileAchievements: jest.fn(() => []),
   getStreak: jest.fn(() => 3),
   getTotals: jest.fn(() => ({ workouts: 12, sets: 84, totalVolume: 42000, totalXP: 5200, streak: 3 })),
   getBestByExercise: jest.fn(() => [{ name: 'Bench Press', e1rm: 110, weight: 100, reps: 5 }]),
@@ -71,6 +74,12 @@ jest.mock('./native/db', () => ({
   getQuestClaims: jest.fn(() => []),
   claimQuest: jest.fn(() => true),
   questClaimXP: jest.fn(() => 0),
+  getRadarInputs: jest.fn(() => ({ maxWeight: 140, avgVolume: 5000, avgSets: 18, streak: 3, workoutsPerWeek: 3, muscleVariety: 6 })),
+  getMuscleRecovery: jest.fn(() => [
+    { muscle: 'chest', daysSince: 0 },
+    { muscle: 'back', daysSince: 2 },
+    { muscle: 'quadriceps', daysSince: null },
+  ]),
   getWrappedInputs: jest.fn(() => ({
     workouts: [{ id: 1, date: '2026-07-02', status: 'completed', totalVolume: 4200, xpEarned: 120, duration: 3600 }],
     sets: [{ workoutId: 1, exerciseId: 1, weight: 100, reps: 5 }],

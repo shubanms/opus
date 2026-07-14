@@ -3,7 +3,7 @@
 // src/components/logo/OpusMark.jsx). Drawn with react-native-svg; a barbell
 // glyph stands in for the lifter image.
 import { View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './Icon';
 import Svg, { Circle, G } from 'react-native-svg';
 import { colors } from '../theme';
 
@@ -50,7 +50,7 @@ export default function OpusMark({ size = 84, level = 1, prestige = 0 }) {
         </G>
       </Svg>
       <View style={{ position: 'absolute' }}>
-        <Ionicons name="barbell" size={iconSize} color={colors.gold} />
+        <Icon name="barbell" size={iconSize} color={colors.gold} />
       </View>
     </View>
   );

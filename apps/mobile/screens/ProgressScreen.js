@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { dateKey } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
 import { colors, radius, space, fonts } from '../theme';
@@ -7,6 +7,8 @@ import Card from '../components/Card';
 import StatTile from '../components/StatTile';
 import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
+import BodyWeightCard from '../components/progress/BodyWeightCard';
+import RecoveryCard from '../components/progress/RecoveryCard';
 import { useDbQuery } from '../native/useDbQuery';
 import { getBestByExercise, getTotals, getWeeklyVolume, getRecentWorkouts, getAllPRs } from '../native/db';
 
@@ -47,7 +49,7 @@ export default function ProgressScreen() {
       <View style={s.bento}>
         <StatTile icon="barbell" value={totals.workouts} label="Workouts" />
         <StatTile icon="repeat" value={totals.sets} label="Sets" />
-        <StatTile icon="trending-up" value={Math.round(totals.totalVolume / 1000)} suffix="k" label="Volume kg" />
+        <StatTile icon="trending-up" value={totals.totalVolume} compact label="Volume kg" />
       </View>
 
       <Card>
@@ -64,6 +66,10 @@ export default function ProgressScreen() {
         </View>
       </Card>
 
+      <RecoveryCard />
+
+      <BodyWeightCard width={chartW} />
+
       <Card>
         <Label>Best est. 1RM (Epley)</Label>
         {(!best || best.length === 0) ? (
@@ -72,7 +78,7 @@ export default function ProgressScreen() {
           <View style={{ marginTop: space(3) }}>
             {best.map((d) => (
               <View key={d.name} style={s.row}>
-                <Ionicons name="trophy" size={15} color={colors.gold} style={{ marginRight: space(3) }} />
+                <Icon name="trophy" size={15} color={colors.gold} style={{ marginRight: space(3) }} />
                 <Text style={s.name} numberOfLines={1}>{d.name}</Text>
                 <Mono style={s.val}>{Math.round(d.e1rm)} kg</Mono>
               </View>
@@ -87,7 +93,7 @@ export default function ProgressScreen() {
           <View style={{ marginTop: space(3) }}>
             {prs.map((p) => (
               <View key={p.id} style={s.row}>
-                <Ionicons name="ribbon" size={15} color={colors.ember} style={{ marginRight: space(3) }} />
+                <Icon name="ribbon" size={15} color={colors.ember} style={{ marginRight: space(3) }} />
                 <Text style={s.name} numberOfLines={1}>{p.exerciseName}</Text>
                 <Mono style={s.sub}>{relDay(p.achievedAt)}</Mono>
                 <Mono style={s.val}>  {Math.round(p.value)} kg</Mono>

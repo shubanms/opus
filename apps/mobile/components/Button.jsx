@@ -1,7 +1,7 @@
 // Gold CTA + neutral secondary buttons — the PWA's rounded-2xl gold-on-obsidian
 // primary and ivory neutral. Built on PressScale so they animate + buzz + click.
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './Icon';
 import PressScale from './PressScale';
 import { colors, radius, space, fonts } from '../theme';
 
@@ -9,7 +9,7 @@ export function GoldButton({ label, onPress, icon, sound = 'tap', style, disable
   return (
     <PressScale onPress={onPress} sound={sound} disabled={disabled} style={[s.btn, s.gold, disabled && s.disabled, style]}>
       <View style={s.row}>
-        {icon ? <Ionicons name={icon} size={18} color={colors.obsidian} style={{ marginRight: 8 }} /> : null}
+        {icon ? <Icon name={icon} size={18} color={colors.obsidian} style={{ marginRight: 8 }} /> : null}
         <Text style={[s.text, s.goldText]}>{label}</Text>
       </View>
     </PressScale>
@@ -22,7 +22,7 @@ export function SecondaryButton({ label, onPress, icon, sound = 'tap', style, to
   return (
     <PressScale onPress={onPress} sound={sound} style={[s.btn, toneStyle, style]}>
       <View style={s.row}>
-        {icon ? <Ionicons name={icon} size={16} color={tone === 'sage' ? colors.textInverse : colors.textPrimary} style={{ marginRight: 6 }} /> : null}
+        {icon ? <Icon name={icon} size={16} color={tone === 'sage' ? colors.textInverse : colors.textPrimary} style={{ marginRight: 6 }} /> : null}
         <Text style={[s.text, textTone]}>{label}</Text>
       </View>
     </PressScale>

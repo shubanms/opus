@@ -1,7 +1,7 @@
 // Hall of Records sheet — every PR, grouped by date (newest first). Ports the
 // PWA HallOfRecordsPage. Reads the prs table (passed in as `prs`).
 import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../Icon';
 import { H2, Label, Body, Mono } from '../../ui';
 import { colors, radius, space, fonts } from '../../theme';
 import PressScale from '../PressScale';
@@ -31,7 +31,7 @@ export default function HallOfRecordsModal({ visible, onClose, prs = [] }) {
         <View style={s.sheet}>
           <View style={s.header}>
             <H2>Hall of Records</H2>
-            <PressScale hitSlop={10} onPress={onClose}><Ionicons name="close" size={24} color={colors.ash} /></PressScale>
+            <PressScale hitSlop={10} onPress={onClose}><Icon name="close" size={24} color={colors.ash} /></PressScale>
           </View>
 
           {groups.length === 0 ? (
@@ -43,7 +43,7 @@ export default function HallOfRecordsModal({ visible, onClose, prs = [] }) {
                   <Label>{dayLabel(g.ms)}</Label>
                   {g.items.map((p) => (
                     <View key={p.id} style={s.row}>
-                      <Ionicons name="trophy" size={16} color={colors.gold} style={{ marginRight: space(3) }} />
+                      <Icon name="trophy" size={16} color={colors.gold} style={{ marginRight: space(3) }} />
                       <Text style={s.name} numberOfLines={1}>{p.exerciseName}</Text>
                       <Mono style={s.val}>{Math.round(p.value)} kg {p.type === 'e1rm' ? '1RM' : ''}</Mono>
                     </View>

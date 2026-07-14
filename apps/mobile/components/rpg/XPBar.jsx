@@ -2,7 +2,7 @@
 // (ports src/components/rpg/XPBar.jsx). Optional label row (Level N · X XP to next).
 import { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../Icon';
 import { Label, Mono } from '../../ui';
 import { colors, radius, space, fonts } from '../../theme';
 import { motionOn } from '../../native/settings';
@@ -26,7 +26,7 @@ export default function XPBar({ progress = 0, level, xpToNext, showLabel = false
       {showLabel && (
         <View style={s.labelRow}>
           <View style={s.labelLeft}>
-            <Ionicons name="flash" size={12} color={colors.gold} />
+            <Icon name="flash" size={12} color={colors.gold} />
             <Label style={{ marginLeft: 5 }}>Level {level}</Label>
           </View>
           <Mono style={s.toNext}>{xpToNext > 0 ? `${Math.round(xpToNext).toLocaleString()} XP to next` : 'Max'}</Mono>

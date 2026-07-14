@@ -2,7 +2,7 @@
 // the 5 boss gates (cleared / active / locked). Ports the PWA ProgressionPage.
 // Pure display over @opus/core rpg.RANKS + bosses.bossList(stats).
 import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../Icon';
 import { rpg, bosses } from '@opus/core';
 import { H2, Label, Mono } from '../../ui';
 import { colors, radius, space, fonts } from '../../theme';
@@ -18,7 +18,7 @@ export default function ProgressionModal({ visible, onClose, level = 1, stats })
         <View style={s.sheet}>
           <View style={s.header}>
             <H2>Ranks & bosses</H2>
-            <PressScale hitSlop={10} onPress={onClose}><Ionicons name="close" size={24} color={colors.ash} /></PressScale>
+            <PressScale hitSlop={10} onPress={onClose}><Icon name="close" size={24} color={colors.ash} /></PressScale>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space(8), gap: space(2) }}>
@@ -27,7 +27,7 @@ export default function ProgressionModal({ visible, onClose, level = 1, stats })
               const isActive = active && active.key === b.key;
               return (
                 <View key={b.key} style={[s.gate, b.cleared && s.gateCleared, isActive && s.gateActive]}>
-                  <Ionicons
+                  <Icon
                     name={b.cleared ? 'shield-checkmark' : isActive ? 'flame' : 'lock-closed'}
                     size={18}
                     color={b.cleared ? colors.sage : isActive ? colors.ember : colors.ash}

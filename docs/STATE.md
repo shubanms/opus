@@ -1,7 +1,9 @@
 # OPUS — Project State
 
-Last updated: 2026-07-13
-Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0. + Native app → PWA parity program (Phase 1 done).
+Last updated: 2026-07-14
+Current sprint: Roadmap v3 COMPLETE (S1–S5, S7, S8; S6 dropped). App at v3.0.0. + Native app → PWA parity program (Phases 1–6 + icon fix in progress).
+
+**On-device fix — icons were BLANK in the release APK (critical):** the user's installed build showed no bottom-nav icons and no in-screen icons at all. Root cause: the **Ionicons glyph font does not render in our Expo SDK 52 release APK** even with the font preloaded — but `react-native-svg` renders reliably (the OpusMark ring/XP bars showed). Fix: replaced `@expo/vector-icons` entirely with a **stroke-based SVG `Icon` component** (`components/Icon.jsx`, ~35 lucide-style glyphs on react-native-svg) — a drop-in (`<Icon name=... size=... color=... />`) swapped across App.js + all screens/components. This GUARANTEES rendering and better matches the web's lucide look. Validated: jest 23/23 + full `expo export` (Metro/Hermes) bundles clean (2.86 MB). Also polished: compact empty-chart states (44px vs 130), `StatTile compact` volume formatting (no more "0k"), higher-contrast Exercises filter chips, toned-down Wrapped button.
 Current version: v3.0.0
 
 > Docs reorganized into `docs/` (this file moved here). Index: `docs/README.md`. Map: `docs/ARCHITECTURE.md`.

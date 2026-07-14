@@ -3,7 +3,7 @@
 // the PWA QuestBoard. Self-contained: reads/writes the questClaims table.
 import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from '../Icon';
 import { quests as coreQuests } from '@opus/core';
 import { Label, Mono } from '../../ui';
 import { colors, radius, space, fonts } from '../../theme';
@@ -49,13 +49,13 @@ export default function QuestBoard() {
             return (
               <View key={q.id} style={s.quest}>
                 <View style={s.qHead}>
-                  <Ionicons name={ICON[q.icon] || 'ellipse'} size={18} color={colors.gold} style={{ marginRight: space(2) }} />
+                  <Icon name={ICON[q.icon] || 'ellipse'} size={18} color={colors.gold} style={{ marginRight: space(2) }} />
                   <View style={{ flex: 1 }}>
                     <Text style={s.qTitle}>{q.title}</Text>
                     <Text style={s.qDesc}>{questDesc(q)}</Text>
                   </View>
                   {isClaimed ? (
-                    <View style={s.claimedPill}><Ionicons name="checkmark" size={13} color={colors.sage} /><Text style={s.claimedText}> Claimed</Text></View>
+                    <View style={s.claimedPill}><Icon name="checkmark" size={13} color={colors.sage} /><Text style={s.claimedText}> Claimed</Text></View>
                   ) : done ? (
                     <PressScale onPress={() => doClaim(q)} style={s.claimBtn}>
                       <Text style={s.claimText}>+{q.xp} XP</Text>

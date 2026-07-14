@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, FlatList, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { oneRepMax } from '@opus/core';
+import Icon from '../components/Icon';
+import { oneRepMax, units } from '@opus/core';
+import { useSettings } from '../native/settings';
 import { Screen, H1, H2, Label, Mono } from '../ui';
 import { colors, radius, space, fonts } from '../theme';
 import PressScale from '../components/PressScale';
@@ -30,6 +31,8 @@ import { playCue } from '../native/sound';
 import { success as hSuccess, warning as hWarning } from '../native/haptics';
 
 export default function WorkoutScreen({ navigation, route }) {
+  const { settings } = useSettings();
+  const unit = settings.unit || 'kg';
   const [workout, setWorkout] = useState(null);
   const [sets, setSets] = useState([]);
   const [exercise, setExercise] = useState('');
@@ -59,13 +62,13 @@ export default function WorkoutScreen({ navigation, route }) {
   );
 
   const log = () => {
-    const w = parseFloat(weight) || 0;
+    const w = parseFloat(weight) || 0; // entered in the display unit
     const r = parseInt(reps, 10) || 0;
     if (w <= 0 && r <= 0) return;
     try {
       const wk = workout || getOrCreateActiveWorkout();
       if (!workout) setWorkout(wk);
-      dbAddSet(wk.id, { exerciseName: exercise.trim(), weight: w, reps: r });
+      dbAddSet(wk.id, { exerciseName: exercise.trim(), weight: units.toKg(w, unit), reps: r });
       setSets(getSets(wk.id));
       setReps('');
       playCue('tick');
@@ -157,7 +160,7 @@ export default function WorkoutScreen({ navigation, route }) {
         <View style={s.head}>
           <View>
             <H1>Workout</H1>
-            <Label style={{ marginTop: 4 }}>{sets.length} sets · {Math.round(volume)} kg volume</Label>
+            <Label style={{ marginTop: 4 }}>{sets.length} sets · {units.fmtVolume(volume, unit)} volume</Label>
           </View>
           {sets.length > 0 && (
             <PressScale sound="success" onPress={finish} style={s.finish}>
@@ -175,18 +178,18 @@ export default function WorkoutScreen({ navigation, route }) {
             style={[s.exercise, { flex: 1 }]}
           />
           <PressScale onPress={() => setPickerOpen(true)} sound="tap" style={s.browse}>
-            <Ionicons name="list" size={22} color={colors.textPrimary} />
+            <Icon name="list" size={22} color={colors.textPrimary} />
           </PressScale>
         </View>
 
         <View style={s.inputRow}>
-          <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder="kg" placeholderTextColor={colors.ash} style={s.input} />
+          <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder={units.unitLabel(unit)} placeholderTextColor={colors.ash} style={s.input} />
           <Text style={s.x}>×</Text>
           <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" placeholder="reps" placeholderTextColor={colors.ash} style={s.input} />
-          <PressScale onPress={log} style={s.add}><Ionicons name="add" size={26} color={colors.obsidian} /></PressScale>
+          <PressScale onPress={log} style={s.add}><Icon name="add" size={26} color={colors.obsidian} /></PressScale>
         </View>
 
-        {parseFloat(weight) > 0 && <PlateCalculator weight={parseFloat(weight)} />}
+        {parseFloat(weight) > 0 && <PlateCalculator weight={units.toKg(parseFloat(weight), unit)} />}
 
         {restKey > 0 && <RestTimer key={restKey} onDone={() => setRestKey(0)} />}
 
@@ -199,10 +202,10 @@ export default function WorkoutScreen({ navigation, route }) {
               <Mono style={s.setNum}>{sets.length - index}</Mono>
               <View style={{ flex: 1 }}>
                 {!!item.exerciseName && <Text style={s.setName}>{item.exerciseName}</Text>}
-                <Mono style={s.setVal}>{item.weight > 0 ? `${item.weight} kg × ${item.reps}` : `${item.reps} reps`}</Mono>
+                <Mono style={s.setVal}>{item.weight > 0 ? `${units.toDisplay(item.weight, unit)} ${units.unitLabel(unit)} × ${item.reps}` : `${item.reps} reps`}</Mono>
               </View>
               <PressScale hitSlop={10} onPress={() => removeSet(item.id)}>
-                <Ionicons name="close" size={18} color={colors.ash} />
+                <Icon name="close" size={18} color={colors.ash} />
               </PressScale>
             </View>
           )}
