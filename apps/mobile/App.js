@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Icon from './components/Icon';
 import { useFonts } from 'expo-font';
 import { CormorantGaramond_600SemiBold, CormorantGaramond_700Bold } from '@expo-google-fonts/cormorant-garamond';
@@ -12,7 +13,8 @@ import { colors, fonts } from './theme';
 import { setFontsReady } from './ui';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initDb } from './native/db';
-import { loadSettings } from './native/settings';
+import { loadSettings, useSettings } from './native/settings';
+import Onboarding from './components/Onboarding';
 import HomeScreen from './screens/HomeScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import ProgressScreen from './screens/ProgressScreen';
@@ -56,6 +58,7 @@ function Splash() {
 export default function App() {
   const [ready, setReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
+  const { settings } = useSettings();
   const [fontsLoaded, fontError] = useFonts({
     CormorantGaramond_700Bold,
     CormorantGaramond_600SemiBold,
@@ -85,8 +88,12 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <NavigationContainer theme={navTheme}>
+      <SafeAreaProvider>
         <StatusBar style="light" />
+        {!settings.onboarded ? (
+          <Onboarding />
+        ) : (
+      <NavigationContainer theme={navTheme}>
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
@@ -107,6 +114,8 @@ export default function App() {
           <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
       </NavigationContainer>
+        )}
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }
