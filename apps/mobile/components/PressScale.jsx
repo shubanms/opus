@@ -1,11 +1,18 @@
 // Every tappable in OPUS presses in slightly (scale 0.96, the PWA's
 // button:active), fires a light haptic, and optionally plays a sound cue — all
 // gated by settings/reduced-motion. Use this instead of raw Pressable.
+//
+// The incoming `style` (including layout like flex:1) goes on the Pressable
+// itself via an Animated Pressable, so flex/width behave correctly — a plain
+// inner Animated.View would swallow flex and collapse rows (e.g. segmented
+// controls) to their text width.
 import { useRef } from 'react';
 import { Animated, Pressable } from 'react-native';
 import { tapLight } from '../native/haptics';
 import { playCue } from '../native/sound';
 import { motionOn } from '../native/settings';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function PressScale({ children, onPress, sound, style, disabled, hitSlop, to = 0.96 }) {
   const scale = useRef(new Animated.Value(1)).current;
@@ -16,7 +23,7 @@ export default function PressScale({ children, onPress, sound, style, disabled, 
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       disabled={disabled}
       hitSlop={hitSlop}
       onPressIn={() => animate(to)}
@@ -26,8 +33,9 @@ export default function PressScale({ children, onPress, sound, style, disabled, 
         if (sound) playCue(sound);
         onPress?.(e);
       }}
+      style={[style, { transform: [{ scale }] }]}
     >
-      <Animated.View style={[{ transform: [{ scale }] }, style]}>{children}</Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 }
