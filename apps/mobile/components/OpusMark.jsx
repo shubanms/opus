@@ -5,9 +5,10 @@
 import { View } from 'react-native';
 import Icon from './Icon';
 import Svg, { Circle, G } from 'react-native-svg';
-import { colors } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 
 export default function OpusMark({ size = 84, level = 1, prestige = 0 }) {
+  const colors = useColors();
   const VB = 200;
   const c = VB / 2;
   const ringR = 90;

@@ -4,11 +4,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import Icon from '../components/Icon';
 import { seedExercises } from '@opus/core';
 import { H1, Label } from '../ui';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import PressScale from '../components/PressScale';
 import { getExercises } from '../native/db';
 
 export default function ExercisesScreen({ navigation }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const [q, setQ] = useState('');
   const [group, setGroup] = useState(null); // selected muscle-group filter (null = all)
   const [all, setAll] = useState([]);
@@ -96,7 +99,7 @@ export default function ExercisesScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: space(2), marginTop: space(4), backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4) },
   searchInput: { flex: 1, paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 15 },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, padding: space(3.5) },

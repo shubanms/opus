@@ -5,7 +5,8 @@ import Icon from '../components/Icon';
 import { oneRepMax, units } from '@opus/core';
 import { useSettings } from '../native/settings';
 import { Screen, H1, H2, Label, Mono } from '../ui';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import PressScale from '../components/PressScale';
 import { GoldButton } from '../components/Button';
 import Particles from '../components/fx/Particles';
@@ -32,6 +33,8 @@ import { playCue } from '../native/sound';
 import { success as hSuccess, warning as hWarning } from '../native/haptics';
 
 export default function WorkoutScreen({ navigation, route }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const { settings } = useSettings();
   const unit = settings.unit || 'kg';
   const [workout, setWorkout] = useState(null);
@@ -234,7 +237,7 @@ export default function WorkoutScreen({ navigation, route }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   finish: { backgroundColor: colors.sage, borderRadius: radius.lg, paddingHorizontal: space(5), paddingVertical: space(3) },
   finishText: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },

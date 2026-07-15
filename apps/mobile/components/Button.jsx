@@ -3,9 +3,12 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from './Icon';
 import PressScale from './PressScale';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 
 export function GoldButton({ label, onPress, icon, sound = 'tap', style, disabled }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   return (
     <PressScale onPress={onPress} sound={sound} disabled={disabled} style={[s.btn, s.gold, disabled && s.disabled, style]}>
       <View style={s.row}>
@@ -17,6 +20,8 @@ export function GoldButton({ label, onPress, icon, sound = 'tap', style, disable
 }
 
 export function SecondaryButton({ label, onPress, icon, sound = 'tap', style, tone = 'neutral' }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const toneStyle = tone === 'sage' ? s.sage : s.neutral;
   const textTone = tone === 'sage' ? s.sageText : s.neutralText;
   return (
@@ -29,7 +34,7 @@ export function SecondaryButton({ label, onPress, icon, sound = 'tap', style, to
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   btn: { borderRadius: radius.lg, paddingVertical: space(3.5), paddingHorizontal: space(4), alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   gold: { backgroundColor: colors.gold },

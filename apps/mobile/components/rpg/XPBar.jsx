@@ -4,10 +4,13 @@ import { useEffect, useRef } from 'react';
 import { View, Animated, StyleSheet } from 'react-native';
 import Icon from '../Icon';
 import { Label, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import { motionOn } from '../../native/settings';
 
 export default function XPBar({ progress = 0, level, xpToNext, showLabel = false }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const w = useRef(new Animated.Value(motionOn() ? 0 : clamp(progress))).current;
 
   useEffect(() => {
@@ -43,7 +46,7 @@ function clamp(n) {
   return Math.max(0, Math.min(1, n || 0));
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   labelLeft: { flexDirection: 'row', alignItems: 'center' },
   toNext: { fontFamily: fonts.mono, fontSize: 12, color: colors.textSecondary },

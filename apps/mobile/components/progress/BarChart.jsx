@@ -3,9 +3,10 @@
 import { View } from 'react-native';
 import Svg, { Rect, Line as SvgLine } from 'react-native-svg';
 import { Label } from '../../ui';
-import { colors } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 
-export default function BarChart({ data = [], height = 120, width = 300, color = colors.gold }) {
+export default function BarChart({ data = [], height = 120, width = 300, color = '#C9A84C' }) {
+  const colors = useColors();
   const values = data.map((d) => (typeof d === 'number' ? d : d?.value || 0));
   if (values.length === 0) {
     return (

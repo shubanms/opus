@@ -4,7 +4,8 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { plateCalc } from '@opus/core';
 import { Label, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import { getSetting } from '../../native/settings';
 
 // Plate → chip color (roughly the calibrated-plate convention, warm-toned).
@@ -14,6 +15,8 @@ const PLATE_COLOR = {
 };
 
 export default function PlateCalculator({ weight }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const bar = Number(getSetting('barWeight')) || 20;
   const target = Number(weight) || 0;
   if (target <= bar) return null;
@@ -43,7 +46,7 @@ export default function PlateCalculator({ weight }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   wrap: { backgroundColor: colors.ivory, borderRadius: radius.md, padding: space(3), gap: space(2) },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2) },

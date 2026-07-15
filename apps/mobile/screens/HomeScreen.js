@@ -4,7 +4,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import Icon from '../components/Icon';
 import { rpg, dateKey } from '@opus/core';
 import { Screen, Wordmark, H1, H2, Label, Body, Mono } from '../ui';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import Card from '../components/Card';
 import StatTile from '../components/StatTile';
 import LevelBadge from '../components/rpg/LevelBadge';
@@ -27,6 +28,8 @@ function relDay(key) {
 }
 
 export default function HomeScreen({ navigation }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const { settings } = useSettings();
   const [totals, setTotals] = useState({ workouts: 0, totalVolume: 0, streak: 0, totalXP: 0 });
   const [recent, setRecent] = useState([]);
@@ -134,7 +137,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   heroTop: { flexDirection: 'row', alignItems: 'flex-start' },
   streakPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.ivory, borderRadius: radius.full, paddingHorizontal: space(3), paddingVertical: space(1.5) },
   streakText: { color: colors.ember, fontFamily: fonts.monoMedium, fontSize: 13, marginLeft: 4 },

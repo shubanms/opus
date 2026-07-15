@@ -3,7 +3,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import Icon from '../components/Icon';
 import { rpg, achievements as ach, bosses } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import Card from '../components/Card';
 import StatTile from '../components/StatTile';
 import LevelBadge from '../components/rpg/LevelBadge';
@@ -21,6 +22,8 @@ import { useDbQuery } from '../native/useDbQuery';
 import { getTotals, unlockedAchievementKeys, computeAchievementStats, getAllPRs, getWrappedInputs } from '../native/db';
 
 export default function ProfileScreen() {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const { settings } = useSettings();
   const [sheet, setSheet] = useState(null); // 'ranks' | 'records' | null
   const totals = useDbQuery(() => getTotals(), [], { totalXP: 0, workouts: 0, sets: 0, streak: 0, totalVolume: 0 });
@@ -136,7 +139,7 @@ export default function ProfileScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   name: { color: colors.textPrimary, fontFamily: fonts.display, fontSize: 30 },
   rankRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(3) },
   rank: { color: colors.textPrimary, fontFamily: fonts.displaySemi, fontSize: 20, marginLeft: space(3) },

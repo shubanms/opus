@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider } from './native/ThemeProvider';
 import Icon from './components/Icon';
 import { useFonts } from 'expo-font';
 import { CormorantGaramond_600SemiBold, CormorantGaramond_700Bold } from '@expo-google-fonts/cormorant-garamond';
@@ -89,6 +90,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
+        <ThemeProvider>
         <StatusBar style="light" />
         {!settings.onboarded ? (
           <Onboarding />
@@ -115,6 +117,7 @@ export default function App() {
         </Tab.Navigator>
       </NavigationContainer>
         )}
+        </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

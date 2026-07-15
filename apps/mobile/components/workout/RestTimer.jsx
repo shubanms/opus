@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Mono, Label } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 import { SecondaryButton } from '../Button';
 import { playCue } from '../../native/sound';
@@ -26,6 +27,8 @@ function fmt(sec) {
 }
 
 export default function RestTimer({ onDone }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const initial = Number(getSetting('restDuration')) || 90;
   const [total, setTotal] = useState(initial);
   const [remaining, setRemaining] = useState(initial);
@@ -120,7 +123,7 @@ export default function RestTimer({ onDone }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   wrap: { backgroundColor: colors.stone, borderRadius: radius.xl, padding: space(4), gap: space(3), alignItems: 'stretch' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   skip: { color: colors.ash, fontFamily: fonts.sansMedium, fontSize: 13 },

@@ -5,7 +5,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { dateKey } from '@opus/core';
 import { Label, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import Card from '../Card';
 import PressScale from '../PressScale';
 import { useDbQuery } from '../../native/useDbQuery';
@@ -16,6 +17,8 @@ const SIZE = 96;
 const STROKE = 9;
 
 function Ring({ frac, color, radiusPx }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const c = 2 * Math.PI * radiusPx;
   return (
     <>
@@ -30,6 +33,8 @@ function Ring({ frac, color, radiusPx }) {
 }
 
 export default function ActivityRings() {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const { settings } = useSettings();
   const today = dateKey.todayKey();
   const steps = useDbQuery(() => getSteps(today), [today], null) || 0;
@@ -66,7 +71,7 @@ export default function ActivityRings() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space(4), marginTop: space(3) },
   rings: { width: SIZE, height: SIZE },
   val: { fontFamily: fonts.monoMedium, fontSize: 18, color: colors.textPrimary },

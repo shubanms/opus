@@ -6,7 +6,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import Icon from '../Icon';
 import { quests as coreQuests } from '@opus/core';
 import { Label, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import Card from '../Card';
 import PressScale from '../PressScale';
 import Particles from '../fx/Particles';
@@ -22,6 +23,8 @@ const ICON = {
 };
 
 export default function QuestBoard() {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const weekQuests = coreQuests.weeklyQuests();
   const stats = useDbQuery(() => getWeekQuestStats(), [], {});
   const claims = useDbQuery(() => getQuestClaims(), [], []);
@@ -88,7 +91,7 @@ function fmtProg(q, progress) {
   return `${Math.round(progress)}/${q.target}`;
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   quest: { gap: space(2) },
   qHead: { flexDirection: 'row', alignItems: 'center' },
   qTitle: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },

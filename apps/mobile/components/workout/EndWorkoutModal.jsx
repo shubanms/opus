@@ -3,12 +3,15 @@
 // and a gold "Done" CTA. Ports the PWA EndWorkoutModal.
 import { Modal, View, Text, StyleSheet } from 'react-native';
 import { H1, H2, Label, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import CountUp from '../fx/CountUp';
 import Particles from '../fx/Particles';
 import { GoldButton } from '../Button';
 
 function Stat({ label, value, suffix, accent }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.stat}>
       <CountUp value={value} suffix={suffix} style={[s.statValue, accent && { color: colors.gold }]} />
@@ -18,6 +21,8 @@ function Stat({ label, value, suffix, accent }) {
 }
 
 export default function EndWorkoutModal({ visible, summary, prs = [], achievements = [], onClose }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const prCount = prs.length;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -68,7 +73,7 @@ export default function EndWorkoutModal({ visible, summary, prs = [], achievemen
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(17,16,16,0.72)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.chalk, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'], padding: space(6), paddingBottom: space(10), gap: space(3) },
   title: { textAlign: 'center' },

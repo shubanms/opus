@@ -4,7 +4,7 @@
     "slug": "opus",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#111010",
     "icon": "./assets/icon-only.png",
     "scheme": "opus",

@@ -3,7 +3,8 @@
 import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
 import Icon from '../Icon';
 import { H2, Label, Body, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 
 function dayLabel(ms) {
@@ -12,6 +13,8 @@ function dayLabel(ms) {
 }
 
 export default function HallOfRecordsModal({ visible, onClose, prs = [] }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   // Group by calendar day (newest first — prs already come newest-first).
   const groups = [];
   const byDay = new Map();
@@ -58,7 +61,7 @@ export default function HallOfRecordsModal({ visible, onClose, prs = [] }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(17,16,16,0.72)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.chalk, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'], padding: space(5), paddingBottom: space(2), height: '82%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space(3) },

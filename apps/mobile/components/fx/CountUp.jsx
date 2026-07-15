@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Text } from 'react-native';
 import { motionOn } from '../../native/settings';
-import { fonts, colors } from '../../theme';
+import { fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 
 export default function CountUp({ value = 0, duration = 900, format, style, suffix = '' }) {
+  const colors = useColors();
   const [display, setDisplay] = useState(motionOn() ? 0 : value);
   const raf = useRef(null);
   const fromRef = useRef(0);
