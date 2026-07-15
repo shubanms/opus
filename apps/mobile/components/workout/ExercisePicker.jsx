@@ -6,11 +6,14 @@ import { useState } from 'react';
 import { Modal, View, Text, TextInput, FlatList, StyleSheet } from 'react-native';
 import Icon from '../Icon';
 import { H2, Label } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 import { getExercises } from '../../native/db';
 
 export default function ExercisePicker({ visible, onClose, onPick }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   let list = [];
   try { list = getExercises(query); } catch { list = []; }
@@ -66,7 +69,7 @@ export default function ExercisePicker({ visible, onClose, onPick }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(17,16,16,0.72)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.chalk, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'], padding: space(5), paddingBottom: space(2), height: '82%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space(3) },

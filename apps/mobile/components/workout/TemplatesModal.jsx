@@ -6,7 +6,8 @@ import { Modal, View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import Icon from '../Icon';
 import { routineGenerator, routineName } from '@opus/core';
 import { H2, Label, Body, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 import { GoldButton } from '../Button';
 import { useDbQuery } from '../../native/useDbQuery';
@@ -23,6 +24,8 @@ const LEVELS = [
 let seedCounter = 1;
 
 export default function TemplatesModal({ visible, onClose, onStart }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const [level, setLevel] = useState('intermediate');
   const templates = useDbQuery(() => getTemplates(), [], []);
 
@@ -110,7 +113,7 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(17,16,16,0.72)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.chalk, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'], padding: space(5), paddingBottom: space(2), height: '82%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space(3) },

@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { dateKey, units } from '@opus/core';
 import { Label, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import Card from '../Card';
 import PressScale from '../PressScale';
 import LineChart from './LineChart';
@@ -13,6 +14,8 @@ import { getBodyStats, logBodyStat, currentBodyweight } from '../../native/db';
 import { useSettings } from '../../native/settings';
 
 export default function BodyWeightCard({ width }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const { settings } = useSettings();
   const unit = settings.unit || 'kg';
   const [val, setVal] = useState('');
@@ -55,7 +58,7 @@ export default function BodyWeightCard({ width }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   current: { color: colors.sage, fontFamily: fonts.monoMedium, fontSize: 15 },
   inputRow: { flexDirection: 'row', gap: space(2), marginTop: space(3) },

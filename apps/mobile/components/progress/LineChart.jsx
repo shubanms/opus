@@ -4,9 +4,11 @@
 import { View } from 'react-native';
 import Svg, { Polyline, Polygon, Circle, Line as SvgLine } from 'react-native-svg';
 import { Label } from '../../ui';
-import { colors, space } from '../../theme';
+import { space } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 
-export default function LineChart({ data = [], height = 120, color = colors.gold, width = 300 }) {
+export default function LineChart({ data = [], height = 120, color = '#C9A84C', width = 300 }) {
+  const colors = useColors();
   const values = data.map((d) => (typeof d === 'number' ? d : d?.value || 0));
   const padX = 6;
   const padY = 10;

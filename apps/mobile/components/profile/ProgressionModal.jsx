@@ -5,10 +5,13 @@ import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
 import Icon from '../Icon';
 import { rpg, bosses } from '@opus/core';
 import { H2, Label, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 
 export default function ProgressionModal({ visible, onClose, level = 1, stats }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const gates = bosses.bossList(stats);
   const active = bosses.activeBoss(level, stats);
 
@@ -63,7 +66,7 @@ export default function ProgressionModal({ visible, onClose, level = 1, stats })
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(17,16,16,0.72)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.chalk, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'], padding: space(5), paddingBottom: space(2), height: '82%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space(3) },

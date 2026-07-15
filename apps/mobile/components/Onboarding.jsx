@@ -4,13 +4,16 @@ import { useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Wordmark, Display, Label, Body } from '../ui';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import PressScale from './PressScale';
 import { GoldButton } from './Button';
 import GoldAura from './fx/GoldAura';
 import { useSettings } from '../native/settings';
 
 export default function Onboarding({ onDone }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const { update } = useSettings();
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('kg');
@@ -62,7 +65,7 @@ export default function Onboarding({ onDone }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   aura: { position: 'absolute', top: 40, left: 0, right: 0, alignItems: 'center' },
   body: { flex: 1, justifyContent: 'center', paddingHorizontal: space(6), gap: space(3) },

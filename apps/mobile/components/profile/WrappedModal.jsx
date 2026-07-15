@@ -5,12 +5,15 @@ import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
 import Icon from '../Icon';
 import { wrapped as coreWrapped } from '@opus/core';
 import { H1, H2, Label, Body, Mono } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 import CountUp from '../fx/CountUp';
 import LineChart from '../progress/LineChart';
 
 function Stat({ value, label, suffix }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.stat}>
       <CountUp value={value} suffix={suffix} style={s.statVal} />
@@ -20,6 +23,8 @@ function Stat({ value, label, suffix }) {
 }
 
 export default function WrappedModal({ visible, onClose, inputs }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const periods = useMemo(
     () => coreWrapped.availablePeriods(inputs?.workouts || []),
     [inputs]
@@ -100,7 +105,7 @@ export default function WrappedModal({ visible, onClose, inputs }) {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(17,16,16,0.72)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.chalk, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'], padding: space(5), paddingBottom: space(2), height: '82%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space(3) },

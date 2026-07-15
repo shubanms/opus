@@ -2,7 +2,8 @@ import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Icon from '../components/Icon';
 import { dateKey } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import Card from '../components/Card';
 import StatTile from '../components/StatTile';
 import LineChart from '../components/progress/LineChart';
@@ -27,6 +28,8 @@ function relDay(ms) {
 }
 
 export default function ProgressScreen() {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const win = useWindowDimensions();
   const chartW = Math.round(win.width - 2 * space(5) - 2 * space(4)); // screen + card padding
 
@@ -106,7 +109,7 @@ export default function ProgressScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   bento: { flexDirection: 'row', gap: space(3) },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: space(2.5), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
   name: { flex: 1, color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 15 },

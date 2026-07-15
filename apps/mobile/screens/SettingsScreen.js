@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, Switch, Modal } from 'react-native';
 import { dateKey } from '@opus/core';
 import { Screen, H1, H2, Label, Body, Mono, Wordmark } from '../ui';
-import { colors, radius, space, fonts } from '../theme';
+import { radius, space, fonts } from '../theme';
+import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import Card from '../components/Card';
 import PressScale from '../components/PressScale';
 import { GoldButton, SecondaryButton } from '../components/Button';
@@ -13,6 +14,8 @@ import { previewSounds } from '../native/sound';
 import { useSettings } from '../native/settings';
 
 function Row({ label, value, onValueChange }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.row}>
       <Body style={{ color: colors.textPrimary, fontFamily: fonts.sansMedium }}>{label}</Body>
@@ -23,6 +26,8 @@ function Row({ label, value, onValueChange }) {
 
 // Segmented control (pill row). options = [{value,label}].
 function Segmented({ options, value, onChange }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.seg}>
       {options.map((o) => {
@@ -38,6 +43,8 @@ function Segmented({ options, value, onChange }) {
 }
 
 function NumberField({ label, value, onChange, suffix }) {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   return (
     <View style={s.numRow}>
       <Body style={{ color: colors.textPrimary, fontFamily: fonts.sansMedium }}>{label}</Body>
@@ -56,6 +63,8 @@ function NumberField({ label, value, onChange, suffix }) {
 }
 
 export default function SettingsScreen() {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const { settings, update } = useSettings();
   const [notif, setNotif] = useState(settings.notifDaily);
   const [steps, setStepsState] = useState(null);
@@ -104,6 +113,14 @@ export default function SettingsScreen() {
             options={[{ value: 'kg', label: 'Kilograms' }, { value: 'lbs', label: 'Pounds' }]}
             value={settings.unit || 'kg'}
             onChange={(v) => update('unit', v)}
+          />
+        </View>
+        <Label style={{ marginTop: space(4) }}>Theme</Label>
+        <View style={{ marginTop: space(2) }}>
+          <Segmented
+            options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }, { value: 'system', label: 'System' }]}
+            value={settings.theme || 'system'}
+            onChange={(v) => update('theme', v)}
           />
         </View>
       </Card>
@@ -195,7 +212,7 @@ export default function SettingsScreen() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: space(2) },
   aboutTag: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 14 },
   seg: { flexDirection: 'row', backgroundColor: colors.ivory, borderRadius: radius.lg, padding: 3 },

@@ -1,9 +1,11 @@
 // Typographic + layout primitives carrying the OPUS brand voice: Cormorant
 // Garamond serif for display/titles, DM Sans for labels/body, DM Mono for
 // numbers. Import these instead of raw <Text> so the whole app stays on-brand.
+// Theme-aware: text/surface colors come from the active palette (useThemedStyles).
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, space, fonts } from './theme';
+import { radius, space, fonts } from './theme';
+import { useThemedStyles } from './native/ThemeProvider';
 
 // When the brand fonts haven't loaded (or we escaped the load timeout), fall
 // back to the system font so text is never invisible. App.js flips this.
@@ -15,6 +17,7 @@ export function setFontsReady(v) {
 const sys = () => (_fontsReady ? null : { fontFamily: undefined });
 
 export function Screen({ children, scroll = true, contentStyle }) {
+  const s = useThemedStyles(makeStyles);
   const Body = scroll ? ScrollView : View;
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
@@ -31,36 +34,43 @@ export function Screen({ children, scroll = true, contentStyle }) {
 
 // "OPUS" wordmark — Cormorant, wide letter-spacing (the brand signature).
 export function Wordmark({ style, size = 40 }) {
+  const s = useThemedStyles(makeStyles);
   return <Text style={[s.wordmark, { fontSize: size, letterSpacing: size * 0.14 }, sys(), style]}>OPUS</Text>;
 }
 
 export function Display({ children, style }) {
+  const s = useThemedStyles(makeStyles);
   return <Text style={[s.display, sys(), style]}>{children}</Text>;
 }
 
 export function H1({ children, style, numberOfLines }) {
+  const s = useThemedStyles(makeStyles);
   return <Text numberOfLines={numberOfLines} style={[s.h1, sys(), style]}>{children}</Text>;
 }
 
 export function H2({ children, style }) {
+  const s = useThemedStyles(makeStyles);
   return <Text style={[s.h2, sys(), style]}>{children}</Text>;
 }
 
 // Small-caps overline label (eyebrow). Pass color for gold/secondary variants.
 export function Label({ children, style }) {
+  const s = useThemedStyles(makeStyles);
   return <Text style={[s.label, sys(), style]}>{children}</Text>;
 }
 
 export function Body({ children, style, numberOfLines }) {
+  const s = useThemedStyles(makeStyles);
   return <Text numberOfLines={numberOfLines} style={[s.body, sys(), style]}>{children}</Text>;
 }
 
 // Tabular numeric text (DM Mono) — levels, XP, stat values, timers.
 export function Mono({ children, style }) {
+  const s = useThemedStyles(makeStyles);
   return <Text style={[s.mono, sys(), style]}>{children}</Text>;
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: space(5), paddingBottom: space(24), gap: space(4) },
   wordmark: { color: colors.textInverse, fontFamily: fonts.display },
@@ -78,4 +88,4 @@ const s = StyleSheet.create({
   mono: { color: colors.textPrimary, fontFamily: fonts.mono, fontSize: 15 },
 });
 
-export { colors, radius, space, fonts };
+export { colors, radius, space, fonts } from './theme';

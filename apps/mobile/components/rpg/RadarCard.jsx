@@ -5,7 +5,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Polygon, Line as SvgLine, Circle, Text as SvgText } from 'react-native-svg';
 import { rpg } from '@opus/core';
 import { Label } from '../../ui';
-import { colors, radius, space, fonts } from '../../theme';
+import { radius, space, fonts } from '../../theme';
+import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import Card from '../Card';
 import { useDbQuery } from '../../native/useDbQuery';
 import { getRadarInputs } from '../../native/db';
@@ -15,6 +16,8 @@ const CENTER = SIZE / 2;
 const R = 78;
 
 export default function RadarCard() {
+  const colors = useColors();
+  const s = useThemedStyles(makeStyles);
   const inputs = useDbQuery(() => getRadarInputs(), [], null);
   const stats = rpg.getCharacterStats(inputs || {});
   const n = stats.length;
@@ -62,7 +65,7 @@ export default function RadarCard() {
   );
 }
 
-const s = StyleSheet.create({
+const makeStyles = (colors) => StyleSheet.create({
   legend: { marginTop: space(3), gap: space(1) },
   legendRow: { flexDirection: 'row', justifyContent: 'space-between' },
   legAxis: { color: colors.ash, fontFamily: fonts.sans, fontSize: 12 },
