@@ -13,6 +13,7 @@ import RestTimer from '../components/workout/RestTimer';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal';
 import ExercisePicker from '../components/workout/ExercisePicker';
 import PlateCalculator from '../components/workout/PlateCalculator';
+import TemplatesModal from '../components/workout/TemplatesModal';
 import {
   getActiveWorkout,
   getOrCreateActiveWorkout,
@@ -42,6 +43,7 @@ export default function WorkoutScreen({ navigation, route }) {
   const [restKey, setRestKey] = useState(0); // >0 shows the rest timer (remounts per rest)
   const [end, setEnd] = useState(null); // { summary, prs } → end-of-workout modal
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -162,9 +164,14 @@ export default function WorkoutScreen({ navigation, route }) {
             <H1>Workout</H1>
             <Label style={{ marginTop: 4 }}>{sets.length} sets · {units.fmtVolume(volume, unit)} volume</Label>
           </View>
-          {sets.length > 0 && (
+          {sets.length > 0 ? (
             <PressScale sound="success" onPress={finish} style={s.finish}>
               <Text style={s.finishText}>Finish</Text>
+            </PressScale>
+          ) : (
+            <PressScale sound="tap" onPress={() => setTemplatesOpen(true)} style={s.routines}>
+              <Icon name="layers" size={16} color={colors.textPrimary} />
+              <Text style={s.routinesText}>Routines</Text>
             </PressScale>
           )}
         </View>
@@ -222,6 +229,7 @@ export default function WorkoutScreen({ navigation, route }) {
       {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
       <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} achievements={end?.achievements || []} onClose={closeEnd} />
       <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={setExercise} />
+      <TemplatesModal visible={templatesOpen} onClose={() => setTemplatesOpen(false)} onStart={setExercise} />
     </Screen>
   );
 }
@@ -230,6 +238,8 @@ const s = StyleSheet.create({
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   finish: { backgroundColor: colors.sage, borderRadius: radius.lg, paddingHorizontal: space(5), paddingVertical: space(3) },
   finishText: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },
+  routines: { flexDirection: 'row', alignItems: 'center', gap: space(2), backgroundColor: colors.ivory, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3) },
+  routinesText: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
   exerciseRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   exercise: { backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 15 },
   browse: { width: 50, height: 50, borderRadius: radius.lg, backgroundColor: colors.ivory, alignItems: 'center', justifyContent: 'center' },

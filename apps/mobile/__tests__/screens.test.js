@@ -18,6 +18,8 @@ import RestTimer from '../components/workout/RestTimer';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal';
 import ExercisePicker from '../components/workout/ExercisePicker';
 import PlateCalculator from '../components/workout/PlateCalculator';
+import TemplatesModal from '../components/workout/TemplatesModal';
+import Onboarding from '../components/Onboarding';
 import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
 import ProgressionModal from '../components/profile/ProgressionModal';
@@ -90,6 +92,16 @@ describe('workout components render without crashing', () => {
     const { getByText } = render(<PlateCalculator weight={100} />);
     expect(getByText('1×25')).toBeTruthy(); // 40/side = 25 + 15
     expect(getByText('1×15')).toBeTruthy();
+  });
+  it('TemplatesModal lists saved routines + generate', () => {
+    const { getByText } = render(<TemplatesModal visible onClose={() => {}} onStart={() => {}} />);
+    expect(getByText('Generate a routine')).toBeTruthy();
+    expect(getByText('Push Day')).toBeTruthy();
+  });
+  it('Onboarding renders the first-run form', () => {
+    const { getByText } = render(<Onboarding onDone={() => {}} />);
+    expect(getByText('Build your masterpiece.')).toBeTruthy();
+    expect(getByText('Start training')).toBeTruthy();
   });
 });
 

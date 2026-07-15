@@ -44,7 +44,7 @@ jest.mock('./native/db', () => ({
   getStreak: jest.fn(() => 3),
   getTotals: jest.fn(() => ({ workouts: 12, sets: 84, totalVolume: 42000, totalXP: 5200, streak: 3 })),
   getBestByExercise: jest.fn(() => [{ name: 'Bench Press', e1rm: 110, weight: 100, reps: 5 }]),
-  getAllSettings: jest.fn(() => ({})),
+  getAllSettings: jest.fn(() => ({ onboarded: 'true' })),
   setSetting: jest.fn(),
   setSteps: jest.fn(),
   getSteps: jest.fn(() => null),
@@ -64,6 +64,9 @@ jest.mock('./native/db', () => ({
   logBodyStat: jest.fn(),
   getBodyStats: jest.fn(() => []),
   currentBodyweight: jest.fn(() => null),
+  getTemplates: jest.fn(() => [{ id: 1, name: 'Push Day', exercises: ['Bench Press', 'Arnold Press'] }]),
+  createTemplate: jest.fn(() => 1),
+  deleteTemplate: jest.fn(),
   unlockedAchievementKeys: jest.fn(() => ['first']),
   syncAchievements: jest.fn(() => []),
   computeAchievementStats: jest.fn(() => ({
