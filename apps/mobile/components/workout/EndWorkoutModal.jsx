@@ -8,6 +8,7 @@ import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import CountUp from '../fx/CountUp';
 import Particles from '../fx/Particles';
 import { GoldButton } from '../Button';
+import ShareButton from '../share/ShareButton';
 
 function Stat({ label, value, suffix, accent }) {
   const colors = useColors();
@@ -20,7 +21,7 @@ function Stat({ label, value, suffix, accent }) {
   );
 }
 
-export default function EndWorkoutModal({ visible, summary, prs = [], achievements = [], onClose }) {
+export default function EndWorkoutModal({ visible, summary, prs = [], achievements = [], shareData, onClose }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const prCount = prs.length;
@@ -64,6 +65,10 @@ export default function EndWorkoutModal({ visible, summary, prs = [], achievemen
                 </View>
               ))}
             </View>
+          )}
+
+          {shareData && (
+            <ShareButton cardKey="workout" data={shareData} filename="opus-workout.png" label="Share this workout" variant="pill" />
           )}
 
           <GoldButton label="Done" icon="checkmark" sound="success" onPress={onClose} style={{ marginTop: space(2) }} />

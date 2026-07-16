@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, FlatList, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from '../components/Icon';
-import { oneRepMax, units } from '@opus/core';
+import { oneRepMax, units, rpg, dateKey } from '@opus/core';
 import { useSettings } from '../native/settings';
 import { Screen, H1, H2, Label, Mono } from '../ui';
 import { radius, space, fonts } from '../theme';
@@ -27,6 +27,8 @@ import {
   addPR,
   getWorkoutSummary,
   syncAchievements,
+  getExercises,
+  getTotals,
 } from '../native/db';
 import { refreshWidgets } from '../native/widgets';
 import { playCue } from '../native/sound';
@@ -131,7 +133,33 @@ export default function WorkoutScreen({ navigation, route }) {
     hSuccess();
     playCue(prs.length || newAchievements.length ? 'chime' : 'success');
     setBurst((b) => b + 1);
-    setEnd({ summary: getWorkoutSummary(workoutId), prs, achievements: newAchievements });
+
+    const summary = getWorkoutSummary(workoutId);
+    // Compose the shareable card payload (mirror of the web EndWorkoutModal).
+    let muscles = [];
+    try {
+      const catalog = new Map(getExercises().map((e) => [e.name, e.muscleGroup]));
+      const names = [...new Set(sets.map((st) => st.exerciseName).filter(Boolean))];
+      muscles = [...new Set(names.map((n) => catalog.get(n)).filter(Boolean))];
+    } catch {}
+    const topPr = prs.length ? prs.reduce((a, b) => (b.value > a.value ? b : a)) : null;
+    let level = 1;
+    try { level = rpg.getLevelFromTotalXP(getTotals().totalXP); } catch {}
+    const shareData = {
+      name: workout.name || 'Workout',
+      athlete: settings.name || null,
+      date: dateKey.todayKey(),
+      duration: summary.durationSec,
+      totalVolume: summary.totalVolume,
+      totalSets: summary.totalSets,
+      xpEarned: summary.xpEarned,
+      muscles,
+      pr: topPr ? { exercise: topPr.exerciseName, value: topPr.value } : null,
+      level,
+      unit,
+    };
+
+    setEnd({ summary, prs, achievements: newAchievements, shareData });
   };
 
   const closeEnd = () => {
@@ -230,7 +258,7 @@ export default function WorkoutScreen({ navigation, route }) {
         )}
       </View>
       {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
-      <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} achievements={end?.achievements || []} onClose={closeEnd} />
+      <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} achievements={end?.achievements || []} shareData={end?.shareData} onClose={closeEnd} />
       <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={setExercise} />
       <TemplatesModal visible={templatesOpen} onClose={() => setTemplatesOpen(false)} onStart={setExercise} />
     </Screen>
