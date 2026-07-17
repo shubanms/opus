@@ -46,6 +46,8 @@ import BodyStatsForm from '../components/progress/BodyStatsForm';
 import SleepForm from '../components/progress/SleepForm';
 import EquipmentModal from '../components/settings/EquipmentModal';
 import WeeklyRecap from '../components/home/WeeklyRecap';
+import Tour from '../components/tour/Tour';
+import CoachMark from '../components/coach/CoachMark';
 
 const Tab = createBottomTabNavigator();
 
@@ -307,6 +309,25 @@ describe('home richness (Phase E)', () => {
     const { getByText } = render(<WeeklyRecap />);
     expect(getByText('Your week so far')).toBeTruthy();
     expect(getByText('Sessions')).toBeTruthy();
+  });
+});
+
+describe('guided tour + coach marks (Phase F)', () => {
+  it('Tour shows the first step and advances', async () => {
+    const { getByText } = render(<Tour navigation={{ navigate: () => {} }} onDone={() => {}} />);
+    expect(getByText('Log your workouts')).toBeTruthy();
+    fireEvent.press(getByText('Next'));
+    await waitFor(() => expect(getByText('Level up')).toBeTruthy());
+  });
+
+  it('CoachMark renders the tip for a tab', () => {
+    const { getByText } = render(<CoachMark route="Home" />);
+    expect(getByText('Got it')).toBeTruthy();
+  });
+
+  it('CoachMark renders nothing for an unknown route', () => {
+    const { toJSON } = render(<CoachMark route="Nope" />);
+    expect(toJSON()).toBeNull();
   });
 });
 

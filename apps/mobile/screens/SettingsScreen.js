@@ -55,7 +55,7 @@ function NumberField({ label, value, onChange, suffix }) {
   );
 }
 
-export default function SettingsScreen() {
+export default function SettingsScreen({ navigation }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const { settings, update } = useSettings();
@@ -229,8 +229,10 @@ export default function SettingsScreen() {
           <Row label="Animations & haptics" value={settings.effects} onValueChange={(v) => update('effects', v)} />
           <Row label="Opening theme music" value={settings.sound && settings.themeOnOpen} onValueChange={(v) => update('themeOnOpen', v)} />
         </View>
-        <View style={{ marginTop: space(2) }}>
+        <View style={{ marginTop: space(2), gap: space(2) }}>
           <SecondaryButton label="Preview sounds" icon="musical-notes" onPress={() => previewSounds()} />
+          <SecondaryButton label="Replay walkthrough" icon="book" onPress={() => { update('tourSeen', false); navigation?.navigate('Home'); }} />
+          <SecondaryButton label="Show tips again" icon="bulb" onPress={() => { update('coachMarksSeen', {}); Alert.alert('Tips reset', 'Tips will show again as you browse.'); }} />
         </View>
       </Card>
 
