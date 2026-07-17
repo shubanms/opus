@@ -30,6 +30,7 @@ export default function VaultModal({ isOpen, onClose }) {
   const life = useLifetimeStats();
   const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
   const ironSpent = useSettingsStore((s) => s.ironSpent);
+  const dungeonIron = useSettingsStore((s) => s.dungeonIron);
   const owned = useSettingsStore((s) => s.ownedCosmetics);
   const equipped = useSettingsStore((s) => s.equipped);
   const buyCosmetic = useSettingsStore((s) => s.buyCosmetic);
@@ -37,7 +38,7 @@ export default function VaultModal({ isOpen, onClose }) {
   const openChest = useSettingsStore((s) => s.openChest);
   const haptic = useHaptics();
 
-  const balance = ironBalance(earnedIron({ workouts: life.workouts, prCount: life.prCount, questClaims }), ironSpent);
+  const balance = ironBalance(earnedIron({ workouts: life.workouts, prCount: life.prCount, questClaims, bonusIron: dungeonIron }), ironSpent);
   const [burst, setBurst] = useState(null);
   const [chestResult, setChestResult] = useState(null);
 

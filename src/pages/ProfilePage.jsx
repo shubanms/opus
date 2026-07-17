@@ -49,13 +49,14 @@ export default function ProfilePage() {
   const unit = useSettingsStore((s) => s.unit);
   const equipped = useSettingsStore((s) => s.equipped);
   const ironSpent = useSettingsStore((s) => s.ironSpent);
+  const dungeonIron = useSettingsStore((s) => s.dungeonIron);
   const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
   const [vaultOpen, setVaultOpen] = useState(false);
 
   if (!loaded || !profile) return null;
 
   const flair = equipped?.titleFlair ? cosmeticById(equipped.titleFlair)?.value : null;
-  const ironBal = ironBalance(earnedIron({ workouts: life.workouts, prCount: life.prCount, questClaims }), ironSpent);
+  const ironBal = ironBalance(earnedIron({ workouts: life.workouts, prCount: life.prCount, questClaims, bonusIron: dungeonIron }), ironSpent);
 
   const totalXp = profile.totalXp ?? 0;
   const { effectiveXp, decaying, lost } = decayInfo(profile);

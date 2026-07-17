@@ -30,7 +30,7 @@ export default function VaultModal({ visible, onClose }) {
   const owned = settings.ownedCosmetics || [];
   const equipped = settings.equipped || {};
   const balance = economy.ironBalance(
-    economy.earnedIron({ workouts: totals.workouts, prCount: totals.prCount, questClaims: totals.questClaims }),
+    economy.earnedIron({ workouts: totals.workouts, prCount: totals.prCount, questClaims: totals.questClaims, bonusIron: settings.dungeonIron }),
     settings.ironSpent
   );
   const [chestResult, setChestResult] = useState(null);

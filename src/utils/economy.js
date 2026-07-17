@@ -10,8 +10,8 @@ export const IRON_PER_PR = 10;
 export const IRON_PER_QUEST = 40;
 export const CHEST_PRICE = 200;
 
-export function earnedIron({ workouts = 0, prCount = 0, questClaims = 0 } = {}) {
-  return (workouts || 0) * IRON_PER_SESSION + (prCount || 0) * IRON_PER_PR + (questClaims || 0) * IRON_PER_QUEST;
+export function earnedIron({ workouts = 0, prCount = 0, questClaims = 0, bonusIron = 0 } = {}) {
+  return (workouts || 0) * IRON_PER_SESSION + (prCount || 0) * IRON_PER_PR + (questClaims || 0) * IRON_PER_QUEST + (bonusIron || 0);
 }
 
 export function ironBalance(earned = 0, spent = 0) {

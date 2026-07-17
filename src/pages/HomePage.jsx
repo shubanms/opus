@@ -22,6 +22,7 @@ import RecoveryMap from '../components/progress/RecoveryMap.jsx';
 import ActivityRings from '../components/progress/ActivityRings.jsx';
 import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import QuestBoard from '../components/rpg/QuestBoard.jsx';
+import DailyDungeonCard from '../components/rpg/DailyDungeonCard.jsx';
 import useWorkoutStore from '../store/workoutStore.js';
 
 const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
@@ -264,6 +265,9 @@ export default function HomePage() {
           <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
         )}
       </div>
+
+      {/* Daily dungeon */}
+      <DailyDungeonCard />
 
       {/* Weekly recap — compact, auto-hides when no data / dismissed */}
       <WeeklyRecap />

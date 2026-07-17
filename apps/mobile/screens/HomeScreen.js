@@ -17,6 +17,7 @@ import QuestBoard from '../components/home/QuestBoard';
 import HistoryModal from '../components/home/HistoryModal';
 import ActivityRings from '../components/home/ActivityRings';
 import WeeklyRecap from '../components/home/WeeklyRecap';
+import DailyDungeonCard from '../components/home/DailyDungeonCard';
 import RecoveryCard from '../components/progress/RecoveryCard';
 import { getTotals, getRecentWorkouts, getTodayPlan, getLastWorkoutDate, computeAchievementStats } from '../native/db';
 import { useWorkoutSession } from '../native/workoutSession';
@@ -148,6 +149,9 @@ export default function HomeScreen({ navigation }) {
           )}
         </Card>
       </View>
+
+      {/* Daily dungeon */}
+      <DailyDungeonCard lastWorkoutDate={lastWorkoutDate} navigation={navigation} />
 
       {/* Stat bento */}
       <View style={s.bento}>
