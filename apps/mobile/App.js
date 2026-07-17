@@ -15,6 +15,7 @@ import { setFontsReady } from './ui';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initDb } from './native/db';
 import { loadSettings, useSettings } from './native/settings';
+import { loadSession } from './native/workoutSession';
 import Onboarding from './components/Onboarding';
 import HomeScreen from './screens/HomeScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
@@ -75,6 +76,7 @@ export default function App() {
     // Independent so a failure in one can't block the other or setReady.
     try { initDb(); } catch (e) { console.warn('initDb failed', e?.message || e); }
     try { loadSettings(); } catch (e) { console.warn('loadSettings failed', e?.message || e); }
+    try { loadSession(); } catch (e) { console.warn('loadSession failed', e?.message || e); }
     setReady(true);
     // Escape hatch: never let font loading hang the app on a blank splash.
     const t = setTimeout(() => setTimedOut(true), 2500);

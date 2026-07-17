@@ -27,6 +27,7 @@ export * as snapshots from './snapshots.js';
 export * as wrapped from './wrapped.js';
 export * as achievements from './achievements.js';
 export * as shareCard from './shareCard.js';
+export * as prs from './prs.js';
 // seedExercises has a single default export (the array), so re-export it as a
 // named binding — this lets consumers use the bare `import { seedExercises }
 // from '@opus/core'` (resolved via the package main field) instead of the

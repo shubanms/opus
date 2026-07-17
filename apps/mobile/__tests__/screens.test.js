@@ -33,6 +33,11 @@ import RadarCard from '../components/rpg/RadarCard';
 import RecoveryCard from '../components/progress/RecoveryCard';
 import ShareSheet from '../components/share/ShareSheet';
 import { CARDS } from '../components/share/cards';
+import ExerciseSection from '../components/workout/ExerciseSection';
+import SetLogger from '../components/workout/SetLogger';
+import OverloadNudge from '../components/workout/OverloadNudge';
+import LevelUpScreen from '../components/rpg/LevelUpScreen';
+import * as workoutSession from '../native/workoutSession';
 
 const Tab = createBottomTabNavigator();
 
@@ -172,6 +177,39 @@ describe('share cards', () => {
       expect(() => render(<Card data={data} scale={1} />)).not.toThrow();
     });
   }
+});
+
+describe('section-based workout logging', () => {
+  const exercise = {
+    name: 'Bench Press', muscleGroup: 'chest', equipment: 'barbell', isBodyweight: false,
+    targetSets: 3, targetReps: 8, targetWeight: null, supersetId: null,
+    sets: [{ setNumber: 1, weight: 100, reps: 5, isWarmup: false, note: null, rpe: 8 }],
+  };
+
+  it('ExerciseSection renders a logged set + tally', () => {
+    const { getByText } = render(<ExerciseSection exercise={exercise} unit="kg" onSetLogged={() => {}} onRemove={() => {}} canMoveUp canMoveDown />);
+    expect(getByText('Bench Press')).toBeTruthy();
+    expect(getByText(/1 set/)).toBeTruthy();
+  });
+
+  it('SetLogger + OverloadNudge render without crashing', () => {
+    expect(() => render(<SetLogger exercise={exercise} unit="kg" />)).not.toThrow();
+    expect(() => render(<OverloadNudge exerciseName="Bench Press" />)).not.toThrow();
+  });
+
+  it('LevelUpScreen shows the new level', () => {
+    const { getByText } = render(<LevelUpScreen visible level={7} onClose={() => {}} />);
+    expect(getByText('7')).toBeTruthy();
+  });
+
+  it('active WorkoutScreen renders sections + notes', () => {
+    workoutSession.startSession('Push Day');
+    workoutSession.addExercise({ name: 'Bench Press', muscleGroup: 'chest', equipment: 'barbell' });
+    const { getByText } = renderScreen(WorkoutScreen);
+    expect(getByText('Session notes')).toBeTruthy();
+    expect(getByText('Bench Press')).toBeTruthy();
+    workoutSession.discardSession();
+  });
 });
 
 describe('home quest board', () => {
