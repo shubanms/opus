@@ -21,6 +21,7 @@ export * as mascot from './mascot.js';
 export * as workoutSession from './workoutSession.js';
 export * as units from './units.js';
 export * as routineGenerator from './routineGenerator.js';
+export * as weekPlanner from './weekPlanner.js';
 export * as goals from './goals.js';
 export * as volume from './volume.js';
 export * as snapshots from './snapshots.js';
