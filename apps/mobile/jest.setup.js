@@ -133,10 +133,6 @@ jest.mock('./native/notifications', () => ({
   testNotification: jest.fn(async () => {}),
   scheduleDailyReminder: jest.fn(async () => {}),
 }));
-jest.mock('./native/healthConnect', () => ({
-  healthAvailability: jest.fn(async () => 'Available'),
-  connectAndReadSteps: jest.fn(async () => ({ ok: true, steps: 8000 })),
-}));
 // Share capture: view-shot's <ViewShot> is a passthrough view in Node, and
 // captureRef / expo-sharing are no-ops so ShareSheet mounts without native code.
 // virtual: these native deps aren't resolvable in the Node test env (they're

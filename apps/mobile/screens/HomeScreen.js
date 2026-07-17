@@ -18,7 +18,6 @@ import HistoryModal from '../components/home/HistoryModal';
 import ActivityRings from '../components/home/ActivityRings';
 import WeeklyRecap from '../components/home/WeeklyRecap';
 import RecoveryCard from '../components/progress/RecoveryCard';
-import Companion from '../components/mascot/Companion';
 import { getTotals, getRecentWorkouts, getTodayPlan, getLastWorkoutDate, computeAchievementStats } from '../native/db';
 import { useWorkoutSession } from '../native/workoutSession';
 import { refreshWidgets } from '../native/widgets';
@@ -121,9 +120,6 @@ export default function HomeScreen({ navigation }) {
           )}
         </Card>
       </View>
-
-      {/* Magnus — the training companion */}
-      <Companion />
 
       {/* Stat bento */}
       <View style={s.bento}>

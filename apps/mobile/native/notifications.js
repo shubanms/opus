@@ -13,9 +13,11 @@ Notifications.setNotificationHandler({
 
 async function ensureChannel() {
   if (Platform.OS === 'android') {
+    // HIGH importance so notifications surface as a heads-up banner (DEFAULT
+    // drops silently into the tray, which reads as "nothing happened").
     await Notifications.setNotificationChannelAsync('default', {
       name: 'OPUS',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
     });
   }
 }
@@ -31,12 +33,14 @@ export async function enableNotifications() {
   return status === 'granted';
 }
 
-// Fire an immediate local notification (proves delivery).
+// Fire a near-immediate local notification (proves delivery). Uses a 1-second
+// timed trigger bound to the 'default' channel — a channel-less `trigger: null`
+// immediate notification is not reliably shown on modern Android.
 export async function testNotification() {
   await ensureChannel();
   await Notifications.scheduleNotificationAsync({
     content: { title: 'OPUS', body: "Notifications are working — let's train." },
-    trigger: null,
+    trigger: { seconds: 1, channelId: 'default' },
   });
 }
 
