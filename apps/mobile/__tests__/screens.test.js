@@ -21,6 +21,8 @@ import EndWorkoutModal from '../components/workout/EndWorkoutModal';
 import ExercisePicker from '../components/workout/ExercisePicker';
 import PlateCalculator from '../components/workout/PlateCalculator';
 import TemplatesModal from '../components/workout/TemplatesModal';
+import WeekPlannerSheet from '../components/workout/WeekPlannerSheet';
+import TemplateEditor from '../components/workout/TemplateEditor';
 import Onboarding from '../components/Onboarding';
 import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
@@ -113,10 +115,26 @@ describe('workout components render without crashing', () => {
     expect(getByText('1×25')).toBeTruthy(); // 40/side = 25 + 15
     expect(getByText('1×15')).toBeTruthy();
   });
-  it('TemplatesModal lists saved routines + generate', () => {
+  it('TemplatesModal lists saved routines + generate + plan week', () => {
     const { getByText } = render(<TemplatesModal visible onClose={() => {}} onStart={() => {}} />);
     expect(getByText('Generate a routine')).toBeTruthy();
+    expect(getByText('Plan my week')).toBeTruthy();
     expect(getByText('Push Day')).toBeTruthy();
+  });
+  it('WeekPlannerSheet shows splits + generates a week', () => {
+    const { getByText, queryAllByText } = render(<WeekPlannerSheet visible onClose={() => {}} />);
+    expect(getByText('Plan my week')).toBeTruthy();
+    expect(getByText('Push · Pull · Legs')).toBeTruthy();
+    expect(getByText('Full Body')).toBeTruthy();
+    fireEvent.press(getByText('Generate week'));
+    // A generated week renders per-day cards (e.g. "Push A") + a Save button.
+    expect(queryAllByText(/Save week/).length).toBeGreaterThan(0);
+  });
+  it('TemplateEditor loads a routine for editing', () => {
+    const { getByText, getByDisplayValue } = render(<TemplateEditor visible templateId={1} onClose={() => {}} />);
+    expect(getByText('Edit routine')).toBeTruthy();
+    expect(getByDisplayValue('Push Day')).toBeTruthy();
+    expect(getByText('Save routine')).toBeTruthy();
   });
   it('Onboarding gathers the full profile then starts', () => {
     const { getByText } = render(<Onboarding onDone={() => {}} />);
