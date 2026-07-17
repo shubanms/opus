@@ -35,6 +35,8 @@ const DEFAULTS = {
   dndEnd: 7,
   reminderHour: 18,
   recapDismissedWeek: '', // weekKey the Home weekly-recap was dismissed for
+  tourSeen: false, // first-run guided tour completed
+  coachMarksSeen: {}, // { [tabName]: true } — per-tab tips dismissed (JSON like inventory)
   // Equipment / plate inventory (stored as JSON; per-location bar + owned plates)
   inventory: { active: 'gym', gym: { barKg: null, plates: null, unit: null }, home: { barKg: null, plates: null, unit: null } },
 };

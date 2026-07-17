@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from './native/ThemeProvider';
@@ -17,6 +17,8 @@ import { initDb } from './native/db';
 import { loadSettings, useSettings } from './native/settings';
 import { loadSession } from './native/workoutSession';
 import Onboarding from './components/Onboarding';
+import Tour from './components/tour/Tour';
+import CoachMark from './components/coach/CoachMark';
 import HomeScreen from './screens/HomeScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import ProgressScreen from './screens/ProgressScreen';
@@ -61,6 +63,8 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
   const { settings } = useSettings();
+  const navRef = useNavigationContainerRef();
+  const [routeName, setRouteName] = useState(undefined);
   const [fontsLoaded, fontError] = useFonts({
     CormorantGaramond_700Bold,
     CormorantGaramond_600SemiBold,
@@ -97,7 +101,12 @@ export default function App() {
         {!settings.onboarded ? (
           <Onboarding />
         ) : (
-      <NavigationContainer theme={navTheme}>
+      <NavigationContainer
+        ref={navRef}
+        theme={navTheme}
+        onReady={() => setRouteName(navRef.getCurrentRoute()?.name)}
+        onStateChange={() => setRouteName(navRef.getCurrentRoute()?.name)}
+      >
         <Tab.Navigator
           screenOptions={({ route }) => ({
             headerShown: false,
@@ -117,6 +126,11 @@ export default function App() {
           <Tab.Screen name="Profile" component={ProfileScreen} />
           <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
+        {!settings.tourSeen ? (
+          <Tour navigation={navRef} onDone={() => setRouteName(navRef.getCurrentRoute()?.name)} />
+        ) : (
+          <CoachMark route={routeName} />
+        )}
       </NavigationContainer>
         )}
         </ThemeProvider>
