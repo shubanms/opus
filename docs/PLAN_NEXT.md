@@ -124,10 +124,53 @@ device" — the privacy selling point of an offline app.
 
 ---
 
-## Parked for a design/prototype pass (RPG expansion)
-The user wants **mockups/prototype images** and these grouped into small self-complete chunks (2+
-ideas) before committing. Candidates (full detail lives in chat + `docs/ROADMAP_V4.md`): character
-classes + skill tree, attribute stat sheet, currency + cosmetics shop, loot chests, gear loadout,
-companion evolution, daily dungeon, boss raids (HP bar), session affixes, seasonal battle pass,
-HP/vitality stakes (gentle vs hardcore), rank-up promotion trials, story/lore campaign. Next step:
-propose 2–3 self-contained bundles + visual prototypes for the user to pick from.
+## 8. A+D — Economy + Daily Dungeon (RPG bundle) · Med–High
+**What (picked from the RPG prototype deck):** give XP a *sink* and a daily reason to open the app.
+- **Economy (bundle A):** earn **Iron** (soft currency) per finished session + from quests/PRs; roll a
+  **loot chest** on milestones (seeded rarity); spend Iron in a **Vault shop** on cosmetics (card
+  themes / logo skins / title flairs). Cosmetics plug into the existing share-card `themes` + `OpusMark`.
+- **Daily Dungeon (bundle D):** a generated themed session ("Leg Day Labyrinth") that rolls 1–3 random
+  **affixes** (XP/crit/loot modifiers) + a mini-boss, expiring at local midnight, paying bonus Iron/XP/loot.
+- **Reuse:** `routineGenerator`/`weekPlanner`, `quests` week math, seeded `makeRng`, Particles/CountUp/
+  sound/haptics, share `themes.js`, `OpusMark`, crit (#14) for dungeon affixes.
+- **Pure:** `utils/economy.js` (`ironForSession`, `COSMETICS`, `rollChest(seed)`, `canAfford`,
+  `ownedFrom`) + `utils/dungeon.js` (`todaysDungeon(dateKey, seed)`, `AFFIXES`, `dungeonRewards`). Tests.
+- **Data — DB additions (append-only):** `cosmetics` (owned + equipped) + an Iron ledger. Keep Iron
+  balance derivable: store an append-only `ledger` (earn/spend rows) so balance = Σ ledger and deletes
+  reconcile. Web: `db.version(10)`; native: `ensureColumn`/new tables mirroring.
+- **Delete-revert:** Iron earned per workout reverts when that workout is deleted (ledger row keyed by
+  workoutId, removed in `deleteWorkout`); purchased cosmetics are user-owned (kept, like claimed-quest XP).
+- **Native:** full parity — `@opus/core/economy` + `@opus/core/dungeon` (pure, shared), native Vault +
+  Dungeon screens + `native/db.js` tables.
+- **Verify:** unit tests (Iron math, deterministic chest/affix rolls, affordability); on-device earn →
+  spend → equip; dungeon rotates daily.
+
+## Data safety & retroactive awards (cross-cutting — REQUIRED)
+Existing users have real data. Every feature here must (a) **never lose it** and (b) **award it rightly**
+after the update. Rules:
+- **Additive migrations only.** New web `db.version(n)` blocks and native `ensureColumn`/new tables —
+  never edit a shipped version, never `.clear()` training data. Existing workouts/sets/PRs/profile survive
+  untouched. (The one historical `.clear()` is v2 on `exercises`, already shipped — not touched.)
+- **Idempotent one-time backfill.** A shared `utils/backfill.js` (pure core: computes *what a returning
+  user has already earned* from their existing rows) + a run-once guard (`opus_backfill_v1` flag /
+  settings key) so it never double-grants. Backfilled on first load after update:
+  - **Iron (economy):** grant Iron for all *past* finished sessions via `ironForSession` so returning
+    users open with a fair balance (capped/summarized, not re-paying per re-open).
+  - **Streak tokens (#13):** grant tokens for past streak milestones already achieved.
+  - **Attributes / Strength / calendar / vs-last-time:** derive live from existing rows — nothing to
+    backfill, they just light up.
+- **"Welcome back" award summary.** After a backfill grants anything, show a one-time celebratory modal
+  ("While you were away: +840 Iron, 3 rest tokens") — reuses `Particles`/`CountUp`. Dismiss persists.
+- **Backup safety.** Extend JSON export/import to cover new tables (ledger, cosmetics, tokens) so a backup
+  taken pre-update restores cleanly and a post-update backup round-trips. Progress-photo blobs stay
+  excluded from JSON by default (documented). Verify export→wipe→import round-trip in review.
+- **Both platforms.** The backfill/guard runs on web (`main.jsx` boot) and native (`App.js` boot) with the
+  same core logic, so PWA and native users are treated identically.
+
+## Execution notes (autonomous build)
+- Local verification harness confirmed working: web `npm test` (vitest 201) + `npm run build`, core
+  `npm test` (213), mobile `npm test` (jest 62). **Every feature is verified green locally before push**,
+  and the production `vite build` is run locally before each merge (PR CI only runs vitest, so JSX/build
+  errors must be caught here).
+- One PR per feature (A+D counts as one bundle), squash-merged to `main` behind CI; branch reset to
+  `origin/main` between features.
