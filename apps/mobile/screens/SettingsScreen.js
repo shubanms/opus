@@ -12,6 +12,7 @@ import EquipmentModal from '../components/settings/EquipmentModal';
 import { enableNotifications, testNotification, scheduleDailyReminder } from '../native/notifications';
 import { connectAndReadSteps, healthAvailability } from '../native/healthConnect';
 import { setSteps, wipeAllData, logBodyStat, currentBodyweight } from '../native/db';
+import { exportJson, exportCsv, importJson } from '../native/dataExport';
 import { previewSounds } from '../native/sound';
 import { useSettings } from '../native/settings';
 
@@ -80,6 +81,24 @@ export default function SettingsScreen() {
   const saveBodyweight = () => {
     const n = parseFloat(bw);
     if (n > 0) { try { logBodyStat({ date: dateKey.todayKey(), weight: units.toKg(n, unit) }); } catch {} }
+  };
+  const onExport = async (fn, kind) => {
+    const res = await fn();
+    if (!res.ok && res.reason !== 'sharing-unavailable') Alert.alert('Export failed', `Could not export ${kind}.`);
+  };
+  const onImport = () => {
+    Alert.alert('Import backup?', 'This replaces all current training data with the backup. This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Choose file',
+        onPress: async () => {
+          const res = await importJson();
+          if (res.ok) Alert.alert('Imported', 'Your backup was restored.');
+          else if (res.reason === 'not-opus') Alert.alert('Wrong file', "That doesn't look like an OPUS backup.");
+          else if (res.reason !== 'cancelled') Alert.alert('Import failed', 'Could not read that backup.');
+        },
+      },
+    ]);
   };
   const onTestNotif = async () => { try { await testNotification(); } catch (e) { Alert.alert('Error', String(e?.message || e)); } };
   const onConnectHealth = async () => {
@@ -219,6 +238,17 @@ export default function SettingsScreen() {
         <Label>Health Connect</Label>
         <Body style={{ marginVertical: space(2) }}>{steps != null ? `${steps.toLocaleString()} steps imported today.` : 'Auto-import steps, weight and sleep from Android Health Connect.'}</Body>
         <GoldButton label="Connect & import today's steps" icon="walk" onPress={onConnectHealth} />
+      </Card>
+
+      {/* Data */}
+      <Card>
+        <Label>Data</Label>
+        <Body style={{ marginVertical: space(2) }}>Back up everything to a file you can save or move to a new phone.</Body>
+        <GoldButton label="Export backup (JSON)" icon="share" onPress={() => onExport(exportJson, 'backup')} />
+        <View style={{ height: space(2) }} />
+        <SecondaryButton label="Import backup" icon="add" onPress={onImport} />
+        <View style={{ height: space(2) }} />
+        <SecondaryButton label="Export sets (CSV)" icon="list" onPress={() => onExport(exportCsv, 'CSV')} />
       </Card>
 
       {/* Danger zone */}

@@ -92,6 +92,9 @@ jest.mock('./native/db', () => ({
   getWaterSeries: jest.fn(() => [{ dateKey: '2026-07-15', water: 6 }, { dateKey: '2026-07-16', water: 8 }]),
   deleteBodyStat: jest.fn(),
   deleteSleepLog: jest.fn(),
+  exportAllRows: jest.fn(() => ({ app: 'OPUS', version: 1, exportedAt: '2026-07-17', data: {} })),
+  importAllRows: jest.fn(() => true),
+  exportSetsRows: jest.fn(() => [{ date: '2026-07-16', workout: 'Push', exercise: 'Bench Press', setNumber: 1, weightKg: 100, reps: 5, rpe: 8, isWarmup: 0, note: '' }]),
   getTemplates: jest.fn(() => [{ id: 1, name: 'Push Day', exercises: ['Bench Press', 'Arnold Press'] }]),
   createTemplate: jest.fn(() => 1),
   deleteTemplate: jest.fn(),
@@ -144,6 +147,14 @@ jest.mock('react-native-view-shot', () => {
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(async () => true),
   shareAsync: jest.fn(async () => {}),
+}), { virtual: true });
+jest.mock('expo-file-system', () => ({
+  documentDirectory: 'file:///doc/',
+  writeAsStringAsync: jest.fn(async () => {}),
+  readAsStringAsync: jest.fn(async () => '{"app":"OPUS","data":{}}'),
+}), { virtual: true });
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(async () => ({ canceled: true })),
 }), { virtual: true });
 
 jest.mock('react-native-android-widget', () => ({

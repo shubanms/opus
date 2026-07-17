@@ -285,6 +285,13 @@ describe('settings parity (Phase D)', () => {
     expect(getByText('Gym')).toBeTruthy();
     expect(getByText('Bar weight')).toBeTruthy();
   });
+
+  it('Settings shows the Data export/import card', () => {
+    const { getByText } = renderScreen(SettingsScreen);
+    expect(getByText('Export backup (JSON)')).toBeTruthy();
+    expect(getByText('Import backup')).toBeTruthy();
+    expect(getByText('Export sets (CSV)')).toBeTruthy();
+  });
 });
 
 describe('home quest board', () => {
