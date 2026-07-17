@@ -16,6 +16,7 @@ import { playCue } from '../../native/sound';
 import { success as hSuccess } from '../../native/haptics';
 import WeekPlannerSheet from './WeekPlannerSheet';
 import TemplateEditor from './TemplateEditor';
+import ProgramsModal from './ProgramsModal';
 
 const LEVELS = [
   { value: 'beginner', label: 'Beginner' },
@@ -30,6 +31,7 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
   const s = useThemedStyles(makeStyles);
   const [level, setLevel] = useState('intermediate');
   const [planOpen, setPlanOpen] = useState(false);
+  const [programsOpen, setProgramsOpen] = useState(false);
   const [editId, setEditId] = useState(null);
   const templates = useDbQuery(() => getTemplates(), [], []);
 
@@ -79,6 +81,7 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
 
           {/* Plan a whole week from a split */}
           <GoldButton label="Plan my week" icon="calendar" onPress={() => setPlanOpen(true)} />
+          <SecondaryButton label="Browse programs" icon="book" onPress={() => setProgramsOpen(true)} style={{ marginTop: space(2) }} />
 
           {/* Auto-generate a single routine */}
           <Label style={{ marginTop: space(5) }}>Auto-generate</Label>
@@ -118,6 +121,7 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
       </View>
 
       <WeekPlannerSheet visible={planOpen} onClose={() => setPlanOpen(false)} />
+      <ProgramsModal visible={programsOpen} onClose={() => setProgramsOpen(false)} />
       <TemplateEditor visible={editId != null} templateId={editId} onClose={() => setEditId(null)} />
     </Modal>
   );

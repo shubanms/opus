@@ -36,6 +36,7 @@ export * as progression from './progression.js';
 export * as streakShield from './streakShield.js';
 export * as economy from './economy.js';
 export * as dungeon from './dungeon.js';
+export * as programs from './programs.js';
 // seedExercises has a single default export (the array), so re-export it as a
 // named binding — this lets consumers use the bare `import { seedExercises }
 // from '@opus/core'` (resolved via the package main field) instead of the

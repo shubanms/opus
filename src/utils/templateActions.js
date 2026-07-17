@@ -1,5 +1,22 @@
 import { db } from '../db/db.js';
 import { decideProgression } from './progression.js';
+import { programById, resolveProgram } from './programs.js';
+
+// Install a bundled program (utils/programs.js) as a week of routines. Resolves
+// catalog exercise names → ids, then creates one routine per training day with
+// the program's progression scheme attached. Returns the number of routines
+// created. The routines are normal templates (fully editable/deletable).
+export async function installProgram(programId) {
+  const program = programById(programId);
+  if (!program) return 0;
+  const all = await db.exercises.toArray();
+  const nameToId = Object.fromEntries(all.map((e) => [e.name, e.id]));
+  const days = resolveProgram(program, nameToId);
+  for (const day of days) {
+    await createTemplate({ name: day.name, dayOfWeek: day.dayOfWeek, progression: day.progression, exercises: day.exercises });
+  }
+  return days.length;
+}
 
 // exercises: [{ exerciseId, targetSets, targetReps, targetWeight }]
 function toLinks(templateId, exercises) {

@@ -4,7 +4,7 @@
 // numbers (XP, PRs, streak, volume) are computed from these rows using the
 // shared @opus/core logic, so web and native agree on the math.
 import * as SQLite from 'expo-sqlite';
-import { rpg, oneRepMax, dateKey, seedExercises, achievements, quests, volume, prs as prsCore, progression as progressionCore } from '@opus/core';
+import { rpg, oneRepMax, dateKey, seedExercises, achievements, quests, volume, prs as prsCore, progression as progressionCore, programs as programsCore } from '@opus/core';
 
 let db = null;
 
@@ -291,6 +291,28 @@ export function createTemplateFull({ name, dayOfWeek = null, color = null, autoK
   });
   touch();
   return id;
+}
+
+// Install a bundled program (@opus/core/programs) as a week of routines with
+// its progression scheme attached. Templates key exercises by name (which match
+// the seeded catalog), so no id resolution is needed. Returns routines created.
+export function installProgram(programId) {
+  const program = programsCore.programById(programId);
+  if (!program) return 0;
+  const d = conn();
+  let count = 0;
+  d.withTransactionSync(() => {
+    for (const day of program.schedule) {
+      const res = d.runSync(
+        'INSERT INTO templates (name, dayOfWeek, color, autoKey, progression, createdAt) VALUES (?,?,?,?,?,?)',
+        day.name, day.dayOfWeek ?? null, null, null, JSON.stringify(program.progression), Date.now()
+      );
+      insertLinks(d, res.lastInsertRowId, day.exercises.map((e) => ({ exerciseName: e.name, targetSets: e.sets, targetReps: e.reps })));
+      count += 1;
+    }
+  });
+  touch();
+  return count;
 }
 
 // Batch-create a whole week (from the planner) in a single transaction.
