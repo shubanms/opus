@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions, Alert } from 'react-native';
 import Icon from '../components/Icon';
 import { dateKey, units, prs as prsCore } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
@@ -10,6 +10,7 @@ import Card from '../components/Card';
 import StatTile from '../components/StatTile';
 import Segmented from '../components/Segmented';
 import PressScale from '../components/PressScale';
+import { GoldButton, SecondaryButton } from '../components/Button';
 import LineChart from '../components/progress/LineChart';
 import BarChart from '../components/progress/BarChart';
 import BodyWeightCard from '../components/progress/BodyWeightCard';
@@ -18,10 +19,13 @@ import MuscleFrequency from '../components/progress/MuscleFrequency';
 import Heatmap from '../components/progress/Heatmap';
 import ActivityRings from '../components/home/ActivityRings';
 import ExerciseDetailSheet from '../components/exercise/ExerciseDetailSheet';
+import BodyStatsForm from '../components/progress/BodyStatsForm';
+import SleepForm from '../components/progress/SleepForm';
 import { useDbQuery } from '../native/useDbQuery';
 import {
   getBestByExercise, getTotals, getWeeklyVolume, getRecentWorkouts, getAllPRs,
   getMuscleFrequency, getWorkoutDays, getTopExercises,
+  getBodyStats, getSleepLogs, getStepsSeries, getWaterSeries, deleteBodyStat, deleteSleepLog,
 } from '../native/db';
 import * as session from '../native/workoutSession';
 
@@ -56,6 +60,8 @@ export default function ProgressScreen({ navigation }) {
   const chartW = Math.round(win.width - 2 * space(5) - 2 * space(4));
   const [tab, setTab] = useState('overview');
   const [detailName, setDetailName] = useState(null);
+  const [statForm, setStatForm] = useState(false);
+  const [sleepForm, setSleepForm] = useState(false);
 
   const totals = useDbQuery(() => getTotals(), [], { workouts: 0, sets: 0, totalVolume: 0, streak: 0, prCount: 0, hours: 0 });
   const best = useDbQuery(() => getBestByExercise(8), [], []);
@@ -65,6 +71,10 @@ export default function ProgressScreen({ navigation }) {
   const muscles = useDbQuery(() => getMuscleFrequency(), [], []);
   const days = useDbQuery(() => getWorkoutDays(), [], new Set());
   const top = useDbQuery(() => getTopExercises({ by: 'sets', limit: 10 }), [], []);
+  const bodyStats = useDbQuery(() => getBodyStats(60), [], []);
+  const sleep = useDbQuery(() => getSleepLogs(30), [], []);
+  const stepsSeries = useDbQuery(() => getStepsSeries(14), [], []);
+  const waterSeries = useDbQuery(() => getWaterSeries(14), [], []);
 
   // Week-over-week volume delta (raw kg).
   const lastVol = weekly.length ? weekly[weekly.length - 1].volume : 0;
@@ -184,14 +194,88 @@ export default function ProgressScreen({ navigation }) {
         </>
       )}
 
-      {tab === 'body' && (
-        <>
-          <ActivityRings />
-          <BodyWeightCard width={chartW} />
-          <RecoveryCard />
-        </>
-      )}
+      {tab === 'body' && (() => {
+        const latest = bodyStats[0];
+        const MEAS = [['chest', 'Chest'], ['waist', 'Waist'], ['hips', 'Hips'], ['arms', 'Arms'], ['thighs', 'Thighs'], ['bodyFat', 'Body fat']];
+        const sleepTrend = [...sleep].filter((x) => x.quality > 0).reverse().map((x) => ({ value: x.quality }));
+        const stepTrend = stepsSeries.filter((x) => x.steps > 0).map((x) => ({ value: x.steps }));
+        const waterTrend = waterSeries.filter((x) => x.water > 0).map((x) => ({ value: x.water }));
+        const hasMeas = latest && MEAS.some(([k]) => latest[k] != null);
+        const del = (fn, id) => Alert.alert('Delete entry?', 'This cannot be undone.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => fn(id) },
+        ]);
+        return (
+          <>
+            <View style={s.bento}>
+              <GoldButton label="Body stats" icon="add" onPress={() => setStatForm(true)} style={{ flex: 1 }} />
+              <SecondaryButton label="Sleep" icon="time" onPress={() => setSleepForm(true)} style={{ flex: 1 }} />
+            </View>
 
+            <ActivityRings />
+            <BodyWeightCard width={chartW} />
+
+            {hasMeas && (
+              <Card>
+                <Label>Latest measurements</Label>
+                <View style={s.measGrid}>
+                  {MEAS.map(([k, label]) => (
+                    <View key={k} style={s.measCell}>
+                      <Mono style={s.measVal}>{latest[k] != null ? `${latest[k]}${k === 'bodyFat' ? '%' : ''}` : '—'}</Mono>
+                      <Text style={s.measLabel}>{label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            )}
+
+            {sleepTrend.length >= 2 && (
+              <Card><Label>Sleep quality</Label><View style={{ marginTop: space(3) }}><LineChart data={sleepTrend} width={chartW} height={110} /></View></Card>
+            )}
+            {stepTrend.length >= 2 && (
+              <Card><Label>Daily steps</Label><View style={{ marginTop: space(3) }}><LineChart data={stepTrend} width={chartW} height={110} /></View></Card>
+            )}
+            {waterTrend.length >= 2 && (
+              <Card><Label>Water (glasses)</Label><View style={{ marginTop: space(3) }}><LineChart data={waterTrend} width={chartW} height={110} /></View></Card>
+            )}
+
+            {bodyStats.length > 0 && (
+              <Card>
+                <Label>Body entries</Label>
+                <View style={{ marginTop: space(2) }}>
+                  {bodyStats.slice(0, 6).map((b) => (
+                    <View key={b.id} style={s.entryRow}>
+                      <Text style={s.entryDate}>{b.date}</Text>
+                      <Mono style={s.entryVal}>{b.weight != null ? `${units.toDisplay(b.weight, unit)} ${units.unitLabel(unit)}` : '—'}</Mono>
+                      <PressScale hitSlop={8} onPress={() => del(deleteBodyStat, b.id)}><Icon name="trash" size={15} color={colors.ash} /></PressScale>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            )}
+
+            {sleep.length > 0 && (
+              <Card>
+                <Label>Sleep entries</Label>
+                <View style={{ marginTop: space(2) }}>
+                  {sleep.slice(0, 6).map((sl) => (
+                    <View key={sl.id} style={s.entryRow}>
+                      <Text style={s.entryDate}>{sl.date}</Text>
+                      <Mono style={s.entryVal}>{sl.hours != null ? `${sl.hours}h ` : ''}{sl.quality ? `★${sl.quality}` : ''}</Mono>
+                      <PressScale hitSlop={8} onPress={() => del(deleteSleepLog, sl.id)}><Icon name="trash" size={15} color={colors.ash} /></PressScale>
+                    </View>
+                  ))}
+                </View>
+              </Card>
+            )}
+
+            <RecoveryCard />
+          </>
+        );
+      })()}
+
+      <BodyStatsForm visible={statForm} onClose={() => setStatForm(false)} />
+      <SleepForm visible={sleepForm} onClose={() => setSleepForm(false)} />
       <ExerciseDetailSheet
         visible={detailName != null}
         exerciseName={detailName}
@@ -212,4 +296,11 @@ const makeStyles = (colors) => StyleSheet.create({
   name: { flex: 1, color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
   sub: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12 },
   val: { color: colors.gold, fontFamily: fonts.monoMedium, fontSize: 13 },
+  measGrid: { flexDirection: 'row', flexWrap: 'wrap', marginTop: space(3) },
+  measCell: { width: '33.33%', paddingVertical: space(2) },
+  measVal: { color: colors.textPrimary, fontFamily: fonts.mono, fontSize: 18 },
+  measLabel: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 },
+  entryRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), paddingVertical: space(2.5), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
+  entryDate: { flex: 1, color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 13 },
+  entryVal: { color: colors.textSecondary, fontFamily: fonts.mono, fontSize: 13 },
 });
