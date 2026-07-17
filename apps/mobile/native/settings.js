@@ -46,6 +46,9 @@ const DEFAULTS = {
   ironSpent: 0,
   ownedCosmetics: [],
   equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
+  // Daily dungeon: claimed bonus Iron + the date key of the last claim.
+  dungeonIron: 0,
+  lastDungeonClaim: '',
 };
 
 // In-memory cache kept in sync with the DB, readable imperatively.

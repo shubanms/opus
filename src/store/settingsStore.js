@@ -10,6 +10,8 @@ const DEFAULTS = {
   tokensSpent: 0, shieldedLapseDate: null,
   // Iron economy: spent Iron + owned/equipped cosmetics (balance is derived).
   ironSpent: 0, ownedCosmetics: [], equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
+  // Daily dungeon: claimed bonus Iron + the date key of the last claim.
+  dungeonIron: 0, lastDungeonClaim: '',
   // Equipment per location. barKg null → use global barWeight; plates null → standard
   // set for the current unit; plates are display-unit numbers stamped with `unit`.
   inventory: {
@@ -30,8 +32,12 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped }));
+    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
+  },
+  claimDungeon(amount, dateKey) {
+    set((s) => (s.lastDungeonClaim === dateKey ? s : { dungeonIron: (s.dungeonIron || 0) + amount, lastDungeonClaim: dateKey }));
+    get().persist();
   },
   spendShield(lapseDate) {
     set((s) => ({ tokensSpent: (s.tokensSpent || 0) + 1, shieldedLapseDate: lapseDate ?? null }));

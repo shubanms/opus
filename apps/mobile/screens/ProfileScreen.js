@@ -53,7 +53,7 @@ export default function ProfileScreen({ navigation }) {
   const equipped = settings.equipped || {};
   const flair = equipped.titleFlair ? economy.cosmeticById(equipped.titleFlair)?.value : null;
   const ironBal = economy.ironBalance(
-    economy.earnedIron({ workouts: totals.workouts, prCount: totals.prCount, questClaims: totals.questClaims }),
+    economy.earnedIron({ workouts: totals.workouts, prCount: totals.prCount, questClaims: totals.questClaims, bonusIron: settings.dungeonIron }),
     settings.ironSpent
   );
 
