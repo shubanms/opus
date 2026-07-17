@@ -2,7 +2,7 @@
 // the plates to load PER SIDE as colored chips. Reuses @opus/core plateCalc so
 // web and native agree. Weights are kg (the app's internal unit).
 import { View, Text, StyleSheet } from 'react-native';
-import { plateCalc } from '@opus/core';
+import { plateCalc, inventory } from '@opus/core';
 import { Label, Mono } from '../../ui';
 import { radius, space, fonts } from '../../theme';
 import { useColors, useThemedStyles } from '../../native/ThemeProvider';
@@ -17,12 +17,17 @@ const PLATE_COLOR = {
 export default function PlateCalculator({ weight }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
-  const bar = Number(getSetting('barWeight')) || 20;
+  // Use the active equipment location's bar + owned plates (falls back to the
+  // global barWeight + the standard kg set).
+  const invData = getSetting('inventory') || {};
+  const loc = invData[invData.active] || {};
+  const bar = loc.barKg ?? (Number(getSetting('barWeight')) || 20);
+  const plates = inventory.effectivePlates(loc, 'kg', plateCalc.PLATES_KG);
   const target = Number(weight) || 0;
   if (target <= bar) return null;
 
-  const perSide = plateCalc.calcPlates(target, bar);
-  const loadable = plateCalc.nearestLoadable(target, bar);
+  const perSide = plateCalc.calcPlates(target, bar, plates);
+  const loadable = plateCalc.nearestLoadable(target, bar, plates);
   const off = Math.abs(loadable - target) > 0.01;
 
   return (
