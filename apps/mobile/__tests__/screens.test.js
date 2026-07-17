@@ -42,6 +42,8 @@ import ExerciseDetailSheet from '../components/exercise/ExerciseDetailSheet';
 import ExerciseFormSheet from '../components/exercise/ExerciseFormSheet';
 import MuscleFrequency from '../components/progress/MuscleFrequency';
 import Heatmap from '../components/progress/Heatmap';
+import BodyStatsForm from '../components/progress/BodyStatsForm';
+import SleepForm from '../components/progress/SleepForm';
 
 const Tab = createBottomTabNavigator();
 
@@ -250,6 +252,21 @@ describe('progress tabs', () => {
   it('MuscleFrequency + Heatmap render standalone', () => {
     expect(() => render(<MuscleFrequency data={[{ muscle: 'chest', sets: 20 }, { muscle: 'calves', sets: 4 }]} />)).not.toThrow();
     expect(() => render(<Heatmap days={new Set(['2026-07-13', '2026-07-15'])} />)).not.toThrow();
+  });
+
+  it('Body tab shows measurements + log buttons', () => {
+    const { getByText } = renderScreen(ProgressScreen);
+    fireEvent.press(getByText('Body'));
+    expect(getByText('Latest measurements')).toBeTruthy();
+    expect(getByText('Body entries')).toBeTruthy();
+    expect(getByText('Sleep entries')).toBeTruthy();
+  });
+
+  it('BodyStatsForm + SleepForm render', () => {
+    const bs = render(<BodyStatsForm visible onClose={() => {}} />);
+    expect(bs.getByText('Body stats')).toBeTruthy();
+    const sf = render(<SleepForm visible onClose={() => {}} />);
+    expect(sf.getByText('Sleep')).toBeTruthy();
   });
 });
 

@@ -195,6 +195,8 @@ export function initDb() {
   ensureColumn(d, 'exercises', 'color', 'TEXT');
   ensureColumn(d, 'exercises', 'secondaryMuscles', 'TEXT'); // JSON string
   ensureColumn(d, 'exercises', 'description', 'TEXT');
+  // Body measurements (cm) — bodyFat already present.
+  for (const m of ['chest', 'waist', 'hips', 'arms', 'thighs']) ensureColumn(d, 'bodyStats', m, 'REAL');
 
   const row = d.getFirstSync('SELECT COUNT(*) AS n FROM exercises');
   if (!row || row.n === 0) {
@@ -830,14 +832,30 @@ export function getWater(day) {
   return r ? r.water : null;
 }
 
-// ── Body stats (weight / body fat) ───────────────────────────────────────────
-export function logBodyStat({ date, weight, bodyFat = null }) {
+// ── Body stats (weight / body fat / measurements) ────────────────────────────
+// Upsert one row per date, patching only the fields provided (mirrors the web
+// logBodyStat). Measurements (chest/waist/hips/arms/thighs) are cm; weight kg.
+const BODY_FIELDS = ['weight', 'bodyFat', 'chest', 'waist', 'hips', 'arms', 'thighs'];
+export function logBodyStat(entry = {}) {
   const d = conn();
+  const { date } = entry;
+  if (!date) return;
+  const provided = BODY_FIELDS.filter((f) => entry[f] != null);
   const existing = d.getFirstSync('SELECT id FROM bodyStats WHERE date = ?', date);
   if (existing) {
-    d.runSync('UPDATE bodyStats SET weight = ?, bodyFat = ? WHERE id = ?', weight ?? null, bodyFat, existing.id);
+    if (provided.length) {
+      d.runSync(
+        `UPDATE bodyStats SET ${provided.map((f) => `${f} = ?`).join(', ')} WHERE id = ?`,
+        ...provided.map((f) => Number(entry[f])),
+        existing.id
+      );
+    }
   } else {
-    d.runSync('INSERT INTO bodyStats (date, weight, bodyFat) VALUES (?, ?, ?)', date, weight ?? null, bodyFat);
+    d.runSync(
+      `INSERT INTO bodyStats (date${provided.length ? ', ' + provided.join(', ') : ''}) VALUES (?${provided.map(() => ', ?').join('')})`,
+      date,
+      ...provided.map((f) => Number(entry[f]))
+    );
   }
   touch();
 }
@@ -849,6 +867,42 @@ export function getBodyStats(limit = 60) {
 export function currentBodyweight() {
   const r = conn().getFirstSync('SELECT weight FROM bodyStats WHERE weight IS NOT NULL ORDER BY date DESC LIMIT 1');
   return r ? r.weight : null;
+}
+
+export function deleteBodyStat(id) {
+  conn().runSync('DELETE FROM bodyStats WHERE id = ?', id);
+  touch();
+}
+
+// ── Sleep logs ───────────────────────────────────────────────────────────────
+export function logSleep({ date, hours = null, quality = 0 }) {
+  const d = conn();
+  if (!date) return;
+  const existing = d.getFirstSync('SELECT id FROM sleepLogs WHERE date = ?', date);
+  if (existing) {
+    d.runSync('UPDATE sleepLogs SET hours = ?, quality = ? WHERE id = ?', hours == null ? null : Number(hours), Number(quality) || 0, existing.id);
+  } else {
+    d.runSync('INSERT INTO sleepLogs (date, hours, quality) VALUES (?, ?, ?)', date, hours == null ? null : Number(hours), Number(quality) || 0);
+  }
+  touch();
+}
+
+export function getSleepLogs(limit = 30) {
+  return conn().getAllSync('SELECT * FROM sleepLogs ORDER BY date DESC LIMIT ?', limit);
+}
+
+export function deleteSleepLog(id) {
+  conn().runSync('DELETE FROM sleepLogs WHERE id = ?', id);
+  touch();
+}
+
+// ── Steps / water history (range reads for the Body-tab trends) ───────────────
+export function getStepsSeries(days = 30) {
+  return conn().getAllSync('SELECT dateKey, steps FROM health ORDER BY dateKey DESC LIMIT ?', days).reverse();
+}
+
+export function getWaterSeries(days = 30) {
+  return conn().getAllSync('SELECT dateKey, water FROM dailyLogs ORDER BY dateKey DESC LIMIT ?', days).reverse();
 }
 
 // ── PRs (personal records) ───────────────────────────────────────────────────
