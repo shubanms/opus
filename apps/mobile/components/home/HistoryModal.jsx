@@ -9,6 +9,8 @@ import { H2, Label, Body, Mono } from '../../ui';
 import { radius, space, fonts } from '../../theme';
 import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
+import Segmented from '../Segmented';
+import MonthCalendar from '../progress/MonthCalendar';
 import { useDbQuery } from '../../native/useDbQuery';
 import { getRecentWorkouts, getSets, deleteWorkout } from '../../native/db';
 import { useSettings } from '../../native/settings';
@@ -30,6 +32,9 @@ export default function HistoryModal({ visible, onClose }) {
   const unit = settings.unit || 'kg';
   const workouts = useDbQuery(() => getRecentWorkouts(100), [], []);
   const [expanded, setExpanded] = useState(null);
+  const [view, setView] = useState('list');
+  const [selDay, setSelDay] = useState(null);
+  const days = new Set((workouts || []).map((w) => w.dateKey));
 
   const confirmDelete = (w) => {
     Alert.alert('Delete workout?', 'This removes the session and reverts its XP, PRs and stats.', [
@@ -37,6 +42,38 @@ export default function HistoryModal({ visible, onClose }) {
       { text: 'Delete', style: 'destructive', onPress: () => { try { deleteWorkout(w.id); } catch {} if (expanded === w.id) setExpanded(null); } },
     ]);
   };
+
+  const renderCard = (w) => {
+    const open = expanded === w.id;
+    const sets = open ? (() => { try { return getSets(w.id); } catch { return []; } })() : [];
+    return (
+      <View key={w.id} style={s.card}>
+        <PressScale onPress={() => setExpanded(open ? null : w.id)} style={s.rowTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.day}>{label(w.dateKey)}</Text>
+            <Mono style={s.meta}>{w.setCount} sets · {units.fmtVolume(w.volume || 0, unit)}</Mono>
+          </View>
+          <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.ash} />
+        </PressScale>
+        {open && (
+          <View style={s.detail}>
+            {sets.map((st) => (
+              <View key={st.id} style={s.setRow}>
+                <Text style={s.setName} numberOfLines={1}>{st.exerciseName || 'Set'}</Text>
+                <Mono style={s.setVal}>{st.weight > 0 ? `${units.toDisplay(st.weight, unit)} ${units.unitLabel(unit)} × ${st.reps}` : `${st.reps} reps`}</Mono>
+              </View>
+            ))}
+            <PressScale onPress={() => confirmDelete(w)} style={s.delRow}>
+              <Icon name="trash" size={15} color={colors.ember} />
+              <Text style={s.delText}> Delete workout</Text>
+            </PressScale>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const dayWorkouts = selDay ? (workouts || []).filter((w) => w.dateKey === selDay) : [];
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -50,37 +87,24 @@ export default function HistoryModal({ visible, onClose }) {
           {(!workouts || workouts.length === 0) ? (
             <Body style={{ marginTop: space(4) }}>No finished workouts yet.</Body>
           ) : (
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space(8), gap: space(2) }}>
-              {workouts.map((w) => {
-                const open = expanded === w.id;
-                const sets = open ? (() => { try { return getSets(w.id); } catch { return []; } })() : [];
-                return (
-                  <View key={w.id} style={s.card}>
-                    <PressScale onPress={() => setExpanded(open ? null : w.id)} style={s.rowTop}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={s.day}>{label(w.dateKey)}</Text>
-                        <Mono style={s.meta}>{w.setCount} sets · {units.fmtVolume(w.volume || 0, unit)}</Mono>
-                      </View>
-                      <Icon name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.ash} />
-                    </PressScale>
-                    {open && (
-                      <View style={s.detail}>
-                        {sets.map((st) => (
-                          <View key={st.id} style={s.setRow}>
-                            <Text style={s.setName} numberOfLines={1}>{st.exerciseName || 'Set'}</Text>
-                            <Mono style={s.setVal}>{st.weight > 0 ? `${units.toDisplay(st.weight, unit)} ${units.unitLabel(unit)} × ${st.reps}` : `${st.reps} reps`}</Mono>
-                          </View>
-                        ))}
-                        <PressScale onPress={() => confirmDelete(w)} style={s.delRow}>
-                          <Icon name="trash" size={15} color={colors.ember} />
-                          <Text style={s.delText}> Delete workout</Text>
-                        </PressScale>
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
-            </ScrollView>
+            <>
+              <Segmented
+                options={[{ value: 'list', label: 'List' }, { value: 'calendar', label: 'Calendar' }]}
+                value={view}
+                onChange={(v) => { setView(v); setSelDay(null); }}
+                style={{ marginBottom: space(3) }}
+              />
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: space(8), gap: space(2) }}>
+                {view === 'calendar' && <MonthCalendar days={days} selected={selDay} onSelect={setSelDay} />}
+                {view === 'list'
+                  ? workouts.map(renderCard)
+                  : selDay
+                    ? (dayWorkouts.length > 0
+                        ? dayWorkouts.map(renderCard)
+                        : <Body style={{ marginTop: space(3), textAlign: 'center' }}>No workout logged on this day</Body>)
+                    : null}
+              </ScrollView>
+            </>
           )}
         </View>
       </View>
