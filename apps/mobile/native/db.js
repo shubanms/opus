@@ -582,6 +582,69 @@ export function getWeekQuestStats() {
   return quests.computeQuestStats({ workouts, sets, prs, exMuscle });
 }
 
+// This week's recap (Monday-aligned) for the Home WeeklyRecap card. Mirrors the
+// web useWeeklyRecap shape.
+export function getWeeklyRecap() {
+  const d = conn();
+  const startMs = quests.weekStartMs();
+  const endMs = startMs + 7 * 86400000;
+  const w = d.getAllSync(
+    'SELECT COALESCE(totalVolume,0) AS vol, COALESCE(xpEarned,0) AS xp FROM workouts WHERE finishedAt IS NOT NULL AND finishedAt >= ? AND finishedAt < ?',
+    startMs, endMs
+  );
+  const sets = d.getFirstSync(
+    'SELECT COUNT(*) AS n FROM sets s JOIN workouts wo ON wo.id = s.workoutId WHERE wo.finishedAt IS NOT NULL AND wo.finishedAt >= ? AND wo.finishedAt < ? AND COALESCE(s.isWarmup,0)=0',
+    startMs, endMs
+  )?.n || 0;
+  const prCount = d.getFirstSync('SELECT COUNT(*) AS n FROM prs WHERE achievedAt >= ? AND achievedAt < ?', startMs, endMs)?.n || 0;
+  const top = d.getFirstSync(
+    `SELECT COALESCE(s.exerciseId, s.exerciseName) AS name, SUM(s.weight*s.reps) AS vol
+       FROM sets s JOIN workouts wo ON wo.id = s.workoutId
+      WHERE wo.finishedAt IS NOT NULL AND wo.finishedAt >= ? AND wo.finishedAt < ? AND COALESCE(s.isWarmup,0)=0
+      GROUP BY name ORDER BY vol DESC LIMIT 1`,
+    startMs, endMs
+  );
+  return {
+    weekKey: quests.weekKeyOf(),
+    sessions: w.length,
+    volumeKg: Math.round(w.reduce((a, x) => a + x.vol, 0)),
+    xp: Math.round(w.reduce((a, x) => a + x.xp, 0)),
+    sets,
+    prCount,
+    topLift: top?.name || null,
+    hasData: w.length > 0,
+  };
+}
+
+// Most-recent finished-workout dateKey (for XP-decay input). Null if none.
+export function getLastWorkoutDate() {
+  return conn().getFirstSync('SELECT MAX(dateKey) AS d FROM workouts WHERE finishedAt IS NOT NULL')?.d || null;
+}
+
+// Today's suggestion for the Home Today card: rest (≥3 consecutive days),
+// a day-of-week template, or a fresh start. Mirrors the web useToday.
+export function getTodayPlan() {
+  const d = conn();
+  const days = d.getAllSync('SELECT DISTINCT dateKey FROM workouts WHERE finishedAt IS NOT NULL ORDER BY dateKey DESC').map((r) => r.dateKey);
+  const today = dateKey.todayKey();
+  let consec = 0;
+  if (days.length && days[0] === today) {
+    consec = 1;
+    for (let i = 1; i < days.length; i++) {
+      if (dateKey.daysBetween(days[i], days[i - 1]) === 1) consec++;
+      else break;
+    }
+  }
+  if (consec >= 3) return { type: 'rest', reason: `${consec} days trained in a row — let your body recover.` };
+  const dow = new Date().getDay();
+  const t = d.getFirstSync('SELECT * FROM templates WHERE dayOfWeek = ? ORDER BY createdAt DESC LIMIT 1', dow);
+  if (t) {
+    const exercises = d.getAllSync('SELECT exerciseName FROM templateExercises WHERE templateId = ? ORDER BY orderIndex', t.id).map((r) => r.exerciseName);
+    return { type: 'template', reason: 'On your plan for today', template: { ...t, exercises } };
+  }
+  return { type: 'fresh', reason: 'No plan today — start fresh.' };
+}
+
 export function getQuestClaims(weekKey = quests.weekKeyOf()) {
   return conn().getAllSync('SELECT questId FROM questClaims WHERE weekKey = ?', weekKey).map((r) => r.questId);
 }

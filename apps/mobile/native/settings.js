@@ -34,6 +34,7 @@ const DEFAULTS = {
   dndStart: 22,
   dndEnd: 7,
   reminderHour: 18,
+  recapDismissedWeek: '', // weekKey the Home weekly-recap was dismissed for
   // Equipment / plate inventory (stored as JSON; per-location bar + owned plates)
   inventory: { active: 'gym', gym: { barKg: null, plates: null, unit: null }, home: { barKg: null, plates: null, unit: null } },
 };
