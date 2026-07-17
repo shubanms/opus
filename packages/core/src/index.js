@@ -31,6 +31,7 @@ export * as shareCard from './shareCard.js';
 export * as prs from './prs.js';
 export * as setDiff from './setDiff.js';
 export * as calendar from './calendar.js';
+export * as crit from './crit.js';
 // seedExercises has a single default export (the array), so re-export it as a
 // named binding — this lets consumers use the bare `import { seedExercises }
 // from '@opus/core'` (resolved via the package main field) instead of the

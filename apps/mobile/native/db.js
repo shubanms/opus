@@ -178,6 +178,7 @@ export function initDb() {
   ensureColumn(d, 'sets', 'isWarmup', 'INTEGER DEFAULT 0');
   ensureColumn(d, 'sets', 'rpe', 'REAL');
   ensureColumn(d, 'sets', 'note', 'TEXT');
+  ensureColumn(d, 'sets', 'bonusXp', 'REAL DEFAULT 0'); // crit + combo bonus (crit.js)
   ensureColumn(d, 'workouts', 'status', "TEXT");        // 'active' | 'completed'
   ensureColumn(d, 'workouts', 'duration', 'INTEGER');
   ensureColumn(d, 'workouts', 'totalVolume', 'REAL');
@@ -433,14 +434,14 @@ export function finishWorkout(workoutId) {
   // Snapshot totals + status + earned XP onto the row (mirrors the web schema so
   // Progress / Wrapped / achievements can read them without recomputing).
   const working = d.getAllSync(
-    'SELECT weight, reps FROM sets WHERE workoutId = ? AND COALESCE(isWarmup, 0) = 0',
+    'SELECT weight, reps, COALESCE(bonusXp,0) AS bonusXp FROM sets WHERE workoutId = ? AND COALESCE(isWarmup, 0) = 0',
     workoutId
   );
   let volume = 0;
   let setXP = 0;
   for (const st of working) {
     volume += (st.weight || 0) * (st.reps || 0);
-    setXP += rpg.calcSetXP(st.weight || 0, st.reps || 0);
+    setXP += rpg.calcSetXP(st.weight || 0, st.reps || 0) + (st.bonusXp || 0);
   }
   const xpEarned = Math.round(setXP + rpg.COMPLETE_BONUS);
   const now = Date.now();
@@ -527,7 +528,7 @@ export function getTotals() {
   const d = conn();
   // XP earned only from finished workouts (matches the web award timing).
   const setRows = d.getAllSync(
-    `SELECT s.weight AS weight, s.reps AS reps
+    `SELECT s.weight AS weight, s.reps AS reps, COALESCE(s.bonusXp,0) AS bonusXp
        FROM sets s JOIN workouts w ON w.id = s.workoutId
       WHERE w.finishedAt IS NOT NULL`
   );
@@ -538,7 +539,7 @@ export function getTotals() {
   let setXP = 0;
   for (const s of setRows) {
     totalVolume += (s.weight || 0) * (s.reps || 0);
-    setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0);
+    setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0) + (s.bonusXp || 0);
   }
   // XP = per-set + per-session bonus + achievement rewards + claimed-quest XP
   // (matches the web, where both count toward level/rank).
@@ -824,11 +825,11 @@ export function computeAchievementStats() {
     `SELECT COUNT(*) AS n FROM workouts WHERE finishedAt IS NOT NULL`
   )?.n || 0;
   const setXpRows = d.getAllSync(
-    `SELECT s.weight AS weight, s.reps AS reps FROM sets s
+    `SELECT s.weight AS weight, s.reps AS reps, COALESCE(s.bonusXp,0) AS bonusXp FROM sets s
        JOIN workouts w ON w.id = s.workoutId WHERE w.finishedAt IS NOT NULL`
   );
   let setXP = 0;
-  for (const s of setXpRows) setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0);
+  for (const s of setXpRows) setXP += rpg.calcSetXP(s.weight || 0, s.reps || 0) + (s.bonusXp || 0);
   const level = rpg.getLevelFromTotalXP(setXP + base * rpg.COMPLETE_BONUS + achievementXP());
   return achievements.computeStats({ workouts, sets, prs, exercises, level });
 }
@@ -1356,10 +1357,10 @@ export function commitWorkout(session) {
       for (const s of e.sets ?? []) {
         n += 1;
         d.runSync(
-          'INSERT INTO sets (workoutId, exerciseName, exerciseId, setNumber, weight, reps, rpe, isWarmup, note, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
+          'INSERT INTO sets (workoutId, exerciseName, exerciseId, setNumber, weight, reps, rpe, isWarmup, note, bonusXp, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
           workoutId, e.name || null, e.name || null, n,
           Number(s.weight) || 0, Number(s.reps) || 0,
-          s.rpe == null ? null : Number(s.rpe), s.isWarmup ? 1 : 0, s.note || null, s.completedAt || now
+          s.rpe == null ? null : Number(s.rpe), s.isWarmup ? 1 : 0, s.note || null, Number(s.bonusXp) || 0, s.completedAt || now
         );
       }
     }

@@ -6,7 +6,7 @@
 // ghost of last session.
 import { useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Modal, Animated } from 'react-native';
-import { units, rpg, setDiff } from '@opus/core';
+import { units, rpg, setDiff, crit as critCore } from '@opus/core';
 import Icon from '../Icon';
 import PressScale from '../PressScale';
 import { radius, space, fonts } from '../../theme';
@@ -55,9 +55,9 @@ export default function SetLogger({ exercise, unit = 'kg', fromTemplate = false,
 
   const stepReps = (d) => setReps((r) => String(Math.max(0, (parseInt(r, 10) || 0) + d)));
 
-  const fireFloat = (xp, pr) => {
+  const fireFloat = (xp, pr, isCrit = false, combo = 1) => {
     if (!motionOn()) return;
-    setFloatData({ xp, pr });
+    setFloatData({ xp, pr, crit: isCrit, combo });
     floatY.setValue(0);
     floatO.setValue(1);
     Animated.parallel([
@@ -76,10 +76,22 @@ export default function SetLogger({ exercise, unit = 'kg', fromTemplate = false,
     const bestVol = Math.max(volPR?.value ?? 0, ...working.map((x) => x.weight * x.reps), 0);
     const isPR = (weightKg > 0 || r > 0) && (weightKg > bestWeight || r > bestReps || weightKg * r > bestVol);
 
-    session.logSet(name, { weight: weightKg, reps: r, rpe: showRpe ? rpe : null, isWarmup: false });
-    if (isPR) hSuccess(); else tapLight();
-    playCue(isPR ? 'pr' : 'tick');
-    fireFloat(rpg.calcSetXP(weightKg, r), isPR);
+    // Crit + combo (@opus/core/crit). Bonus is stored on the set, so every XP
+    // total already includes it and a delete reverts it for free.
+    const sess = session.getSession();
+    const sessionWorking = (sess?.exercises ?? []).reduce((n, e) => n + e.sets.filter((x) => !x.isWarmup).length, 0);
+    const isCrit = critCore.rollCrit({ seed: sess?.startedAt ?? 0, setNumber: exercise.sets.length + 1, first: sessionWorking === 0 });
+    const times = (sess?.exercises ?? [])
+      .flatMap((e) => e.sets.filter((x) => !x.isWarmup).map((x) => x.completedAt))
+      .filter(Boolean);
+    const combo = critCore.comboCount([...times, Date.now()]);
+    const base = rpg.calcSetXP(weightKg, r);
+    const bonus = critCore.bonusXp(base, { crit: isCrit, combo });
+
+    session.logSet(name, { weight: weightKg, reps: r, rpe: showRpe ? rpe : null, isWarmup: false, crit: isCrit, bonusXp: bonus });
+    if (isPR || isCrit) hSuccess(); else tapLight();
+    playCue(isPR ? 'pr' : isCrit ? 'achievement' : 'tick');
+    fireFloat(base + bonus, isPR, isCrit, combo);
     onSetLogged?.();
     setReps('');
     setRpe(null);
@@ -146,9 +158,9 @@ export default function SetLogger({ exercise, unit = 'kg', fromTemplate = false,
 
       {/* Input row */}
       <View style={s.inputRow}>
-        {floatData && (floatData.xp > 0 || floatData.pr) && (
+        {floatData && (floatData.xp > 0 || floatData.pr || floatData.crit) && (
           <Animated.Text style={[s.xpFloat, { opacity: floatO, transform: [{ translateY: floatY }] }]}>
-            {floatData.pr ? '🏆 PR! ' : ''}{floatData.xp > 0 ? `+${floatData.xp} XP` : ''}
+            {floatData.pr ? '🏆 PR! ' : floatData.crit ? '⚡ CRIT! ' : ''}{floatData.xp > 0 ? `+${floatData.xp} XP` : ''}{floatData.combo > 1 ? ` ×${floatData.combo}` : ''}
           </Animated.Text>
         )}
         {showWeight && (

@@ -10,6 +10,8 @@ import { playChime } from '../../utils/sound.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import { calcSetXP } from '../../utils/rpg.js';
 import { diffsBySetNumber } from '../../utils/setDiff.js';
+import { rollCrit, comboCount, bonusXp as critBonusXp } from '../../utils/crit.js';
+import Particles from '../fx/Particles.jsx';
 import PlateCalculator from './PlateCalculator.jsx';
 
 // Compact "vs last session" badge for a logged working set.
@@ -54,6 +56,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   const [showPlates, setShowPlates] = useState(false);
   const [addWeight, setAddWeight] = useState(false);
   const [xpFloat, setXpFloat] = useState(null);
+  const [critBurst, setCritBurst] = useState(null);
 
   if (!exercise) return null;
 
@@ -79,15 +82,30 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
     const bestVol = Math.max(volPR?.value ?? 0, ...working.map((s) => s.weight * s.reps), 0);
     const isPR = (weightKg > 0 || r > 0) && (weightKg > bestWeight || r > bestReps || weightKg * r > bestVol);
 
+    // Crit + combo (utils/crit.js). The bonus is stored on the set, so xpEarned
+    // and every XP total already include it and a delete reverts it for free.
+    const sessionWorking = (activeWorkout?.exercises ?? []).reduce(
+      (n, e) => n + e.sets.filter((x) => !x.isWarmup).length, 0);
+    const crit = rollCrit({ seed: activeWorkout?.startedAt ?? 0, setNumber: exercise.sets.length + 1, first: sessionWorking === 0 });
+    const times = (activeWorkout?.exercises ?? [])
+      .flatMap((e) => e.sets.filter((x) => !x.isWarmup).map((x) => x.completedAt))
+      .filter(Boolean);
+    const combo = comboCount([...times, Date.now()]);
+    const base = calcSetXP(weightKg, r);
+    const bonus = critBonusXp(base, { crit, combo });
+
     logSet(exerciseId, {
       weight: weightKg,
       reps: r,
       rpe: showRpe ? rpe : null,
       isWarmup: false,
+      crit,
+      bonusXp: bonus,
     });
-    haptic(isPR ? 'pr' : 'tap');
-    playChime(isPR ? 'pr' : 'tick');
-    setXpFloat({ key: Date.now(), xp: calcSetXP(weightKg, r), pr: isPR });
+    haptic(isPR || crit ? 'pr' : 'tap');
+    playChime(isPR ? 'pr' : crit ? 'achievement' : 'tick');
+    if (crit) { setCritBurst(Date.now()); setTimeout(() => setCritBurst(null), 1300); }
+    setXpFloat({ key: Date.now(), xp: base + bonus, pr: isPR, crit, combo });
     onSetLogged?.();
     setReps('');
     setRpe(null);
@@ -108,6 +126,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
   return (
     <div className="mt-3">
+      {critBurst && <Particles key={critBurst} count={26} />}
       {/* Reference line: your best PR when following a routine, else the ghost
           of last session's sets. */}
       {showPR ? (
@@ -171,15 +190,17 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
       {/* Input row */}
       <div className="relative mt-2 flex items-center gap-1.5">
-        {xpFloat && (xpFloat.xp > 0 || xpFloat.pr) && (
+        {xpFloat && (xpFloat.xp > 0 || xpFloat.pr || xpFloat.crit) && (
           <span
             key={xpFloat.key}
             className="pointer-events-none absolute right-1 top-0 flex items-center gap-1 font-mono text-sm font-bold"
             style={{ color: 'var(--color-gold)', animation: 'floatUp 900ms var(--ease-out) forwards' }}
             onAnimationEnd={() => setXpFloat(null)}
           >
-            {xpFloat.pr && <Trophy size={13} />}
-            {xpFloat.pr ? 'PR! ' : ''}{xpFloat.xp > 0 ? `+${xpFloat.xp} XP` : ''}
+            {(xpFloat.pr || xpFloat.crit) && <Trophy size={13} />}
+            {xpFloat.pr ? 'PR! ' : xpFloat.crit ? 'CRIT! ' : ''}
+            {xpFloat.xp > 0 ? `+${xpFloat.xp} XP` : ''}
+            {xpFloat.combo > 1 ? ` ×${xpFloat.combo}` : ''}
           </span>
         )}
         {showWeight && (

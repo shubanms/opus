@@ -113,11 +113,11 @@ export function addExercise({ name, muscleGroup = null, equipment = null }) {
   });
 }
 
-export function logSet(name, { weight = 0, reps = 0, rpe = null, isWarmup = false } = {}) {
+export function logSet(name, { weight = 0, reps = 0, rpe = null, isWarmup = false, crit = false, bonusXp = 0 } = {}) {
   if (!session) return;
   commitState(mapExercise(session, name, (e) => ({
     ...e,
-    sets: [...e.sets, { setNumber: nextSetNumber(e), weight: Number(weight) || 0, reps: Number(reps) || 0, rpe, isWarmup: !!isWarmup, note: null, completedAt: Date.now() }],
+    sets: [...e.sets, { setNumber: nextSetNumber(e), weight: Number(weight) || 0, reps: Number(reps) || 0, rpe, isWarmup: !!isWarmup, note: null, crit: !!crit, bonusXp: Number(bonusXp) || 0, completedAt: Date.now() }],
   })));
 }
 

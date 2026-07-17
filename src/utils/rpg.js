@@ -68,7 +68,9 @@ export function calcSetXP(weight, reps) {
 
 export function calcWorkoutXP(sets) {
   const working = sets.filter((s) => !s.isWarmup);
-  const setXP = working.reduce((sum, s) => sum + calcSetXP(s.weight, s.reps), 0);
+  // Per-set crit + combo bonus (utils/crit.js) is baked into each set's stored
+  // `bonusXp`, so it's part of the total and reverts cleanly when a set is gone.
+  const setXP = working.reduce((sum, s) => sum + calcSetXP(s.weight, s.reps) + (s.bonusXp || 0), 0);
   return setXP + COMPLETE_BONUS;
 }
 
