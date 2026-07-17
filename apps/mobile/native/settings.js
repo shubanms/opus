@@ -42,6 +42,10 @@ const DEFAULTS = {
   // Streak shield / rest token: tokens spent + the lapse date a shield protects.
   tokensSpent: 0,
   shieldedLapseDate: '',
+  // Iron economy: spent Iron + owned/equipped cosmetics (balance is derived).
+  ironSpent: 0,
+  ownedCosmetics: [],
+  equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
 };
 
 // In-memory cache kept in sync with the DB, readable imperatively.
