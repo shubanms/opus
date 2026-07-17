@@ -118,16 +118,25 @@ export default function App() {
             tabBarLabelStyle: { fontFamily: fontsLoaded ? fonts.sansMedium : undefined, fontSize: 10 },
             tabBarStyle: { backgroundColor: colors.obsidian, borderTopColor: '#221F1C', height: 60, paddingBottom: 8, paddingTop: 6 },
             tabBarIcon: ({ color, size }) => (
-              <Icon name={ICON[route.name] || 'ellipse'} size={size} color={color} />
+              // Workout is the dead-center action — render it as a raised gold FAB
+              // (mirrors the web PWA's elevated center button), the rest as icons.
+              route.name === 'Workout' ? (
+                <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="add" size={28} color={colors.obsidian} />
+                </View>
+              ) : (
+                <Icon name={ICON[route.name] || 'ellipse'} size={size} color={color} />
+              )
             ),
           })}
         >
           <Tab.Screen name="Home" component={HomeScreen} />
           <Tab.Screen name="Progress" component={ProgressScreen} />
-          <Tab.Screen name="Workout" component={WorkoutScreen} />
+          <Tab.Screen name="Workout" component={WorkoutScreen} options={{ tabBarLabel: () => null }} />
           <Tab.Screen name="Exercises" component={ExercisesScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />
-          <Tab.Screen name="Settings" component={SettingsScreen} />
+          {/* Settings stays registered (Tour/Profile-gear navigate to it) but is hidden from the bar. */}
+          <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarButton: () => null }} />
         </Tab.Navigator>
         {!settings.tourSeen ? (
           <Tour navigation={navRef} onDone={() => setRouteName(navRef.getCurrentRoute()?.name)} />

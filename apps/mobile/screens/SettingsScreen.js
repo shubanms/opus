@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, Switch, Modal } from 'react-native';
+import Constants from 'expo-constants';
 import { dateKey, units } from '@opus/core';
 import { Screen, H1, H2, Label, Body, Mono, Wordmark } from '../ui';
 import { radius, space, fonts } from '../theme';
@@ -10,11 +11,12 @@ import Segmented from '../components/Segmented';
 import { GoldButton, SecondaryButton } from '../components/Button';
 import EquipmentModal from '../components/settings/EquipmentModal';
 import { enableNotifications, testNotification, scheduleDailyReminder } from '../native/notifications';
-import { connectAndReadSteps, healthAvailability } from '../native/healthConnect';
-import { setSteps, wipeAllData, logBodyStat, currentBodyweight } from '../native/db';
+import { wipeAllData, logBodyStat, currentBodyweight } from '../native/db';
 import { exportJson, exportCsv, importJson } from '../native/dataExport';
 import { previewSounds, playCue } from '../native/sound';
 import { useSettings } from '../native/settings';
+
+const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
 
 const NOTIF_TYPES = [
   { key: 'prCelebration', label: 'PR celebrations' },
@@ -60,7 +62,6 @@ export default function SettingsScreen({ navigation }) {
   const s = useThemedStyles(makeStyles);
   const { settings, update } = useSettings();
   const [notif, setNotif] = useState(settings.notifEnabled);
-  const [steps, setStepsState] = useState(null);
   const [name, setName] = useState(settings.name);
   const [bw, setBw] = useState(() => { const w = currentBodyweight(); return w != null ? String(Math.round(units.toDisplay(w, settings.unit || 'kg') * 10) / 10) : ''; });
   const [resetOpen, setResetOpen] = useState(false);
@@ -101,16 +102,6 @@ export default function SettingsScreen({ navigation }) {
     ]);
   };
   const onTestNotif = async () => { try { await testNotification(); } catch (e) { Alert.alert('Error', String(e?.message || e)); } };
-  const onConnectHealth = async () => {
-    try {
-      const avail = await healthAvailability();
-      if (avail === 'NotInstalled') { Alert.alert('Health Connect', 'Install Health Connect from the Play Store, then retry.'); return; }
-      if (avail !== 'Available') { Alert.alert('Health Connect', 'Not supported on this device.'); return; }
-      const res = await connectAndReadSteps();
-      if (res.ok) { setStepsState(res.steps); try { setSteps(dateKey.todayKey(), res.steps); } catch {} Alert.alert('Imported', `${res.steps.toLocaleString()} steps today.`); }
-      else Alert.alert('Health Connect', 'Could not read steps.');
-    } catch (e) { Alert.alert('Error', String(e?.message || e)); }
-  };
 
   const doReset = () => {
     if (confirm !== 'DELETE') return;
@@ -237,12 +228,6 @@ export default function SettingsScreen({ navigation }) {
         </View>
       </Card>
 
-      <Card>
-        <Label>Health Connect</Label>
-        <Body style={{ marginVertical: space(2) }}>{steps != null ? `${steps.toLocaleString()} steps imported today.` : 'Auto-import steps, weight and sleep from Android Health Connect.'}</Body>
-        <GoldButton label="Connect & import today's steps" icon="walk" onPress={onConnectHealth} />
-      </Card>
-
       {/* Data */}
       <Card>
         <Label>Data</Label>
@@ -265,10 +250,8 @@ export default function SettingsScreen({ navigation }) {
         <Label>About</Label>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: space(2) }}>
           <Wordmark size={20} style={{ color: colors.textPrimary }} />
-          <Text style={s.aboutTag}> · native</Text>
+          <Text style={s.aboutTag}> v{APP_VERSION}</Text>
         </View>
-        <Body style={{ marginTop: 4 }}>React Native + Expo build. Shared logic via @opus/core.</Body>
-        <Body style={{ marginTop: space(2), color: colors.ash }}>v3.0.0 · github.com/shubanms/opus</Body>
       </Card>
 
       <EquipmentModal visible={equipOpen} onClose={() => setEquipOpen(false)} />

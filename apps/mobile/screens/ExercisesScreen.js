@@ -162,9 +162,11 @@ const makeStyles = (colors) => StyleSheet.create({
   meta: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, textTransform: 'capitalize' },
   diff: { fontFamily: fonts.sansMedium, fontSize: 11, textTransform: 'capitalize' },
   chips: { paddingHorizontal: space(5), paddingTop: space(3), gap: space(2) },
-  chip: { paddingHorizontal: space(4), paddingVertical: space(2), borderRadius: radius.full, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1 },
-  chipSm: { paddingHorizontal: space(3.5), paddingVertical: space(1.5), borderRadius: radius.full, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1 },
+  // This screen sits on the constant-obsidian canvas, so unselected chips need a
+  // visible outline (a chalk/ivory fill goes near-invisible in the dark palette).
+  chip: { paddingHorizontal: space(4), paddingVertical: space(2), borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.ash, borderWidth: 1 },
+  chipSm: { paddingHorizontal: space(3.5), paddingVertical: space(1.5), borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.ash, borderWidth: 1 },
   chipActive: { backgroundColor: colors.gold, borderColor: colors.gold },
-  chipText: { color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 13, textTransform: 'capitalize' },
+  chipText: { color: colors.textInverse, fontFamily: fonts.sansMedium, fontSize: 13, textTransform: 'capitalize' },
   chipTextActive: { color: colors.obsidian },
 });

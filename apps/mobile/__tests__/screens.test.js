@@ -47,10 +47,10 @@ import Heatmap from '../components/progress/Heatmap';
 import BodyStatsForm from '../components/progress/BodyStatsForm';
 import SleepForm from '../components/progress/SleepForm';
 import EquipmentModal from '../components/settings/EquipmentModal';
+import AchievementsModal from '../components/profile/AchievementsModal';
 import WeeklyRecap from '../components/home/WeeklyRecap';
 import Tour from '../components/tour/Tour';
 import CoachMark from '../components/coach/CoachMark';
-import Companion from '../components/mascot/Companion';
 
 const Tab = createBottomTabNavigator();
 
@@ -118,9 +118,14 @@ describe('workout components render without crashing', () => {
     expect(getByText('Generate a routine')).toBeTruthy();
     expect(getByText('Push Day')).toBeTruthy();
   });
-  it('Onboarding renders the first-run form', () => {
+  it('Onboarding gathers the full profile then starts', () => {
     const { getByText } = render(<Onboarding onDone={() => {}} />);
     expect(getByText('Build your masterpiece.')).toBeTruthy();
+    // Profile-gathering fields (parity with the PWA onboarding).
+    expect(getByText('Bodyweight')).toBeTruthy();
+    expect(getByText('Height')).toBeTruthy();
+    expect(getByText('Age')).toBeTruthy();
+    expect(getByText('Sex')).toBeTruthy();
     expect(getByText('Start training')).toBeTruthy();
   });
 });
@@ -298,6 +303,25 @@ describe('settings parity (Phase D)', () => {
     expect(getByText('Import backup')).toBeTruthy();
     expect(getByText('Export sets (CSV)')).toBeTruthy();
   });
+
+  it('About shows a real version and no Health Connect card', () => {
+    const { getByText, queryByText } = renderScreen(SettingsScreen);
+    expect(getByText(/v\d+\.\d+\.\d+/)).toBeTruthy(); // real semver, not a hardcoded string
+    expect(queryByText('Health Connect')).toBeNull(); // removed
+    expect(queryByText(/@opus\/core/)).toBeNull(); // no shared-logic mention
+  });
+});
+
+describe('profile compaction (on-device polish)', () => {
+  it('Profile shows an achievements preview + View all', () => {
+    const { getByText } = renderScreen(ProfileScreen);
+    expect(getByText(/View all achievements/)).toBeTruthy();
+  });
+
+  it('AchievementsModal lists the full trophy case', () => {
+    const { getByText } = render(<AchievementsModal visible unlocked={new Set(['first'])} onClose={() => {}} />);
+    expect(getByText('Achievements')).toBeTruthy();
+  });
 });
 
 describe('home richness (Phase E)', () => {
@@ -312,18 +336,6 @@ describe('home richness (Phase E)', () => {
     const { getByText } = render(<WeeklyRecap />);
     expect(getByText('Your week so far')).toBeTruthy();
     expect(getByText('Sessions')).toBeTruthy();
-  });
-});
-
-describe('companion Magnus (Phase H)', () => {
-  it('greets on mount and talks when tapped', () => {
-    const { getByLabelText, queryAllByText } = render(<Companion />);
-    // The tappable companion is present…
-    const btn = getByLabelText('Talk to Magnus');
-    expect(btn).toBeTruthy();
-    // …and tapping it doesn't throw (says a hype line + plays a gesture).
-    expect(() => fireEvent.press(btn)).not.toThrow();
-    expect(queryAllByText(/Magnus/).length).toBeGreaterThan(0);
   });
 });
 

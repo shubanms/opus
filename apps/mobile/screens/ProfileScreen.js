@@ -17,12 +17,13 @@ import { SecondaryButton } from '../components/Button';
 import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
 import WrappedModal from '../components/profile/WrappedModal';
+import AchievementsModal, { AchievementRow } from '../components/profile/AchievementsModal';
 import ShareButton from '../components/share/ShareButton';
 import { useSettings } from '../native/settings';
 import { useDbQuery } from '../native/useDbQuery';
 import { getTotals, unlockedAchievementKeys, computeAchievementStats, getAllPRs, getWrappedInputs, getRadarInputs } from '../native/db';
 
-export default function ProfileScreen() {
+export default function ProfileScreen({ navigation }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const { settings } = useSettings();
@@ -34,6 +35,11 @@ export default function ProfileScreen() {
   const wrappedInputs = useDbQuery(() => getWrappedInputs(), [], { workouts: [], sets: [], prs: [], exName: {} });
   const radarInputs = useDbQuery(() => getRadarInputs(), [], null);
   const unlocked = new Set(unlockedKeys);
+  // Preview = earned first, then locked, capped so the profile stays short.
+  const achPreview = [
+    ...ach.ACHIEVEMENTS.filter((a) => unlocked.has(a.key)),
+    ...ach.ACHIEVEMENTS.filter((a) => !unlocked.has(a.key)),
+  ].slice(0, 4);
 
   const rawLevel = rpg.getLevelFromTotalXP(totals.totalXP);
   const level = bosses.cappedLevel(rawLevel, stats); // display level respects boss gates
@@ -56,7 +62,13 @@ export default function ProfileScreen() {
 
   return (
     <Screen>
-      <H1>Profile</H1>
+      {/* Header row — title + Settings gear (Settings is no longer a bottom tab). */}
+      <View style={s.headerRow}>
+        <H1>Profile</H1>
+        <PressScale sound="tap" onPress={() => navigation?.navigate('Settings')} hitSlop={10} style={s.gear} accessibilityLabel="Settings">
+          <Icon name="settings" size={22} color={colors.textSecondary} />
+        </PressScale>
+      </View>
 
       {/* Identity hero */}
       <Card>
@@ -125,41 +137,33 @@ export default function ProfileScreen() {
         <StatTile icon="ribbon" accent={colors.sage} value={level} label="Level" />
       </View>
 
-      {/* Achievements / trophy case */}
+      {/* Achievements / trophy case — a short preview; full list opens in a sheet. */}
       <View style={s.achHead}>
         <Label>Achievements</Label>
         <Mono style={s.achCount}>{unlocked.size}/{ach.ACHIEVEMENTS.length}</Mono>
       </View>
       <Card>
         <View style={{ gap: space(1) }}>
-          {ach.ACHIEVEMENTS.map((a) => {
-            const earned = unlocked.has(a.key);
-            const masked = a.hidden && !earned;
-            return (
-              <View key={a.key} style={s.achRow}>
-                <Text style={[s.achIcon, !earned && { opacity: 0.3 }]}>{earned ? '🏅' : '🔒'}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={[s.achTitle, !earned && s.achLocked]}>{masked ? 'Hidden achievement' : a.title}</Text>
-                  <Text style={s.achDesc}>{masked ? 'Keep training to reveal this one.' : a.desc}</Text>
-                </View>
-                {a.xp > 0 && earned && <Mono style={s.achXp}>+{a.xp}</Mono>}
-              </View>
-            );
-          })}
+          {achPreview.map((a) => (
+            <AchievementRow key={a.key} a={a} earned={unlocked.has(a.key)} />
+          ))}
         </View>
       </Card>
+      <SecondaryButton label={`View all achievements (${ach.ACHIEVEMENTS.length})`} icon="trophy" onPress={() => setSheet('achievements')} />
 
-      <Body>XP is earned from finished workouts — {rpg.COMPLETE_BONUS} per session plus per-set XP
-        and achievement rewards, computed by the shared @opus/core engine so web and native agree.</Body>
+      <Body>XP is earned from finished workouts — {rpg.COMPLETE_BONUS} per session, plus per-set XP and achievement rewards.</Body>
 
       <ProgressionModal visible={sheet === 'ranks'} onClose={() => setSheet(null)} level={rawLevel} stats={stats} />
       <HallOfRecordsModal visible={sheet === 'records'} onClose={() => setSheet(null)} prs={prs} />
       <WrappedModal visible={sheet === 'wrapped'} onClose={() => setSheet(null)} inputs={wrappedInputs} />
+      <AchievementsModal visible={sheet === 'achievements'} onClose={() => setSheet(null)} unlocked={unlocked} />
     </Screen>
   );
 }
 
 const makeStyles = (colors) => StyleSheet.create({
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  gear: { padding: space(1) },
   name: { color: colors.textPrimary, fontFamily: fonts.display, fontSize: 30 },
   rankRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(3) },
   rank: { color: colors.textPrimary, fontFamily: fonts.displaySemi, fontSize: 20, marginLeft: space(3) },
@@ -168,12 +172,6 @@ const makeStyles = (colors) => StyleSheet.create({
   bento: { flexDirection: 'row', gap: space(3) },
   achHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   achCount: { color: colors.gold, fontFamily: fonts.monoMedium, fontSize: 14 },
-  achRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), paddingVertical: space(2.5), borderTopColor: colors.ivory, borderTopWidth: StyleSheet.hairlineWidth },
-  achIcon: { fontSize: 20 },
-  achTitle: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
-  achLocked: { color: colors.textSecondary },
-  achDesc: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, marginTop: 1 },
-  achXp: { color: colors.gold, fontFamily: fonts.mono, fontSize: 12 },
   bossCallout: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.ivory, borderRadius: radius.lg, padding: space(4), borderLeftWidth: 3, borderLeftColor: colors.ember },
   bossTitle: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
   bossDesc: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, marginTop: 1 },
