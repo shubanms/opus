@@ -4,6 +4,11 @@ Living plan for the next wave. Committed so it survives session refreshes;
 `STATE.md` tracks live status. This wave leans hard into the **RPG factor**
 (user's steer), with normal-feature candidates kept alongside.
 
+> **Committed build queue (next 7)** lives in `docs/PLAN_NEXT.md` — the user picked
+> vs-last-time diff, crit sets + combo, calendar month view, auto progressive-overload,
+> streak shield / rest token, classic program library, and progress photos (one PR each).
+> The RPG-expansion ideas below are parked for a **design/prototype pass** first.
+
 ## Hard constraints (unchanged)
 - 100% **local-first** PWA — no backend/accounts/sync; no leaderboards/multiplayer.
 - Weights stored in **kg**; convert at display via `src/utils/units.js`.
