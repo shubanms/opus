@@ -1,6 +1,10 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles, TrendingDown, Swords } from 'lucide-react';
+import { Settings, Dumbbell, Layers, Trophy, Flame, Clock, Zap, CalendarDays, ChevronRight, Sparkles, TrendingDown, Swords, Gem } from 'lucide-react';
+import { db } from '../db/db.js';
+import VaultModal from '../components/rpg/VaultModal.jsx';
+import { cosmeticById, earnedIron, ironBalance } from '../utils/economy.js';
 import { useRPG, useCharacterStats } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js';
@@ -43,8 +47,15 @@ export default function ProfilePage() {
   const life = useLifetimeStats();
   const bossStats = useBossStats();
   const unit = useSettingsStore((s) => s.unit);
+  const equipped = useSettingsStore((s) => s.equipped);
+  const ironSpent = useSettingsStore((s) => s.ironSpent);
+  const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
+  const [vaultOpen, setVaultOpen] = useState(false);
 
   if (!loaded || !profile) return null;
+
+  const flair = equipped?.titleFlair ? cosmeticById(equipped.titleFlair)?.value : null;
+  const ironBal = ironBalance(earnedIron({ workouts: life.workouts, prCount: life.prCount, questClaims }), ironSpent);
 
   const totalXp = profile.totalXp ?? 0;
   const { effectiveXp, decaying, lost } = decayInfo(profile);
@@ -90,7 +101,7 @@ export default function ProfilePage() {
         <div className="flex items-start justify-between">
           <div className="min-w-0">
             <h1 className="truncate font-display text-3xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-              {profile.name || 'Profile'}
+              {flair ? `${flair} ` : ''}{profile.name || 'Profile'}
             </h1>
             <p className="mt-1.5 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
               {identity.length ? identity.join('  ·  ') : `Member since ${profile.joinDate}`}
@@ -168,6 +179,23 @@ export default function ProfilePage() {
           </button>
         ))}
       </div>
+
+      {/* The Vault */}
+      <button
+        onClick={() => setVaultOpen(true)}
+        className="mt-3 flex w-full items-center justify-between rounded-xl px-4 py-3"
+        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-gold)' }}
+      >
+        <span className="flex items-center gap-2.5 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+          <Gem size={15} style={{ color: 'var(--color-gold)' }} /> The Vault — cosmetics &amp; loot
+        </span>
+        <span className="flex items-center gap-1.5 font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}>
+          <span style={{ display: 'inline-block', width: 11, height: 11, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
+          {ironBal.toLocaleString()}
+        </span>
+      </button>
+
+      <VaultModal isOpen={vaultOpen} onClose={() => setVaultOpen(false)} />
 
       {/* Lifetime stats */}
       <h2 className="mb-3 mt-6 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>

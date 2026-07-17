@@ -8,6 +8,8 @@ const DEFAULTS = {
   tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '', coachMarksSeen: {},
   // Streak shield / rest token: tokens spent + the lapse date a shield protects.
   tokensSpent: 0, shieldedLapseDate: null,
+  // Iron economy: spent Iron + owned/equipped cosmetics (balance is derived).
+  ironSpent: 0, ownedCosmetics: [], equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
   // Equipment per location. barKg null → use global barWeight; plates null → standard
   // set for the current unit; plates are display-unit numbers stamped with `unit`.
   inventory: {
@@ -28,11 +30,25 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate }));
+    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped }));
   },
   spendShield(lapseDate) {
     set((s) => ({ tokensSpent: (s.tokensSpent || 0) + 1, shieldedLapseDate: lapseDate ?? null }));
+    get().persist();
+  },
+  // Buy a cosmetic: record the spend + add it to owned (idempotent on id).
+  buyCosmetic(id, price) {
+    set((s) => (s.ownedCosmetics.includes(id) ? s : { ironSpent: (s.ironSpent || 0) + price, ownedCosmetics: [...s.ownedCosmetics, id] }));
+    get().persist();
+  },
+  equipCosmetic(type, id) {
+    set((s) => ({ equipped: { ...s.equipped, [type]: s.equipped?.[type] === id ? null : id } }));
+    get().persist();
+  },
+  // Open a chest: spend the chest price and add the rolled cosmetic to owned.
+  openChest(price, cosmeticId) {
+    set((s) => ({ ironSpent: (s.ironSpent || 0) + price, ownedCosmetics: cosmeticId && !s.ownedCosmetics.includes(cosmeticId) ? [...s.ownedCosmetics, cosmeticId] : s.ownedCosmetics }));
     get().persist();
   },
   setInventoryActive(active) {

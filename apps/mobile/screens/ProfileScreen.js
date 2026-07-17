@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from '../components/Icon';
-import { rpg, achievements as ach, bosses } from '@opus/core';
+import { rpg, achievements as ach, bosses, economy } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
 import { radius, space, fonts } from '../theme';
 import { useColors, useThemedStyles } from '../native/ThemeProvider';
@@ -18,6 +18,7 @@ import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
 import WrappedModal from '../components/profile/WrappedModal';
 import AchievementsModal, { AchievementRow } from '../components/profile/AchievementsModal';
+import VaultModal from '../components/rpg/VaultModal';
 import ShareButton from '../components/share/ShareButton';
 import { useSettings } from '../native/settings';
 import { useDbQuery } from '../native/useDbQuery';
@@ -48,6 +49,14 @@ export default function ProfileScreen({ navigation }) {
   const prestige = rpg.getPrestige(totals.totalXP);
   const prog = rpg.getXPProgress(totals.totalXP);
 
+  // Iron economy: equipped title flair + spendable balance (derived from history).
+  const equipped = settings.equipped || {};
+  const flair = equipped.titleFlair ? economy.cosmeticById(equipped.titleFlair)?.value : null;
+  const ironBal = economy.ironBalance(
+    economy.earnedIron({ workouts: totals.workouts, prCount: totals.prCount, questClaims: totals.questClaims }),
+    settings.ironSpent
+  );
+
   // Share-card payloads (mirror the web ProfilePage share data).
   const charStats = rpg.getCharacterStats(radarInputs || {});
   const unit = settings.unit || 'kg';
@@ -72,7 +81,7 @@ export default function ProfileScreen({ navigation }) {
 
       {/* Identity hero */}
       <Card>
-        <Text style={s.name}>{settings.name}</Text>
+        <Text style={s.name}>{flair ? `${flair} ` : ''}{settings.name}</Text>
         <View style={s.rankRow}>
           <LevelBadge level={level} size={30} />
           <Text style={s.rank}>{rank}</Text>
@@ -117,6 +126,7 @@ export default function ProfileScreen({ navigation }) {
         <SecondaryButton label="Hall of Records" icon="trophy" onPress={() => setSheet('records')} style={{ flex: 1 }} />
       </View>
       <SecondaryButton label="Your Wrapped" icon="sparkles" onPress={() => setSheet('wrapped')} />
+      <SecondaryButton label={`The Vault · ◆ ${ironBal.toLocaleString()} Iron`} icon="star" onPress={() => setSheet('vault')} />
 
       {/* Shareable cards */}
       <View style={s.btnRow}>
@@ -157,6 +167,7 @@ export default function ProfileScreen({ navigation }) {
       <HallOfRecordsModal visible={sheet === 'records'} onClose={() => setSheet(null)} prs={prs} />
       <WrappedModal visible={sheet === 'wrapped'} onClose={() => setSheet(null)} inputs={wrappedInputs} />
       <AchievementsModal visible={sheet === 'achievements'} onClose={() => setSheet(null)} unlocked={unlocked} />
+      <VaultModal visible={sheet === 'vault'} onClose={() => setSheet(null)} />
     </Screen>
   );
 }
