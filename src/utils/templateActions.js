@@ -1,4 +1,5 @@
 import { db } from '../db/db.js';
+import { decideProgression } from './progression.js';
 
 // exercises: [{ exerciseId, targetSets, targetReps, targetWeight }]
 function toLinks(templateId, exercises) {
@@ -16,23 +17,25 @@ function toLinks(templateId, exercises) {
 // `autoKey` (unindexed) marks auto-generated routines and carries the muscle
 // signature used to re-match a later same-group session. Stored freely by Dexie
 // — no schema migration needed.
-export async function createTemplate({ name, dayOfWeek = null, color = null, autoKey = null, exercises = [] }) {
+export async function createTemplate({ name, dayOfWeek = null, color = null, autoKey = null, progression = null, exercises = [] }) {
   const templateId = await db.templates.add({
     name: name.trim() || 'Routine',
     dayOfWeek,
     color,
     autoKey,
+    progression,
     createdAt: Date.now(),
   });
   if (exercises.length) await db.templateExercises.bulkAdd(toLinks(templateId, exercises));
   return templateId;
 }
 
-export async function updateTemplate(templateId, { name, dayOfWeek = null, color = null, autoKey, exercises = [] }) {
+export async function updateTemplate(templateId, { name, dayOfWeek = null, color = null, autoKey, progression, exercises = [] }) {
   // Only touch autoKey when the caller passes it, so a manual edit from the
   // builder (which never sends it) preserves any existing signature.
   const patch = { name: name.trim() || 'Routine', dayOfWeek, color };
   if (autoKey !== undefined) patch.autoKey = autoKey;
+  if (progression !== undefined) patch.progression = progression;
   await db.templates.update(templateId, patch);
   await db.templateExercises.where('templateId').equals(templateId).delete();
   if (exercises.length) await db.templateExercises.bulkAdd(toLinks(templateId, exercises));
@@ -82,6 +85,43 @@ export async function saveWorkoutAsRoutine({ name, autoKey = null, nameEdited = 
 
   await createTemplate({ name, autoKey, exercises });
   return (name || 'Routine').trim();
+}
+
+// After finishing a session logged against a routine, advance that routine's
+// per-exercise targets by its progression scheme (utils/progression.js). Edits
+// only the routine's *targets* (forward-only suggestions), so workout history
+// is never touched and deletes need no revert. Returns a summary for a toast,
+// or null when there's nothing to advance.
+export async function advanceProgression(templateId, exercises) {
+  if (!templateId) return null;
+  const tpl = await db.templates.get(templateId);
+  const scheme = tpl?.progression;
+  if (!scheme || !scheme.mode || scheme.mode === 'off') return null;
+
+  const links = await db.templateExercises.where('templateId').equals(templateId).toArray();
+  const workingByEx = {};
+  for (const e of exercises ?? []) {
+    workingByEx[e.exerciseId] = (e.sets ?? []).filter((s) => !s.isWarmup && ((s.weight ?? 0) > 0 || (s.reps ?? 0) > 0));
+  }
+
+  const bumps = [];
+  for (const link of links) {
+    const working = workingByEx[link.exerciseId];
+    if (!working || !working.length) continue;
+    const next = decideProgression(
+      { targetSets: link.targetSets, targetReps: link.targetReps, targetWeight: link.targetWeight, misses: link.misses ?? 0 },
+      working,
+      scheme
+    );
+    if (next.action === 'off') continue;
+    await db.templateExercises.update(link.id, {
+      targetSets: next.targetSets, targetReps: next.targetReps, targetWeight: next.targetWeight, misses: next.misses,
+    });
+    if (next.action === 'increase' || next.action === 'deload') {
+      bumps.push({ exerciseId: link.exerciseId, action: next.action });
+    }
+  }
+  return bumps.length ? { count: bumps.length, bumps, mode: scheme.mode } : null;
 }
 
 // Quick name-only rename (leaves exercises/targets untouched).

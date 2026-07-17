@@ -10,6 +10,7 @@ import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 import { GoldButton, SecondaryButton } from '../Button';
 import ExercisePicker from './ExercisePicker';
+import Segmented from '../Segmented';
 import { getTemplate, updateTemplate, deleteTemplate } from '../../native/db';
 import { playCue } from '../../native/sound';
 import { success as hSuccess } from '../../native/haptics';
@@ -21,6 +22,7 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
   const s = useThemedStyles(makeStyles);
   const [name, setName] = useState('');
   const [dayOfWeek, setDayOfWeek] = useState(null);
+  const [progressionMode, setProgressionMode] = useState('off');
   const [rows, setRows] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [swapIdx, setSwapIdx] = useState(null); // row being replaced, or null
@@ -32,6 +34,7 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
       if (t) {
         setName(t.name || '');
         setDayOfWeek(t.dayOfWeek ?? null);
+        setProgressionMode((() => { try { return t.progression ? (JSON.parse(t.progression).mode || 'off') : 'off'; } catch { return 'off'; } })());
         setRows((t.exercises || []).map((e) => ({
           exerciseName: e.exerciseName,
           targetSets: e.targetSets ?? 3,
@@ -65,7 +68,7 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
 
   const save = () => {
     try {
-      updateTemplate(templateId, { name, dayOfWeek, color: null, exercises: rows });
+      updateTemplate(templateId, { name, dayOfWeek, color: null, progression: progressionMode === 'off' ? { mode: 'off' } : { mode: progressionMode, weightStep: 2.5, deloadAfterMisses: 2 }, exercises: rows });
       hSuccess();
       playCue('success');
       onClose?.();
@@ -111,6 +114,17 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
                 </PressScale>
               ))}
             </View>
+
+            <Label style={{ marginTop: space(4) }}>Auto-progression</Label>
+            <Segmented
+              style={{ marginTop: space(2) }}
+              options={[{ value: 'off', label: 'Off' }, { value: 'linear', label: 'Linear' }, { value: 'double', label: 'Double' }]}
+              value={progressionMode}
+              onChange={setProgressionMode}
+            />
+            <Body style={{ marginTop: space(2), fontSize: 12 }}>
+              {progressionMode === 'off' ? 'Targets stay put.' : progressionMode === 'linear' ? 'Hit every set → +2.5kg; miss twice → deload 10%.' : 'Hit target reps → +2.5kg; else hold & build reps.'}
+            </Body>
 
             <Label style={{ marginTop: space(4) }}>Exercises</Label>
             <View style={{ gap: space(2), marginTop: space(2) }}>

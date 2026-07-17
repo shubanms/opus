@@ -4,7 +4,7 @@
 // numbers (XP, PRs, streak, volume) are computed from these rows using the
 // shared @opus/core logic, so web and native agree on the math.
 import * as SQLite from 'expo-sqlite';
-import { rpg, oneRepMax, dateKey, seedExercises, achievements, quests, volume, prs as prsCore } from '@opus/core';
+import { rpg, oneRepMax, dateKey, seedExercises, achievements, quests, volume, prs as prsCore, progression as progressionCore } from '@opus/core';
 
 let db = null;
 
@@ -200,6 +200,8 @@ export function initDb() {
   for (const m of ['chest', 'waist', 'hips', 'arms', 'thighs']) ensureColumn(d, 'bodyStats', m, 'REAL');
   // Per-exercise rest (seconds) on routine templates (week planner + editor).
   ensureColumn(d, 'templateExercises', 'targetRest', 'INTEGER');
+  ensureColumn(d, 'templateExercises', 'misses', 'INTEGER DEFAULT 0'); // progression miss counter
+  ensureColumn(d, 'templates', 'progression', 'TEXT');                 // JSON progression scheme
 
   const row = d.getFirstSync('SELECT COUNT(*) AS n FROM exercises');
   if (!row || row.n === 0) {
@@ -278,12 +280,12 @@ function clearDay(d, dayOfWeek, exceptId = null) {
 }
 
 // Create a fully-specified template (targets + rest + weekday + autoKey). Returns id.
-export function createTemplateFull({ name, dayOfWeek = null, color = null, autoKey = null, exercises = [] }) {
+export function createTemplateFull({ name, dayOfWeek = null, color = null, autoKey = null, progression = null, exercises = [] }) {
   const d = conn();
   let id;
   d.withTransactionSync(() => {
     clearDay(d, dayOfWeek);
-    const res = d.runSync('INSERT INTO templates (name, dayOfWeek, color, autoKey, createdAt) VALUES (?, ?, ?, ?, ?)', name.trim() || 'Routine', dayOfWeek, color, autoKey, Date.now());
+    const res = d.runSync('INSERT INTO templates (name, dayOfWeek, color, autoKey, progression, createdAt) VALUES (?, ?, ?, ?, ?, ?)', name.trim() || 'Routine', dayOfWeek, color, autoKey, progression ? JSON.stringify(progression) : null, Date.now());
     id = res.lastInsertRowId;
     insertLinks(d, id, exercises);
   });
@@ -332,11 +334,14 @@ export function getTemplate(id) {
 }
 
 // Full replace of a template's fields + exercise list (editor save).
-export function updateTemplate(id, { name, dayOfWeek = null, color = null, exercises = [] }) {
+export function updateTemplate(id, { name, dayOfWeek = null, color = null, progression, exercises = [] }) {
   const d = conn();
   d.withTransactionSync(() => {
     clearDay(d, dayOfWeek, id);
     d.runSync('UPDATE templates SET name = ?, dayOfWeek = ?, color = ? WHERE id = ?', (name ?? '').trim() || 'Routine', dayOfWeek, color, id);
+    if (progression !== undefined) {
+      d.runSync('UPDATE templates SET progression = ? WHERE id = ?', progression ? JSON.stringify(progression) : null, id);
+    }
     d.runSync('DELETE FROM templateExercises WHERE templateId = ?', id);
     insertLinks(d, id, exercises);
   });
@@ -1386,10 +1391,37 @@ export function commitWorkout(session) {
   const afterXP = getTotals().totalXP;
   const gained = Math.max(0, afterXP - beforeXP);
   d.runSync('UPDATE workouts SET xpEarned = ? WHERE id = ?', gained, workoutId);
+
+  // Advance the routine's targets by its progression scheme (forward-only — only
+  // touches routine targets, never history, so deletes need no revert).
+  let progressed = 0;
+  try {
+    if (session.templateId) {
+      const tpl = d.getFirstSync('SELECT progression FROM templates WHERE id = ?', session.templateId);
+      const scheme = tpl?.progression ? JSON.parse(tpl.progression) : null;
+      if (scheme && scheme.mode && scheme.mode !== 'off') {
+        const links = d.getAllSync('SELECT id, exerciseName, targetSets, targetReps, targetWeight, COALESCE(misses,0) AS misses FROM templateExercises WHERE templateId = ?', session.templateId);
+        for (const link of links) {
+          const w = workingByEx.find((x) => x.ex.name === link.exerciseName)?.working;
+          if (!w || !w.length) continue;
+          const next = progressionCore.decideProgression(
+            { targetSets: link.targetSets, targetReps: link.targetReps, targetWeight: link.targetWeight, misses: link.misses },
+            w.map((s) => ({ weight: Number(s.weight) || 0, reps: Number(s.reps) || 0 })),
+            scheme
+          );
+          if (next.action === 'off') continue;
+          d.runSync('UPDATE templateExercises SET targetSets = ?, targetReps = ?, targetWeight = ?, misses = ? WHERE id = ?', next.targetSets, next.targetReps, next.targetWeight, next.misses, link.id);
+          if (next.action === 'increase' || next.action === 'deload') progressed += 1;
+        }
+      }
+    }
+  } catch { /* progression is best-effort; the workout is already saved */ }
+
   touch();
 
   return {
     discarded: false,
+    progressed,
     workoutId,
     summary: {
       totalSets: totalWorking,
