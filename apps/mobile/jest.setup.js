@@ -138,7 +138,7 @@ jest.mock('./native/haptics', () => ({ tapLight: jest.fn(), success: jest.fn(), 
 jest.mock('./native/widgets', () => ({ refreshWidgets: jest.fn() }));
 jest.mock('./native/notifications', () => ({
   enableNotifications: jest.fn(async () => true),
-  testNotification: jest.fn(async () => {}),
+  testNotification: jest.fn(async () => ({ ok: true })),
   scheduleDailyReminder: jest.fn(async () => {}),
 }));
 // Share capture: view-shot's <ViewShot> is a passthrough view in Node, and
