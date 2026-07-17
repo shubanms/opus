@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { units, dateKey } from '@opus/core';
+import { units, dateKey, weekPlanner, routineGenerator } from '@opus/core';
 import { Wordmark, Display, Label, Body } from '../ui';
 import { radius, space, fonts } from '../theme';
 import { useColors, useThemedStyles } from '../native/ThemeProvider';
@@ -13,14 +13,17 @@ import PressScale from './PressScale';
 import { GoldButton } from './Button';
 import GoldAura from './fx/GoldAura';
 import { useSettings } from '../native/settings';
-import { logBodyStat } from '../native/db';
+import { logBodyStat, getExercises, createWeek } from '../native/db';
 
 const SEX = ['Male', 'Female', 'Other'];
+const LEVELS = ['beginner', 'intermediate', 'advanced'];
+const toAppDow = (d) => (d === 7 ? 0 : d);
 
 export default function Onboarding({ onDone }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const { update } = useSettings();
+  const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('kg');
   const [bodyweight, setBodyweight] = useState('');
@@ -28,11 +31,15 @@ export default function Onboarding({ onDone }) {
   const [age, setAge] = useState('');
   const [sex, setSex] = useState('');
   const [bar, setBar] = useState('20');
+  const [splitKey, setSplitKey] = useState('ppl');
+  const [days, setDays] = useState(6);
+  const [level, setLevel] = useState('intermediate');
   const currentYear = new Date().getFullYear();
+  const split = weekPlanner.SPLIT_LIST.find((x) => x.key === splitKey);
 
   const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
 
-  const start = () => {
+  const saveProfile = () => {
     update('name', name.trim() || 'Athlete');
     update('unit', unit);
     update('barWeight', units.toKg(num(bar) || 20, unit));
@@ -41,8 +48,26 @@ export default function Onboarding({ onDone }) {
     update('sex', sex);
     const bw = num(bodyweight);
     if (bw > 0) { try { logBodyStat({ date: dateKey.todayKey(), weight: units.toKg(bw, unit) }); } catch {} }
-    update('onboarded', true);
-    onDone?.();
+  };
+
+  const start = () => { saveProfile(); setStep(1); };
+
+  const finish = () => { update('onboarded', true); onDone?.(); };
+
+  const pickSplit = (key) => {
+    const sp = weekPlanner.SPLIT_LIST.find((x) => x.key === key);
+    setSplitKey(key);
+    if (sp && !sp.days.includes(days)) setDays(sp.days[sp.days.length - 1]);
+  };
+
+  const createMyWeek = () => {
+    try {
+      const catalog = getExercises().map((e) => ({ ...e, id: e.name }));
+      const rng = routineGenerator.makeRng((Date.now() % 100000) + 7919);
+      const wk = weekPlanner.planWeek({ split: splitKey, days, level, sessionMinutes: 60, rest: 'standard', exercises: catalog, rng });
+      createWeek(wk.map((day) => ({ ...day, dayOfWeek: toAppDow(day.dayOfWeek) })));
+    } catch {}
+    finish();
   };
 
   const NumField = ({ label, value, onChange, suffix, placeholder }) => (
@@ -61,6 +86,59 @@ export default function Onboarding({ onDone }) {
       </View>
     </View>
   );
+
+  if (step === 1) {
+    return (
+      <SafeAreaView style={s.safe}>
+        <View style={s.aura}><GoldAura size={380} intensity={0.5} /></View>
+        <ScrollView contentContainerStyle={s.body} showsVerticalScrollIndicator={false}>
+          <View style={{ alignItems: 'center' }}>
+            <Wordmark size={40} />
+            <Display style={[s.tagline, { fontSize: 28, lineHeight: 32 }]}>Plan your week.</Display>
+            <Body style={{ textAlign: 'center', marginTop: space(2) }}>Pick a split — we'll build a full week of routines, fully editable after.</Body>
+          </View>
+
+          <View style={{ gap: space(2), marginTop: space(4) }}>
+            {weekPlanner.SPLIT_LIST.map((sp) => {
+              const on = sp.key === splitKey;
+              return (
+                <PressScale key={sp.key} sound="tap" onPress={() => pickSplit(sp.key)} style={[s.splitCard, on && s.splitCardOn]}>
+                  <View style={s.splitTop}>
+                    <Text style={s.splitLabel}>{sp.label}</Text>
+                    <Text style={s.splitDays}>{sp.days.join('/')}d</Text>
+                  </View>
+                  <Text style={s.splitBlurb}>{sp.blurb}</Text>
+                </PressScale>
+              );
+            })}
+          </View>
+
+          <Label style={{ marginTop: space(4) }}>Days per week</Label>
+          <View style={s.seg}>
+            {split.days.map((d) => (
+              <PressScale key={d} sound="tap" onPress={() => setDays(d)} style={[s.segItem, days === d && s.segActive]}>
+                <Text style={[s.segText, days === d && s.segTextActive]}>{d} days</Text>
+              </PressScale>
+            ))}
+          </View>
+
+          <Label style={{ marginTop: space(4) }}>Experience</Label>
+          <View style={s.seg}>
+            {LEVELS.map((l) => (
+              <PressScale key={l} sound="tap" onPress={() => setLevel(l)} style={[s.segItem, level === l && s.segActive]}>
+                <Text style={[s.segText, level === l && s.segTextActive, { textTransform: 'capitalize' }]}>{l}</Text>
+              </PressScale>
+            ))}
+          </View>
+
+          <GoldButton label="Create my week" icon="calendar" sound="start" onPress={createMyWeek} style={{ marginTop: space(6) }} />
+          <PressScale onPress={finish} style={{ alignItems: 'center', paddingVertical: space(3) }}>
+            <Text style={{ color: colors.ash, fontFamily: fonts.sansMedium, fontSize: 14 }}>Skip for now</Text>
+          </PressScale>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={s.safe}>
@@ -131,4 +209,10 @@ const makeStyles = (colors) => StyleSheet.create({
   segText: { color: colors.ash, fontFamily: fonts.sansMedium, fontSize: 14 },
   segTextActive: { color: colors.obsidian },
   footer: { padding: space(6), paddingTop: space(3) },
+  splitCard: { backgroundColor: colors.stone, borderRadius: radius.lg, padding: space(4), borderWidth: 1, borderColor: 'transparent' },
+  splitCardOn: { borderColor: colors.gold },
+  splitTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  splitLabel: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 15 },
+  splitDays: { color: colors.ash, fontFamily: fonts.mono, fontSize: 12 },
+  splitBlurb: { color: colors.ash, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 },
 });

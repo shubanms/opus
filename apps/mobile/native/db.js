@@ -197,6 +197,8 @@ export function initDb() {
   ensureColumn(d, 'exercises', 'description', 'TEXT');
   // Body measurements (cm) — bodyFat already present.
   for (const m of ['chest', 'waist', 'hips', 'arms', 'thighs']) ensureColumn(d, 'bodyStats', m, 'REAL');
+  // Per-exercise rest (seconds) on routine templates (week planner + editor).
+  ensureColumn(d, 'templateExercises', 'targetRest', 'INTEGER');
 
   const row = d.getFirstSync('SELECT COUNT(*) AS n FROM exercises');
   if (!row || row.n === 0) {
@@ -256,6 +258,54 @@ export function createTemplate(name, exerciseNames = []) {
   return id;
 }
 
+// Insert rich template-exercise rows (name + targets + rest) inside a txn.
+function insertLinks(d, templateId, exercises) {
+  exercises.forEach((e, i) => {
+    const name = e.exerciseName ?? e.exerciseId ?? e;
+    d.runSync(
+      'INSERT INTO templateExercises (templateId, exerciseName, orderIndex, targetSets, targetReps, targetWeight, targetRest) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      templateId, name, i, e.targetSets ?? null, e.targetReps ?? null, e.targetWeight ?? null, e.targetRest ?? null
+    );
+  });
+}
+
+// One template per weekday: clear any other template already on that day.
+function clearDay(d, dayOfWeek, exceptId = null) {
+  if (dayOfWeek == null) return;
+  const rows = d.getAllSync('SELECT id FROM templates WHERE dayOfWeek = ?', dayOfWeek);
+  for (const r of rows) if (r.id !== exceptId) d.runSync('UPDATE templates SET dayOfWeek = NULL WHERE id = ?', r.id);
+}
+
+// Create a fully-specified template (targets + rest + weekday + autoKey). Returns id.
+export function createTemplateFull({ name, dayOfWeek = null, color = null, autoKey = null, exercises = [] }) {
+  const d = conn();
+  let id;
+  d.withTransactionSync(() => {
+    clearDay(d, dayOfWeek);
+    const res = d.runSync('INSERT INTO templates (name, dayOfWeek, color, autoKey, createdAt) VALUES (?, ?, ?, ?, ?)', name.trim() || 'Routine', dayOfWeek, color, autoKey, Date.now());
+    id = res.lastInsertRowId;
+    insertLinks(d, id, exercises);
+  });
+  touch();
+  return id;
+}
+
+// Batch-create a whole week (from the planner) in a single transaction.
+export function createWeek(days = []) {
+  const d = conn();
+  const ids = [];
+  d.withTransactionSync(() => {
+    for (const day of days) {
+      clearDay(d, day.dayOfWeek);
+      const res = d.runSync('INSERT INTO templates (name, dayOfWeek, color, autoKey, createdAt) VALUES (?, ?, ?, ?, ?)', day.name.trim() || 'Routine', day.dayOfWeek ?? null, day.color ?? null, day.autoKey ?? null, Date.now());
+      insertLinks(d, res.lastInsertRowId, day.exercises || []);
+      ids.push(res.lastInsertRowId);
+    }
+  });
+  touch();
+  return ids;
+}
+
 export function getTemplates() {
   const d = conn();
   return d.getAllSync('SELECT * FROM templates ORDER BY createdAt DESC').map((t) => ({
@@ -264,6 +314,47 @@ export function getTemplates() {
       .getAllSync('SELECT exerciseName FROM templateExercises WHERE templateId = ? ORDER BY orderIndex', t.id)
       .map((r) => r.exerciseName),
   }));
+}
+
+// Rich single-template read for the editor / start-with-targets: exercises carry
+// targets + rest + the catalog's muscleGroup/equipment.
+export function getTemplate(id) {
+  const d = conn();
+  const t = d.getFirstSync('SELECT * FROM templates WHERE id = ?', id);
+  if (!t) return null;
+  const exercises = d.getAllSync(
+    `SELECT te.exerciseName, te.orderIndex, te.targetSets, te.targetReps, te.targetWeight, te.targetRest,
+            e.muscleGroup, e.equipment, e.difficulty
+       FROM templateExercises te LEFT JOIN exercises e ON e.name = te.exerciseName
+      WHERE te.templateId = ? ORDER BY te.orderIndex`, id);
+  return { ...t, exercises };
+}
+
+// Full replace of a template's fields + exercise list (editor save).
+export function updateTemplate(id, { name, dayOfWeek = null, color = null, exercises = [] }) {
+  const d = conn();
+  d.withTransactionSync(() => {
+    clearDay(d, dayOfWeek, id);
+    d.runSync('UPDATE templates SET name = ?, dayOfWeek = ?, color = ? WHERE id = ?', (name ?? '').trim() || 'Routine', dayOfWeek, color, id);
+    d.runSync('DELETE FROM templateExercises WHERE templateId = ?', id);
+    insertLinks(d, id, exercises);
+  });
+  touch();
+}
+
+export function renameTemplate(id, name) {
+  const d = conn();
+  d.runSync('UPDATE templates SET name = ? WHERE id = ?', (name ?? '').trim() || 'Routine', id);
+  touch();
+}
+
+export function setTemplateDay(id, dayOfWeek) {
+  const d = conn();
+  d.withTransactionSync(() => {
+    clearDay(d, dayOfWeek, id);
+    d.runSync('UPDATE templates SET dayOfWeek = ? WHERE id = ?', dayOfWeek, id);
+  });
+  touch();
 }
 
 export function deleteTemplate(id) {

@@ -9,11 +9,13 @@ import { H2, Label, Body, Mono } from '../../ui';
 import { radius, space, fonts } from '../../theme';
 import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
-import { GoldButton } from '../Button';
+import { GoldButton, SecondaryButton } from '../Button';
 import { useDbQuery } from '../../native/useDbQuery';
 import { getTemplates, createTemplate, deleteTemplate, getExercises } from '../../native/db';
 import { playCue } from '../../native/sound';
 import { success as hSuccess } from '../../native/haptics';
+import WeekPlannerSheet from './WeekPlannerSheet';
+import TemplateEditor from './TemplateEditor';
 
 const LEVELS = [
   { value: 'beginner', label: 'Beginner' },
@@ -27,6 +29,8 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const [level, setLevel] = useState('intermediate');
+  const [planOpen, setPlanOpen] = useState(false);
+  const [editId, setEditId] = useState(null);
   const templates = useDbQuery(() => getTemplates(), [], []);
 
   const generate = () => {
@@ -73,8 +77,11 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
             <PressScale hitSlop={10} onPress={onClose}><Icon name="close" size={24} color={colors.ash} /></PressScale>
           </View>
 
-          {/* Auto-generate */}
-          <Label>Auto-generate</Label>
+          {/* Plan a whole week from a split */}
+          <GoldButton label="Plan my week" icon="calendar" onPress={() => setPlanOpen(true)} />
+
+          {/* Auto-generate a single routine */}
+          <Label style={{ marginTop: space(5) }}>Auto-generate</Label>
           <View style={s.seg}>
             {LEVELS.map((l) => (
               <PressScale key={l.value} sound="tap" onPress={() => setLevel(l.value)} style={[s.segItem, level === l.value && s.segActive]}>
@@ -93,10 +100,10 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
               templates.map((t) => (
                 <View key={t.id} style={s.card}>
                   <View style={s.cardTop}>
-                    <View style={{ flex: 1 }}>
+                    <PressScale onPress={() => setEditId(t.id)} style={{ flex: 1 }}>
                       <Text style={s.name}>{t.name}</Text>
-                      <Mono style={s.meta}>{t.exercises.length} exercises</Mono>
-                    </View>
+                      <Mono style={s.meta}>{t.exercises.length} exercises · tap to edit</Mono>
+                    </PressScale>
                     <PressScale onPress={() => start(t)} style={s.startBtn}><Text style={s.startText}>Start</Text></PressScale>
                     <PressScale hitSlop={8} onPress={() => confirmDelete(t)} style={{ marginLeft: space(3) }}>
                       <Icon name="trash" size={16} color={colors.ash} />
@@ -109,6 +116,9 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
           </ScrollView>
         </View>
       </View>
+
+      <WeekPlannerSheet visible={planOpen} onClose={() => setPlanOpen(false)} />
+      <TemplateEditor visible={editId != null} templateId={editId} onClose={() => setEditId(null)} />
     </Modal>
   );
 }
