@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, Sparkles, CalendarRange } from 'lucide-react';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useExercises } from '../hooks/useExercises.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
@@ -11,6 +11,7 @@ import { playChime } from '../utils/sound.js';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import TemplateBuilder from '../components/template/TemplateBuilder.jsx';
 import RoutineGeneratorModal from '../components/template/RoutineGeneratorModal.jsx';
+import WeekPlannerModal from '../components/template/WeekPlannerModal.jsx';
 import WeeklyPlanner from '../components/template/WeeklyPlanner.jsx';
 import useUIStore from '../store/uiStore.js';
 
@@ -22,6 +23,7 @@ export default function TemplatesPage() {
   const counts = sessionCounts(workouts);
   const [builderOpen, setBuilderOpen] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
   function openNew() {
@@ -97,6 +99,13 @@ export default function TemplatesPage() {
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <button
+            onClick={() => setPlanOpen(true)}
+            className="flex h-10 items-center gap-1.5 rounded-full px-3 font-sans text-xs font-semibold"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            <CalendarRange size={15} style={{ color: 'var(--color-gold)' }} /> Plan week
+          </button>
+          <button
             onClick={() => setGenOpen(true)}
             className="flex h-10 items-center gap-1.5 rounded-full px-3 font-sans text-xs font-semibold"
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
@@ -153,6 +162,7 @@ export default function TemplatesPage() {
         editing={editing}
       />
       <RoutineGeneratorModal isOpen={genOpen} onClose={() => setGenOpen(false)} />
+      <WeekPlannerModal isOpen={planOpen} onClose={() => setPlanOpen(false)} />
     </div>
   );
 }

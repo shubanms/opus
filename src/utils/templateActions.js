@@ -9,6 +9,7 @@ function toLinks(templateId, exercises) {
     targetSets: e.targetSets ?? null,
     targetReps: e.targetReps ?? null,
     targetWeight: e.targetWeight ?? null,
+    targetRest: e.targetRest ?? null,
   }));
 }
 
