@@ -19,6 +19,23 @@ const DEFAULTS = {
   stepGoal: 8000,
   waterGoal: 8,
   onboarded: false,
+  // Profile (Phase D)
+  height: 0, // cm (0 = unset)
+  birthYear: 0, // 0 = unset; UI edits Age = currentYear - birthYear
+  sex: '', // '' | 'Male' | 'Female' | 'Other'
+  themeOnOpen: true, // opening theme music
+  // Notifications (Phase D): master + per-type + quiet hours + reminder time
+  notifEnabled: false,
+  prCelebration: true,
+  streakRisk: true,
+  gymNudge: true,
+  weeklySummary: true,
+  staleRoutine: true,
+  dndStart: 22,
+  dndEnd: 7,
+  reminderHour: 18,
+  // Equipment / plate inventory (stored as JSON; per-location bar + owned plates)
+  inventory: { active: 'gym', gym: { barKg: null, plates: null, unit: null }, home: { barKg: null, plates: null, unit: null } },
 };
 
 // In-memory cache kept in sync with the DB, readable imperatively.
@@ -31,6 +48,10 @@ function coerce(key, raw) {
   const def = DEFAULTS[key];
   if (typeof def === 'boolean') return raw === 'true' || raw === true;
   if (typeof def === 'number') return Number(raw);
+  if (def !== null && typeof def === 'object') {
+    if (raw && typeof raw === 'object') return raw;
+    try { return JSON.parse(raw); } catch { return def; }
+  }
   return raw;
 }
 
@@ -72,7 +93,9 @@ export function motionOn() {
 export function setSetting(key, value) {
   cache = { ...cache, [key]: value };
   try {
-    dbSetSetting(key, value);
+    // Objects (e.g. the plate inventory) persist as JSON strings.
+    const stored = value !== null && typeof value === 'object' ? JSON.stringify(value) : value;
+    dbSetSetting(key, stored);
   } catch {}
   emit();
 }

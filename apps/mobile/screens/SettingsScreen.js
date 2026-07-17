@@ -1,17 +1,27 @@
 import { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert, Switch, Modal } from 'react-native';
-import { dateKey } from '@opus/core';
+import { dateKey, units } from '@opus/core';
 import { Screen, H1, H2, Label, Body, Mono, Wordmark } from '../ui';
 import { radius, space, fonts } from '../theme';
 import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import Card from '../components/Card';
 import PressScale from '../components/PressScale';
+import Segmented from '../components/Segmented';
 import { GoldButton, SecondaryButton } from '../components/Button';
+import EquipmentModal from '../components/settings/EquipmentModal';
 import { enableNotifications, testNotification, scheduleDailyReminder } from '../native/notifications';
 import { connectAndReadSteps, healthAvailability } from '../native/healthConnect';
-import { setSteps, wipeAllData } from '../native/db';
+import { setSteps, wipeAllData, logBodyStat, currentBodyweight } from '../native/db';
 import { previewSounds } from '../native/sound';
 import { useSettings } from '../native/settings';
+
+const NOTIF_TYPES = [
+  { key: 'prCelebration', label: 'PR celebrations' },
+  { key: 'streakRisk', label: 'Streak at risk' },
+  { key: 'gymNudge', label: 'Daily gym reminder' },
+  { key: 'weeklySummary', label: 'Weekly summary' },
+  { key: 'staleRoutine', label: 'Switch up a stale routine' },
+];
 
 function Row({ label, value, onValueChange }) {
   const colors = useColors();
@@ -20,24 +30,6 @@ function Row({ label, value, onValueChange }) {
     <View style={s.row}>
       <Body style={{ color: colors.textPrimary, fontFamily: fonts.sansMedium }}>{label}</Body>
       <Switch value={value} onValueChange={onValueChange} trackColor={{ false: colors.ivory, true: colors.gold }} thumbColor={colors.chalk} />
-    </View>
-  );
-}
-
-// Segmented control (pill row). options = [{value,label}].
-function Segmented({ options, value, onChange }) {
-  const colors = useColors();
-  const s = useThemedStyles(makeStyles);
-  return (
-    <View style={s.seg}>
-      {options.map((o) => {
-        const active = value === o.value;
-        return (
-          <PressScale key={o.value} sound="tap" onPress={() => onChange(o.value)} style={[s.segItem, active && s.segActive]}>
-            <Text style={[s.segText, active && s.segTextActive]}>{o.label}</Text>
-          </PressScale>
-        );
-      })}
     </View>
   );
 }
@@ -66,20 +58,28 @@ export default function SettingsScreen() {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const { settings, update } = useSettings();
-  const [notif, setNotif] = useState(settings.notifDaily);
+  const [notif, setNotif] = useState(settings.notifEnabled);
   const [steps, setStepsState] = useState(null);
   const [name, setName] = useState(settings.name);
+  const [bw, setBw] = useState(() => { const w = currentBodyweight(); return w != null ? String(Math.round(units.toDisplay(w, settings.unit || 'kg') * 10) / 10) : ''; });
   const [resetOpen, setResetOpen] = useState(false);
+  const [equipOpen, setEquipOpen] = useState(false);
   const [confirm, setConfirm] = useState('');
+  const unit = settings.unit || 'kg';
+  const currentYear = new Date().getFullYear();
 
   const onEnableNotif = async () => {
     try {
       const granted = await enableNotifications();
       setNotif(granted);
-      update('notifDaily', granted);
-      if (granted) { await scheduleDailyReminder(18, 0); Alert.alert('Notifications on', 'Daily 6pm reminder scheduled.'); }
+      update('notifEnabled', granted);
+      if (granted) { await scheduleDailyReminder(Number(settings.reminderHour) || 18, 0); Alert.alert('Notifications on', `Daily reminder scheduled for ${settings.reminderHour ?? 18}:00.`); }
       else Alert.alert('Not granted', 'Enable notifications for OPUS in Android settings.');
     } catch (e) { Alert.alert('Error', String(e?.message || e)); }
+  };
+  const saveBodyweight = () => {
+    const n = parseFloat(bw);
+    if (n > 0) { try { logBodyStat({ date: dateKey.todayKey(), weight: units.toKg(n, unit) }); } catch {} }
   };
   const onTestNotif = async () => { try { await testNotification(); } catch (e) { Alert.alert('Error', String(e?.message || e)); } };
   const onConnectHealth = async () => {
@@ -139,15 +139,66 @@ export default function SettingsScreen() {
             placeholderTextColor={colors.ash}
           />
         </View>
+        {/* Bodyweight — stored in bodyStats (kg), like the web */}
+        <View style={s.numRow}>
+          <Body style={{ color: colors.textPrimary, fontFamily: fonts.sansMedium }}>Bodyweight</Body>
+          <View style={s.numInputWrap}>
+            <TextInput value={bw} onChangeText={setBw} onBlur={saveBodyweight} keyboardType="decimal-pad" style={s.numInput} placeholderTextColor={colors.ash} placeholder="—" />
+            <Text style={s.numSuffix}>{units.unitLabel(unit)}</Text>
+          </View>
+        </View>
+        <NumberField label="Height" value={settings.height || ''} onChange={(v) => update('height', Number(v) || 0)} suffix="cm" />
+        <View style={s.numRow}>
+          <Body style={{ color: colors.textPrimary, fontFamily: fonts.sansMedium }}>Age</Body>
+          <View style={s.numInputWrap}>
+            <TextInput
+              value={settings.birthYear ? String(currentYear - settings.birthYear) : ''}
+              onChangeText={(v) => { const age = Number(v); update('birthYear', age > 0 ? currentYear - age : 0); }}
+              keyboardType="number-pad"
+              style={s.numInput}
+              placeholder="—"
+              placeholderTextColor={colors.ash}
+            />
+          </View>
+        </View>
+        <Label style={{ marginTop: space(3) }}>Sex</Label>
+        <View style={{ marginTop: space(2) }}>
+          <Segmented
+            options={[{ value: 'Male', label: 'Male' }, { value: 'Female', label: 'Female' }, { value: 'Other', label: 'Other' }]}
+            value={settings.sex || ''}
+            onChange={(v) => update('sex', v)}
+          />
+        </View>
         <NumberField label="Barbell weight" value={settings.barWeight} onChange={(v) => update('barWeight', Number(v) || 20)} suffix="kg" />
         <NumberField label="Daily step goal" value={settings.stepGoal} onChange={(v) => update('stepGoal', Number(v) || 0)} />
         <NumberField label="Daily water goal" value={settings.waterGoal} onChange={(v) => update('waterGoal', Number(v) || 0)} suffix="glasses" />
+        <View style={{ marginTop: space(3) }}>
+          <SecondaryButton label="Equipment & plates" icon="barbell" onPress={() => setEquipOpen(true)} />
+        </View>
       </Card>
 
       <Card>
         <Label>Notifications</Label>
-        <Body style={{ marginVertical: space(2) }}>{notif ? 'Enabled · daily reminder set.' : 'Workout reminders and PR celebrations.'}</Body>
+        <Body style={{ marginVertical: space(2) }}>{notif ? 'Enabled · reminders active.' : 'Workout reminders and PR celebrations.'}</Body>
         <GoldButton label={notif ? 'Re-schedule reminder' : 'Enable notifications'} icon="notifications" onPress={onEnableNotif} />
+        {notif && (
+          <>
+            <View style={{ marginTop: space(3) }}>
+              {NOTIF_TYPES.map((t) => (
+                <Row key={t.key} label={t.label} value={settings[t.key]} onValueChange={(v) => update(t.key, v)} />
+              ))}
+            </View>
+            <NumberField label="Daily reminder hour" value={settings.reminderHour} onChange={(v) => update('reminderHour', Math.max(0, Math.min(23, Number(v) || 0)))} suffix="h" />
+            <View style={s.numRow}>
+              <Body style={{ color: colors.textPrimary, fontFamily: fonts.sansMedium }}>Quiet hours</Body>
+              <View style={s.numInputWrap}>
+                <TextInput value={String(settings.dndStart ?? 22)} onChangeText={(v) => update('dndStart', Math.max(0, Math.min(23, Number(v) || 0)))} keyboardType="number-pad" style={s.numInput} />
+                <Text style={s.numSuffix}>→</Text>
+                <TextInput value={String(settings.dndEnd ?? 7)} onChangeText={(v) => update('dndEnd', Math.max(0, Math.min(23, Number(v) || 0)))} keyboardType="number-pad" style={s.numInput} />
+              </View>
+            </View>
+          </>
+        )}
         <View style={{ height: space(2) }} />
         <SecondaryButton label="Test notification" icon="paper-plane" onPress={onTestNotif} />
       </Card>
@@ -157,6 +208,7 @@ export default function SettingsScreen() {
         <View style={{ marginTop: space(2) }}>
           <Row label="Sound effects" value={settings.sound} onValueChange={(v) => update('sound', v)} />
           <Row label="Animations & haptics" value={settings.effects} onValueChange={(v) => update('effects', v)} />
+          <Row label="Opening theme music" value={settings.sound && settings.themeOnOpen} onValueChange={(v) => update('themeOnOpen', v)} />
         </View>
         <View style={{ marginTop: space(2) }}>
           <SecondaryButton label="Preview sounds" icon="musical-notes" onPress={() => previewSounds()} />
@@ -183,7 +235,10 @@ export default function SettingsScreen() {
           <Text style={s.aboutTag}> · native</Text>
         </View>
         <Body style={{ marginTop: 4 }}>React Native + Expo build. Shared logic via @opus/core.</Body>
+        <Body style={{ marginTop: space(2), color: colors.ash }}>v3.0.0 · github.com/shubanms/opus</Body>
       </Card>
+
+      <EquipmentModal visible={equipOpen} onClose={() => setEquipOpen(false)} />
 
       {/* Reset confirm modal */}
       <Modal visible={resetOpen} transparent animationType="fade" onRequestClose={() => setResetOpen(false)}>

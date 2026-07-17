@@ -44,6 +44,7 @@ import MuscleFrequency from '../components/progress/MuscleFrequency';
 import Heatmap from '../components/progress/Heatmap';
 import BodyStatsForm from '../components/progress/BodyStatsForm';
 import SleepForm from '../components/progress/SleepForm';
+import EquipmentModal from '../components/settings/EquipmentModal';
 
 const Tab = createBottomTabNavigator();
 
@@ -267,6 +268,22 @@ describe('progress tabs', () => {
     expect(bs.getByText('Body stats')).toBeTruthy();
     const sf = render(<SleepForm visible onClose={() => {}} />);
     expect(sf.getByText('Sleep')).toBeTruthy();
+  });
+});
+
+describe('settings parity (Phase D)', () => {
+  it('Settings shows profile fields + equipment', () => {
+    const { getByText } = renderScreen(SettingsScreen);
+    expect(getByText('Bodyweight')).toBeTruthy();
+    expect(getByText('Sex')).toBeTruthy();
+    expect(getByText('Equipment & plates')).toBeTruthy();
+  });
+
+  it('EquipmentModal shows locations + plates', () => {
+    const { getByText } = render(<EquipmentModal visible onClose={() => {}} />);
+    expect(getByText('Equipment & plates')).toBeTruthy();
+    expect(getByText('Gym')).toBeTruthy();
+    expect(getByText('Bar weight')).toBeTruthy();
   });
 });
 
