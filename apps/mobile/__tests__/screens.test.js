@@ -3,7 +3,7 @@
 // without throwing. Catches the class of bug that shows a blank screen or a
 // frozen splash on-device (render crashes, undefined imports, bad props).
 import React from 'react';
-import { render, waitFor } from '@testing-library/react-native';
+import { render, waitFor, fireEvent } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
@@ -40,6 +40,8 @@ import LevelUpScreen from '../components/rpg/LevelUpScreen';
 import * as workoutSession from '../native/workoutSession';
 import ExerciseDetailSheet from '../components/exercise/ExerciseDetailSheet';
 import ExerciseFormSheet from '../components/exercise/ExerciseFormSheet';
+import MuscleFrequency from '../components/progress/MuscleFrequency';
+import Heatmap from '../components/progress/Heatmap';
 
 const Tab = createBottomTabNavigator();
 
@@ -227,6 +229,27 @@ describe('exercise detail + custom CRUD', () => {
     const { getByText } = render(<ExerciseFormSheet visible onClose={() => {}} onCreated={() => {}} />);
     expect(getByText('New exercise')).toBeTruthy();
     expect(getByText('Create exercise')).toBeTruthy();
+  });
+});
+
+describe('progress tabs', () => {
+  it('Overview shows KPIs, muscle focus + training calendar', () => {
+    const { getByText } = renderScreen(ProgressScreen);
+    expect(getByText('Muscle focus')).toBeTruthy();
+    expect(getByText('Training calendar')).toBeTruthy();
+    expect(getByText('Hours')).toBeTruthy();
+  });
+
+  it('By Exercise tab lists top exercises', () => {
+    const { getByText } = renderScreen(ProgressScreen);
+    fireEvent.press(getByText('By Exercise'));
+    expect(getByText('Top exercises')).toBeTruthy();
+    expect(getByText('Back Squat')).toBeTruthy();
+  });
+
+  it('MuscleFrequency + Heatmap render standalone', () => {
+    expect(() => render(<MuscleFrequency data={[{ muscle: 'chest', sets: 20 }, { muscle: 'calves', sets: 4 }]} />)).not.toThrow();
+    expect(() => render(<Heatmap days={new Set(['2026-07-13', '2026-07-15'])} />)).not.toThrow();
   });
 });
 

@@ -450,6 +450,8 @@ export function getTotals() {
   // XP = per-set + per-session bonus + achievement rewards + claimed-quest XP
   // (matches the web, where both count toward level/rank).
   const totalXP = setXP + wCount * rpg.COMPLETE_BONUS + achievementXP() + questClaimXP();
+  const prCount = d.getFirstSync('SELECT COUNT(*) AS n FROM prs')?.n || 0;
+  const durSec = d.getFirstSync('SELECT COALESCE(SUM(duration),0) AS s FROM workouts WHERE finishedAt IS NOT NULL')?.s || 0;
 
   return {
     workouts: wCount,
@@ -457,6 +459,8 @@ export function getTotals() {
     totalVolume: Math.round(totalVolume),
     totalXP,
     streak: getStreak(),
+    prCount,
+    hours: durSec / 3600,
   };
 }
 
@@ -509,6 +513,41 @@ export function getMuscleRecovery() {
   return rows
     .map((r) => ({ muscle: r.mg, daysSince: r.last ? dateKey.daysBetween(r.last, today) : null }))
     .sort((a, b) => (b.daysSince ?? 999) - (a.daysSince ?? 999));
+}
+
+// Working-set count per muscle group (all finished workouts), most-trained
+// first — feeds the Progress "muscle focus" bars.
+export function getMuscleFrequency() {
+  return conn().getAllSync(
+    `SELECT e.muscleGroup AS muscle, COUNT(*) AS sets
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+       JOIN exercises e ON e.name = COALESCE(s.exerciseId, s.exerciseName)
+      WHERE w.finishedAt IS NOT NULL AND COALESCE(s.isWarmup,0)=0 AND e.muscleGroup IS NOT NULL
+      GROUP BY e.muscleGroup ORDER BY sets DESC`
+  );
+}
+
+// Set of finished-workout dateKeys within the last `weeks` — for the training
+// calendar heatmap.
+export function getWorkoutDays() {
+  const rows = conn().getAllSync('SELECT DISTINCT dateKey FROM workouts WHERE finishedAt IS NOT NULL');
+  return new Set(rows.map((r) => r.dateKey));
+}
+
+// Top exercises by working-set count (default) or volume, most first.
+export function getTopExercises({ by = 'sets', limit = 10 } = {}) {
+  const order = by === 'volume' ? 'volume DESC, sets DESC' : 'sets DESC, volume DESC';
+  return conn().getAllSync(
+    `SELECT COALESCE(s.exerciseId, s.exerciseName) AS name,
+            COUNT(*) AS sets,
+            COALESCE(SUM(s.weight * s.reps), 0) AS volume,
+            e.muscleGroup AS muscleGroup
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+       LEFT JOIN exercises e ON e.name = COALESCE(s.exerciseId, s.exerciseName)
+      WHERE w.finishedAt IS NOT NULL AND COALESCE(s.isWarmup,0)=0 AND name IS NOT NULL
+      GROUP BY name ORDER BY ${order} LIMIT ?`,
+    limit
+  );
 }
 
 // ── Weekly quests (shared engine: @opus/core/quests) ─────────────────────────
