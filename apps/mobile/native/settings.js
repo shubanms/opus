@@ -37,6 +37,7 @@ const DEFAULTS = {
   recapDismissedWeek: '', // weekKey the Home weekly-recap was dismissed for
   tourSeen: false, // first-run guided tour completed
   coachMarksSeen: {}, // { [tabName]: true } — per-tab tips dismissed (JSON like inventory)
+  mascotMet: false, // Magnus companion has introduced himself once
   // Equipment / plate inventory (stored as JSON; per-location bar + owned plates)
   inventory: { active: 'gym', gym: { barKg: null, plates: null, unit: null }, home: { barKg: null, plates: null, unit: null } },
 };

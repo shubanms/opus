@@ -50,6 +50,7 @@ import EquipmentModal from '../components/settings/EquipmentModal';
 import WeeklyRecap from '../components/home/WeeklyRecap';
 import Tour from '../components/tour/Tour';
 import CoachMark from '../components/coach/CoachMark';
+import Companion from '../components/mascot/Companion';
 
 const Tab = createBottomTabNavigator();
 
@@ -311,6 +312,18 @@ describe('home richness (Phase E)', () => {
     const { getByText } = render(<WeeklyRecap />);
     expect(getByText('Your week so far')).toBeTruthy();
     expect(getByText('Sessions')).toBeTruthy();
+  });
+});
+
+describe('companion Magnus (Phase H)', () => {
+  it('greets on mount and talks when tapped', () => {
+    const { getByLabelText, queryAllByText } = render(<Companion />);
+    // The tappable companion is present…
+    const btn = getByLabelText('Talk to Magnus');
+    expect(btn).toBeTruthy();
+    // …and tapping it doesn't throw (says a hype line + plays a gesture).
+    expect(() => fireEvent.press(btn)).not.toThrow();
+    expect(queryAllByText(/Magnus/).length).toBeGreaterThan(0);
   });
 });
 
