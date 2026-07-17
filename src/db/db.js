@@ -72,6 +72,15 @@ db.version(8).stores({
     '++id, weekKey',
 });
 
+// v9: private progress photos. The image Blob + note/weight are unindexed; we
+// only index by date + category for grouping. Additive — no existing data is
+// touched. Photos are intentionally excluded from the JSON backup (blobs are
+// heavy) and live only on this device.
+db.version(9).stores({
+  photos:
+    '++id, date, category',
+});
+
 // When a newer tab/build wants to upgrade the schema, close this (older)
 // connection and reload so the upgrade isn't blocked and left stuck.
 if (typeof window !== 'undefined') {
