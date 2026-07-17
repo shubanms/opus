@@ -1040,6 +1040,66 @@ export function getExerciseE1rmSeries(name, limit = 10) {
     .filter((p) => p.value > 0);
 }
 
+// ── Data export / import (Phase D2) ──────────────────────────────────────────
+// Training-data tables (excludes the `settings` KV + unused `userProfile`).
+const EXPORT_TABLES = [
+  'exercises', 'workouts', 'sets', 'prs', 'templates', 'templateExercises',
+  'achievements', 'questClaims', 'dailyLogs', 'bodyStats', 'sleepLogs',
+  'energyLogs', 'exerciseNotes', 'health',
+];
+
+// Full backup payload, matching the web export shape { app, version, exportedAt, data }.
+export function exportAllRows(exportedAt = new Date().toISOString()) {
+  const d = conn();
+  const data = {};
+  for (const t of EXPORT_TABLES) {
+    try { data[t] = d.getAllSync('SELECT * FROM ' + t); } catch { data[t] = []; }
+  }
+  return { app: 'OPUS', version: 1, exportedAt, data };
+}
+
+function tableColumns(d, t) {
+  return new Set(d.getAllSync(`PRAGMA table_info(${t})`).map((r) => r.name));
+}
+
+// Restore a backup: clear + re-insert each known table, filtering row keys to
+// the table's real columns (tolerates cross-version backups). One transaction.
+export function importAllRows(payload) {
+  const data = payload?.data ?? payload;
+  if (!data || typeof data !== 'object') return false;
+  const d = conn();
+  d.withTransactionSync(() => {
+    for (const t of EXPORT_TABLES) {
+      const rows = data[t];
+      if (!Array.isArray(rows)) continue;
+      const valid = tableColumns(d, t);
+      d.runSync('DELETE FROM ' + t);
+      for (const row of rows) {
+        const cols = Object.keys(row).filter((c) => valid.has(c));
+        if (!cols.length) continue;
+        d.runSync(
+          `INSERT INTO ${t} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+          ...cols.map((c) => row[c])
+        );
+      }
+    }
+  });
+  touch();
+  return true;
+}
+
+// Flat set rows for CSV export (feeds @opus/core csv.setsToCsv).
+export function exportSetsRows() {
+  return conn().getAllSync(
+    `SELECT w.dateKey AS date, w.name AS workout, COALESCE(s.exerciseId, s.exerciseName) AS exercise,
+            s.setNumber AS setNumber, s.weight AS weightKg, s.reps AS reps, s.rpe AS rpe,
+            COALESCE(s.isWarmup,0) AS isWarmup, s.note AS note
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+      WHERE w.finishedAt IS NOT NULL
+      ORDER BY w.dateKey, s.setNumber`
+  );
+}
+
 // Working sets from the most recent PAST finished workout that included this
 // exercise — the "ghost of last session" reference line.
 export function getLastWorkingSets(exerciseName) {
