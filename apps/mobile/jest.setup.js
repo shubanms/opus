@@ -125,7 +125,7 @@ jest.mock('./native/db', () => ({
   })),
 }));
 
-jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn() }));
+jest.mock('./native/sound', () => ({ playCue: jest.fn(), previewSounds: jest.fn(), playIntro: jest.fn() }));
 jest.mock('./native/haptics', () => ({ tapLight: jest.fn(), success: jest.fn(), warning: jest.fn(), selection: jest.fn() }));
 jest.mock('./native/widgets', () => ({ refreshWidgets: jest.fn() }));
 jest.mock('./native/notifications', () => ({

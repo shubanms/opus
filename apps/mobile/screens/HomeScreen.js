@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from '../components/Icon';
@@ -22,6 +22,11 @@ import { getTotals, getRecentWorkouts, getTodayPlan, getLastWorkoutDate, compute
 import { useWorkoutSession } from '../native/workoutSession';
 import { refreshWidgets } from '../native/widgets';
 import { useSettings, motionOn } from '../native/settings';
+import { playCue } from '../native/sound';
+
+// The "calling you back" anthem plays at most once per app session, the first
+// time Home shows an active XP-decay warning (mirrors the web streakRisk cue).
+let anthemPlayed = false;
 
 function relDay(key) {
   const gap = dateKey.daysBetween(key, dateKey.todayKey());
@@ -67,6 +72,11 @@ export default function HomeScreen({ navigation }) {
   const rank = rpg.getRankLabel(effXp);
   const prog = rpg.getXPProgress(effXp);
   const scene = ambient.sceneParams({ streak: totals.streak, level, prestige, reducedMotion: !motionOn() });
+
+  // Once per session, sound the "calling you back" anthem when the rank is slipping.
+  useEffect(() => {
+    if (info.decaying && !anthemPlayed) { anthemPlayed = true; playCue('anthem'); }
+  }, [info.decaying]);
 
   const deckTabs = [
     { value: 'activity', label: 'Activity' },

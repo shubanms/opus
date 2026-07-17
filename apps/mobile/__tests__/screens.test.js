@@ -3,6 +3,8 @@
 // without throwing. Catches the class of bug that shows a blank screen or a
 // frozen splash on-device (render crashes, undefined imports, bad props).
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
 import { render, waitFor, fireEvent } from '@testing-library/react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -310,6 +312,23 @@ describe('home richness (Phase E)', () => {
     expect(getByText('Your week so far')).toBeTruthy();
     expect(getByText('Sessions')).toBeTruthy();
   });
+});
+
+describe('feel / sound cues (Phase G)', () => {
+  // The dedicated milestone cues are pre-rendered WAV assets; guard that each
+  // one ships and is a valid, non-empty PCM WAV so the release build won't fail
+  // to bundle a missing require or ship a corrupt/silent asset.
+  const NEW_CUES = ['pr', 'achievement', 'quest', 'rest', 'anthem', 'themeOpen'];
+  for (const name of NEW_CUES) {
+    it(`${name}.wav is a valid PCM WAV asset`, () => {
+      const file = path.join(__dirname, '..', 'assets', 'sound', `${name}.wav`);
+      const b = fs.readFileSync(file);
+      expect(b.toString('ascii', 0, 4)).toBe('RIFF');
+      expect(b.toString('ascii', 8, 12)).toBe('WAVE');
+      expect(b.readUInt16LE(20)).toBe(1); // PCM
+      expect(b.length - 44).toBeGreaterThan(4000); // has real audio data
+    });
+  }
 });
 
 describe('guided tour + coach marks (Phase F)', () => {

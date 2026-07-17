@@ -78,7 +78,7 @@ export default function SetLogger({ exercise, unit = 'kg', fromTemplate = false,
 
     session.logSet(name, { weight: weightKg, reps: r, rpe: showRpe ? rpe : null, isWarmup: false });
     if (isPR) hSuccess(); else tapLight();
-    playCue(isPR ? 'chime' : 'tick');
+    playCue(isPR ? 'pr' : 'tick');
     fireFloat(rpg.calcSetXP(weightKg, r), isPR);
     onSetLogged?.();
     setReps('');

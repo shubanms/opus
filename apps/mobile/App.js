@@ -16,6 +16,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { initDb } from './native/db';
 import { loadSettings, useSettings } from './native/settings';
 import { loadSession } from './native/workoutSession';
+import { playIntro } from './native/sound';
 import Onboarding from './components/Onboarding';
 import Tour from './components/tour/Tour';
 import CoachMark from './components/coach/CoachMark';
@@ -81,6 +82,8 @@ export default function App() {
     try { initDb(); } catch (e) { console.warn('initDb failed', e?.message || e); }
     try { loadSettings(); } catch (e) { console.warn('loadSettings failed', e?.message || e); }
     try { loadSession(); } catch (e) { console.warn('loadSession failed', e?.message || e); }
+    // Cinematic cold-start intro (gated on sound + themeOnOpen inside playIntro).
+    try { playIntro(); } catch {}
     setReady(true);
     // Escape hatch: never let font loading hang the app on a blank splash.
     const t = setTimeout(() => setTimedOut(true), 2500);
