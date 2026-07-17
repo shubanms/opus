@@ -23,6 +23,7 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
   const [dayOfWeek, setDayOfWeek] = useState(null);
   const [rows, setRows] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [swapIdx, setSwapIdx] = useState(null); // row being replaced, or null
 
   useEffect(() => {
     if (!visible || templateId == null) return;
@@ -51,6 +52,16 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
   });
   const remove = (i) => setRows((rs) => rs.filter((_, j) => j !== i));
   const add = (n) => setRows((rs) => (rs.some((r) => r.exerciseName === n) ? rs : [...rs, { exerciseName: n, targetSets: 3, targetReps: 8, targetRest: 90 }]));
+  // Picker pick: replace the swap row (keep its targets) or append a new one.
+  const onPick = (n) => {
+    if (swapIdx != null) {
+      setRows((rs) => (rs.some((r, j) => r.exerciseName === n && j !== swapIdx) ? rs : rs.map((r, j) => (j === swapIdx ? { ...r, exerciseName: n } : r))));
+      setSwapIdx(null);
+    } else {
+      add(n);
+    }
+  };
+  const startSwap = (i) => { setSwapIdx(i); setPickerOpen(true); };
 
   const save = () => {
     try {
@@ -109,6 +120,7 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
                     <Text style={s.exName} numberOfLines={1}>{r.exerciseName}</Text>
                     <PressScale hitSlop={6} onPress={() => move(i, -1)} style={s.iconBtn}><Icon name="chevron-up" size={16} color={colors.ash} /></PressScale>
                     <PressScale hitSlop={6} onPress={() => move(i, 1)} style={s.iconBtn}><Icon name="chevron-down" size={16} color={colors.ash} /></PressScale>
+                    <PressScale hitSlop={6} onPress={() => startSwap(i)} style={s.iconBtn}><Icon name="repeat" size={15} color={colors.ash} /></PressScale>
                     <PressScale hitSlop={6} onPress={() => remove(i)} style={s.iconBtn}><Icon name="trash" size={15} color={colors.ash} /></PressScale>
                   </View>
                   <View style={s.stepGroup}>
@@ -127,7 +139,7 @@ export default function TemplateEditor({ visible, templateId, onClose }) {
         </View>
       </View>
 
-      <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={add} />
+      <ExercisePicker visible={pickerOpen} onClose={() => { setPickerOpen(false); setSwapIdx(null); }} onPick={onPick} />
     </Modal>
   );
 }

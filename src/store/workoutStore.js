@@ -203,6 +203,22 @@ const useWorkoutStore = create((set, get) => ({
     });
   },
 
+  // Replace an exercise in the live session with another, keeping its logged
+  // sets (0-set case is the common one — swapping before you start lifting).
+  swapExercise(oldId, exercise) {
+    const w = get().activeWorkout;
+    if (!w || oldId === exercise.id) return;
+    if (w.exercises.some(e => e.exerciseId === exercise.id)) return; // no duplicates
+    set({
+      activeWorkout: {
+        ...w,
+        exercises: w.exercises.map(e =>
+          e.exerciseId !== oldId ? e : { ...e, exerciseId: exercise.id, name: exercise.name }
+        ),
+      },
+    });
+  },
+
   // Reorder an exercise up (-1) or down (+1). Superset grouping re-derives from
   // the new order, so moving a member out of its run naturally breaks the link.
   moveExercise(exerciseId, dir) {

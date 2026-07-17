@@ -35,7 +35,7 @@ function ElapsedTimer({ startedAt }) {
   );
 }
 
-function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
+function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const exerciseData = useExercise(ex.exerciseId);
   const muscleGroup = exerciseData?.muscleGroup ?? null;
   return (
@@ -45,6 +45,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, on
       isBodyweight={exerciseData?.equipment === 'bodyweight'}
       onSetLogged={onSetLogged}
       onRemove={onRemove}
+      onSwap={onSwap}
       canLink={canLink}
       linked={linked}
       onToggleSuperset={onToggleSuperset}
@@ -57,11 +58,12 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, canLink, linked, on
 }
 
 export default function WorkoutPage() {
-  const { activeWorkout, resumed, dismissResumed, startWorkout, startFromTemplate, addExercise, removeExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset, moveExercise } = useWorkoutStore();
+  const { activeWorkout, resumed, dismissResumed, startWorkout, startFromTemplate, addExercise, removeExercise, swapExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset, moveExercise } = useWorkoutStore();
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
 
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [swapId, setSwapId] = useState(null); // exercise being swapped, or null
   const [endOpen, setEndOpen] = useState(false);
   const [showRest, setShowRest] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -290,6 +292,7 @@ export default function WorkoutPage() {
               linked={linked}
               onSetLogged={handleSetLogged}
               onRemove={() => removeExercise(ex.exerciseId)}
+              onSwap={() => { setSwapId(ex.exerciseId); setPickerOpen(true); }}
               onToggleSuperset={() => toggleSuperset(ex.exerciseId)}
               onMoveUp={() => moveExercise(ex.exerciseId, -1)}
               onMoveDown={() => moveExercise(ex.exerciseId, 1)}
@@ -334,8 +337,8 @@ export default function WorkoutPage() {
 
       <ExercisePicker
         isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={(ex) => { playChime('tap'); addExercise(ex); }}
+        onClose={() => { setPickerOpen(false); setSwapId(null); }}
+        onSelect={(ex) => { playChime('tap'); if (swapId) swapExercise(swapId, ex); else addExercise(ex); }}
         alreadyAdded={alreadyAdded}
       />
 

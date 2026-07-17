@@ -147,6 +147,17 @@ export function removeExercise(name) {
   commitState({ ...session, exercises: session.exercises.filter((e) => e.name !== name) });
 }
 
+// Replace an exercise in the live session with another, keeping its logged sets
+// + targets + superset link (0-set case is the common one — swapping before you
+// start lifting).
+export function swapExercise(oldName, { name, muscleGroup = null, equipment = null }) {
+  if (!session || !name || oldName === name) return;
+  if (session.exercises.some((e) => e.name === name)) return; // no duplicates
+  commitState(mapExercise(session, oldName, (e) => ({
+    ...e, name, muscleGroup, equipment, isBodyweight: equipment === 'bodyweight',
+  })));
+}
+
 export function moveExercise(name, dir) {
   if (!session) return;
   const i = session.exercises.findIndex((e) => e.name === name);

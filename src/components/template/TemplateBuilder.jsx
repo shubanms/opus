@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X, Plus, ChevronUp, ChevronDown, Shuffle, Pin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Plus, ChevronUp, ChevronDown, Shuffle, Pin, Repeat } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import ExercisePicker from '../workout/ExercisePicker.jsx';
 import { createTemplate, updateTemplate } from '../../utils/templateActions.js';
@@ -37,6 +37,21 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
   const [color, setColor] = useState(editing?.color ?? null);
   const [exercises, setExercises] = useState(() => initExercises(editing, unit));
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [swapId, setSwapId] = useState(null); // exercise being replaced, or null
+
+  // The builder stays mounted (only the Modal toggles), so re-sync local state
+  // from `editing` every time it opens — otherwise editing an existing routine
+  // shows an empty "create from scratch" form.
+  useEffect(() => {
+    if (!isOpen) return;
+    setName(editing?.name ?? '');
+    setDay(editing?.dayOfWeek ?? null);
+    setColor(editing?.color ?? null);
+    setExercises(initExercises(editing, unit));
+    setPickerOpen(false);
+    setSwapId(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, editing]);
 
   function addExercise(ex) {
     setExercises((prev) =>
@@ -49,6 +64,15 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
   function togglePin(id) {
     setExercises((prev) => prev.map((e) => (e.id === id ? { ...e, pinned: !e.pinned } : e)));
   }
+
+  // Replace one exercise with another, keeping its targets/pin/position.
+  function swapExercise(ex) {
+    setExercises((prev) => {
+      if (prev.some((e) => e.id === ex.id && e.id !== swapId)) return prev; // no duplicates
+      return prev.map((e) => (e.id === swapId ? { ...e, id: ex.id, name: ex.name, muscleGroup: ex.muscleGroup, difficulty: ex.difficulty } : e));
+    });
+  }
+  function startSwap(id) { setSwapId(id); setPickerOpen(true); }
 
   function shuffleBuilder(intensity) {
     const slots = exercises.map((e) => ({
@@ -178,6 +202,9 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
                     <ChevronDown size={15} style={{ color: 'var(--color-ash)' }} />
                   </button>
                 </div>
+                <button onClick={() => startSwap(ex.id)} aria-label="Swap exercise">
+                  <Repeat size={14} style={{ color: 'var(--color-ash)' }} />
+                </button>
                 <button onClick={() => removeExercise(ex.id)} aria-label="Remove">
                   <X size={15} style={{ color: 'var(--color-ash)' }} />
                 </button>
@@ -219,10 +246,10 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
 
       <ExercisePicker
         isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={addExercise}
+        onClose={() => { setPickerOpen(false); setSwapId(null); }}
+        onSelect={swapId ? swapExercise : addExercise}
         alreadyAdded={exercises.map((e) => e.id)}
-        multi
+        multi={!swapId}
       />
     </Modal>
   );

@@ -1,4 +1,4 @@
-import { X, StickyNote, Link2, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, StickyNote, Link2, ChevronUp, ChevronDown, Repeat } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -13,7 +13,7 @@ const MUSCLE_HUE = {
   abs: '#C9A84C', obliques: '#C9A84C',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
+export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
@@ -80,6 +80,16 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
               aria-label={linked ? 'Remove from superset' : 'Superset with exercise above'}
             >
               <Link2 size={12} /> {linked ? 'Superset' : 'Link'}
+            </button>
+          )}
+          {onSwap && (
+            <button
+              onClick={onSwap}
+              className="flex h-7 w-7 items-center justify-center rounded-full"
+              style={{ background: 'var(--color-ivory)' }}
+              aria-label="Swap exercise"
+            >
+              <Repeat size={13} style={{ color: 'var(--color-ash)' }} />
             </button>
           )}
           <button
