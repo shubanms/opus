@@ -86,8 +86,9 @@ export default function ExercisesScreen({ navigation }) {
         </View>
       </View>
 
-      {/* Muscle-group filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips} style={{ flexGrow: 0 }}>
+      {/* Muscle-group filter — fixed row height so the horizontal scroller can't
+          collapse/overlap the row below (which clipped the chip text). */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipsContent} style={[s.chipRow, { marginTop: space(3) }]}>
         {[null, ...groups].map((g) => {
           const active = group === g;
           return (
@@ -99,7 +100,7 @@ export default function ExercisesScreen({ navigation }) {
       </ScrollView>
 
       {/* Equipment filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[s.chips, { paddingTop: space(2) }]} style={{ flexGrow: 0 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chipsContent} style={s.chipRow}>
         {[null, ...equipment].map((eq) => {
           const active = equip === eq;
           return (
@@ -161,12 +162,16 @@ const makeStyles = (colors) => StyleSheet.create({
   name: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 15 },
   meta: { color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, textTransform: 'capitalize' },
   diff: { fontFamily: fonts.sansMedium, fontSize: 11, textTransform: 'capitalize' },
-  chips: { paddingHorizontal: space(5), paddingTop: space(3), gap: space(2) },
+  // Fixed-height horizontal row so the scroller keeps a definite height (a
+  // height-collapsing horizontal ScrollView made the two chip rows overlap and
+  // clip their text). Chips centre within it.
+  chipRow: { flexGrow: 0, height: 44 },
+  chipsContent: { paddingHorizontal: space(5), gap: space(2), alignItems: 'center' },
   // This screen sits on the constant-obsidian canvas, so unselected chips need a
   // visible outline (a chalk/ivory fill goes near-invisible in the dark palette).
   chip: { paddingHorizontal: space(4), paddingVertical: space(2), borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.ash, borderWidth: 1 },
-  chipSm: { paddingHorizontal: space(3.5), paddingVertical: space(1.5), borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.ash, borderWidth: 1 },
+  chipSm: { paddingHorizontal: space(3.5), paddingVertical: space(2), borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.06)', borderColor: colors.ash, borderWidth: 1 },
   chipActive: { backgroundColor: colors.gold, borderColor: colors.gold },
-  chipText: { color: colors.textInverse, fontFamily: fonts.sansMedium, fontSize: 13, textTransform: 'capitalize' },
+  chipText: { color: colors.textInverse, fontFamily: fonts.sansMedium, fontSize: 13, lineHeight: 16, textTransform: 'capitalize' },
   chipTextActive: { color: colors.obsidian },
 });

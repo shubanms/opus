@@ -135,8 +135,11 @@ export default function App() {
           <Tab.Screen name="Workout" component={WorkoutScreen} options={{ tabBarLabel: () => null }} />
           <Tab.Screen name="Exercises" component={ExercisesScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />
-          {/* Settings stays registered (Tour/Profile-gear navigate to it) but is hidden from the bar. */}
-          <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarButton: () => null }} />
+          {/* Settings stays registered (Tour/Profile-gear navigate to it) but is fully
+              removed from the bar — display:'none' collapses its slot so the 5 visible
+              tabs stay evenly spaced and Workout is truly centered (tabBarButton:null
+              leaves an empty slot, shoving the row left). */}
+          <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarItemStyle: { display: 'none' } }} />
         </Tab.Navigator>
         {!settings.tourSeen ? (
           <Tour navigation={navRef} onDone={() => setRouteName(navRef.getCurrentRoute()?.name)} />

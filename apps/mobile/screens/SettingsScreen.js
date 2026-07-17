@@ -101,7 +101,13 @@ export default function SettingsScreen({ navigation }) {
       },
     ]);
   };
-  const onTestNotif = async () => { try { await testNotification(); } catch (e) { Alert.alert('Error', String(e?.message || e)); } };
+  const onTestNotif = async () => {
+    try {
+      const res = await testNotification();
+      if (res?.ok) Alert.alert('Sent', 'Check your notification shade — a test notification just fired.');
+      else Alert.alert('Notifications off', 'Allow notifications for OPUS in Android settings, then try again.');
+    } catch (e) { Alert.alert('Error', String(e?.message || e)); }
+  };
 
   const doReset = () => {
     if (confirm !== 'DELETE') return;
