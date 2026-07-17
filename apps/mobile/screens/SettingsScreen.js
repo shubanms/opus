@@ -13,7 +13,7 @@ import { enableNotifications, testNotification, scheduleDailyReminder } from '..
 import { connectAndReadSteps, healthAvailability } from '../native/healthConnect';
 import { setSteps, wipeAllData, logBodyStat, currentBodyweight } from '../native/db';
 import { exportJson, exportCsv, importJson } from '../native/dataExport';
-import { previewSounds } from '../native/sound';
+import { previewSounds, playCue } from '../native/sound';
 import { useSettings } from '../native/settings';
 
 const NOTIF_TYPES = [
@@ -231,6 +231,7 @@ export default function SettingsScreen({ navigation }) {
         </View>
         <View style={{ marginTop: space(2), gap: space(2) }}>
           <SecondaryButton label="Preview sounds" icon="musical-notes" onPress={() => previewSounds()} />
+          <SecondaryButton label="Preview theme intro" icon="sparkles" onPress={() => playCue('themeOpen', { force: true })} />
           <SecondaryButton label="Replay walkthrough" icon="book" onPress={() => { update('tourSeen', false); navigation?.navigate('Home'); }} />
           <SecondaryButton label="Show tips again" icon="bulb" onPress={() => { update('coachMarksSeen', {}); Alert.alert('Tips reset', 'Tips will show again as you browse.'); }} />
         </View>

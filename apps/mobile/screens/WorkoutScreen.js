@@ -101,7 +101,7 @@ export default function WorkoutScreen({ navigation }) {
     session.discardSession();
     refreshWidgets();
     hSuccess();
-    playCue(result.prCount || result.newAchievements.length ? 'chime' : 'success');
+    playCue(result.prCount ? 'pr' : result.newAchievements.length ? 'achievement' : 'success');
     setBurst((b) => b + 1);
 
     // Build the shareable-workout payload (top PR = heaviest-weight record).

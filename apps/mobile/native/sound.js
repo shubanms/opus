@@ -13,6 +13,14 @@ const FILES = {
   delete: require('../assets/sound/delete.wav'),
   goal: require('../assets/sound/goal.wav'),
   level: require('../assets/sound/level.wav'),
+  // Dedicated milestone cues (Phase G) — rendered from the web synth so the
+  // native app no longer collapses these onto the general chime/success/goal.
+  pr: require('../assets/sound/pr.wav'),
+  achievement: require('../assets/sound/achievement.wav'),
+  quest: require('../assets/sound/quest.wav'),
+  rest: require('../assets/sound/rest.wav'),
+  anthem: require('../assets/sound/anthem.wav'), // "calling you back" streak-risk motif
+  themeOpen: require('../assets/sound/themeOpen.wav'), // ~10s cold-start intro
 };
 
 let audioConfigured = false;
@@ -54,4 +62,14 @@ export async function previewSounds() {
     // eslint-disable-next-line no-await-in-loop
     await new Promise((r) => setTimeout(r, 260));
   }
+}
+
+// Cinematic ~10s app-open intro — fires once per cold start, gated by the
+// `sound` + `themeOnOpen` settings (mirrors the web LoadingPage playIntro()).
+let introPlayed = false;
+export function playIntro() {
+  if (introPlayed) return;
+  if (!getSetting('sound') || !getSetting('themeOnOpen')) return;
+  introPlayed = true;
+  playCue('themeOpen');
 }

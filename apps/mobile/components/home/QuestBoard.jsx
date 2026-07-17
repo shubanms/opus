@@ -34,7 +34,7 @@ export default function QuestBoard() {
   const doClaim = (q) => {
     if (claimQuest(q.id, q.xp)) {
       hSuccess();
-      playCue('goal');
+      playCue('quest');
       setBurst((b) => b + 1);
     }
   };

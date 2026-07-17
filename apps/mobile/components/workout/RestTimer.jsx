@@ -49,7 +49,7 @@ export default function RestTimer({ onDone }) {
         doneRef.current = true;
         clearInterval(tickRef.current);
         setRunning(false);
-        playCue('chime');
+        playCue('rest');
         hSuccess();
         onDone?.();
       }
