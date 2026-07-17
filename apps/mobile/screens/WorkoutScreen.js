@@ -55,6 +55,7 @@ export default function WorkoutScreen({ navigation }) {
   const [end, setEnd] = useState(null);
   const [levelUp, setLevelUp] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [swapName, setSwapName] = useState(null); // exercise being swapped, or null
   const [templatesOpen, setTemplatesOpen] = useState(false);
 
   // Catalog lookup (name → {muscleGroup, equipment}) for enriching added exercises.
@@ -215,6 +216,7 @@ export default function WorkoutScreen({ navigation }) {
                       canMoveUp={idx > 0}
                       canMoveDown={idx < active.exercises.length - 1}
                       onRemove={() => session.removeExercise(ex.name)}
+                      onSwap={() => { setSwapName(ex.name); setPickerOpen(true); }}
                       onSetLogged={onSetLogged}
                     />
                   );
@@ -266,7 +268,11 @@ export default function WorkoutScreen({ navigation }) {
       {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
       <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} achievements={end?.achievements || []} shareData={end?.shareData} onClose={closeEnd} />
       <LevelUpScreen visible={levelUp != null} level={levelUp || 1} onClose={() => setLevelUp(null)} />
-      <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={(name) => addExercise(name)} />
+      <ExercisePicker
+        visible={pickerOpen}
+        onClose={() => { setPickerOpen(false); setSwapName(null); }}
+        onPick={(name) => { if (swapName) session.swapExercise(swapName, resolve(name)); else addExercise(name); }}
+      />
       <TemplatesModal visible={templatesOpen} onClose={() => setTemplatesOpen(false)} onStart={startFromTemplate} />
     </Screen>
   );

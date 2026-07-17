@@ -246,6 +246,17 @@ describe('section-based workout logging', () => {
     expect(getByText('Bench Press')).toBeTruthy();
     workoutSession.discardSession();
   });
+
+  it('swapExercise replaces an exercise, keeping its logged sets', () => {
+    workoutSession.startSession('Push Day');
+    workoutSession.addExercise({ name: 'Bench Press', muscleGroup: 'chest', equipment: 'barbell' });
+    workoutSession.logSet('Bench Press', { weight: 100, reps: 5 });
+    workoutSession.swapExercise('Bench Press', { name: 'Incline Bench Press', muscleGroup: 'chest', equipment: 'barbell' });
+    const s = workoutSession.getSession();
+    expect(s.exercises.map((e) => e.name)).toEqual(['Incline Bench Press']);
+    expect(s.exercises[0].sets).toHaveLength(1); // logged set carried over
+    workoutSession.discardSession();
+  });
 });
 
 describe('exercise detail + custom CRUD', () => {

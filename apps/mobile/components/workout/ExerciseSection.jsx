@@ -20,7 +20,7 @@ const MUSCLE_HUE = {
 
 export default function ExerciseSection({
   exercise, unit = 'kg', fromTemplate = false,
-  canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onRemove, onSetLogged,
+  canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onRemove, onSwap, onSetLogged,
 }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
@@ -63,6 +63,11 @@ export default function ExerciseSection({
           {canLink && (
             <PressScale sound="tap" onPress={onToggleSuperset} style={[s.linkBtn, linked && { backgroundColor: colors.gold }]}>
               <Text style={[s.linkText, linked && { color: colors.obsidian }]}>{linked ? 'Superset' : 'Link'}</Text>
+            </PressScale>
+          )}
+          {onSwap && (
+            <PressScale hitSlop={6} onPress={onSwap} style={s.removeBtn}>
+              <Icon name="repeat" size={14} color={colors.ash} />
             </PressScale>
           )}
           <PressScale hitSlop={6} onPress={onRemove} style={s.removeBtn}>
