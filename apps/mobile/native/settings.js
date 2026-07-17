@@ -39,6 +39,9 @@ const DEFAULTS = {
   coachMarksSeen: {}, // { [tabName]: true } — per-tab tips dismissed (JSON like inventory)
   // Equipment / plate inventory (stored as JSON; per-location bar + owned plates)
   inventory: { active: 'gym', gym: { barKg: null, plates: null, unit: null }, home: { barKg: null, plates: null, unit: null } },
+  // Streak shield / rest token: tokens spent + the lapse date a shield protects.
+  tokensSpent: 0,
+  shieldedLapseDate: '',
 };
 
 // In-memory cache kept in sync with the DB, readable imperatively.

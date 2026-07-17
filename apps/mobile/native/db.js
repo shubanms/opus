@@ -551,6 +551,7 @@ export function getTotals() {
   const totalXP = setXP + wCount * rpg.COMPLETE_BONUS + achievementXP() + questClaimXP();
   const prCount = d.getFirstSync('SELECT COUNT(*) AS n FROM prs')?.n || 0;
   const durSec = d.getFirstSync('SELECT COALESCE(SUM(duration),0) AS s FROM workouts WHERE finishedAt IS NOT NULL')?.s || 0;
+  const questClaims = d.getFirstSync('SELECT COUNT(*) AS n FROM questClaims')?.n || 0;
 
   return {
     workouts: wCount,
@@ -559,6 +560,7 @@ export function getTotals() {
     totalXP,
     streak: getStreak(),
     prCount,
+    questClaims,
     hours: durSec / 3600,
   };
 }
