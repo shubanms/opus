@@ -6,9 +6,13 @@ import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
-import { decayInfo } from '../utils/decay.js';
+import { decayInfo, streakBreakPenalty } from '../utils/decay.js';
+import { tokensEarned, tokenBalance, isShieldActive, shieldedDecay } from '../utils/streakShield.js';
 import { cappedLevel, activeBoss } from '../utils/bosses.js';
 import { useBossStats } from '../hooks/useBosses.js';
+import { useLifetimeStats } from '../hooks/useProgress.js';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../db/db.js';
 import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
@@ -94,7 +98,21 @@ export default function HomePage() {
 
   const effects = useSettingsStore((s) => s.effects);
   const bossStats = useBossStats();
-  const { effectiveXp, decaying, lost } = decayInfo(profile ?? {});
+
+  // Streak shield / rest token. Tokens are derived from history (workouts +
+  // claimed quests), so they're already earned; spending one waives the
+  // streak-break penalty on the current lapse.
+  const life = useLifetimeStats();
+  const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
+  const tokensSpent = useSettingsStore((s) => s.tokensSpent);
+  const shieldedLapseDate = useSettingsStore((s) => s.shieldedLapseDate);
+  const spendShield = useSettingsStore((s) => s.spendShield);
+  const shieldTokens = tokenBalance(tokensEarned({ workouts: life.workouts, questClaims }), tokensSpent);
+  const rawDecay = decayInfo(profile ?? {});
+  const shieldActive = isShieldActive(shieldedLapseDate, profile?.lastWorkoutDate);
+  const streakPenalty = streakBreakPenalty(rawDecay.days, profile?.streak ?? 0);
+  const { effectiveXp, decaying, lost } = shieldedDecay(rawDecay, { active: shieldActive, streakPenalty, earnedXp: profile?.totalXp ?? 0 });
+  const canShield = rawDecay.decaying && streakPenalty > 0 && !shieldActive && shieldTokens > 0;
   const { level: rawLevel } = getXPProgress(effectiveXp);
   const prestige = getPrestige(effectiveXp);
   const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
@@ -159,9 +177,30 @@ export default function HomePage() {
               </div>
               <XPBar totalXp={effectiveXp} showLabel={false} />
               {decaying && (
-                <p className="mt-2 flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
-                  <TrendingDown size={12} />
-                  Rank slipping — train to recover (−{lost.toLocaleString()} XP)
+                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <p className="flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
+                    <TrendingDown size={12} />
+                    Rank slipping — train to recover (−{lost.toLocaleString()} XP)
+                  </p>
+                  {canShield && (
+                    <button
+                      onClick={() => { spendShield(profile?.lastWorkoutDate); playChime('goal'); }}
+                      className="flex items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold"
+                      style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+                    >
+                      🛡️ Use shield ({shieldTokens})
+                    </button>
+                  )}
+                </div>
+              )}
+              {!decaying && shieldActive && (
+                <p className="mt-2 flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-sage)' }}>
+                  🛡️ Streak shielded — your rest day is protected
+                </p>
+              )}
+              {!decaying && !shieldActive && shieldTokens > 0 && (
+                <p className="mt-2 font-mono text-[11px]" style={{ color: 'var(--color-ash)' }}>
+                  🛡️ {shieldTokens} rest {shieldTokens === 1 ? 'token' : 'tokens'} banked
                 </p>
               )}
             </div>

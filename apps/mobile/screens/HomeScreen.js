@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from '../components/Icon';
-import { rpg, dateKey, ambient, decay, bosses } from '@opus/core';
+import { rpg, dateKey, ambient, decay, bosses, streakShield } from '@opus/core';
 import { Screen, Wordmark, H1, H2, Label, Body, Mono } from '../ui';
 import { radius, space, fonts } from '../theme';
 import { useColors, useThemedStyles } from '../native/ThemeProvider';
@@ -21,7 +21,7 @@ import RecoveryCard from '../components/progress/RecoveryCard';
 import { getTotals, getRecentWorkouts, getTodayPlan, getLastWorkoutDate, computeAchievementStats } from '../native/db';
 import { useWorkoutSession } from '../native/workoutSession';
 import { refreshWidgets } from '../native/widgets';
-import { useSettings, motionOn } from '../native/settings';
+import { useSettings, motionOn, setSetting } from '../native/settings';
 import { playCue } from '../native/sound';
 
 // The "calling you back" anthem plays at most once per app session, the first
@@ -63,7 +63,17 @@ export default function HomeScreen({ navigation }) {
   );
 
   // XP decay → boss cap → progression, mirroring the web Home derivation order.
-  const info = decay.decayInfo({ totalXp: totals.totalXP, lastWorkoutDate, streak: totals.streak });
+  const rawInfo = decay.decayInfo({ totalXp: totals.totalXP, lastWorkoutDate, streak: totals.streak });
+  // Streak shield: tokens derived from history (workouts + claimed quests);
+  // spending one waives the streak-break penalty on the current lapse.
+  const shieldTokens = streakShield.tokenBalance(
+    streakShield.tokensEarned({ workouts: totals.workouts, questClaims: totals.questClaims }),
+    settings.tokensSpent
+  );
+  const shieldActive = streakShield.isShieldActive(settings.shieldedLapseDate, lastWorkoutDate);
+  const streakPenalty = decay.streakBreakPenalty(rawInfo.days, totals.streak);
+  const info = streakShield.shieldedDecay(rawInfo, { active: shieldActive, streakPenalty, earnedXp: totals.totalXP });
+  const canShield = rawInfo.decaying && streakPenalty > 0 && !shieldActive && shieldTokens > 0;
   const effXp = info.effectiveXp;
   const rawLevel = rpg.getLevelFromTotalXP(effXp);
   const level = stats ? bosses.cappedLevel(rawLevel, stats) : rawLevel;
@@ -116,6 +126,24 @@ export default function HomeScreen({ navigation }) {
             <View style={s.decayRow}>
               <Icon name="trending-up" size={13} color={colors.ember} />
               <Text style={s.decayText}>Rank slipping — train to recover (−{info.lost} XP)</Text>
+              {canShield && (
+                <PressScale
+                  onPress={() => { setSetting('tokensSpent', (settings.tokensSpent || 0) + 1); setSetting('shieldedLapseDate', lastWorkoutDate || ''); playCue('goal'); }}
+                  style={s.shieldBtn}
+                >
+                  <Text style={s.shieldBtnText}>🛡️ Use shield ({shieldTokens})</Text>
+                </PressScale>
+              )}
+            </View>
+          )}
+          {!info.decaying && shieldActive && (
+            <View style={s.decayRow}>
+              <Text style={[s.decayText, { color: colors.sage }]}>🛡️ Streak shielded — rest day protected</Text>
+            </View>
+          )}
+          {!info.decaying && !shieldActive && shieldTokens > 0 && (
+            <View style={s.decayRow}>
+              <Mono style={s.tokenText}>🛡️ {shieldTokens} rest {shieldTokens === 1 ? 'token' : 'tokens'} banked</Mono>
             </View>
           )}
         </Card>
@@ -202,8 +230,11 @@ const makeStyles = (colors) => StyleSheet.create({
   streakText: { color: colors.ember, fontFamily: fonts.monoMedium, fontSize: 13, marginLeft: 4 },
   rankRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(4) },
   rankTitle: { color: colors.textPrimary, fontFamily: fonts.displaySemi, fontSize: 22, marginLeft: space(3) },
-  decayRow: { flexDirection: 'row', alignItems: 'center', gap: space(2), marginTop: space(3) },
+  decayRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space(2), marginTop: space(3) },
   decayText: { color: colors.ember, fontFamily: fonts.sans, fontSize: 12 },
+  shieldBtn: { backgroundColor: colors.gold, borderRadius: radius.full, paddingHorizontal: space(2.5), paddingVertical: space(1) },
+  shieldBtnText: { color: colors.obsidian, fontFamily: fonts.sansSemi, fontSize: 12 },
+  tokenText: { color: colors.ash, fontFamily: fonts.mono, fontSize: 11 },
   bento: { flexDirection: 'row', gap: space(3) },
   bossCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.obsidian, borderColor: colors.ember, borderWidth: 1, borderRadius: radius.xl, padding: space(4) },
   bossTitle: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },
