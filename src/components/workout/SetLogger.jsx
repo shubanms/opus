@@ -9,7 +9,25 @@ import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import { calcSetXP } from '../../utils/rpg.js';
+import { diffsBySetNumber } from '../../utils/setDiff.js';
 import PlateCalculator from './PlateCalculator.jsx';
+
+// Compact "vs last session" badge for a logged working set.
+function SetDelta({ diff, unit }) {
+  if (!diff || diff.dir === 'new') return null;
+  const color = diff.dir === 'up' ? 'var(--color-gold)' : diff.dir === 'down' ? 'var(--color-ember)' : 'var(--color-ash)';
+  const arrow = diff.dir === 'up' ? '▲' : diff.dir === 'down' ? '▼' : '＝';
+  const wD = diff.weightDelta;
+  const parts = [];
+  if (wD) parts.push(`${wD > 0 ? '+' : '−'}${toDisplay(Math.abs(wD), unit)}${unitLabel(unit)}`);
+  if (diff.repsDelta) parts.push(`${diff.repsDelta > 0 ? '+' : '−'}${Math.abs(diff.repsDelta)}r`);
+  return (
+    <span className="flex items-center gap-0.5 font-mono text-xs" style={{ color }} title="vs last session">
+      <span style={{ fontSize: '0.6rem' }}>{arrow}</span>
+      {parts.join(' ')}
+    </span>
+  );
+}
 
 const RPE_CHIPS = [6, 7, 8, 9, 10];
 
@@ -85,6 +103,8 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   }
 
   const fmt = (s) => (s.weight > 0 ? `${toDisplay(s.weight, unit)}${unitLabel(unit)} × ${s.reps}` : `${s.reps} reps`);
+  // Per-set improvement vs the previous session (working sets only).
+  const setDeltas = diffsBySetNumber(exercise.sets, lastSets);
 
   return (
     <div className="mt-3">
@@ -132,6 +152,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
             <span className="flex-1 font-mono text-sm" style={{ color: 'var(--color-text-primary)' }}>
               {fmt(s)}
             </span>
+            {!s.isWarmup && <SetDelta diff={setDeltas[s.setNumber]} unit={unit} />}
             {s.rpe && (
               <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>RPE {s.rpe}</span>
             )}
