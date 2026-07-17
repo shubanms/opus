@@ -189,6 +189,12 @@ export function initDb() {
   ensureColumn(d, 'workouts', 'color', 'TEXT');
   ensureColumn(d, 'workouts', 'bodyweightKg', 'REAL');
   ensureColumn(d, 'workouts', 'createdAt', 'INTEGER');
+  // Exercise metadata for custom exercises, favorites, label color, detail page.
+  ensureColumn(d, 'exercises', 'isCustom', 'INTEGER DEFAULT 0');
+  ensureColumn(d, 'exercises', 'favorite', 'INTEGER DEFAULT 0');
+  ensureColumn(d, 'exercises', 'color', 'TEXT');
+  ensureColumn(d, 'exercises', 'secondaryMuscles', 'TEXT'); // JSON string
+  ensureColumn(d, 'exercises', 'description', 'TEXT');
 
   const row = d.getFirstSync('SELECT COUNT(*) AS n FROM exercises');
   if (!row || row.n === 0) {
@@ -828,6 +834,117 @@ export function getAllPRs(limit = 100) {
 export function getExercisePRs(exerciseName) {
   if (!exerciseName) return [];
   return conn().getAllSync('SELECT type, value FROM prs WHERE exerciseName = ?', exerciseName);
+}
+
+// ── Exercise detail + custom-exercise CRUD (Phase B) ─────────────────────────
+export function getExercise(name) {
+  if (!name) return null;
+  return conn().getFirstSync('SELECT * FROM exercises WHERE name = ?', name) || null;
+}
+
+export function addCustomExercise({ name, muscleGroup = null, equipment = null }) {
+  const n = (name || '').trim();
+  if (!n) return false;
+  const d = conn();
+  if (d.getFirstSync('SELECT name FROM exercises WHERE name = ?', n)) return false; // no dup
+  d.runSync('INSERT INTO exercises (name, muscleGroup, equipment, isCustom) VALUES (?,?,?,1)', n, muscleGroup, equipment);
+  touch();
+  return true;
+}
+
+export function toggleFavorite(name) {
+  conn().runSync('UPDATE exercises SET favorite = CASE WHEN COALESCE(favorite,0)=1 THEN 0 ELSE 1 END WHERE name = ?', name);
+  touch();
+}
+
+export function setExerciseColor(name, color) {
+  conn().runSync('UPDATE exercises SET color = ? WHERE name = ?', color || null, name);
+  touch();
+}
+
+function recomputeWorkoutTotals(workoutId) {
+  const d = conn();
+  const rows = d.getAllSync('SELECT weight, reps FROM sets WHERE workoutId = ? AND COALESCE(isWarmup,0)=0', workoutId);
+  let vol = 0;
+  for (const r of rows) vol += (r.weight || 0) * (r.reps || 0);
+  d.runSync('UPDATE workouts SET totalVolume = ?, totalSets = ? WHERE id = ?', Math.round(vol), rows.length, workoutId);
+}
+
+// Delete a CUSTOM exercise and revert all derived data (sets/PRs/template refs,
+// affected workout totals, achievements, quests). Built-in seeds aren't deletable.
+export function deleteCustomExercise(name) {
+  const d = conn();
+  const ex = d.getFirstSync('SELECT isCustom FROM exercises WHERE name = ?', name);
+  if (!ex || !ex.isCustom) return false;
+  const affected = d
+    .getAllSync('SELECT DISTINCT workoutId FROM sets WHERE COALESCE(exerciseId, exerciseName) = ?', name)
+    .map((r) => r.workoutId);
+  d.withTransactionSync(() => {
+    d.runSync('DELETE FROM sets WHERE COALESCE(exerciseId, exerciseName) = ?', name);
+    d.runSync('DELETE FROM prs WHERE exerciseName = ?', name);
+    d.runSync('DELETE FROM templateExercises WHERE exerciseName = ?', name);
+    d.runSync('DELETE FROM exerciseNotes WHERE exerciseName = ?', name);
+    d.runSync('DELETE FROM exercises WHERE name = ?', name);
+    for (const wId of affected) recomputeWorkoutTotals(wId);
+  });
+  reconcileAchievements();
+  reconcileQuests();
+  touch();
+  return true;
+}
+
+// Coaching note for one exercise (upsert into the exerciseNotes table; empty
+// clears it — mirrors the web noteActions).
+export function getExerciseNote(name) {
+  return conn().getFirstSync('SELECT text FROM exerciseNotes WHERE exerciseName = ?', name)?.text ?? '';
+}
+
+export function setExerciseNote(name, text) {
+  const d = conn();
+  const t = (text || '').trim();
+  const existing = d.getFirstSync('SELECT exerciseName FROM exerciseNotes WHERE exerciseName = ?', name);
+  if (!t) {
+    if (existing) d.runSync('DELETE FROM exerciseNotes WHERE exerciseName = ?', name);
+  } else if (existing) {
+    d.runSync('UPDATE exerciseNotes SET text = ?, updatedAt = ? WHERE exerciseName = ?', t, Date.now(), name);
+  } else {
+    d.runSync('INSERT INTO exerciseNotes (exerciseName, text, updatedAt) VALUES (?,?,?)', name, t, Date.now());
+  }
+  touch();
+}
+
+// Per-session series for one exercise (oldest→newest, last `limit` sessions).
+function exerciseSessionsAsc(name, limit) {
+  const d = conn();
+  const rows = d.getAllSync(
+    `SELECT w.id AS wid, w.dateKey AS dk, s.weight AS weight, s.reps AS reps
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+      WHERE w.finishedAt IS NOT NULL AND COALESCE(s.exerciseId, s.exerciseName) = ? AND COALESCE(s.isWarmup,0)=0
+      ORDER BY w.finishedAt ASC`,
+    name
+  );
+  const byW = new Map();
+  for (const r of rows) {
+    if (!byW.has(r.wid)) byW.set(r.wid, { dk: r.dk, sets: [] });
+    byW.get(r.wid).sets.push({ weight: r.weight, reps: r.reps });
+  }
+  const arr = [...byW.values()];
+  return arr.slice(Math.max(0, arr.length - limit));
+}
+
+// Volume-per-session series (kg) for the exercise detail chart. [{label,value}].
+export function getExerciseVolumeSeries(name, limit = 10) {
+  return exerciseSessionsAsc(name, limit).map((w) => ({
+    label: (w.dk || '').slice(5),
+    value: Math.round(w.sets.reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0)),
+  }));
+}
+
+// Best-Epley-1RM-per-session series for the exercise detail chart. [{label,value}].
+export function getExerciseE1rmSeries(name, limit = 10) {
+  return exerciseSessionsAsc(name, limit)
+    .map((w) => ({ label: (w.dk || '').slice(5), value: Math.round(Math.max(0, ...w.sets.map((s) => oneRepMax.epley1RM(s.weight || 0, s.reps || 0)))) }))
+    .filter((p) => p.value > 0);
 }
 
 // Working sets from the most recent PAST finished workout that included this

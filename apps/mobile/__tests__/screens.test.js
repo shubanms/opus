@@ -38,6 +38,8 @@ import SetLogger from '../components/workout/SetLogger';
 import OverloadNudge from '../components/workout/OverloadNudge';
 import LevelUpScreen from '../components/rpg/LevelUpScreen';
 import * as workoutSession from '../native/workoutSession';
+import ExerciseDetailSheet from '../components/exercise/ExerciseDetailSheet';
+import ExerciseFormSheet from '../components/exercise/ExerciseFormSheet';
 
 const Tab = createBottomTabNavigator();
 
@@ -209,6 +211,22 @@ describe('section-based workout logging', () => {
     expect(getByText('Session notes')).toBeTruthy();
     expect(getByText('Bench Press')).toBeTruthy();
     workoutSession.discardSession();
+  });
+});
+
+describe('exercise detail + custom CRUD', () => {
+  it('ExerciseDetailSheet shows records + charts + how-to', () => {
+    const { getByText } = render(<ExerciseDetailSheet visible exerciseName="Bench Press" onClose={() => {}} onAddToWorkout={() => {}} />);
+    expect(getByText('Records')).toBeTruthy();
+    expect(getByText('Heaviest weight')).toBeTruthy();
+    expect(getByText('Watch how-to on YouTube')).toBeTruthy();
+    expect(getByText('Add to workout')).toBeTruthy();
+  });
+
+  it('ExerciseFormSheet renders the create form', () => {
+    const { getByText } = render(<ExerciseFormSheet visible onClose={() => {}} onCreated={() => {}} />);
+    expect(getByText('New exercise')).toBeTruthy();
+    expect(getByText('Create exercise')).toBeTruthy();
   });
 });
 
