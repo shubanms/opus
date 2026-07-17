@@ -15,7 +15,7 @@ import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useHaptics } from '../hooks/useHaptics.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
-import { saveWorkoutAsRoutine } from '../utils/templateActions.js';
+import { saveWorkoutAsRoutine, advanceProgression } from '../utils/templateActions.js';
 import { playChime } from '../utils/sound.js';
 import { supersetRuns, noRestIds } from '../utils/supersets.js';
 import useUIStore from '../store/uiStore.js';
@@ -101,6 +101,19 @@ export default function WorkoutPage() {
     const result = await completeWorkout(xp);
     setEndOpen(false);
     if (result?.discarded) return; // empty session — nothing saved or rewarded
+
+    // Advance the routine's targets by its progression scheme (if any).
+    if (snapshot?.templateId) {
+      try {
+        const prog = await advanceProgression(snapshot.templateId, snapshot.exercises);
+        if (prog?.count) {
+          const verb = prog.mode === 'linear' ? 'progressed' : 'updated';
+          useUIStore.getState().showToast(`Routine ${verb}: next targets set for ${prog.count} lift${prog.count > 1 ? 's' : ''}`, { type: 'success' });
+        }
+      } catch (e) {
+        console.error('Progression advance failed (workout still saved):', e);
+      }
+    }
 
     // Keep an ad-hoc session as a routine if the user opted in.
     if (routine?.saveRoutine) {

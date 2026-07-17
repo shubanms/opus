@@ -35,6 +35,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
   const [name, setName] = useState(editing?.name ?? '');
   const [day, setDay] = useState(editing?.dayOfWeek ?? null);
   const [color, setColor] = useState(editing?.color ?? null);
+  const [progression, setProgression] = useState(editing?.progression?.mode ?? 'off');
   const [exercises, setExercises] = useState(() => initExercises(editing, unit));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [swapId, setSwapId] = useState(null); // exercise being replaced, or null
@@ -47,6 +48,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
     setName(editing?.name ?? '');
     setDay(editing?.dayOfWeek ?? null);
     setColor(editing?.color ?? null);
+    setProgression(editing?.progression?.mode ?? 'off');
     setExercises(initExercises(editing, unit));
     setPickerOpen(false);
     setSwapId(null);
@@ -116,6 +118,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
       name,
       dayOfWeek: day,
       color,
+      progression: progression === 'off' ? { mode: 'off' } : { mode: progression, weightStep: 2.5, deloadAfterMisses: 2 },
       exercises: exercises.map((e) => ({
         exerciseId: e.id,
         targetSets: e.targetSets === '' ? null : Number(e.targetSets),
@@ -163,6 +166,38 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
 
       <div className="mt-3">
         <ColorPicker value={color} onChange={setColor} />
+      </div>
+
+      <div className="mt-4">
+        <p className="mb-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+          Auto-progression
+        </p>
+        <div className="flex gap-2">
+          {[
+            { v: 'off', l: 'Off' },
+            { v: 'linear', l: 'Linear' },
+            { v: 'double', l: 'Double' },
+          ].map((m) => (
+            <button
+              key={m.v}
+              onClick={() => setProgression(m.v)}
+              className="flex-1 rounded-lg py-2 font-sans text-xs font-medium"
+              style={{
+                background: progression === m.v ? 'var(--color-gold)' : 'var(--color-ivory)',
+                color: progression === m.v ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+              }}
+            >
+              {m.l}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
+          {progression === 'off'
+            ? 'Targets stay put.'
+            : progression === 'linear'
+            ? 'Hit every set → +2.5kg next time; miss twice → auto-deload 10%.'
+            : 'Hit target reps on every set → +2.5kg; otherwise hold and build reps.'}
+        </p>
       </div>
 
       {exercises.length > 0 && (
