@@ -299,6 +299,8 @@ const useWorkoutStore = create((set, get) => ({
           isWarmup: s.isWarmup ?? false,
           note: s.note ?? null,
           completedAt: s.completedAt,
+          crit: s.crit ?? false,
+          bonusXp: s.bonusXp ?? 0,
         });
       }
     }
