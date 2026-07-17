@@ -8,20 +8,22 @@ import { motionOn } from '../../native/settings';
 
 const AView = Animated.createAnimatedComponent(View);
 
-export default function GoldAura({ size = 320, intensity = 0.5 }) {
+export default function GoldAura({ size = 320, intensity = 0.5, speed = 0.5 }) {
   const t = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!motionOn()) return;
+    // Livelier progression → faster breathe (mirrors the web (7 - speed*3)s).
+    const half = Math.round((7 - Math.max(0, Math.min(1, speed)) * 3) * 500);
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(t, { toValue: 1, duration: 3000, useNativeDriver: true }),
-        Animated.timing(t, { toValue: 0, duration: 3000, useNativeDriver: true }),
+        Animated.timing(t, { toValue: 1, duration: half, useNativeDriver: true }),
+        Animated.timing(t, { toValue: 0, duration: half, useNativeDriver: true }),
       ])
     );
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [speed]);
 
   const opacity = motionOn() ? t.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] }) : 0.7;
   const scale = motionOn() ? t.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] }) : 1;

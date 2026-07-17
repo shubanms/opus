@@ -45,6 +45,7 @@ import Heatmap from '../components/progress/Heatmap';
 import BodyStatsForm from '../components/progress/BodyStatsForm';
 import SleepForm from '../components/progress/SleepForm';
 import EquipmentModal from '../components/settings/EquipmentModal';
+import WeeklyRecap from '../components/home/WeeklyRecap';
 
 const Tab = createBottomTabNavigator();
 
@@ -291,6 +292,21 @@ describe('settings parity (Phase D)', () => {
     expect(getByText('Export backup (JSON)')).toBeTruthy();
     expect(getByText('Import backup')).toBeTruthy();
     expect(getByText('Export sets (CSV)')).toBeTruthy();
+  });
+});
+
+describe('home richness (Phase E)', () => {
+  it('Home shows the weekly recap + Today card + deck', () => {
+    const { getByText } = renderScreen(HomeScreen);
+    expect(getByText('Your week so far')).toBeTruthy();
+    expect(getByText('Activity')).toBeTruthy(); // deck tab
+    expect(getByText('Ready to train?')).toBeTruthy();
+  });
+
+  it('WeeklyRecap renders this week\'s stats', () => {
+    const { getByText } = render(<WeeklyRecap />);
+    expect(getByText('Your week so far')).toBeTruthy();
+    expect(getByText('Sessions')).toBeTruthy();
   });
 });
 

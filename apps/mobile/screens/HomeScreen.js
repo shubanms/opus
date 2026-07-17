@@ -2,12 +2,13 @@ import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from '../components/Icon';
-import { rpg, dateKey } from '@opus/core';
+import { rpg, dateKey, ambient, decay, bosses } from '@opus/core';
 import { Screen, Wordmark, H1, H2, Label, Body, Mono } from '../ui';
 import { radius, space, fonts } from '../theme';
 import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import Card from '../components/Card';
 import StatTile from '../components/StatTile';
+import Segmented from '../components/Segmented';
 import LevelBadge from '../components/rpg/LevelBadge';
 import XPBar from '../components/rpg/XPBar';
 import GoldAura from '../components/fx/GoldAura';
@@ -15,10 +16,12 @@ import PressScale from '../components/PressScale';
 import QuestBoard from '../components/home/QuestBoard';
 import HistoryModal from '../components/home/HistoryModal';
 import ActivityRings from '../components/home/ActivityRings';
-import { getTotals, getRecentWorkouts } from '../native/db';
+import WeeklyRecap from '../components/home/WeeklyRecap';
+import RecoveryCard from '../components/progress/RecoveryCard';
+import { getTotals, getRecentWorkouts, getTodayPlan, getLastWorkoutDate, computeAchievementStats } from '../native/db';
 import { useWorkoutSession } from '../native/workoutSession';
 import { refreshWidgets } from '../native/widgets';
-import { useSettings } from '../native/settings';
+import { useSettings, motionOn } from '../native/settings';
 
 function relDay(key) {
   const gap = dateKey.daysBetween(key, dateKey.todayKey());
@@ -34,28 +37,48 @@ export default function HomeScreen({ navigation }) {
   const { settings } = useSettings();
   const [totals, setTotals] = useState({ workouts: 0, totalVolume: 0, streak: 0, totalXP: 0 });
   const [recent, setRecent] = useState([]);
-  const active = useWorkoutSession(); // in-memory active session (or null)
+  const [stats, setStats] = useState(null);
+  const [today, setToday] = useState({ type: 'fresh', reason: 'No plan today — start fresh.' });
+  const [lastWorkoutDate, setLastWorkoutDate] = useState(null);
+  const active = useWorkoutSession();
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [deck, setDeck] = useState('activity');
 
   useFocusEffect(
     useCallback(() => {
       try {
         setTotals(getTotals());
         setRecent(getRecentWorkouts(3));
+        setStats(computeAchievementStats());
+        setToday(getTodayPlan());
+        setLastWorkoutDate(getLastWorkoutDate());
         refreshWidgets();
       } catch {}
     }, [])
   );
 
-  const level = rpg.getLevelFromTotalXP(totals.totalXP);
-  const rank = rpg.getRankLabel(totals.totalXP);
-  const prog = rpg.getXPProgress(totals.totalXP);
+  // XP decay → boss cap → progression, mirroring the web Home derivation order.
+  const info = decay.decayInfo({ totalXp: totals.totalXP, lastWorkoutDate, streak: totals.streak });
+  const effXp = info.effectiveXp;
+  const rawLevel = rpg.getLevelFromTotalXP(effXp);
+  const level = stats ? bosses.cappedLevel(rawLevel, stats) : rawLevel;
+  const boss = stats ? bosses.activeBoss(rawLevel, stats) : null;
+  const prestige = rpg.getPrestige(effXp);
+  const rank = rpg.getRankLabel(effXp);
+  const prog = rpg.getXPProgress(effXp);
+  const scene = ambient.sceneParams({ streak: totals.streak, level, prestige, reducedMotion: !motionOn() });
+
+  const deckTabs = [
+    { value: 'activity', label: 'Activity' },
+    ...(totals.workouts > 0 ? [{ value: 'recovery', label: 'Recovery' }] : []),
+    { value: 'quests', label: 'Quests' },
+  ];
 
   return (
     <Screen>
       {/* Hero */}
       <View>
-        <GoldAura size={340} intensity={0.5} />
+        <GoldAura size={340} intensity={scene.goldShade} speed={scene.motionSpeed} />
         <Card style={{ overflow: 'hidden' }}>
           <View style={s.heroTop}>
             <View style={{ flex: 1 }}>
@@ -78,35 +101,61 @@ export default function HomeScreen({ navigation }) {
           <View style={{ marginTop: space(3) }}>
             <XPBar progress={prog.progress} level={level} xpToNext={prog.xpToNext} showLabel />
           </View>
+
+          {info.decaying && (
+            <View style={s.decayRow}>
+              <Icon name="trending-up" size={13} color={colors.ember} />
+              <Text style={s.decayText}>Rank slipping — train to recover (−{info.lost} XP)</Text>
+            </View>
+          )}
         </Card>
       </View>
 
       {/* Stat bento */}
       <View style={s.bento}>
-        <StatTile icon="flame" accent={colors.ember} value={totals.streak} label={totals.streak === 1 ? 'Day streak' : 'Day streak'} />
+        <StatTile icon="flame" accent={colors.ember} value={totals.streak} label="Day streak" />
         <StatTile icon="barbell" value={totals.workouts} label="Workouts" />
         <StatTile icon="trending-up" value={totals.totalVolume} compact label="Volume kg" />
       </View>
 
-      {/* Today / start */}
+      {/* Boss gate */}
+      {boss && (
+        <PressScale onPress={() => navigation.navigate('Profile')} style={s.bossCard}>
+          <Icon name="flame" size={20} color={colors.ember} style={{ marginRight: space(3) }} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.bossTitle}>Boss gate · Lv.{boss.gate} {boss.title}</Text>
+            <Text style={s.bossDesc}>{boss.desc}</Text>
+          </View>
+          <Icon name="chevron-forward" size={18} color={colors.ash} />
+        </PressScale>
+      )}
+
+      {/* Today */}
       <Card variant="feature">
         <Label style={{ color: colors.gold }}>Today · {dateKey.todayKey()}</Label>
         <View style={s.todayRow}>
           <View style={{ flex: 1 }}>
-            <H2 style={{ color: colors.textInverse, marginTop: 4 }}>{active ? 'Workout in progress' : 'Ready to train?'}</H2>
-            <Body style={{ marginTop: 2 }}>{active ? 'Pick up where you left off.' : 'Log a session and earn XP.'}</Body>
+            <H2 style={{ color: colors.textInverse, marginTop: 4 }}>
+              {active ? 'Workout in progress' : today.type === 'rest' ? 'Rest day' : today.type === 'template' ? today.template?.name || 'On your plan' : 'Ready to train?'}
+            </H2>
+            <Body style={{ marginTop: 2 }}>
+              {active ? 'Pick up where you left off.' : today.type === 'template' ? `${today.template?.exercises?.length || 0} exercises · ${today.reason}` : today.reason}
+            </Body>
           </View>
           <PressScale sound="start" onPress={() => navigation.navigate('Workout')} style={s.playBtn}>
-            <Icon name={active ? 'play' : 'add'} size={24} color={colors.obsidian} />
+            <Icon name={active ? 'play' : today.type === 'rest' ? 'checkmark' : 'add'} size={24} color={colors.obsidian} />
           </PressScale>
         </View>
       </Card>
 
-      {/* Daily activity */}
-      <ActivityRings />
+      {/* Weekly recap */}
+      <WeeklyRecap />
 
-      {/* Weekly quests */}
-      <QuestBoard />
+      {/* Secondary deck */}
+      <Segmented options={deckTabs} value={deckTabs.some((t) => t.value === deck) ? deck : 'activity'} onChange={setDeck} />
+      {deck === 'activity' && <ActivityRings />}
+      {deck === 'recovery' && totals.workouts > 0 && <RecoveryCard />}
+      {deck === 'quests' && <QuestBoard />}
 
       {/* Recent */}
       <Card>
@@ -143,7 +192,12 @@ const makeStyles = (colors) => StyleSheet.create({
   streakText: { color: colors.ember, fontFamily: fonts.monoMedium, fontSize: 13, marginLeft: 4 },
   rankRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(4) },
   rankTitle: { color: colors.textPrimary, fontFamily: fonts.displaySemi, fontSize: 22, marginLeft: space(3) },
+  decayRow: { flexDirection: 'row', alignItems: 'center', gap: space(2), marginTop: space(3) },
+  decayText: { color: colors.ember, fontFamily: fonts.sans, fontSize: 12 },
   bento: { flexDirection: 'row', gap: space(3) },
+  bossCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.obsidian, borderColor: colors.ember, borderWidth: 1, borderRadius: radius.xl, padding: space(4) },
+  bossTitle: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },
+  bossDesc: { color: colors.ash, fontFamily: fonts.sans, fontSize: 12, marginTop: 1 },
   todayRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(2) },
   playBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center', marginLeft: space(3) },
   recentHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
