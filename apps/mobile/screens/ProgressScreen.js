@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Icon from '../components/Icon';
-import { dateKey } from '@opus/core';
+import { dateKey, units, prs as prsCore } from '@opus/core';
 import { Screen, H1, Label, Body, Mono } from '../ui';
 import { radius, space, fonts } from '../theme';
 import { useColors, useThemedStyles } from '../native/ThemeProvider';
+import { useSettings } from '../native/settings';
 import Card from '../components/Card';
 import StatTile from '../components/StatTile';
 import LineChart from '../components/progress/LineChart';
@@ -27,9 +28,18 @@ function relDay(ms) {
   }
 }
 
+// Format a PR row value by type: reps are a count; weight/volume are weights.
+// Legacy 'e1rm' rows (pre-Phase-A) fall back to weight formatting.
+function fmtPr(p, unit) {
+  if (p.type === 'reps') return `${Math.round(p.value)} reps`;
+  return `${units.toDisplay(p.value, unit)} ${units.unitLabel(unit)}`;
+}
+
 export default function ProgressScreen() {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
+  const { settings } = useSettings();
+  const unit = settings.unit || 'kg';
   const win = useWindowDimensions();
   const chartW = Math.round(win.width - 2 * space(5) - 2 * space(4)); // screen + card padding
 
@@ -98,8 +108,8 @@ export default function ProgressScreen() {
               <View key={p.id} style={s.row}>
                 <Icon name="ribbon" size={15} color={colors.ember} style={{ marginRight: space(3) }} />
                 <Text style={s.name} numberOfLines={1}>{p.exerciseName}</Text>
-                <Mono style={s.sub}>{relDay(p.achievedAt)}</Mono>
-                <Mono style={s.val}>  {Math.round(p.value)} kg</Mono>
+                <Mono style={s.sub}>{p.type ? prsCore.prTypeLabel(p.type) : relDay(p.achievedAt)}</Mono>
+                <Mono style={s.val}>  {fmtPr(p, unit)}</Mono>
               </View>
             ))}
           </View>

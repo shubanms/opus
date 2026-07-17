@@ -1,10 +1,12 @@
 // Hall of Records sheet — every PR, grouped by date (newest first). Ports the
 // PWA HallOfRecordsPage. Reads the prs table (passed in as `prs`).
 import { Modal, View, Text, ScrollView, StyleSheet } from 'react-native';
+import { units, prs as prsCore } from '@opus/core';
 import Icon from '../Icon';
 import { H2, Label, Body, Mono } from '../../ui';
 import { radius, space, fonts } from '../../theme';
 import { useColors, useThemedStyles } from '../../native/ThemeProvider';
+import { useSettings } from '../../native/settings';
 import PressScale from '../PressScale';
 
 function dayLabel(ms) {
@@ -15,6 +17,9 @@ function dayLabel(ms) {
 export default function HallOfRecordsModal({ visible, onClose, prs = [] }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
+  const { settings } = useSettings();
+  const unit = settings.unit || 'kg';
+  const fmtPr = (p) => (p.type === 'reps' ? `${Math.round(p.value)} reps` : `${units.toDisplay(p.value, unit)} ${units.unitLabel(unit)}`);
   // Group by calendar day (newest first — prs already come newest-first).
   const groups = [];
   const byDay = new Map();
@@ -47,8 +52,11 @@ export default function HallOfRecordsModal({ visible, onClose, prs = [] }) {
                   {g.items.map((p) => (
                     <View key={p.id} style={s.row}>
                       <Icon name="trophy" size={16} color={colors.gold} style={{ marginRight: space(3) }} />
-                      <Text style={s.name} numberOfLines={1}>{p.exerciseName}</Text>
-                      <Mono style={s.val}>{Math.round(p.value)} kg {p.type === 'e1rm' ? '1RM' : ''}</Mono>
+                      <View style={{ flex: 1 }}>
+                        <Text style={s.name} numberOfLines={1}>{p.exerciseName}</Text>
+                        {p.type && p.type !== 'e1rm' ? <Text style={s.type}>{prsCore.prTypeLabel(p.type)}</Text> : null}
+                      </View>
+                      <Mono style={s.val}>{fmtPr(p)}</Mono>
                     </View>
                   ))}
                 </View>
@@ -66,6 +74,7 @@ const makeStyles = (colors) => StyleSheet.create({
   sheet: { backgroundColor: colors.chalk, borderTopLeftRadius: radius['2xl'], borderTopRightRadius: radius['2xl'], padding: space(5), paddingBottom: space(2), height: '82%' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space(3) },
   row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.ivory, borderRadius: radius.md, paddingHorizontal: space(4), paddingVertical: space(3) },
-  name: { flex: 1, color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 14 },
+  name: { color: colors.textPrimary, fontFamily: fonts.sansMedium, fontSize: 14 },
+  type: { color: colors.ash, fontFamily: fonts.sans, fontSize: 11, marginTop: 1 },
   val: { color: colors.gold, fontFamily: fonts.monoMedium, fontSize: 14 },
 });

@@ -60,7 +60,7 @@ export default function TemplatesModal({ visible, onClose, onStart }) {
   };
 
   const start = (t) => {
-    if (t.exercises?.length) onStart?.(t.exercises[0]);
+    if (t.exercises?.length) onStart?.(t);
     onClose?.();
   };
 

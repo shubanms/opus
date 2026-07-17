@@ -2,9 +2,11 @@
 // saved: animated XP / volume / sets counters, a PR banner when a record fell,
 // and a gold "Done" CTA. Ports the PWA EndWorkoutModal.
 import { Modal, View, Text, StyleSheet } from 'react-native';
+import { units, prs as prsCore } from '@opus/core';
 import { H1, H2, Label, Mono } from '../../ui';
 import { radius, space, fonts } from '../../theme';
 import { useColors, useThemedStyles } from '../../native/ThemeProvider';
+import { useSettings } from '../../native/settings';
 import CountUp from '../fx/CountUp';
 import Particles from '../fx/Particles';
 import { GoldButton } from '../Button';
@@ -24,7 +26,13 @@ function Stat({ label, value, suffix, accent }) {
 export default function EndWorkoutModal({ visible, summary, prs = [], achievements = [], shareData, onClose }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
+  const { settings } = useSettings();
+  const unit = settings.unit || 'kg';
   const prCount = prs.length;
+  // Format a PR value by its type: reps are a count, weight/volume are weights.
+  const fmtPr = (p) => (p.type === 'reps'
+    ? `${Math.round(p.value)} reps`
+    : `${units.toDisplay(p.value, unit)} ${units.unitLabel(unit)}`);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={s.backdrop}>
@@ -45,9 +53,12 @@ export default function EndWorkoutModal({ visible, summary, prs = [], achievemen
           {prCount > 0 && (
             <View style={s.prList}>
               {prs.slice(0, 4).map((p) => (
-                <View key={p.exerciseName} style={s.prRow}>
-                  <Text style={s.prName}>{p.exerciseName}</Text>
-                  <Mono style={s.prVal}>{Math.round(p.value)} kg 1RM</Mono>
+                <View key={`${p.exerciseName}-${p.type || 'e1rm'}`} style={s.prRow}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.prName}>{p.exerciseName}</Text>
+                    {p.type ? <Text style={s.prType}>{prsCore.prTypeLabel(p.type)}</Text> : null}
+                  </View>
+                  <Mono style={s.prVal}>{fmtPr(p)}</Mono>
                 </View>
               ))}
             </View>
@@ -89,6 +100,7 @@ const makeStyles = (colors) => StyleSheet.create({
   prList: { gap: space(2), marginTop: space(1) },
   prRow: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.ivory, borderRadius: radius.md, paddingHorizontal: space(4), paddingVertical: space(3) },
   prName: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
+  prType: { color: colors.ash, fontFamily: fonts.sans, fontSize: 11, marginTop: 1 },
   prVal: { color: colors.gold, fontSize: 14 },
   achList: { gap: space(2), marginTop: space(1) },
   achRow: { flexDirection: 'row', alignItems: 'center', gap: space(3), backgroundColor: colors.stone, borderRadius: radius.md, paddingHorizontal: space(4), paddingVertical: space(3) },

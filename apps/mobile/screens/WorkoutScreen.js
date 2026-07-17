@@ -1,165 +1,128 @@
-import { useCallback, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+// The logging screen — a section-based session (one card per exercise) mirroring
+// the web WorkoutPage. The in-progress session lives in the workoutSession store
+// (in memory + snapshot); nothing is written to SQLite until Finish, which calls
+// commitWorkout. Supersets bracket adjacent linked exercises; rest starts after
+// each logged set except a non-last superset move.
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, TextInput, StyleSheet, ScrollView, Alert } from 'react-native';
 import Icon from '../components/Icon';
-import { oneRepMax, units, rpg, dateKey } from '@opus/core';
+import { units, supersets, dateKey } from '@opus/core';
 import { useSettings } from '../native/settings';
-import { Screen, H1, H2, Label, Mono } from '../ui';
+import { Screen, H1, H2, Label, Body } from '../ui';
 import { radius, space, fonts } from '../theme';
 import { useColors, useThemedStyles } from '../native/ThemeProvider';
 import PressScale from '../components/PressScale';
-import { GoldButton } from '../components/Button';
+import { GoldButton, SecondaryButton } from '../components/Button';
 import Particles from '../components/fx/Particles';
 import RestTimer from '../components/workout/RestTimer';
+import ExerciseSection from '../components/workout/ExerciseSection';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal';
 import ExercisePicker from '../components/workout/ExercisePicker';
-import PlateCalculator from '../components/workout/PlateCalculator';
 import TemplatesModal from '../components/workout/TemplatesModal';
-import {
-  getActiveWorkout,
-  getOrCreateActiveWorkout,
-  addSet as dbAddSet,
-  deleteSet as dbDeleteSet,
-  getSets,
-  finishWorkout,
-  discardWorkout,
-  priorBestE1rm,
-  addPR,
-  getWorkoutSummary,
-  syncAchievements,
-  getExercises,
-  getTotals,
-} from '../native/db';
+import LevelUpScreen from '../components/rpg/LevelUpScreen';
+import { getExercises, commitWorkout } from '../native/db';
+import * as session from '../native/workoutSession';
+import { useWorkoutSession } from '../native/workoutSession';
 import { refreshWidgets } from '../native/widgets';
 import { playCue } from '../native/sound';
 import { success as hSuccess, warning as hWarning } from '../native/haptics';
 
-export default function WorkoutScreen({ navigation, route }) {
+const ENERGY = [1, 2, 3, 4, 5];
+
+function ElapsedTimer({ startedAt, style }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const secs = Math.max(0, Math.round((now - startedAt) / 1000));
+  const m = Math.floor(secs / 60);
+  const h = Math.floor(m / 60);
+  const label = h > 0 ? `${h}:${String(m % 60).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}` : `${m}:${String(secs % 60).padStart(2, '0')}`;
+  return <Text style={style}>{label}</Text>;
+}
+
+export default function WorkoutScreen({ navigation }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
   const { settings } = useSettings();
   const unit = settings.unit || 'kg';
-  const [workout, setWorkout] = useState(null);
-  const [sets, setSets] = useState([]);
-  const [exercise, setExercise] = useState('');
-  const [weight, setWeight] = useState('');
-  const [reps, setReps] = useState('');
-  const [burst, setBurst] = useState(0); // increment to fire a particle burst
-  const [restKey, setRestKey] = useState(0); // >0 shows the rest timer (remounts per rest)
-  const [end, setEnd] = useState(null); // { summary, prs } → end-of-workout modal
+  const active = useWorkoutSession();
+
+  const [newExercise, setNewExercise] = useState('');
+  const [restKey, setRestKey] = useState(0);
+  const [burst, setBurst] = useState(0);
+  const [end, setEnd] = useState(null);
+  const [levelUp, setLevelUp] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      try {
-        const active = getActiveWorkout();
-        setWorkout(active);
-        setSets(active ? getSets(active.id) : []);
-      } catch {
-        setWorkout(null);
-        setSets([]);
-      }
-      const picked = route?.params?.exercise;
-      if (picked) {
-        setExercise(picked);
-        navigation.setParams({ exercise: undefined });
-      }
-    }, [route?.params?.exercise])
-  );
+  // Catalog lookup (name → {muscleGroup, equipment}) for enriching added exercises.
+  const catalog = useMemo(() => {
+    try { return new Map(getExercises().map((e) => [e.name, e])); } catch { return new Map(); }
+  }, []);
+  const resolve = useCallback((name) => {
+    const c = catalog.get(name);
+    return { name, muscleGroup: c?.muscleGroup ?? null, equipment: c?.equipment ?? null };
+  }, [catalog]);
 
-  const log = () => {
-    const w = parseFloat(weight) || 0; // entered in the display unit
-    const r = parseInt(reps, 10) || 0;
-    if (w <= 0 && r <= 0) return;
-    try {
-      const wk = workout || getOrCreateActiveWorkout();
-      if (!workout) setWorkout(wk);
-      dbAddSet(wk.id, { exerciseName: exercise.trim(), weight: units.toKg(w, unit), reps: r });
-      setSets(getSets(wk.id));
-      setReps('');
-      playCue('tick');
-      setRestKey((k) => k + 1); // start/restart the rest timer
-    } catch (e) {
-      Alert.alert('Error', String(e?.message || e));
-    }
+  const runs = useMemo(() => (active ? supersets.supersetRuns(active.exercises) : []), [active]);
+  const noRest = useMemo(() => (active ? supersets.noRestIds(active.exercises) : new Set()), [active]);
+
+  const addExercise = (name) => {
+    const n = (name || '').trim();
+    if (!n) return;
+    session.ensureSession();
+    session.addExercise(resolve(n));
+    setNewExercise('');
+    playCue('tap');
   };
 
-  const removeSet = (id) => {
-    try {
-      dbDeleteSet(id);
-      setSets(workout ? getSets(workout.id) : []);
-      playCue('delete');
-    } catch {}
+  const onSetLogged = (name) => {
+    setRestKey((k) => k + 1);
+    if (noRest.has(name)) setRestKey(0); // superset internal move → no rest yet
+  };
+
+  const startFromTemplate = (t) => {
+    session.startFromTemplate({
+      name: t.name,
+      templateId: t.id,
+      exercises: (t.exercises || []).map((n) => resolve(n)),
+    });
   };
 
   const finish = () => {
-    if (!workout) return;
-    const workoutId = workout.id;
-    // PR check: best e1rm per exercise this session vs its prior best. Compute
-    // from the in-memory sets BEFORE finishing (priorBestE1rm excludes this id).
-    const prs = [];
-    try {
-      const byEx = {};
-      for (const st of sets) {
-        if (!st.exerciseName || !st.weight) continue;
-        const e = oneRepMax.epley1RM(st.weight, st.reps);
-        byEx[st.exerciseName] = Math.max(byEx[st.exerciseName] || 0, e);
-      }
-      for (const [name, e] of Object.entries(byEx)) {
-        if (e > priorBestE1rm(name, workoutId) + 0.01) prs.push({ exerciseName: name, value: e });
-      }
-    } catch {}
-
-    const kept = finishWorkout(workoutId);
-    setWorkout(null);
-    setSets([]);
-    setExercise('');
-    setRestKey(0);
-    refreshWidgets();
-
-    if (!kept) {
-      Alert.alert('Nothing to save', 'No sets were logged.');
+    if (!active) return;
+    const result = commitWorkout(active);
+    if (result.discarded) {
+      Alert.alert('Nothing to save', 'Log at least one working set first.');
       return;
     }
-
-    // Persist each PR (so Hall of Records / Progress show them), then detect any
-    // newly-earned achievements (persist + award XP), then celebrate.
-    let newAchievements = [];
-    try {
-      for (const p of prs) addPR({ exerciseName: p.exerciseName, type: 'e1rm', value: p.value, workoutId });
-      newAchievements = syncAchievements();
-    } catch {}
+    session.discardSession();
+    refreshWidgets();
     hSuccess();
-    playCue(prs.length || newAchievements.length ? 'chime' : 'success');
+    playCue(result.prCount || result.newAchievements.length ? 'chime' : 'success');
     setBurst((b) => b + 1);
 
-    const summary = getWorkoutSummary(workoutId);
-    // Compose the shareable card payload (mirror of the web EndWorkoutModal).
-    let muscles = [];
-    try {
-      const catalog = new Map(getExercises().map((e) => [e.name, e.muscleGroup]));
-      const names = [...new Set(sets.map((st) => st.exerciseName).filter(Boolean))];
-      muscles = [...new Set(names.map((n) => catalog.get(n)).filter(Boolean))];
-    } catch {}
-    const topPr = prs.length ? prs.reduce((a, b) => (b.value > a.value ? b : a)) : null;
-    let level = 1;
-    try { level = rpg.getLevelFromTotalXP(getTotals().totalXP); } catch {}
+    // Build the shareable-workout payload (top PR = heaviest-weight record).
+    const muscles = [...new Set(active.exercises.map((e) => e.muscleGroup).filter(Boolean))];
+    const topPr = result.prs.find((p) => p.type === 'weight') || result.prs[0] || null;
     const shareData = {
-      name: workout.name || 'Workout',
+      name: active.name || 'Workout',
       athlete: settings.name || null,
       date: dateKey.todayKey(),
-      duration: summary.durationSec,
-      totalVolume: summary.totalVolume,
-      totalSets: summary.totalSets,
-      xpEarned: summary.xpEarned,
+      duration: result.summary.durationSec,
+      totalVolume: result.summary.totalVolume,
+      totalSets: result.summary.totalSets,
+      xpEarned: result.summary.xpEarned,
       muscles,
       pr: topPr ? { exercise: topPr.exerciseName, value: topPr.value } : null,
-      level,
+      level: result.newLevel,
       unit,
     };
 
-    setEnd({ summary, prs, achievements: newAchievements, shareData });
+    setEnd({ summary: result.summary, prs: result.prs, achievements: result.newAchievements, shareData });
+    if (result.leveledUp) setLevelUp(result.newLevel);
   };
 
   const closeEnd = () => {
@@ -168,120 +131,164 @@ export default function WorkoutScreen({ navigation, route }) {
   };
 
   const discard = () => {
-    if (!workout) return;
-    Alert.alert('Discard workout?', 'This deletes the logged sets.', [
+    if (!active) return;
+    Alert.alert('Discard workout?', 'This clears the current session.', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Discard',
-        style: 'destructive',
-        onPress: () => {
-          discardWorkout(workout.id);
-          setWorkout(null);
-          setSets([]);
-          hWarning();
-          playCue('delete');
-        },
-      },
+      { text: 'Discard', style: 'destructive', onPress: () => { session.discardSession(); hWarning(); playCue('delete'); } },
     ]);
   };
 
-  const volume = sets.reduce((a, st) => a + (st.weight || 0) * (st.reps || 0), 0);
+  const totalSets = active ? active.exercises.reduce((a, e) => a + e.sets.filter((x) => !x.isWarmup).length, 0) : 0;
+  const totalVol = active ? active.exercises.reduce((a, e) => a + e.sets.filter((x) => !x.isWarmup).reduce((b, x) => b + (x.weight || 0) * (x.reps || 0), 0), 0) : 0;
 
+  // ── Idle (no active session) ────────────────────────────────────────────────
+  if (!active) {
+    return (
+      <Screen>
+        <H1>Workout</H1>
+        <Body>Start an empty session or run one of your routines.</Body>
+        <GoldButton label="Start workout" icon="add" sound="start" onPress={() => session.startSession()} style={{ marginTop: space(2) }} />
+        <SecondaryButton label="Routines" icon="layers" onPress={() => setTemplatesOpen(true)} />
+        {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
+        <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} achievements={end?.achievements || []} shareData={end?.shareData} onClose={closeEnd} />
+        <LevelUpScreen visible={levelUp != null} level={levelUp || 1} onClose={() => setLevelUp(null)} />
+        <TemplatesModal visible={templatesOpen} onClose={() => setTemplatesOpen(false)} onStart={startFromTemplate} />
+      </Screen>
+    );
+  }
+
+  // ── Active session ──────────────────────────────────────────────────────────
   return (
     <Screen scroll={false}>
-      <View style={{ padding: space(5), gap: space(4), flex: 1 }}>
-        <View style={s.head}>
-          <View>
-            <H1>Workout</H1>
-            <Label style={{ marginTop: 4 }}>{sets.length} sets · {units.fmtVolume(volume, unit)} volume</Label>
+      <View style={{ flex: 1 }}>
+        <View style={s.headWrap}>
+          <View style={s.head}>
+            <TextInput
+              value={active.name}
+              onChangeText={(v) => session.setName(v)}
+              placeholder="Workout"
+              placeholderTextColor={colors.ash}
+              style={s.nameInput}
+            />
+            <ElapsedTimer startedAt={active.startedAt} style={s.timer} />
           </View>
-          {sets.length > 0 ? (
-            <PressScale sound="success" onPress={finish} style={s.finish}>
-              <Text style={s.finishText}>Finish</Text>
-            </PressScale>
-          ) : (
-            <PressScale sound="tap" onPress={() => setTemplatesOpen(true)} style={s.routines}>
-              <Icon name="layers" size={16} color={colors.textPrimary} />
-              <Text style={s.routinesText}>Routines</Text>
-            </PressScale>
-          )}
+          <Label style={{ marginTop: 2 }}>{totalSets} sets · {units.fmtVolume(totalVol, unit)}</Label>
         </View>
 
-        <View style={s.exerciseRow}>
-          <TextInput
-            value={exercise}
-            onChangeText={setExercise}
-            placeholder="Exercise (e.g. Bench Press)"
-            placeholderTextColor={colors.ash}
-            style={[s.exercise, { flex: 1 }]}
-          />
-          <PressScale onPress={() => setPickerOpen(true)} sound="tap" style={s.browse}>
-            <Icon name="list" size={22} color={colors.textPrimary} />
-          </PressScale>
-        </View>
-
-        <View style={s.inputRow}>
-          <TextInput value={weight} onChangeText={setWeight} keyboardType="decimal-pad" placeholder={units.unitLabel(unit)} placeholderTextColor={colors.ash} style={s.input} />
-          <Text style={s.x}>×</Text>
-          <TextInput value={reps} onChangeText={setReps} keyboardType="number-pad" placeholder="reps" placeholderTextColor={colors.ash} style={s.input} />
-          <PressScale onPress={log} style={s.add}><Icon name="add" size={26} color={colors.obsidian} /></PressScale>
-        </View>
-
-        {parseFloat(weight) > 0 && <PlateCalculator weight={units.toKg(parseFloat(weight), unit)} />}
-
-        {restKey > 0 && <RestTimer key={restKey} onDone={() => setRestKey(0)} />}
-
-        <FlatList
-          data={[...sets].reverse()}
-          keyExtractor={(st) => String(st.id)}
-          contentContainerStyle={{ gap: space(2), paddingBottom: space(4) }}
-          renderItem={({ item, index }) => (
-            <View style={s.set}>
-              <Mono style={s.setNum}>{sets.length - index}</Mono>
-              <View style={{ flex: 1 }}>
-                {!!item.exerciseName && <Text style={s.setName}>{item.exerciseName}</Text>}
-                <Mono style={s.setVal}>{item.weight > 0 ? `${units.toDisplay(item.weight, unit)} ${units.unitLabel(unit)} × ${item.reps}` : `${item.reps} reps`}</Mono>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: space(5), paddingTop: space(2), paddingBottom: space(24), gap: space(3) }}>
+          {/* Energy check-in */}
+          {active.energy == null && (
+            <View style={s.energyCard}>
+              <Label>How's your energy today?</Label>
+              <View style={s.energyRow}>
+                {ENERGY.map((n) => (
+                  <PressScale key={n} sound="tap" onPress={() => session.setEnergy(n)} style={s.energyBtn}>
+                    <Text style={s.energyText}>{n}</Text>
+                  </PressScale>
+                ))}
               </View>
-              <PressScale hitSlop={10} onPress={() => removeSet(item.id)}>
-                <Icon name="close" size={18} color={colors.ash} />
-              </PressScale>
             </View>
           )}
-          ListEmptyComponent={<H2 style={s.empty}>Log your first set.</H2>}
-        />
 
-        {sets.length > 0 && (
-          <>
-            <GoldButton label="Finish workout" icon="checkmark" sound="success" onPress={finish} />
-            <PressScale onPress={discard}><Text style={s.discard}>Discard workout</Text></PressScale>
-          </>
-        )}
+          {restKey > 0 && <RestTimer key={restKey} onDone={() => setRestKey(0)} />}
+
+          {/* Exercise sections, bracketed by superset runs */}
+          {runs.map((run, ri) => {
+            const bracket = run.length > 1;
+            return (
+              <View key={ri} style={bracket ? s.superset : null}>
+                {bracket && <Text style={s.supersetLabel}>Superset · {run.length} moves · rest after the last</Text>}
+                {run.map((ex) => {
+                  const idx = active.exercises.findIndex((e) => e.name === ex.name);
+                  const prev = active.exercises[idx - 1];
+                  return (
+                    <ExerciseSection
+                      key={ex.name}
+                      exercise={ex}
+                      unit={unit}
+                      fromTemplate={active.templateId != null}
+                      canLink={idx > 0}
+                      linked={ex.supersetId != null && prev && ex.supersetId === prev.supersetId}
+                      onToggleSuperset={() => session.toggleSuperset(ex.name)}
+                      onMoveUp={() => session.moveExercise(ex.name, -1)}
+                      onMoveDown={() => session.moveExercise(ex.name, 1)}
+                      canMoveUp={idx > 0}
+                      canMoveDown={idx < active.exercises.length - 1}
+                      onRemove={() => session.removeExercise(ex.name)}
+                      onSetLogged={onSetLogged}
+                    />
+                  );
+                })}
+              </View>
+            );
+          })}
+
+          {active.exercises.length === 0 && <H2 style={s.empty}>Add your first exercise.</H2>}
+
+          {/* Add exercise */}
+          <View style={s.addRow}>
+            <TextInput
+              value={newExercise}
+              onChangeText={setNewExercise}
+              placeholder="Add exercise (e.g. Bench Press)"
+              placeholderTextColor={colors.ash}
+              style={s.addInput}
+              onSubmitEditing={() => addExercise(newExercise)}
+              returnKeyType="done"
+            />
+            <PressScale onPress={() => setPickerOpen(true)} sound="tap" style={s.browse}>
+              <Icon name="list" size={22} color={colors.textPrimary} />
+            </PressScale>
+            <PressScale onPress={() => addExercise(newExercise)} style={s.addBtn}>
+              <Icon name="add" size={24} color={colors.obsidian} />
+            </PressScale>
+          </View>
+
+          {/* Session notes */}
+          <View style={s.notesCard}>
+            <Label>Session notes</Label>
+            <TextInput
+              value={active.notes || ''}
+              onChangeText={(v) => session.setNotes(v)}
+              placeholder="How did it go?"
+              placeholderTextColor={colors.ash}
+              style={s.notesInput}
+              multiline
+            />
+          </View>
+
+          {/* Finish / discard */}
+          <GoldButton label="Finish workout" icon="checkmark" sound="success" onPress={finish} style={{ marginTop: space(2) }} />
+          <PressScale onPress={discard}><Text style={s.discard}>Discard workout</Text></PressScale>
+        </ScrollView>
       </View>
+
       {burst > 0 && <Particles key={burst} origin={{ x: 180, y: 260 }} spread={160} />}
       <EndWorkoutModal visible={!!end} summary={end?.summary} prs={end?.prs || []} achievements={end?.achievements || []} shareData={end?.shareData} onClose={closeEnd} />
-      <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={setExercise} />
-      <TemplatesModal visible={templatesOpen} onClose={() => setTemplatesOpen(false)} onStart={setExercise} />
+      <LevelUpScreen visible={levelUp != null} level={levelUp || 1} onClose={() => setLevelUp(null)} />
+      <ExercisePicker visible={pickerOpen} onClose={() => setPickerOpen(false)} onPick={(name) => addExercise(name)} />
+      <TemplatesModal visible={templatesOpen} onClose={() => setTemplatesOpen(false)} onStart={startFromTemplate} />
     </Screen>
   );
 }
 
 const makeStyles = (colors) => StyleSheet.create({
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  finish: { backgroundColor: colors.sage, borderRadius: radius.lg, paddingHorizontal: space(5), paddingVertical: space(3) },
-  finishText: { color: colors.textInverse, fontFamily: fonts.sansSemi, fontSize: 14 },
-  routines: { flexDirection: 'row', alignItems: 'center', gap: space(2), backgroundColor: colors.ivory, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3) },
-  routinesText: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
-  exerciseRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
-  exercise: { backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 15 },
+  headWrap: { paddingHorizontal: space(5), paddingTop: space(2) },
+  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  nameInput: { flex: 1, color: colors.textPrimary, fontFamily: fonts.display, fontSize: 30, paddingVertical: 2 },
+  timer: { color: colors.gold, fontFamily: fonts.mono, fontSize: 18, marginLeft: space(3) },
+  energyCard: { backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.xl, padding: space(4) },
+  energyRow: { flexDirection: 'row', gap: space(2), marginTop: space(3) },
+  energyBtn: { flex: 1, alignItems: 'center', paddingVertical: space(3), borderRadius: radius.md, backgroundColor: colors.ivory },
+  energyText: { color: colors.textPrimary, fontFamily: fonts.mono, fontSize: 16 },
+  superset: { borderLeftColor: colors.gold, borderLeftWidth: 3, paddingLeft: space(3), marginLeft: space(1) },
+  supersetLabel: { color: colors.gold, fontFamily: fonts.sansSemi, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: space(2) },
+  empty: { textAlign: 'center', color: colors.textSecondary, marginVertical: space(6) },
+  addRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
+  addInput: { flex: 1, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 15 },
   browse: { width: 50, height: 50, borderRadius: radius.lg, backgroundColor: colors.ivory, alignItems: 'center', justifyContent: 'center' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
-  input: { flex: 1, backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space(4), paddingVertical: space(3.5), color: colors.textPrimary, fontFamily: fonts.mono, fontSize: 15, textAlign: 'center' },
-  x: { color: colors.ash, fontSize: 16 },
-  add: { width: 50, height: 50, borderRadius: 25, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center' },
-  set: { flexDirection: 'row', alignItems: 'center', gap: space(3), backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space(4), paddingVertical: space(3) },
-  setNum: { color: colors.ash, width: 20, fontSize: 14 },
-  setName: { color: colors.textPrimary, fontFamily: fonts.sansSemi, fontSize: 14 },
-  setVal: { color: colors.textSecondary, fontSize: 14, marginTop: 1 },
-  empty: { color: colors.textSecondary, textAlign: 'center', marginTop: space(6) },
-  discard: { color: colors.ember, fontFamily: fonts.sansMedium, fontSize: 13, textAlign: 'center', paddingVertical: space(2) },
+  addBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center' },
+  notesCard: { backgroundColor: colors.chalk, borderColor: colors.ivory, borderWidth: 1, borderRadius: radius.xl, padding: space(4) },
+  notesInput: { marginTop: space(2), color: colors.textPrimary, fontFamily: fonts.sans, fontSize: 14, minHeight: 44, textAlignVertical: 'top' },
+  discard: { textAlign: 'center', color: colors.ember, fontFamily: fonts.sansMedium, fontSize: 14, paddingVertical: space(3) },
 });

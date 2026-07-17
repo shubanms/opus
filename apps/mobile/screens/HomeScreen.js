@@ -15,7 +15,8 @@ import PressScale from '../components/PressScale';
 import QuestBoard from '../components/home/QuestBoard';
 import HistoryModal from '../components/home/HistoryModal';
 import ActivityRings from '../components/home/ActivityRings';
-import { getTotals, getRecentWorkouts, getActiveWorkout } from '../native/db';
+import { getTotals, getRecentWorkouts } from '../native/db';
+import { useWorkoutSession } from '../native/workoutSession';
 import { refreshWidgets } from '../native/widgets';
 import { useSettings } from '../native/settings';
 
@@ -33,7 +34,7 @@ export default function HomeScreen({ navigation }) {
   const { settings } = useSettings();
   const [totals, setTotals] = useState({ workouts: 0, totalVolume: 0, streak: 0, totalXP: 0 });
   const [recent, setRecent] = useState([]);
-  const [active, setActive] = useState(null);
+  const active = useWorkoutSession(); // in-memory active session (or null)
   const [historyOpen, setHistoryOpen] = useState(false);
 
   useFocusEffect(
@@ -41,7 +42,6 @@ export default function HomeScreen({ navigation }) {
       try {
         setTotals(getTotals());
         setRecent(getRecentWorkouts(3));
-        setActive(getActiveWorkout());
         refreshWidgets();
       } catch {}
     }, [])

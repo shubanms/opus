@@ -4,7 +4,7 @@
 // numbers (XP, PRs, streak, volume) are computed from these rows using the
 // shared @opus/core logic, so web and native agree on the math.
 import * as SQLite from 'expo-sqlite';
-import { rpg, oneRepMax, dateKey, seedExercises, achievements, quests } from '@opus/core';
+import { rpg, oneRepMax, dateKey, seedExercises, achievements, quests, volume, prs as prsCore } from '@opus/core';
 
 let db = null;
 
@@ -659,6 +659,7 @@ export function deleteWorkout(workoutId) {
     d.runSync('DELETE FROM workouts WHERE id = ?', workoutId);
   });
   reconcileAchievements();
+  reconcileQuests();
   touch();
 }
 
@@ -820,4 +821,162 @@ export function addPR({ exerciseName, type, value, workoutId = null, achievedAt 
 
 export function getAllPRs(limit = 100) {
   return conn().getAllSync('SELECT * FROM prs ORDER BY achievedAt DESC LIMIT ?', limit);
+}
+
+// Current PR rows for one exercise (weight/reps/volume) — the SetLogger reference
+// line + exercise detail read this.
+export function getExercisePRs(exerciseName) {
+  if (!exerciseName) return [];
+  return conn().getAllSync('SELECT type, value FROM prs WHERE exerciseName = ?', exerciseName);
+}
+
+// Working sets from the most recent PAST finished workout that included this
+// exercise — the "ghost of last session" reference line.
+export function getLastWorkingSets(exerciseName) {
+  if (!exerciseName) return [];
+  const d = conn();
+  const row = d.getFirstSync(
+    `SELECT w.id AS id FROM workouts w
+       JOIN sets s ON s.workoutId = w.id
+      WHERE w.finishedAt IS NOT NULL AND COALESCE(s.exerciseId, s.exerciseName) = ?
+      ORDER BY w.finishedAt DESC LIMIT 1`,
+    exerciseName
+  );
+  if (!row) return [];
+  return d.getAllSync(
+    'SELECT weight, reps FROM sets WHERE workoutId = ? AND COALESCE(exerciseId, exerciseName) = ? AND COALESCE(isWarmup,0) = 0 ORDER BY setNumber, createdAt',
+    row.id,
+    exerciseName
+  );
+}
+
+// Last `limit` finished sessions for an exercise as arrays of {weight,reps}
+// (newest first) — feeds @opus/core/overload.getOverloadSuggestion.
+export function getExerciseSessions(exerciseName, limit = 3) {
+  if (!exerciseName) return [];
+  const d = conn();
+  const rows = d.getAllSync(
+    `SELECT w.id AS wid, w.finishedAt AS fin, s.weight AS weight, s.reps AS reps
+       FROM sets s JOIN workouts w ON w.id = s.workoutId
+      WHERE w.finishedAt IS NOT NULL AND COALESCE(s.exerciseId, s.exerciseName) = ? AND COALESCE(s.isWarmup,0) = 0
+      ORDER BY w.finishedAt DESC`,
+    exerciseName
+  );
+  const byWorkout = new Map();
+  for (const r of rows) {
+    if (!byWorkout.has(r.wid)) byWorkout.set(r.wid, []);
+    byWorkout.get(r.wid).push({ weight: r.weight, reps: r.reps });
+  }
+  return [...byWorkout.values()].slice(0, limit);
+}
+
+// Re-check this week's claimed quests after a deletion; un-claim any whose target
+// is no longer met (its XP reverts automatically, since questClaimXP sums claims).
+export function reconcileQuests() {
+  const d = conn();
+  const weekKey = quests.weekKeyOf();
+  const claimed = getQuestClaims(weekKey);
+  if (!claimed.length) return;
+  const stats = getWeekQuestStats();
+  for (const id of claimed) {
+    const def = quests.QUEST_BY_ID[id];
+    if (!def) continue;
+    if ((stats[def.metric] || 0) < def.target) {
+      d.runSync('DELETE FROM questClaims WHERE weekKey = ? AND questId = ?', weekKey, id);
+    }
+  }
+  touch();
+}
+
+// Persist a finished section-based session in one transaction — the native
+// equivalent of the web workoutStore.completeWorkout. Writes the workout + sets
+// + energy log, detects weight/reps/volume PRs (one upserted row per
+// exercise+type), then reports the XP gained, level-up, and new achievements.
+// Returns { discarded: true } for a session with no working sets (never saved).
+export function commitWorkout(session) {
+  const d = conn();
+  const exercises = session?.exercises ?? [];
+  const workingByEx = exercises.map((e) => ({
+    ex: e,
+    working: (e.sets ?? []).filter((s) => !s.isWarmup && ((Number(s.weight) || 0) > 0 || (Number(s.reps) || 0) > 0)),
+  }));
+  const totalWorking = workingByEx.reduce((a, x) => a + x.working.length, 0);
+  if (totalWorking === 0) return { discarded: true };
+
+  const beforeXP = getTotals().totalXP;
+  const bw = currentBodyweight();
+  const bwMap = {};
+  exercises.forEach((e) => { bwMap[e.name] = !!e.isBodyweight; });
+  const flat = exercises.flatMap((e) =>
+    (e.sets ?? []).map((s) => ({ exerciseId: e.name, weight: Number(s.weight) || 0, reps: Number(s.reps) || 0, isWarmup: !!s.isWarmup }))
+  );
+  const totalVolume = volume.computeVolume(flat, bw, bwMap);
+
+  const now = Date.now();
+  const started = session.startedAt ?? now;
+  const dk = dateKey.todayKey();
+  const prRecords = [];
+  let workoutId;
+
+  d.withTransactionSync(() => {
+    const res = d.runSync(
+      'INSERT INTO workouts (dateKey, startedAt, finishedAt, status, name, notes, energy, duration, totalSets, totalVolume, bodyweightKg, templateId, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      dk, started, now, 'completed', session.name || 'Workout', session.notes || null,
+      session.energy ?? null, Math.round((now - started) / 1000), totalWorking, Math.round(totalVolume),
+      bw ?? null, session.templateId ?? null, now
+    );
+    workoutId = res.lastInsertRowId;
+
+    for (const e of exercises) {
+      let n = 0;
+      for (const s of e.sets ?? []) {
+        n += 1;
+        d.runSync(
+          'INSERT INTO sets (workoutId, exerciseName, exerciseId, setNumber, weight, reps, rpe, isWarmup, note, createdAt) VALUES (?,?,?,?,?,?,?,?,?,?)',
+          workoutId, e.name || null, e.name || null, n,
+          Number(s.weight) || 0, Number(s.reps) || 0,
+          s.rpe == null ? null : Number(s.rpe), s.isWarmup ? 1 : 0, s.note || null, s.completedAt || now
+        );
+      }
+    }
+
+    if (session.energy) d.runSync('INSERT INTO energyLogs (workoutId, level) VALUES (?, ?)', workoutId, session.energy);
+
+    // PRs — weight/reps/volume, one upserted row per exercise+type.
+    for (const { ex, working } of workingByEx) {
+      if (!working.length) continue;
+      const existing = d.getAllSync('SELECT id, type, value FROM prs WHERE exerciseName = ?', ex.name);
+      for (const pr of prsCore.detectPRs(existing, working)) {
+        const prev = existing.find((p) => p.type === pr.type);
+        if (prev) d.runSync('UPDATE prs SET value = ?, achievedAt = ?, workoutId = ? WHERE id = ?', pr.value, now, workoutId, prev.id);
+        else d.runSync('INSERT INTO prs (exerciseName, type, value, achievedAt, workoutId) VALUES (?,?,?,?,?)', ex.name, pr.type, pr.value, now, workoutId);
+        prRecords.push({ exerciseName: ex.name, type: pr.type, value: pr.value });
+      }
+    }
+  });
+
+  // Newly-earned achievements (award XP), then measure the real economy gain so
+  // the end-of-workout modal shows a truthful "+XP" and we can flag a level-up.
+  const newAchievements = syncAchievements();
+  const afterXP = getTotals().totalXP;
+  const gained = Math.max(0, afterXP - beforeXP);
+  d.runSync('UPDATE workouts SET xpEarned = ? WHERE id = ?', gained, workoutId);
+  touch();
+
+  return {
+    discarded: false,
+    workoutId,
+    summary: {
+      totalSets: totalWorking,
+      totalVolume: Math.round(totalVolume),
+      xpEarned: gained,
+      durationSec: Math.round((now - started) / 1000),
+    },
+    prs: prRecords,
+    prCount: prRecords.length,
+    newAchievements,
+    leveledUp: rpg.getLevelFromTotalXP(afterXP) > rpg.getLevelFromTotalXP(beforeXP),
+    newLevel: rpg.getLevelFromTotalXP(afterXP),
+    newTitle: rpg.getTitle(rpg.getLevelFromTotalXP(afterXP)),
+  };
 }
