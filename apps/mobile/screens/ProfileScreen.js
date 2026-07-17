@@ -17,9 +17,10 @@ import { SecondaryButton } from '../components/Button';
 import ProgressionModal from '../components/profile/ProgressionModal';
 import HallOfRecordsModal from '../components/profile/HallOfRecordsModal';
 import WrappedModal from '../components/profile/WrappedModal';
+import ShareButton from '../components/share/ShareButton';
 import { useSettings } from '../native/settings';
 import { useDbQuery } from '../native/useDbQuery';
-import { getTotals, unlockedAchievementKeys, computeAchievementStats, getAllPRs, getWrappedInputs } from '../native/db';
+import { getTotals, unlockedAchievementKeys, computeAchievementStats, getAllPRs, getWrappedInputs, getRadarInputs } from '../native/db';
 
 export default function ProfileScreen() {
   const colors = useColors();
@@ -31,6 +32,7 @@ export default function ProfileScreen() {
   const stats = useDbQuery(() => computeAchievementStats(), [], null);
   const prs = useDbQuery(() => getAllPRs(200), [], []);
   const wrappedInputs = useDbQuery(() => getWrappedInputs(), [], { workouts: [], sets: [], prs: [], exName: {} });
+  const radarInputs = useDbQuery(() => getRadarInputs(), [], null);
   const unlocked = new Set(unlockedKeys);
 
   const rawLevel = rpg.getLevelFromTotalXP(totals.totalXP);
@@ -39,6 +41,18 @@ export default function ProfileScreen() {
   const rank = rpg.getRankLabel(totals.totalXP);
   const prestige = rpg.getPrestige(totals.totalXP);
   const prog = rpg.getXPProgress(totals.totalXP);
+
+  // Share-card payloads (mirror the web ProfilePage share data).
+  const charStats = rpg.getCharacterStats(radarInputs || {});
+  const unit = settings.unit || 'kg';
+  const profileShareData = {
+    name: settings.name, level, prestige, title: rank, stats: charStats,
+    workouts: totals.workouts, streak: totals.streak, totalXp: totals.totalXP,
+  };
+  const challengeShareData = {
+    name: settings.name, level, title: rank, workouts: totals.workouts,
+    volumeKg: totals.totalVolume, bestStreak: stats?.bestStreak ?? totals.streak, unit,
+  };
 
   return (
     <Screen>
@@ -91,6 +105,12 @@ export default function ProfileScreen() {
         <SecondaryButton label="Hall of Records" icon="trophy" onPress={() => setSheet('records')} style={{ flex: 1 }} />
       </View>
       <SecondaryButton label="Your Wrapped" icon="sparkles" onPress={() => setSheet('wrapped')} />
+
+      {/* Shareable cards */}
+      <View style={s.btnRow}>
+        <ShareButton cardKey="profile" data={profileShareData} filename="opus-profile.png" label="Share profile" variant="pill" style={{ flex: 1 }} />
+        <ShareButton cardKey="challenge" data={challengeShareData} filename="opus-challenge.png" label="Challenge" variant="pill" style={{ flex: 1 }} />
+      </View>
 
       {/* Lifetime bento */}
       <Label>Lifetime</Label>

@@ -31,6 +31,8 @@ import ActivityRings from '../components/home/ActivityRings';
 import BodyWeightCard from '../components/progress/BodyWeightCard';
 import RadarCard from '../components/rpg/RadarCard';
 import RecoveryCard from '../components/progress/RecoveryCard';
+import ShareSheet from '../components/share/ShareSheet';
+import { CARDS } from '../components/share/cards';
 
 const Tab = createBottomTabNavigator();
 
@@ -142,6 +144,34 @@ describe('profile modals render without crashing', () => {
     expect(getByText('Wrapped')).toBeTruthy();
     expect(getByText('Month')).toBeTruthy();
   });
+});
+
+describe('share cards', () => {
+  // One payload broad enough to satisfy every card variant.
+  const data = {
+    name: 'Athlete', athlete: 'Athlete', date: '2026-07-16',
+    duration: 3900, totalVolume: 4200, totalSets: 12, xpEarned: 120,
+    muscles: ['chest', 'triceps'], pr: { exercise: 'Bench Press', value: 112.5 },
+    level: 6, unit: 'kg', prestige: 1, title: 'Iron Adept',
+    stats: [{ axis: 'Strength', value: 72 }, { axis: 'Power', value: 55 }],
+    workouts: 24, streak: 5, totalXp: 5200, volumeKg: 82000, bestStreak: 9,
+    label: 'July 2026', sessions: 12, sets: 140, prs: 4, hours: 9, xp: 1800,
+    topLift: 'Deadlift', busiestDay: 'Monday', series: [1000, 2000, 1500, 3200, 2800],
+  };
+
+  it('renders the share sheet with theme + accent pickers', () => {
+    const { getByText } = render(<ShareSheet visible cardKey="workout" data={data} onClose={() => {}} />);
+    expect(getByText('Background')).toBeTruthy();
+    expect(getByText('Accent')).toBeTruthy();
+    expect(getByText('Black')).toBeTruthy(); // a background swatch label
+  });
+
+  for (const key of Object.keys(CARDS)) {
+    it(`${key} card renders at full scale without crashing`, () => {
+      const Card = CARDS[key];
+      expect(() => render(<Card data={data} scale={1} />)).not.toThrow();
+    });
+  }
 });
 
 describe('home quest board', () => {

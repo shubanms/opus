@@ -103,6 +103,21 @@ jest.mock('./native/healthConnect', () => ({
   healthAvailability: jest.fn(async () => 'Available'),
   connectAndReadSteps: jest.fn(async () => ({ ok: true, steps: 8000 })),
 }));
+// Share capture: view-shot's <ViewShot> is a passthrough view in Node, and
+// captureRef / expo-sharing are no-ops so ShareSheet mounts without native code.
+// virtual: these native deps aren't resolvable in the Node test env (they're
+// only installed in the prebuild), so mock them without requiring resolution.
+jest.mock('react-native-view-shot', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const ViewShot = React.forwardRef((props, ref) => React.createElement(View, { ...props, ref }));
+  return { __esModule: true, default: ViewShot, captureRef: jest.fn(async () => 'file:///tmp/opus-card.png') };
+}, { virtual: true });
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn(async () => true),
+  shareAsync: jest.fn(async () => {}),
+}), { virtual: true });
+
 jest.mock('react-native-android-widget', () => ({
   requestWidgetUpdate: jest.fn(async () => {}),
   registerWidgetTaskHandler: jest.fn(),

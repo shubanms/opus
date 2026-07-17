@@ -10,6 +10,8 @@ import { useColors, useThemedStyles } from '../../native/ThemeProvider';
 import PressScale from '../PressScale';
 import CountUp from '../fx/CountUp';
 import LineChart from '../progress/LineChart';
+import ShareButton from '../share/ShareButton';
+import { useSettings } from '../../native/settings';
 
 function Stat({ value, label, suffix }) {
   const colors = useColors();
@@ -25,6 +27,7 @@ function Stat({ value, label, suffix }) {
 export default function WrappedModal({ visible, onClose, inputs }) {
   const colors = useColors();
   const s = useThemedStyles(makeStyles);
+  const { settings } = useSettings();
   const periods = useMemo(
     () => coreWrapped.availablePeriods(inputs?.workouts || []),
     [inputs]
@@ -95,6 +98,30 @@ export default function WrappedModal({ visible, onClose, inputs }) {
                     <View style={s.chip}><Icon name="calendar" size={14} color={colors.sage} /><Text style={s.chipText}> Busiest · {data.busiestDay}</Text></View>
                   )}
                   <View style={s.chip}><Icon name="time" size={14} color={colors.ember} /><Text style={s.chipText}> {data.hours.toFixed(1)} h trained</Text></View>
+                </View>
+
+                <View style={{ marginTop: space(5), alignItems: 'center' }}>
+                  <ShareButton
+                    cardKey="wrapped"
+                    filename="opus-wrapped.png"
+                    label="Share your Wrapped"
+                    variant="pill"
+                    style={{ alignSelf: 'stretch' }}
+                    data={{
+                      name: settings.name || 'Athlete',
+                      label: data.label,
+                      volumeKg: data.volumeKg,
+                      unit: settings.unit || 'kg',
+                      sessions: data.sessions,
+                      sets: data.sets,
+                      prs: data.prs,
+                      hours: data.hours,
+                      xp: data.xp,
+                      topLift: data.topLift,
+                      busiestDay: data.busiestDay,
+                      series: data.series,
+                    }}
+                  />
                 </View>
               </>
             )}
