@@ -27,9 +27,15 @@ export async function wipeAllData() {
 }
 
 // Downloads a JSON backup of every table.
+// Progress photos are large local-only blobs — never part of the portable backup.
+const EXPORT_SKIP = new Set(['photos']);
+
 export async function exportData() {
   const data = {};
-  for (const t of db.tables) data[t.name] = await t.toArray();
+  for (const t of db.tables) {
+    if (EXPORT_SKIP.has(t.name)) continue;
+    data[t.name] = await t.toArray();
+  }
   const payload = { app: 'OPUS', version: 1, exportedAt: new Date().toISOString(), data };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -112,8 +118,10 @@ export async function importData(jsonText) {
   const parsed = typeof jsonText === 'string' ? JSON.parse(jsonText) : jsonText;
   const data = parsed?.data ?? parsed;
   if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
-  await Promise.all(db.tables.map((t) => t.clear()));
+  // Keep local-only photos across an import (they're never in the backup).
+  await Promise.all(db.tables.filter((t) => !EXPORT_SKIP.has(t.name)).map((t) => t.clear()));
   for (const t of db.tables) {
+    if (EXPORT_SKIP.has(t.name)) continue;
     if (Array.isArray(data[t.name]) && data[t.name].length) {
       await t.bulkAdd(data[t.name]);
     }

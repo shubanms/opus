@@ -122,6 +122,11 @@ export function useMuscleFrequency() {
 }
 
 // Set of ISO dates on which a workout was completed (for the heatmap).
+// Progress photos, newest date first.
+export function usePhotos() {
+  return useLiveQuery(() => db.photos.orderBy('date').reverse().toArray(), []) ?? [];
+}
+
 export function useWorkoutDays() {
   return useLiveQuery(async () => {
     const workouts = await db.workouts.toArray();

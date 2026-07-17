@@ -14,6 +14,7 @@ import SleepForm from '../components/progress/SleepForm.jsx';
 import ActivityForm from '../components/progress/ActivityForm.jsx';
 import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import RecoveryMap, { MUSCLE_LABEL } from '../components/progress/RecoveryMap.jsx';
+import ProgressPhotos from '../components/progress/ProgressPhotos.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
 import CountUp from '../components/fx/CountUp.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
@@ -393,6 +394,8 @@ function Body() {
           </div>
         </Section>
       )}
+
+      <ProgressPhotos />
 
       <BodyStatsForm isOpen={statForm} onClose={() => setStatForm(false)} />
       <SleepForm isOpen={sleepForm} onClose={() => setSleepForm(false)} />
