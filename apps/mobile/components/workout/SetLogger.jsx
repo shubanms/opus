@@ -6,7 +6,7 @@
 // ghost of last session.
 import { useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, Modal, Animated } from 'react-native';
-import { units, rpg } from '@opus/core';
+import { units, rpg, setDiff } from '@opus/core';
 import Icon from '../Icon';
 import PressScale from '../PressScale';
 import { radius, space, fonts } from '../../theme';
@@ -86,6 +86,17 @@ export default function SetLogger({ exercise, unit = 'kg', fromTemplate = false,
   };
 
   const fmt = (x) => (x.weight > 0 ? `${units.toDisplay(x.weight, unit)}${units.unitLabel(unit)} × ${x.reps}` : `${x.reps} reps`);
+  // Per-set improvement vs the previous session (working sets only).
+  const setDeltas = setDiff.diffsBySetNumber(exercise.sets, lastSets);
+  const deltaText = (diff) => {
+    if (!diff || diff.dir === 'new') return null;
+    const color = diff.dir === 'up' ? colors.gold : diff.dir === 'down' ? '#D4622A' : colors.ash;
+    const arrow = diff.dir === 'up' ? '▲' : diff.dir === 'down' ? '▼' : '＝';
+    const parts = [];
+    if (diff.weightDelta) parts.push(`${diff.weightDelta > 0 ? '+' : '−'}${units.toDisplay(Math.abs(diff.weightDelta), unit)}${units.unitLabel(unit)}`);
+    if (diff.repsDelta) parts.push(`${diff.repsDelta > 0 ? '+' : '−'}${Math.abs(diff.repsDelta)}r`);
+    return <Text style={[s.deltaBadge, { color }]}>{arrow} {parts.join(' ')}</Text>;
+  };
 
   return (
     <View style={{ marginTop: space(3) }}>
@@ -120,6 +131,7 @@ export default function SetLogger({ exercise, unit = 'kg', fromTemplate = false,
               {x.isWarmup ? '🔥' : x.setNumber}
             </Text>
             <Text style={s.setText}>{fmt(x)}</Text>
+            {!x.isWarmup ? deltaText(setDeltas[x.setNumber]) : null}
             {x.rpe ? <Text style={s.rpeBadge}>RPE {x.rpe}</Text> : null}
             <PressScale hitSlop={8} onPress={() => setNoteFor({ setNumber: x.setNumber, value: x.note || '' })}>
               <Icon name="list" size={15} color={x.note ? colors.gold : colors.ash} />
@@ -245,6 +257,7 @@ const makeStyles = (colors) => StyleSheet.create({
   setBadge: { width: 24, height: 24, borderRadius: 12, textAlign: 'center', lineHeight: 24, color: colors.ash, fontFamily: fonts.mono, fontSize: 12, overflow: 'hidden' },
   setText: { flex: 1, color: colors.textPrimary, fontFamily: fonts.mono, fontSize: 14 },
   rpeBadge: { color: colors.ash, fontFamily: fonts.mono, fontSize: 11 },
+  deltaBadge: { fontFamily: fonts.mono, fontSize: 11 },
   noteText: { marginTop: 2, paddingLeft: 32, color: colors.textSecondary, fontFamily: fonts.sans, fontSize: 12, fontStyle: 'italic' },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.5), marginTop: space(2) },
   field: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.ivory, borderRadius: radius.md, paddingHorizontal: space(2) },
