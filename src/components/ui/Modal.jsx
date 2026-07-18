@@ -14,9 +14,15 @@ export default function Modal({ isOpen, onClose, title, children }) {
 
   // Portal to body so ancestor transforms (page animations) never trap the
   // fixed overlay inside a non-viewport containing block.
+  //
+  // z-[62]: this is a bottom-sheet, so its action row sits low on screen — right
+  // where the CoachMark tip (z-60) and other passive overlays float. It must
+  // stack ABOVE those (CoachMark/LevelUp at 60) or they intercept taps on the
+  // sheet's buttons, but BELOW toasts + confirm/prompt dialogs (UiHost, z-80),
+  // which must still appear over an open modal.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
+      className="fixed inset-0 z-[62] flex items-end justify-center"
       onClick={onClose}
     >
       <div className="absolute inset-0" style={{ background: 'rgba(17,16,16,0.7)' }} />

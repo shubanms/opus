@@ -82,9 +82,29 @@ export async function syncExercises() {
   }
 }
 
+// Seeding can be triggered from several mounts at once (multiple useExercises
+// consumers). Two callers both seeing count===0 would each bulkAdd the same
+// rows, and the second collides on the explicit ids → BulkError. Share a single
+// in-flight seed across concurrent callers, and treat an already-populated table
+// (or a duplicate-key race) as success rather than a thrown error.
+let seedInFlight = null;
+
 export async function seedDatabase() {
-  const count = await db.exercises.count();
-  if (count === 0) {
-    await db.exercises.bulkAdd(seed);
+  if (seedInFlight) return seedInFlight;
+  seedInFlight = (async () => {
+    const count = await db.exercises.count();
+    if (count > 0) return;
+    try {
+      await db.exercises.bulkAdd(seed);
+    } catch (err) {
+      // A concurrent seeder already inserted these rows → duplicate-key
+      // BulkError. The end state is the same seed set, so treat it as success.
+      if (err?.name !== 'BulkError' && err?.name !== 'ConstraintError') throw err;
+    }
+  })();
+  try {
+    return await seedInFlight;
+  } finally {
+    seedInFlight = null;
   }
 }

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../db/db.js';
+import useUserStore from './userStore.js';
 import { PR_BONUS, STREAK_BONUS_PER_DAY, getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
 import { computeVolume } from '../utils/volume.js';
 import { getCurrentBodyweight } from '../utils/healthActions.js';
@@ -333,8 +334,11 @@ const useWorkoutStore = create((set, get) => ({
       await upsert('volume', maxVol);
     }
 
-    // XP + streak (lazy import to avoid circular dep)
-    const { default: useUserStore } = await import('./userStore.js');
+    // XP + streak. userStore is imported statically (no circular dependency):
+    // a lazy import() here is a separate chunk that can fail to load on a stale
+    // service-worker shell, which would throw mid-save and silently strand the
+    // finish. Keeping it static means the save path never depends on a runtime
+    // chunk fetch.
     const userStore = useUserStore.getState();
     const profile = userStore.profile;
     const result = {
