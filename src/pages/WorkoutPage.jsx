@@ -29,7 +29,7 @@ function ElapsedTimer({ startedAt }) {
   const m = Math.floor(secs / 60);
   const h = Math.floor(m / 60);
   return (
-    <span className="font-mono text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+    <span className="mt-1 block font-mono text-sm" style={{ color: 'var(--color-text-secondary)' }}>
       {h > 0 ? `${h}h ${m % 60}m` : `${m}m`}
     </span>
   );

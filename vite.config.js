@@ -31,6 +31,12 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2,glb}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        // Purge old precached assets and take control immediately, so a new
+        // deploy never leaves a client with a stale index.html pointing at
+        // asset hashes that no longer exist (which breaks the whole layout).
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/wger\.de\/api/,
