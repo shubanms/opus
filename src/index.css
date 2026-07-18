@@ -16,6 +16,18 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+  /* Safety net: a too-wide row can never shift the whole app sideways. Real
+     overflows are still fixed at the component level; this just clips the page. */
+  overflow-x: hidden;
+}
+
+/* Horizontally-scrollable rows (action pills, chips) without a visible bar. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Smooth theme switches: animate colour-only properties. */
