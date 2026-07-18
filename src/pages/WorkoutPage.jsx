@@ -98,7 +98,17 @@ export default function WorkoutPage() {
 
   async function handleSave(xp, routine) {
     const snapshot = activeWorkout; // completeWorkout clears the store — capture first
-    const result = await completeWorkout(xp);
+    let result;
+    try {
+      result = await completeWorkout(xp);
+    } catch (e) {
+      // Never fail silently: the session is preserved (completeWorkout only
+      // clears the store on success), so surface the error and let the user
+      // retry instead of the button appearing to do nothing.
+      console.error('Finish workout failed:', e);
+      useUIStore.getState().showToast("Couldn't save the workout — your session is safe. Try again.", { type: 'error' });
+      return;
+    }
     setEndOpen(false);
     if (result?.discarded) return; // empty session — nothing saved or rewarded
 

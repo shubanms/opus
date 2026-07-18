@@ -23,11 +23,11 @@ export default function CoachMark() {
 
   return createPortal(
     <div
-      className="fixed inset-x-0 z-[60] flex justify-center px-5"
+      className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-5"
       style={{ bottom: 'calc(96px + env(safe-area-inset-bottom))' }}
     >
       <div
-        className="anim-fade-slide-up flex w-full max-w-md items-center gap-3 rounded-2xl px-4 py-3"
+        className="anim-fade-slide-up pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl px-4 py-3"
         style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}
       >
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
