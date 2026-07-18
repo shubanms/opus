@@ -90,8 +90,8 @@ export default function TemplatesPage() {
         <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
       </button>
 
-      <div className="mb-6 flex items-end justify-between">
-        <div>
+      <div className="mb-4 flex items-end justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
             Routines
           </h1>
@@ -99,37 +99,40 @@ export default function TemplatesPage() {
             Reusable workout templates
           </p>
         </div>
-        <div className="flex flex-shrink-0 items-center gap-2">
-          <button
-            onClick={() => setProgramsOpen(true)}
-            className="flex h-10 items-center gap-1.5 rounded-full px-3 font-sans text-xs font-semibold"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-          >
-            <BookOpen size={15} style={{ color: 'var(--color-gold)' }} /> Programs
-          </button>
-          <button
-            onClick={() => setPlanOpen(true)}
-            className="flex h-10 items-center gap-1.5 rounded-full px-3 font-sans text-xs font-semibold"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-          >
-            <CalendarRange size={15} style={{ color: 'var(--color-gold)' }} /> Plan week
-          </button>
-          <button
-            onClick={() => setGenOpen(true)}
-            className="flex h-10 items-center gap-1.5 rounded-full px-3 font-sans text-xs font-semibold"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-          >
-            <Sparkles size={15} style={{ color: 'var(--color-gold)' }} /> Auto
-          </button>
-          <button
-            onClick={openNew}
-            className="flex h-10 w-10 items-center justify-center rounded-full"
-            style={{ background: 'var(--color-gold)' }}
-            aria-label="New routine"
-          >
-            <Plus size={20} style={{ color: 'var(--color-obsidian)' }} strokeWidth={2.5} />
-          </button>
-        </div>
+        <button
+          onClick={openNew}
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+          style={{ background: 'var(--color-gold)' }}
+          aria-label="New routine"
+        >
+          <Plus size={20} style={{ color: 'var(--color-obsidian)' }} strokeWidth={2.5} />
+        </button>
+      </div>
+
+      {/* Action pills — their own edge-to-edge scrollable row so they never
+          push the page wider than the screen. */}
+      <div className="no-scrollbar -mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1">
+        <button
+          onClick={() => setProgramsOpen(true)}
+          className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
+          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+        >
+          <BookOpen size={15} style={{ color: 'var(--color-gold)' }} /> Programs
+        </button>
+        <button
+          onClick={() => setPlanOpen(true)}
+          className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
+          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+        >
+          <CalendarRange size={15} style={{ color: 'var(--color-gold)' }} /> Plan week
+        </button>
+        <button
+          onClick={() => setGenOpen(true)}
+          className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
+          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+        >
+          <Sparkles size={15} style={{ color: 'var(--color-gold)' }} /> Auto
+        </button>
       </div>
 
       {templates.length > 0 && <WeeklyPlanner templates={templates} />}
