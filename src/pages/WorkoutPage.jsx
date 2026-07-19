@@ -18,6 +18,8 @@ import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
 import { saveWorkoutAsRoutine, advanceProgression } from '../utils/templateActions.js';
 import { playChime } from '../utils/sound.js';
 import { supersetRuns, noRestIds } from '../utils/supersets.js';
+import { sessionIron } from '../utils/economy.js';
+import { db } from '../db/db.js';
 import useUIStore from '../store/uiStore.js';
 
 function ElapsedTimer({ startedAt }) {
@@ -111,6 +113,20 @@ export default function WorkoutPage() {
     }
     setEndOpen(false);
     if (result?.discarded) return; // empty session — nothing saved or rewarded
+
+    // Iron + rest-token reward feedback. Both are derived from history, so this
+    // just surfaces what the finished session added (the user asked to see it).
+    try {
+      const iron = sessionIron(result?.prCount ?? 0);
+      const finishedCount = await db.workouts.count();
+      const earnedToken = finishedCount > 0 && finishedCount % 10 === 0; // one token per 10 workouts
+      useUIStore.getState().showToast(
+        earnedToken ? `◆ +${iron} Iron · 🛡 Rest token earned!` : `◆ +${iron} Iron earned`,
+        { type: 'success' },
+      );
+    } catch (e) {
+      console.error('Reward feedback failed (workout still saved):', e);
+    }
 
     // Advance the routine's targets by its progression scheme (if any).
     if (snapshot?.templateId) {

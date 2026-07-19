@@ -11,7 +11,10 @@ import { playChime } from '../../utils/sound.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import {
   COSMETICS, cosmeticById, earnedIron, ironBalance, canAfford, rollChest, CHEST_PRICE,
+  TOKEN_IRON_PRICE, IRON_PER_SESSION, IRON_PER_PR, IRON_PER_QUEST,
 } from '../../utils/economy.js';
+import { tokensEarned, tokenBalance } from '../../utils/streakShield.js';
+import { Shield } from 'lucide-react';
 
 const RARITY_COLOR = {
   common: 'var(--color-ash)',
@@ -19,8 +22,8 @@ const RARITY_COLOR = {
   epic: '#b877dd',
   legendary: 'var(--color-gold)',
 };
-const TYPE_LABEL = { titleFlair: 'Title flair', cardTheme: 'Card theme', logoSkin: 'Logo skin' };
-const TYPES = ['titleFlair', 'cardTheme', 'logoSkin'];
+const TYPE_LABEL = { titleFlair: 'Title flair' };
+const TYPES = ['titleFlair'];
 
 function Coin({ size = 12 }) {
   return <span style={{ display: 'inline-block', width: size, height: size, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />;
@@ -36,11 +39,21 @@ export default function VaultModal({ isOpen, onClose }) {
   const buyCosmetic = useSettingsStore((s) => s.buyCosmetic);
   const equipCosmetic = useSettingsStore((s) => s.equipCosmetic);
   const openChest = useSettingsStore((s) => s.openChest);
+  const tokensSpent = useSettingsStore((s) => s.tokensSpent);
+  const tokensPurchased = useSettingsStore((s) => s.tokensPurchased);
+  const buyToken = useSettingsStore((s) => s.buyToken);
   const haptic = useHaptics();
 
   const balance = ironBalance(earnedIron({ workouts: life.workouts, prCount: life.prCount, questClaims, bonusIron: dungeonIron }), ironSpent);
+  const tokens = tokenBalance(tokensEarned({ workouts: life.workouts, questClaims }) + (tokensPurchased || 0), tokensSpent);
   const [burst, setBurst] = useState(null);
   const [chestResult, setChestResult] = useState(null);
+
+  function purchaseToken() {
+    if (balance < TOKEN_IRON_PRICE) return;
+    buyToken(TOKEN_IRON_PRICE);
+    haptic('pr'); playChime('quest'); setBurst(Date.now()); setTimeout(() => setBurst(null), 1200);
+  }
 
   function buy(c) {
     if (!canAfford(balance, c.price) || owned.includes(c.id)) return;
@@ -91,6 +104,25 @@ export default function VaultModal({ isOpen, onClose }) {
         </p>
       )}
 
+      {/* Rest-token exchange — spend Iron on a streak shield. */}
+      <div className="mb-4 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--color-ivory)', border: '1px solid var(--color-gold)' }}>
+        <span className="flex items-center gap-2">
+          <Shield size={18} style={{ color: 'var(--color-gold)' }} />
+          <span className="text-left">
+            <span className="block font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Buy a Rest Token</span>
+            <span className="block font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Protects your streak on a missed day · you have {tokens}</span>
+          </span>
+        </span>
+        <button
+          onClick={purchaseToken}
+          disabled={balance < TOKEN_IRON_PRICE}
+          className="flex items-center gap-1 rounded-lg px-3 py-2 font-mono text-sm font-bold"
+          style={{ background: balance < TOKEN_IRON_PRICE ? 'var(--color-chalk)' : 'var(--color-gold)', color: balance < TOKEN_IRON_PRICE ? 'var(--color-ash)' : 'var(--color-obsidian)' }}
+        >
+          <Coin size={10} />{TOKEN_IRON_PRICE}
+        </button>
+      </div>
+
       {/* Cosmetics by type */}
       {TYPES.map((type) => (
         <div key={type} className="mb-4">
@@ -133,7 +165,7 @@ export default function VaultModal({ isOpen, onClose }) {
         </div>
       ))}
       <p className="text-center font-sans text-xs" style={{ color: 'var(--color-ash)' }}>
-        Iron is earned as you train — every session, PR and quest adds to your balance.
+        Iron is earned as you train: <span style={{ color: 'var(--color-text-secondary)' }}>+{IRON_PER_SESSION} per workout · +{IRON_PER_PR} per PR · +{IRON_PER_QUEST} per quest</span>, plus your Daily Dungeon bonus.
       </p>
     </Modal>
   );

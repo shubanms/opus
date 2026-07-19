@@ -9,6 +9,16 @@ export const IRON_PER_SESSION = 25;
 export const IRON_PER_PR = 10;
 export const IRON_PER_QUEST = 40;
 export const CHEST_PRICE = 200;
+// Iron price to buy one rest token in the Vault. A token is otherwise earned
+// every 10 workouts (~250 Iron of sessions), so this is a modest sink that
+// gives Iron a second use beyond cosmetics.
+export const TOKEN_IRON_PRICE = 150;
+
+// Iron earned by a single finished session (before PR bonuses), surfaced on the
+// finish screen so the reward is legible.
+export function sessionIron(prCount = 0) {
+  return IRON_PER_SESSION + (prCount || 0) * IRON_PER_PR;
+}
 
 export function earnedIron({ workouts = 0, prCount = 0, questClaims = 0, bonusIron = 0 } = {}) {
   return (workouts || 0) * IRON_PER_SESSION + (prCount || 0) * IRON_PER_PR + (questClaims || 0) * IRON_PER_QUEST + (bonusIron || 0);
@@ -22,17 +32,19 @@ export function canAfford(balance, price) {
   return (balance || 0) >= (price || 0);
 }
 
-// Cosmetics catalog. `type`: 'cardTheme' | 'logoSkin' | 'titleFlair'.
+// Cosmetics catalog. Only `titleFlair` is currently applied (an emoji beside
+// your title on the Profile), so that's all the Vault sells — card themes and
+// logo skins were removed because buying them changed nothing visible. New
+// title flairs (emoji) can be added here and they work immediately.
 export const COSMETICS = [
   { id: 'flair_ironclad', type: 'titleFlair', name: 'Ironclad', rarity: 'rare', price: 300, value: '⚔️' },
   { id: 'flair_ember', type: 'titleFlair', name: 'Ember', rarity: 'rare', price: 300, value: '🔥' },
   { id: 'flair_bolt', type: 'titleFlair', name: 'Charged', rarity: 'rare', price: 300, value: '⚡' },
   { id: 'flair_crown', type: 'titleFlair', name: 'Crowned', rarity: 'epic', price: 600, value: '👑' },
-  { id: 'theme_slate', type: 'cardTheme', name: 'Slate', rarity: 'common', price: 150, value: 'slate' },
-  { id: 'theme_amethyst', type: 'cardTheme', name: 'Amethyst', rarity: 'epic', price: 600, value: 'amethyst' },
-  { id: 'theme_obsidian', type: 'cardTheme', name: 'Obsidian', rarity: 'legendary', price: 900, value: 'obsidian' },
-  { id: 'skin_frost', type: 'logoSkin', name: 'Frost Mark', rarity: 'rare', price: 300, value: 'frost' },
-  { id: 'skin_gilded', type: 'logoSkin', name: 'Gilded Mark', rarity: 'epic', price: 600, value: 'gilded' },
+  { id: 'flair_skull', type: 'titleFlair', name: 'Reaper', rarity: 'rare', price: 300, value: '💀' },
+  { id: 'flair_star', type: 'titleFlair', name: 'Star', rarity: 'common', price: 150, value: '⭐' },
+  { id: 'flair_dragon', type: 'titleFlair', name: 'Dragon', rarity: 'legendary', price: 900, value: '🐉' },
+  { id: 'flair_trophy', type: 'titleFlair', name: 'Champion', rarity: 'epic', price: 600, value: '🏆' },
 ];
 
 export const RARITY_ORDER = { common: 0, rare: 1, epic: 2, legendary: 3 };
