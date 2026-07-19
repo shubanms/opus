@@ -6,8 +6,9 @@ const KEY = 'opus_prefs';
 const DEFAULTS = {
   barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', themeOnOpen: true,
   tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '', coachMarksSeen: {},
-  // Streak shield / rest token: tokens spent + the lapse date a shield protects.
-  tokensSpent: 0, shieldedLapseDate: null,
+  // Streak shield / rest token: tokens spent, tokens bought with Iron, and the
+  // lapse date a shield protects. Balance = earned-from-history + bought − spent.
+  tokensSpent: 0, tokensPurchased: 0, shieldedLapseDate: null,
   // Iron economy: spent Iron + owned/equipped cosmetics (balance is derived).
   ironSpent: 0, ownedCosmetics: [], equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
   // Daily dungeon: claimed bonus Iron + the date key of the last claim.
@@ -32,8 +33,8 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
+    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
   },
   claimDungeon(amount, dateKey) {
     set((s) => (s.lastDungeonClaim === dateKey ? s : { dungeonIron: (s.dungeonIron || 0) + amount, lastDungeonClaim: dateKey }));
@@ -41,6 +42,11 @@ const useSettingsStore = create((set, get) => ({
   },
   spendShield(lapseDate) {
     set((s) => ({ tokensSpent: (s.tokensSpent || 0) + 1, shieldedLapseDate: lapseDate ?? null }));
+    get().persist();
+  },
+  // Buy a rest token with Iron: record the Iron spend + one purchased token.
+  buyToken(price) {
+    set((s) => ({ ironSpent: (s.ironSpent || 0) + price, tokensPurchased: (s.tokensPurchased || 0) + 1 }));
     get().persist();
   },
   // Buy a cosmetic: record the spend + add it to owned (idempotent on id).

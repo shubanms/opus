@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { earnedIron, ironBalance, canAfford, COSMETICS, cosmeticById, rollChest, CHEST_PRICE } from './economy.js';
+import { earnedIron, ironBalance, canAfford, COSMETICS, cosmeticById, rollChest, CHEST_PRICE, TOKEN_IRON_PRICE, sessionIron } from './economy.js';
 
 describe('earnedIron', () => {
   it('sums sessions, PRs and quests', () => {
@@ -20,12 +20,27 @@ describe('canAfford', () => {
   });
 });
 
+describe('sessionIron', () => {
+  it('is the flat session base plus per-PR bonus', () => {
+    expect(sessionIron(0)).toBe(25);
+    expect(sessionIron(3)).toBe(25 + 3 * 10);
+  });
+  it('handles missing prCount', () => { expect(sessionIron()).toBe(25); });
+});
+
+describe('token exchange', () => {
+  it('has a positive Iron price', () => { expect(TOKEN_IRON_PRICE).toBeGreaterThan(0); });
+});
+
 describe('cosmetics', () => {
   it('every cosmetic has id/type/price/rarity', () => {
     for (const c of COSMETICS) {
       expect(c.id && c.type && c.rarity).toBeTruthy();
       expect(c.price).toBeGreaterThan(0);
     }
+  });
+  it('only sells title flair (the one cosmetic type that is applied)', () => {
+    expect(COSMETICS.every((c) => c.type === 'titleFlair')).toBe(true);
   });
   it('cosmeticById finds and misses correctly', () => {
     expect(cosmeticById('flair_crown').name).toBe('Crowned');

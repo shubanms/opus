@@ -106,9 +106,10 @@ export default function HomePage() {
   const life = useLifetimeStats();
   const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
   const tokensSpent = useSettingsStore((s) => s.tokensSpent);
+  const tokensPurchased = useSettingsStore((s) => s.tokensPurchased);
   const shieldedLapseDate = useSettingsStore((s) => s.shieldedLapseDate);
   const spendShield = useSettingsStore((s) => s.spendShield);
-  const shieldTokens = tokenBalance(tokensEarned({ workouts: life.workouts, questClaims }), tokensSpent);
+  const shieldTokens = tokenBalance(tokensEarned({ workouts: life.workouts, questClaims }) + (tokensPurchased || 0), tokensSpent);
   const rawDecay = decayInfo(profile ?? {});
   const shieldActive = isShieldActive(shieldedLapseDate, profile?.lastWorkoutDate);
   const streakPenalty = streakBreakPenalty(rawDecay.days, profile?.streak ?? 0);

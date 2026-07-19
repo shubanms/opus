@@ -8,6 +8,7 @@ import { computeVolume } from '../../utils/volume.js';
 import { getCurrentBodyweight } from '../../utils/healthActions.js';
 import { deriveRoutineName } from '../../utils/routineName.js';
 import { fmtVolume } from '../../utils/units.js';
+import { IRON_PER_SESSION, IRON_PER_PR } from '../../utils/economy.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import XPBar from '../rpg/XPBar.jsx';
@@ -119,6 +120,13 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
           <CountUp value={stats.xp} format={(n) => `+${Math.round(n)}`} className="mt-1 block font-mono text-xl font-medium" style={{ color: 'var(--color-gold)' }} />
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>XP earned</p>
         </div>
+      </div>
+
+      {/* Iron reward — legible so you know what the session pays into the Vault. */}
+      <div className="mb-5 flex items-center justify-center gap-2 rounded-xl py-2.5" style={{ background: 'var(--color-obsidian)' }}>
+        <span style={{ display: 'inline-block', width: 12, height: 12, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
+        <span className="font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}>+{IRON_PER_SESSION} Iron</span>
+        <span className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>this session · +{IRON_PER_PR} per PR</span>
       </div>
 
       {/* XP progress (animates the gained XP) */}
