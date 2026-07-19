@@ -5,13 +5,16 @@ import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
 import { deleteWorkout } from '../../utils/workoutActions.js';
 import { fmtVolume, toDisplay } from '../../utils/units.js';
 import { avgRest, avgRestAcross, formatRest } from '../../utils/restStats.js';
-import { setWorkoutNote, setWorkoutColor } from '../../utils/noteActions.js';
+import { setWorkoutNote, setWorkoutColor, setWorkoutName, setWorkoutTags } from '../../utils/noteActions.js';
 import { playChime } from '../../utils/sound.js';
 import ShareButton from '../share/ShareButton.jsx';
 import ColorPicker from '../ui/ColorPicker.jsx';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useUIStore from '../../store/uiStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
+
+// Friendly muscle-group tags a user can attach to a past session.
+const MUSCLE_TAGS = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Cardio', 'Full Body'];
 
 function formatDuration(secs) {
   const m = Math.floor(secs / 60);
@@ -26,9 +29,16 @@ function formatDate(iso) {
 
 export default function WorkoutCard({ workout }) {
   const [expanded, setExpanded] = useState(false);
+  const [tags, setTags] = useState(workout.tags ?? []);
   const navigate = useNavigate();
   const repeatWorkout = useWorkoutStore((s) => s.repeatWorkout);
   const unit = useSettingsStore((s) => s.unit);
+
+  function toggleTag(tag) {
+    const next = tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag];
+    setTags(next);
+    setWorkoutTags(workout.id, next);
+  }
   const detail = useWorkoutDetail(expanded ? workout.id : null);
   const shareData = useShareData(expanded ? workout.id : null);
 
@@ -67,6 +77,15 @@ export default function WorkoutCard({ workout }) {
             <p className="mt-0.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               {formatDate(workout.date)}
             </p>
+            {tags.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {tags.map((t) => (
+                  <span key={t} className="rounded-full px-2 py-0.5 font-sans text-[10px] font-medium" style={{ background: 'var(--color-ivory)', color: 'var(--color-gold)' }}>
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {workout.xpEarned > 0 && (
@@ -100,6 +119,34 @@ export default function WorkoutCard({ workout }) {
 
       {expanded && (
         <div className="mt-3 border-t pt-3" style={{ borderColor: 'var(--color-ivory)' }}>
+          {/* Rename */}
+          <label className="mb-1 block font-sans text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>Name</label>
+          <input
+            key={workout.name}
+            defaultValue={workout.name}
+            onBlur={(e) => setWorkoutName(workout.id, e.target.value)}
+            className="mb-3 w-full rounded-xl px-3 py-2 font-sans text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          />
+
+          {/* Muscle-group tags */}
+          <label className="mb-1.5 block font-sans text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>Tags</label>
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {MUSCLE_TAGS.map((t) => {
+              const on = tags.includes(t);
+              return (
+                <button
+                  key={t}
+                  onClick={() => toggleTag(t)}
+                  className="rounded-full px-2.5 py-1 font-sans text-xs font-medium"
+                  style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Session summary incl. rest */}
           <div className="mb-3 flex flex-wrap gap-x-5 gap-y-1">
             <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
