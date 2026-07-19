@@ -1,6 +1,8 @@
-import { X, StickyNote, Link2, ChevronUp, ChevronDown, Repeat } from 'lucide-react';
+import { useState } from 'react';
+import { X, StickyNote, Link2, ChevronUp, ChevronDown, Repeat, Info } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
+import ExerciseInfoModal from './ExerciseInfoModal.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useExerciseNote } from '../../hooks/useExercises.js';
 import { toDisplay, unitLabel, fmtVolume } from '../../utils/units.js';
@@ -17,6 +19,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   // Live per-exercise tally for this session.
   const working = exercise.sets.filter((s) => !s.isWarmup);
@@ -69,6 +72,14 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
               <ChevronDown size={16} style={{ color: 'var(--color-ash)' }} />
             </button>
           </div>
+          <button
+            onClick={() => setInfoOpen(true)}
+            className="flex h-7 w-7 items-center justify-center rounded-full"
+            style={{ background: 'var(--color-ivory)' }}
+            aria-label="Exercise info"
+          >
+            <Info size={13} style={{ color: 'var(--color-ash)' }} />
+          </button>
           {canLink && (
             <button
               onClick={onToggleSuperset}
@@ -133,6 +144,8 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
       </div>
 
       <SetLogger exerciseId={exercise.exerciseId} onSetLogged={() => onSetLogged?.(exercise.exerciseId)} isBodyweight={isBodyweight} />
+
+      <ExerciseInfoModal exerciseId={exercise.exerciseId} isOpen={infoOpen} onClose={() => setInfoOpen(false)} />
     </div>
   );
 }
