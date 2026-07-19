@@ -128,6 +128,19 @@ export default function WorkoutPage() {
       console.error('Reward feedback failed (workout still saved):', e);
     }
 
+    // Daily Dungeon clear — the Iron + XP bonus were already awarded in the
+    // store; celebrate it here.
+    if (result?.dungeon?.cleared) {
+      const d = result.dungeon;
+      useUIStore.getState().showToast(
+        d.alreadyCleared
+          ? `⚔ ${d.name} — already cleared today`
+          : `⚔ Dungeon cleared! ◆ +${d.iron} Iron${d.xpBonus ? ` · +${d.xpBonus} bonus XP` : ''}`,
+        { type: 'success' },
+      );
+      if (!d.alreadyCleared) { haptic('pr'); playChime('quest'); setCelebrate(true); setTimeout(() => setCelebrate(false), 1300); }
+    }
+
     // Advance the routine's targets by its progression scheme (if any).
     if (snapshot?.templateId) {
       try {
