@@ -9,6 +9,8 @@ import VolumeChart from '../components/progress/VolumeChart.jsx';
 import TrendChart from '../components/progress/TrendChart.jsx';
 import MuscleFrequency from '../components/progress/MuscleFrequency.jsx';
 import Heatmap from '../components/progress/Heatmap.jsx';
+import MonthCalendar from '../components/progress/MonthCalendar.jsx';
+import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import BodyStatsForm from '../components/progress/BodyStatsForm.jsx';
 import SleepForm from '../components/progress/SleepForm.jsx';
 import ActivityForm from '../components/progress/ActivityForm.jsx';
@@ -23,6 +25,7 @@ import {
   useExerciseVolume, useExerciseMaxWeight, useExerciseOneRepMax, useBodyStats, useSleepLogs,
   useActivityHistory, useLifetimeStats, useAllPRs, useTopExercises, usePRs,
 } from '../hooks/useProgress.js';
+import { useWorkouts } from '../hooks/useWorkout.js';
 import { useRPG } from '../hooks/useRPG.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel, fmtVolume } from '../utils/units.js';
@@ -84,6 +87,9 @@ function Overview() {
   const muscles = useMuscleFrequency();
   const days = useWorkoutDays();
   const allPRs = useAllPRs();
+  const workouts = useWorkouts();
+  const [calDay, setCalDay] = useState(null);
+  const calDayWorkouts = calDay ? workouts.filter((w) => w.date === calDay) : [];
 
   const lastVol = weeklyRaw[weeklyRaw.length - 1]?.volume ?? 0;
   const prevVol = weeklyRaw[weeklyRaw.length - 2]?.volume ?? 0;
@@ -123,7 +129,21 @@ function Overview() {
       )}
 
       <Section title="Muscle focus"><MuscleFrequency data={muscles} /></Section>
-      <Section title="Training calendar"><Heatmap days={days} /></Section>
+      <Section title="Training calendar">
+        <MonthCalendar days={days} selected={calDay} onSelect={setCalDay} />
+        {calDay && (
+          <div className="mt-3">
+            {calDayWorkouts.length > 0 ? (
+              calDayWorkouts.map((w) => <WorkoutCard key={w.id} workout={w} />)
+            ) : (
+              <p className="py-4 text-center font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                No workout logged on this day
+              </p>
+            )}
+          </div>
+        )}
+      </Section>
+      <Section title="Consistency (last 12 weeks)"><Heatmap days={days} /></Section>
     </>
   );
 }
