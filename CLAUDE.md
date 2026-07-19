@@ -4,6 +4,13 @@
 > React 18 + Vite + Tailwind v3 · Dexie/IndexedDB · Zustand · React Router · Recharts ·
 > html2canvas · vite-plugin-pwa. 100% local, no backend. Live: https://shubanms.github.io/opus/
 
+## ⛔ FOCUS: PWA ONLY — native app is ON HOLD (set 2026-07-19)
+**Work exclusively in the web/PWA app (`src/`, `docs/`, root config). The native app is paused by the user's explicit instruction.**
+- **Do NOT touch, edit, create, build, or test anything under `apps/mobile/`** (the Expo/React Native app) — no code, no config, no docs, no PRs.
+- **Native parity is paused** — do not port web features to native or add native counterparts right now.
+- `packages/core/` (`@opus/core`, shared logic) is native-facing too — leave it alone unless the web genuinely needs it; the web uses its own `src/utils/*` copies, so PWA work does not require `packages/core` edits.
+- The user will set up a proper native environment later (their laptop/phone + Android Studio); native work resumes only when they explicitly say so.
+
 ## Start here (don't re-read the whole codebase)
 The `docs/` folder is the source of truth — read these first each session:
 - **`docs/ARCHITECTURE.md`** — codebase map: routes, DB tables (v1–v8), localStorage keys, every util/hook/store/component, and the reusable patterns. **This is the efficiency reference — check it before grepping.**
