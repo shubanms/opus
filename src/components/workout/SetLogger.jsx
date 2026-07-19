@@ -10,7 +10,8 @@ import { playChime } from '../../utils/sound.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import { calcSetXP } from '../../utils/rpg.js';
 import { diffsBySetNumber } from '../../utils/setDiff.js';
-import { rollCrit, comboCount, bonusXp as critBonusXp } from '../../utils/crit.js';
+import { rollCrit, comboCount, bonusXp as critBonusXp, CRIT_CHANCE } from '../../utils/crit.js';
+import { todaysDungeon, affixEffects } from '../../utils/dungeon.js';
 import Particles from '../fx/Particles.jsx';
 import PlateCalculator from './PlateCalculator.jsx';
 
@@ -86,7 +87,9 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
     // and every XP total already include it and a delete reverts it for free.
     const sessionWorking = (activeWorkout?.exercises ?? []).reduce(
       (n, e) => n + e.sets.filter((x) => !x.isWarmup).length, 0);
-    const crit = rollCrit({ seed: activeWorkout?.startedAt ?? 0, setNumber: exercise.sets.length + 1, first: sessionWorking === 0 });
+    // In a Daily Dungeon with the Volatile affix, crit chance runs hot.
+    const critChance = CRIT_CHANCE + (activeWorkout?.dungeon ? affixEffects(todaysDungeon(activeWorkout.dungeon).affixes).critBonus : 0);
+    const crit = rollCrit({ seed: activeWorkout?.startedAt ?? 0, setNumber: exercise.sets.length + 1, first: sessionWorking === 0, chance: critChance });
     const times = (activeWorkout?.exercises ?? [])
       .flatMap((e) => e.sets.filter((x) => !x.isWarmup).map((x) => x.completedAt))
       .filter(Boolean);
