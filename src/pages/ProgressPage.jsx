@@ -92,7 +92,7 @@ function Overview() {
 
   return (
     <>
-      <WeeklyRecap dismissible={false} />
+      <WeeklyRecap />
 
       {/* Lifetime headline numbers */}
       <div className="mb-5 grid grid-cols-3 gap-2.5">

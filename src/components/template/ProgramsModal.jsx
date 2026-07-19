@@ -32,7 +32,7 @@ export default function ProgramsModal({ isOpen, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose} title="Programs">
       {burst && <Particles key={burst} count={22} />}
       <p className="mb-3 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-        Proven training templates — installing adds them as routines you can edit or delete. Progression is switched on, so targets advance as you train.
+        <b style={{ color: 'var(--color-text-primary)' }}>Ready-made, named</b> programs (5×5, GZCLP, PPL…) — installing adds them as routines you can edit or delete, with progression switched on so targets advance as you train. (For a <b style={{ color: 'var(--color-text-primary)' }}>custom</b> auto-generated week, use <b style={{ color: 'var(--color-text-primary)' }}>Plan week</b> instead.)
       </p>
       <div className="flex flex-col gap-3">
         {PROGRAMS.map((p) => (
