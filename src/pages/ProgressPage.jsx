@@ -26,6 +26,7 @@ import {
   useActivityHistory, useLifetimeStats, useAllPRs, useTopExercises, usePRs,
 } from '../hooks/useProgress.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
+import { workoutCalories } from '../utils/calories.js';
 import { useRPG } from '../hooks/useRPG.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel, fmtVolume } from '../utils/units.js';
@@ -91,6 +92,29 @@ function Overview() {
   const [calDay, setCalDay] = useState(null);
   const calDayWorkouts = calDay ? workouts.filter((w) => w.date === calDay) : [];
 
+  // Calories: derived per workout (includes pre-cardio history). This-week vs
+  // all-time totals + an 8-week trend (kcal reused into the volume-bar chart).
+  const weekStartOf = (d) => {
+    const x = new Date(d);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // back to Monday
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+  const thisWeekStart = weekStartOf(new Date());
+  const calWeeks = [];
+  for (let i = 7; i >= 0; i--) {
+    const ws = new Date(thisWeekStart);
+    ws.setDate(ws.getDate() - i * 7);
+    const we = new Date(ws);
+    we.setDate(ws.getDate() + 7);
+    const wsKey = ws.toISOString().slice(0, 10);
+    const weKey = we.toISOString().slice(0, 10);
+    const kcal = workouts.filter((w) => w.date >= wsKey && w.date < weKey).reduce((a, w) => a + workoutCalories(w), 0);
+    calWeeks.push({ label: `${ws.getMonth() + 1}/${ws.getDate()}`, volume: Math.round(kcal) });
+  }
+  const weekCalories = calWeeks[calWeeks.length - 1]?.volume ?? 0;
+  const lifetimeCalories = Math.round(workouts.reduce((a, w) => a + workoutCalories(w), 0));
+
   const lastVol = weeklyRaw[weeklyRaw.length - 1]?.volume ?? 0;
   const prevVol = weeklyRaw[weeklyRaw.length - 2]?.volume ?? 0;
   const deltaPct = prevVol > 0 ? Math.round(((lastVol - prevVol) / prevVol) * 100) : null;
@@ -118,6 +142,29 @@ function Overview() {
           </div>
         )}
         <VolumeChart data={weekly} unit={unitLabel(unit)} />
+      </Section>
+
+      <Section title="Calories burned">
+        <div className="mb-3 grid grid-cols-2 gap-2.5">
+          <div className="rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+            <Flame size={14} style={{ color: 'var(--color-ember)' }} />
+            <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
+              {effects ? <CountUp value={weekCalories} /> : weekCalories.toLocaleString()}
+            </p>
+            <p className="mt-1 font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>kcal this week</p>
+          </div>
+          <div className="rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+            <Flame size={14} style={{ color: 'var(--color-ember)' }} />
+            <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
+              {effects ? <CountUp value={lifetimeCalories} /> : lifetimeCalories.toLocaleString()}
+            </p>
+            <p className="mt-1 font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>kcal all time</p>
+          </div>
+        </div>
+        <VolumeChart data={calWeeks} unit="kcal" />
+        <p className="mt-2 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
+          Cardio is calculated; lifting is estimated from session time + bodyweight.
+        </p>
       </Section>
 
       {allPRs.length > 0 && (
