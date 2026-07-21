@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, StickyNote, Link2, ChevronUp, ChevronDown, Repeat, Info } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
+import CardioLogger from './CardioLogger.jsx';
 import OverloadNudge from './OverloadNudge.jsx';
 import ExerciseInfoModal from './ExerciseInfoModal.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -15,7 +16,7 @@ const MUSCLE_HUE = {
   abs: '#C9A84C', obliques: '#C9A84C',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
+export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, isCardio, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
@@ -28,6 +29,10 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
   const volKg = working.reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
   const targetSets = exercise.targetSets || null;
   const progress = targetSets ? Math.min(setCount / targetSets, 1) : null;
+
+  // Cardio session totals for the header/tally.
+  const cardioKcal = exercise.sets.reduce((a, s) => a + (s.calories || 0), 0);
+  const cardioMin = Math.round(exercise.sets.reduce((a, s) => a + (s.durationSec || 0), 0) / 60);
 
   return (
     <div
@@ -46,7 +51,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
           >
             {(muscleGroup ?? '').replace(/-/g, ' ')}
           </span>
-          {(exercise.targetSets || exercise.targetReps || exercise.targetWeight) && (
+          {!isCardio && (exercise.targetSets || exercise.targetReps || exercise.targetWeight) && (
             <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               Target: {exercise.targetSets ?? '—'}×{exercise.targetReps ?? '—'}
               {exercise.targetWeight ? ` @ ${toDisplay(exercise.targetWeight, unit)}${unitLabel(unit)}` : ''}
@@ -80,7 +85,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
           >
             <Info size={13} style={{ color: 'var(--color-ash)' }} />
           </button>
-          {canLink && (
+          {canLink && !isCardio && (
             <button
               onClick={onToggleSuperset}
               className="flex items-center gap-1 rounded-full px-2 py-1 font-sans text-[11px] font-medium"
@@ -121,29 +126,42 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, o
         </div>
       )}
 
-      {(setCount > 0 || targetSets) && (
-        <div className="mt-3">
-          <p className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            {setCount} set{setCount === 1 ? '' : 's'}{targetSets ? ` / ${targetSets}` : ''}
-            {totalReps > 0 ? ` · ${totalReps} reps` : ''}
-            {volKg > 0 ? ` · ${fmtVolume(volKg, unit)}` : ''}
-          </p>
-          {progress != null && (
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--color-ivory)' }}>
-              <div
-                className="h-full rounded-full"
-                style={{ width: `${progress * 100}%`, background: progress >= 1 ? 'var(--color-sage)' : 'var(--color-gold)', transition: 'width .4s var(--ease-out)' }}
-              />
+      {isCardio ? (
+        <>
+          {cardioKcal > 0 && (
+            <p className="mt-3 font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {cardioMin} min · <span style={{ color: 'var(--color-gold)' }}>{cardioKcal} kcal</span>
+            </p>
+          )}
+          <CardioLogger exerciseId={exercise.exerciseId} onLogged={() => onSetLogged?.(exercise.exerciseId)} />
+        </>
+      ) : (
+        <>
+          {(setCount > 0 || targetSets) && (
+            <div className="mt-3">
+              <p className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                {setCount} set{setCount === 1 ? '' : 's'}{targetSets ? ` / ${targetSets}` : ''}
+                {totalReps > 0 ? ` · ${totalReps} reps` : ''}
+                {volKg > 0 ? ` · ${fmtVolume(volKg, unit)}` : ''}
+              </p>
+              {progress != null && (
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--color-ivory)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${progress * 100}%`, background: progress >= 1 ? 'var(--color-sage)' : 'var(--color-gold)', transition: 'width .4s var(--ease-out)' }}
+                  />
+                </div>
+              )}
             </div>
           )}
-        </div>
+
+          <div className="mt-3">
+            <OverloadNudge exerciseId={exercise.exerciseId} />
+          </div>
+
+          <SetLogger exerciseId={exercise.exerciseId} onSetLogged={() => onSetLogged?.(exercise.exerciseId)} isBodyweight={isBodyweight} />
+        </>
       )}
-
-      <div className="mt-3">
-        <OverloadNudge exerciseId={exercise.exerciseId} />
-      </div>
-
-      <SetLogger exerciseId={exercise.exerciseId} onSetLogged={() => onSetLogged?.(exercise.exerciseId)} isBodyweight={isBodyweight} />
 
       <ExerciseInfoModal exerciseId={exercise.exerciseId} isOpen={infoOpen} onClose={() => setInfoOpen(false)} />
     </div>

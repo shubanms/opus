@@ -9,6 +9,8 @@ import { getCurrentBodyweight } from '../../utils/healthActions.js';
 import { deriveRoutineName } from '../../utils/routineName.js';
 import { fmtVolume } from '../../utils/units.js';
 import { IRON_PER_SESSION, IRON_PER_PR } from '../../utils/economy.js';
+import { strengthKcal } from '../../utils/calories.js';
+import { Flame } from 'lucide-react';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import XPBar from '../rpg/XPBar.jsx';
@@ -42,6 +44,19 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
     const bw = await getCurrentBodyweight();
     return computeVolume(flat, bw);
   }, [activeWorkout]) ?? 0;
+
+  // Calories: cardio bouts are precise; lifting is a MET estimate over the
+  // non-cardio time. `estimated` flags when any lifting is included.
+  const cal = useLiveQuery(async () => {
+    if (!activeWorkout) return { total: 0, estimated: false };
+    const sets = activeWorkout.exercises.flatMap((e) => e.sets);
+    const cardioKcal = sets.reduce((a, s) => a + (s.calories || 0), 0);
+    const cardioMin = sets.reduce((a, s) => a + (s.durationSec || 0), 0) / 60;
+    const hasStrength = sets.some((s) => !s.isCardio && !s.isWarmup && ((s.weight || 0) > 0 || (s.reps || 0) > 0));
+    const bw = await getCurrentBodyweight();
+    const strengthMin = hasStrength ? Math.max(0, elapsedSecs / 60 - cardioMin) : 0;
+    return { total: Math.round(cardioKcal + strengthKcal({ weightKg: bw ?? 70, minutes: strengthMin })), estimated: hasStrength };
+  }, [activeWorkout, elapsedSecs]) ?? { total: 0, estimated: false };
 
   // Per-muscle working-set counts drive both the share card's muscle list and
   // the auto-routine name.
@@ -123,11 +138,20 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
       </div>
 
       {/* Iron reward — legible so you know what the session pays into the Vault. */}
-      <div className="mb-5 flex items-center justify-center gap-2 rounded-xl py-2.5" style={{ background: 'var(--color-obsidian)' }}>
+      <div className="mb-3 flex items-center justify-center gap-2 rounded-xl py-2.5" style={{ background: 'var(--color-obsidian)' }}>
         <span style={{ display: 'inline-block', width: 12, height: 12, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
         <span className="font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}>+{IRON_PER_SESSION} Iron</span>
         <span className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>this session · +{IRON_PER_PR} per PR</span>
       </div>
+
+      {/* Calories burned */}
+      {cal.total > 0 && (
+        <div className="mb-5 flex items-center justify-center gap-2 rounded-xl py-2.5" style={{ background: 'var(--color-obsidian)' }}>
+          <Flame size={14} style={{ color: 'var(--color-ember)' }} />
+          <span className="font-mono text-sm font-bold" style={{ color: 'var(--color-ember)' }}>{cal.total} kcal</span>
+          <span className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>{cal.estimated ? 'burned (est.)' : 'burned'}</span>
+        </div>
+      )}
 
       {/* XP progress (animates the gained XP) */}
       {profile && (

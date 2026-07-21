@@ -4,6 +4,7 @@ import useUserStore from './userStore.js';
 import useSettingsStore from './settingsStore.js';
 import { PR_BONUS, STREAK_BONUS_PER_DAY, getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
 import { todaysDungeon, isDungeonCleared, dungeonReward, affixEffects } from '../utils/dungeon.js';
+import { strengthKcal } from '../utils/calories.js';
 import { computeVolume } from '../utils/volume.js';
 import { getCurrentBodyweight } from '../utils/healthActions.js';
 import { serialize, deserialize, isStale } from '../utils/workoutSession.js';
@@ -301,6 +302,14 @@ const useWorkoutStore = create((set, get) => ({
     const flatSets = w.exercises.flatMap((e) => e.sets.map((s) => ({ ...s, exerciseId: e.exerciseId })));
     const totalVolume = await computeVolume(flatSets, bodyweightKg);
 
+    // Calories: cardio bouts carry a precise (ACSM/MET) figure; lifting is a MET
+    // estimate over the non-cardio portion of the session.
+    const cardioKcal = allSets.reduce((a, s) => a + (s.calories || 0), 0);
+    const cardioMin = allSets.reduce((a, s) => a + (s.durationSec || 0), 0) / 60;
+    const hasStrength = allSets.some((s) => !s.isCardio && !s.isWarmup && ((s.weight || 0) > 0 || (s.reps || 0) > 0));
+    const strengthMin = hasStrength ? Math.max(0, duration / 60 - cardioMin) : 0;
+    const totalCalories = Math.round(cardioKcal + strengthKcal({ weightKg: bodyweightKg ?? 70, minutes: strengthMin }));
+
     const workoutId = await db.workouts.add({
       date: today,
       templateId: w.templateId,
@@ -310,6 +319,7 @@ const useWorkoutStore = create((set, get) => ({
       notes: w.notes ?? '',
       xpEarned,
       totalVolume,
+      totalCalories,
       totalSets,
       bodyweightKg,
       createdAt: Date.now(),
@@ -329,6 +339,12 @@ const useWorkoutStore = create((set, get) => ({
           completedAt: s.completedAt,
           crit: s.crit ?? false,
           bonusXp: s.bonusXp ?? 0,
+          isCardio: s.isCardio ?? false,
+          durationSec: s.durationSec ?? null,
+          speedKmh: s.speedKmh ?? null,
+          incline: s.incline ?? null,
+          distanceKm: s.distanceKm ?? null,
+          calories: s.calories ?? 0,
         });
       }
     }
@@ -398,6 +414,7 @@ const useWorkoutStore = create((set, get) => ({
       newLevel: profile?.level ?? 1,
       newTitle: profile?.title ?? 'First Rep',
       dungeon: dungeonResult,
+      totalCalories,
     };
 
     if (profile) {

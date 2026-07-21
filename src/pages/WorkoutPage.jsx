@@ -45,6 +45,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, li
       exercise={ex}
       muscleGroup={muscleGroup}
       isBodyweight={exerciseData?.equipment === 'bodyweight'}
+      isCardio={exerciseData?.equipment === 'cardio'}
       onSetLogged={onSetLogged}
       onRemove={onRemove}
       onSwap={onSwap}
