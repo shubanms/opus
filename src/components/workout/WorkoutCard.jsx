@@ -6,6 +6,7 @@ import { deleteWorkout } from '../../utils/workoutActions.js';
 import { fmtVolume, toDisplay } from '../../utils/units.js';
 import { avgRest, avgRestAcross, formatRest } from '../../utils/restStats.js';
 import { setWorkoutNote, setWorkoutColor, setWorkoutName, setWorkoutTags } from '../../utils/noteActions.js';
+import { workoutCalories } from '../../utils/calories.js';
 import { playChime } from '../../utils/sound.js';
 import ShareButton from '../share/ShareButton.jsx';
 import ColorPicker from '../ui/ColorPicker.jsx';
@@ -112,6 +113,12 @@ export default function WorkoutCard({ workout }) {
           {workout.totalVolume > 0 && (
             <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               {fmtVolume(workout.totalVolume, unit)}
+            </span>
+          )}
+          {workoutCalories(workout) > 0 && (
+            <span className="flex items-center gap-1.5 font-sans text-xs" style={{ color: 'var(--color-ember)' }}>
+              <Flame size={12} />
+              {workoutCalories(workout)} kcal
             </span>
           )}
         </div>

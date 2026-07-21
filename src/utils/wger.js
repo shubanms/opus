@@ -82,6 +82,42 @@ export async function syncExercises() {
   }
 }
 
+// Cardio machines/modalities. `cardioMode` drives the logger: 'treadmill' logs
+// speed + incline (ACSM calories); 'met' logs time at a base MET. Added via an
+// idempotent ensure so existing users get them without a fresh seed.
+export const CARDIO_EXERCISES = [
+  { name: 'Treadmill', cardioMode: 'treadmill', met: null },
+  { name: 'Walking', cardioMode: 'treadmill', met: null },
+  { name: 'Running', cardioMode: 'treadmill', met: null },
+  { name: 'Cycling', cardioMode: 'met', met: 7 },
+  { name: 'Rowing Machine', cardioMode: 'met', met: 7 },
+  { name: 'Elliptical', cardioMode: 'met', met: 5 },
+  { name: 'Stair Climber', cardioMode: 'met', met: 8 },
+  { name: 'Jump Rope', cardioMode: 'met', met: 11 },
+];
+
+// Add any cardio exercises the library is missing (by name). Idempotent, so it
+// runs safely on every seed for both fresh and existing databases.
+export async function ensureCardioExercises() {
+  const have = new Set((await db.exercises.toArray()).map((e) => e.name));
+  const missing = CARDIO_EXERCISES.filter((c) => !have.has(c.name)).map((c) => ({
+    name: c.name,
+    muscleGroup: 'cardio',
+    equipment: 'cardio',
+    difficulty: 'beginner',
+    cardioMode: c.cardioMode,
+    met: c.met,
+    secondaryMuscles: [],
+    description: '',
+    isCustom: false,
+    wgerId: null,
+  }));
+  if (missing.length) {
+    try { await db.exercises.bulkAdd(missing); }
+    catch (err) { if (err?.name !== 'BulkError' && err?.name !== 'ConstraintError') throw err; }
+  }
+}
+
 // Seeding can be triggered from several mounts at once (multiple useExercises
 // consumers). Two callers both seeing count===0 would each bulkAdd the same
 // rows, and the second collides on the explicit ids → BulkError. Share a single
@@ -93,14 +129,17 @@ export async function seedDatabase() {
   if (seedInFlight) return seedInFlight;
   seedInFlight = (async () => {
     const count = await db.exercises.count();
-    if (count > 0) return;
-    try {
-      await db.exercises.bulkAdd(seed);
-    } catch (err) {
-      // A concurrent seeder already inserted these rows → duplicate-key
-      // BulkError. The end state is the same seed set, so treat it as success.
-      if (err?.name !== 'BulkError' && err?.name !== 'ConstraintError') throw err;
+    if (count === 0) {
+      try {
+        await db.exercises.bulkAdd(seed);
+      } catch (err) {
+        // A concurrent seeder already inserted these rows → duplicate-key
+        // BulkError. The end state is the same seed set, so treat it as success.
+        if (err?.name !== 'BulkError' && err?.name !== 'ConstraintError') throw err;
+      }
     }
+    // Additive for both fresh and existing databases.
+    await ensureCardioExercises();
   })();
   try {
     return await seedInFlight;
