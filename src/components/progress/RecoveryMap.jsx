@@ -10,6 +10,10 @@ export const MUSCLE_LABEL = {
   hamstring: 'Hamstrings', gluteal: 'Glutes', calves: 'Calves', forearm: 'Forearms',
 };
 
+// The muscles react-body-highlighter can render (== the anatomical groups we
+// label). Anything else (e.g. 'cardio') must be filtered out before the map.
+const SUPPORTED_MUSCLES = new Set(Object.keys(MUSCLE_LABEL));
+
 // frequency → highlightedColors index: 1=sage(2d), 2=gold(1d), 3=ember(today)
 const COLORS = ['#6B8F71', '#C9A84C', '#D4622A'];
 const RECOVERY_LEGEND = [['#D4622A', 'Worked today'], ['#C9A84C', '1 day'], ['#6B8F71', '2 days'], ['var(--color-ivory)', 'Ready']];
@@ -34,6 +38,13 @@ export default function RecoveryMap({ data: extData, onSelect, legend: extLegend
     }
   }
   const legend = extLegend ?? RECOVERY_LEGEND;
+
+  // react-body-highlighter only knows anatomical muscles; a non-body group like
+  // 'cardio' makes its internal lookup crash (undefined.exercises). Keep only
+  // muscles the map supports, and drop items left with none.
+  const safeData = (data ?? [])
+    .map((d) => ({ ...d, muscles: (d.muscles ?? []).filter((m) => SUPPORTED_MUSCLES.has(m)) }))
+    .filter((d) => d.muscles.length > 0);
 
   const handleClick = ({ muscle }) => {
     if (onSelect) onSelect(muscle);
@@ -79,7 +90,7 @@ export default function RecoveryMap({ data: extData, onSelect, legend: extLegend
       </div>
 
       <div className="flex justify-center" style={{ maxHeight: 220, overflow: 'hidden' }}>
-        <Model data={data} highlightedColors={COLORS} onClick={handleClick} type={view} />
+        <Model data={safeData} highlightedColors={COLORS} onClick={handleClick} type={view} />
       </div>
 
       {/* Legend */}
