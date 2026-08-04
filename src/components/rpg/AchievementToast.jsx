@@ -20,7 +20,7 @@ export default function AchievementToast({ achievements, onDismiss }) {
           className="anim-fade-slide-up mb-2 flex w-full max-w-md items-center gap-3 rounded-2xl px-4 py-3"
           style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}
         >
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
             <Award size={20} style={{ color: 'var(--color-obsidian)' }} />
           </div>
           <div className="min-w-0">

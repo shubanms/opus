@@ -41,7 +41,7 @@ export default function ExercisePage() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-obsidian)' }}
           aria-label="Add custom exercise"
         >
@@ -56,7 +56,7 @@ export default function ExercisePage() {
         </div>
         <button
           onClick={() => setFavoritesOnly((v) => !v)}
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
           style={{ background: favoritesOnly ? 'var(--color-gold)' : 'var(--color-ivory)' }}
           aria-label="Show favorites only"
         >

@@ -20,7 +20,7 @@ function Chip({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 rounded-full px-3 py-1.5 font-sans text-xs font-medium"
+      className="shrink-0 rounded-full px-3 py-1.5 font-sans text-xs font-medium"
       style={{ background: active ? 'var(--color-gold)' : 'var(--color-ivory)', color: active ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
     >
       {children}

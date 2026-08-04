@@ -28,11 +28,11 @@ export default function Modal({ isOpen, onClose, title, children }) {
       <div className="absolute inset-0" style={{ background: 'rgba(17,16,16,0.7)' }} />
       <div
         className="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl"
-        style={{ background: 'var(--color-chalk)', animation: 'fadeSlideUp 300ms var(--ease-out)' }}
+        style={{ background: 'var(--color-chalk)', animation: 'fadeSlideUp 300ms var(--opus-ease-out)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Fixed header */}
-        <div className="flex flex-shrink-0 items-center justify-between px-5 pb-4 pt-5">
+        <div className="flex shrink-0 items-center justify-between px-5 pb-4 pt-5">
           <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
             {title}
           </h2>

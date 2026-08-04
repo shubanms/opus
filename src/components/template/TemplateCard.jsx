@@ -20,7 +20,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            {template.color && <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: template.color }} />}
+            {template.color && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: template.color }} />}
             {onRename ? (
               <button onClick={() => onRename(template)} className="min-w-0 truncate text-left font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }} aria-label="Rename routine">
                 {template.name}
@@ -31,7 +31,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
               </p>
             )}
             {template.dayOfWeek != null && (
-              <span className="flex-shrink-0 rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }}>
+              <span className="shrink-0 rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }}>
                 {DAY_LABEL[template.dayOfWeek]}
               </span>
             )}
@@ -41,7 +41,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
           </p>
         </div>
 
-        <div className="ml-2 flex flex-shrink-0 gap-1.5">
+        <div className="ml-2 flex shrink-0 gap-1.5">
           {onShuffle && (
             <button onClick={() => onShuffle(template)} className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }} aria-label="Shuffle exercises">
               <Shuffle size={13} style={{ color: 'var(--color-ash)' }} />

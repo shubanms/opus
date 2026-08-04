@@ -34,7 +34,7 @@ function Ring({ value, goal, color, icon: Icon, center, label }) {
             strokeDasharray={CIRC}
             strokeDashoffset={CIRC * (1 - draw)}
             transform="rotate(-90 43 43)"
-            style={{ transition: 'stroke-dashoffset 1.1s var(--ease-out)' }}
+            style={{ transition: 'stroke-dashoffset 1.1s var(--opus-ease-out)' }}
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -101,7 +101,7 @@ export default function ActivityRings() {
         </button>
         <button
           onClick={() => addWater(-1)}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
           style={{ background: 'var(--color-ivory)' }}
           aria-label="Remove a glass"
         >

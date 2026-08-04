@@ -163,7 +163,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
           <div className="flex items-center gap-2">
             <button
               onClick={() => toggleWarmup(exerciseId, s.setNumber)}
-              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
               style={{ background: s.isWarmup ? '#D4622A22' : 'transparent' }}
               title="Toggle warmup"
             >
@@ -197,7 +197,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
           <span
             key={xpFloat.key}
             className="pointer-events-none absolute right-1 top-0 flex items-center gap-1 font-mono text-sm font-bold"
-            style={{ color: 'var(--color-gold)', animation: 'floatUp 900ms var(--ease-out) forwards' }}
+            style={{ color: 'var(--color-gold)', animation: 'floatUp 900ms var(--opus-ease-out) forwards' }}
             onAnimationEnd={() => setXpFloat(null)}
           >
             {(xpFloat.pr || xpFloat.crit) && <Trophy size={13} />}
@@ -229,7 +229,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         )}
 
         <div className="flex min-w-0 flex-1 items-center rounded-xl" style={{ background: 'var(--color-ivory)' }}>
-          <button onClick={() => stepReps(-1)} className="flex h-full flex-shrink-0 items-center px-2 py-2.5" aria-label="Fewer reps">
+          <button onClick={() => stepReps(-1)} className="flex h-full shrink-0 items-center px-2 py-2.5" aria-label="Fewer reps">
             <Minus size={14} style={{ color: 'var(--color-ash)' }} />
           </button>
           <input
@@ -241,7 +241,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
             className="min-w-0 flex-1 bg-transparent text-center font-mono text-sm outline-none"
             style={{ color: 'var(--color-text-primary)' }}
           />
-          <button onClick={() => stepReps(1)} className="flex h-full flex-shrink-0 items-center px-2 py-2.5" aria-label="More reps">
+          <button onClick={() => stepReps(1)} className="flex h-full shrink-0 items-center px-2 py-2.5" aria-label="More reps">
             <Plus size={14} style={{ color: 'var(--color-ash)' }} />
           </button>
         </div>
@@ -249,7 +249,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         <button
           onClick={handleLog}
           disabled={!canLog}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: canLog ? 1 : 0.35 }}
         >
           <Plus size={18} strokeWidth={2.5} />

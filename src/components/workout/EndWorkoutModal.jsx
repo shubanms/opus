@@ -168,7 +168,7 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
             className="flex w-full items-center gap-2.5"
           >
             <span
-              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md"
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
               style={{ background: saveRoutine ? 'var(--color-gold)' : 'var(--color-chalk)', border: saveRoutine ? 'none' : '1px solid var(--color-ash)' }}
             >
               {saveRoutine && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />}

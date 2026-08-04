@@ -54,7 +54,7 @@ export default function RestTimer({ duration = 90, onComplete, onSkip, onSetDefa
       <div className="flex items-center gap-3">
         <svg
           width={44} height={44} viewBox="0 0 44 44"
-          style={{ flexShrink: 0, animation: urgent ? 'timerPulse 1s var(--ease-out) infinite' : 'none' }}
+          style={{ flexShrink: 0, animation: urgent ? 'timerPulse 1s var(--opus-ease-out) infinite' : 'none' }}
         >
           <circle cx={22} cy={22} r={R} fill="none" stroke="#444" strokeWidth={3} />
           <circle

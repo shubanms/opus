@@ -22,13 +22,13 @@ export default function MuscleFrequency({ data }) {
         const hue = MUSCLE_HUE[d.muscle] ?? '#8A8780';
         return (
           <div key={d.muscle} className="flex items-center gap-3">
-            <span className="w-24 flex-shrink-0 truncate font-sans text-xs capitalize" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="w-24 shrink-0 truncate font-sans text-xs capitalize" style={{ color: 'var(--color-text-secondary)' }}>
               {d.muscle.replace(/-/g, ' ')}
             </span>
             <div className="h-2.5 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--color-ivory)' }}>
               <div className="h-full rounded-full" style={{ width: `${(d.count / max) * 100}%`, background: hue }} />
             </div>
-            <span className="w-6 flex-shrink-0 text-right font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="w-6 shrink-0 text-right font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               {d.count}
             </span>
           </div>

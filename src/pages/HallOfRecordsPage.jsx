@@ -60,7 +60,7 @@ export default function HallOfRecordsPage() {
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5"
                     style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
                   >
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
                       <Trophy size={15} style={{ color: 'var(--color-obsidian)' }} />
                     </div>
                     <div className="min-w-0 flex-1">

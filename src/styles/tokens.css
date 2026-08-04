@@ -26,15 +26,15 @@
   --space-8: 32px;
 
   /* Border radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 24px;
-  --radius-full: 9999px;
+  --opus-radius-sm: 8px;
+  --opus-radius-md: 12px;
+  --opus-radius-lg: 16px;
+  --opus-radius-xl: 20px;
+  --opus-radius-2xl: 24px;
+  --opus-radius-full: 9999px;
 
   /* Motion */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --opus-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --dur-micro: 150ms;
   --dur-standard: 250ms;
   --dur-enter: 350ms;

@@ -72,7 +72,7 @@ export default function WorkoutCard({ workout }) {
         <div className="flex items-start justify-between">
           <div>
             <p className="flex items-center gap-2 font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              {workout.color && <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: workout.color }} />}
+              {workout.color && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: workout.color }} />}
               {workout.name}
             </p>
             <p className="mt-0.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -233,12 +233,12 @@ export default function WorkoutCard({ workout }) {
             <ShareButton
               data={shareData}
               label=""
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
               style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
             />
             <button
               onClick={handleDelete}
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
               style={{ background: 'var(--color-ivory)' }}
               aria-label="Delete workout"
             >

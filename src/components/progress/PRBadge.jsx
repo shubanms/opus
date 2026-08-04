@@ -8,7 +8,7 @@ export default function PRBadge({ label, value, unit = 'kg' }) {
       style={{
         background: 'var(--color-gold)',
         color: 'var(--color-obsidian)',
-        animation: 'goldPulse 1.6s var(--ease-out) 1',
+        animation: 'goldPulse 1.6s var(--opus-ease-out) 1',
       }}
     >
       <Trophy size={14} />

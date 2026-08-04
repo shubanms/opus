@@ -108,7 +108,7 @@ export default function ProfilePage() {
           </div>
           <button
             onClick={() => navigate('/settings')}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
             style={{ background: 'var(--color-ivory)' }}
             aria-label="Settings"
           >

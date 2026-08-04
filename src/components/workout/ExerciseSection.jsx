@@ -58,7 +58,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
             </p>
           )}
         </div>
-        <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+        <div className="ml-2 flex shrink-0 items-center gap-2">
           <div className="flex flex-col">
             <button
               onClick={onMoveUp}
@@ -148,7 +148,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--color-ivory)' }}>
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${progress * 100}%`, background: progress >= 1 ? 'var(--color-sage)' : 'var(--color-gold)', transition: 'width .4s var(--ease-out)' }}
+                    style={{ width: `${progress * 100}%`, background: progress >= 1 ? 'var(--color-sage)' : 'var(--color-gold)', transition: 'width .4s var(--opus-ease-out)' }}
                   />
                 </div>
               )}

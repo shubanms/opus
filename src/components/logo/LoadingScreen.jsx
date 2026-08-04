@@ -8,22 +8,22 @@ export default function LoadingScreen({ fadingOut = false }) {
       style={{
         background: 'var(--color-obsidian)',
         opacity: fadingOut ? 0 : 1,
-        transition: 'opacity 600ms var(--ease-out)',
+        transition: 'opacity 600ms var(--opus-ease-out)',
       }}
     >
-      <div style={{ animation: 'scaleIn 600ms var(--ease-out) 300ms both' }}>
+      <div style={{ animation: 'scaleIn 600ms var(--opus-ease-out) 300ms both' }}>
         <OpusMark size={200} dark animate />
       </div>
 
       <h1
-        className="font-display text-chalk"
+        className="font-display text-surface"
         style={{
           marginTop: 'var(--space-8)',
           fontSize: 52,
           fontWeight: 700,
           letterSpacing: 18,
           textIndent: 18,
-          animation: 'fadeSlideUp 700ms var(--ease-out) 2000ms both',
+          animation: 'fadeSlideUp 700ms var(--opus-ease-out) 2000ms both',
         }}
       >
         OPUS
@@ -38,7 +38,7 @@ export default function LoadingScreen({ fadingOut = false }) {
           textIndent: 5,
           textTransform: 'uppercase',
           color: 'var(--color-ash)',
-          animation: 'fadeIn 600ms var(--ease-out) 2600ms both',
+          animation: 'fadeIn 600ms var(--opus-ease-out) 2600ms both',
         }}
       >
         Build your masterpiece.

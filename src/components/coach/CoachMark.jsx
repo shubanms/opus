@@ -30,13 +30,13 @@ export default function CoachMark() {
         className="anim-fade-slide-up pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl px-4 py-3"
         style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}
       >
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
           <Lightbulb size={16} style={{ color: 'var(--color-obsidian)' }} />
         </div>
         <p className="flex-1 font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-inverse)' }}>{tip}</p>
         <button
           onClick={() => markSeen(pathname)}
-          className="flex-shrink-0 rounded-lg px-3 py-1.5 font-sans text-[11px] font-semibold"
+          className="shrink-0 rounded-lg px-3 py-1.5 font-sans text-[11px] font-semibold"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
         >
           Got it

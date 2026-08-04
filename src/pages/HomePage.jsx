@@ -43,8 +43,8 @@ function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
         </p>
       </div>
       <div
-        className="ml-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-        style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.6s var(--ease-out) infinite' }}
+        className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.6s var(--opus-ease-out) infinite' }}
       >
         <Icon size={16} strokeWidth={2.4} style={{ color: 'var(--color-obsidian)' }} />
       </div>
@@ -163,7 +163,7 @@ export default function HomePage() {
               </p>
             </div>
             {profile?.streak > 0 && (
-              <span className="flex flex-shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold" style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}>
+              <span className="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold" style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}>
                 <Flame size={12} />{profile.streak}
               </span>
             )}
@@ -251,7 +251,7 @@ export default function HomePage() {
             className="flex items-center gap-3 rounded-2xl px-5 py-4"
             style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
           >
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
               <Moon size={16} style={{ color: 'var(--color-sage)' }} />
             </div>
             <div className="flex-1">

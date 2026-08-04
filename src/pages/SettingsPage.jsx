@@ -28,13 +28,13 @@ function Switch({ on, onChange, disabled }) {
   return (
     <button
       onClick={() => !disabled && onChange(!on)}
-      className="relative h-6 w-10 flex-shrink-0 rounded-full"
+      className="relative h-6 w-10 shrink-0 rounded-full"
       style={{ background: on && !disabled ? 'var(--color-gold)' : 'var(--color-ivory)', opacity: disabled ? 0.4 : 1 }}
       aria-pressed={on}
     >
       <span
         className="absolute top-0.5 h-5 w-5 rounded-full"
-        style={{ background: 'var(--color-text-inverse)', left: on ? 18 : 2, transition: 'left 160ms var(--ease-out)', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+        style={{ background: 'var(--color-text-inverse)', left: on ? 18 : 2, transition: 'left 160ms var(--opus-ease-out)', boxShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
       />
     </button>
   );

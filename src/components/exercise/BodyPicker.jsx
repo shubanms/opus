@@ -40,7 +40,7 @@ export default function BodyPicker({ selected, onSelect }) {
             <button
               key={key}
               onClick={() => onSelect(selected === key ? null : key)}
-              className="flex-shrink-0 rounded-full px-3 py-1.5 font-sans text-xs font-medium"
+              className="shrink-0 rounded-full px-3 py-1.5 font-sans text-xs font-medium"
               style={{
                 background: selected === key ? 'var(--color-gold)' : 'var(--color-ivory)',
                 color: selected === key ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
@@ -55,7 +55,7 @@ export default function BodyPicker({ selected, onSelect }) {
         {/* Toggle body model */}
         <button
           onClick={() => setShowModel((v) => !v)}
-          className="flex-shrink-0 flex h-8 w-8 items-center justify-center rounded-full"
+          className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full"
           style={{ background: showModel ? 'var(--color-obsidian)' : 'var(--color-ivory)' }}
           aria-label="Toggle body map"
         >

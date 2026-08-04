@@ -100,15 +100,15 @@
 
 /* Utility animation classes */
 .anim-fade-slide-up {
-  animation: fadeSlideUp var(--dur-enter) var(--ease-out) both;
+  animation: fadeSlideUp var(--dur-enter) var(--opus-ease-out) both;
 }
 
 .anim-fade-in {
-  animation: fadeIn var(--dur-standard) var(--ease-out) both;
+  animation: fadeIn var(--dur-standard) var(--opus-ease-out) both;
 }
 
 .anim-tick-up {
-  animation: tickUp var(--dur-standard) var(--ease-out) both;
+  animation: tickUp var(--dur-standard) var(--opus-ease-out) both;
 }
 
 @keyframes spin {
@@ -131,7 +131,7 @@
 }
 
 .anim-breathe {
-  animation: breathe 6s var(--ease-out) infinite;
+  animation: breathe 6s var(--opus-ease-out) infinite;
   transform-origin: center;
 }
 

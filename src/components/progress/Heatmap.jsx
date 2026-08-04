@@ -34,7 +34,7 @@ export default function Heatmap({ days }) {
             <div
               key={cell.iso}
               title={cell.iso}
-              className="h-3 w-3 flex-shrink-0 rounded-sm"
+              className="h-3 w-3 shrink-0 rounded-sm"
               style={{
                 background: cell.future
                   ? 'transparent'

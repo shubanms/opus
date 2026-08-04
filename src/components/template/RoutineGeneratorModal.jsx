@@ -145,7 +145,7 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
                 return (
                   <div key={s.exerciseId} className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
                     <span className="truncate font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>{ex?.name ?? 'Exercise'}</span>
-                    <span className="ml-2 flex-shrink-0 font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+                    <span className="ml-2 shrink-0 font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                       {s.targetSets}×{s.targetReps}
                     </span>
                   </div>

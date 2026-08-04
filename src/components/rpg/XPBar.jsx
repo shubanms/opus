@@ -31,7 +31,7 @@ export default function XPBar({ totalXp = 0, showLabel = true }) {
           style={{
             width: `${Math.round(width)}%`,
             background: 'var(--color-gold)',
-            transition: 'width 1.1s var(--ease-out)',
+            transition: 'width 1.1s var(--opus-ease-out)',
           }}
         />
       </div>

@@ -225,7 +225,7 @@ export default function TemplateBuilder({ isOpen, onClose, editing = null }) {
               <span className="truncate font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
                 {ex.name}
               </span>
-              <div className="ml-2 flex flex-shrink-0 items-center gap-1.5">
+              <div className="ml-2 flex shrink-0 items-center gap-1.5">
                 <button onClick={() => togglePin(ex.id)} aria-label={ex.pinned ? 'Unpin (allow shuffle)' : 'Pin (keep on shuffle)'}>
                   <Pin size={14} fill={ex.pinned ? 'var(--color-gold)' : 'none'} style={{ color: ex.pinned ? 'var(--color-gold)' : 'var(--color-ash)' }} />
                 </button>

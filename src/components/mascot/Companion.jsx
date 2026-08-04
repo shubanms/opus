@@ -66,13 +66,16 @@ export default function Companion({ autoGreet = true }) {
 
   return (
     <div className="relative mb-5 flex flex-col items-center">
-      {/* Speech bubble */}
+      {/* Speech bubble. The inline transform owns the horizontal centring — a
+          `-translate-x-1/2` utility here would double it, because Tailwind v4
+          compiles translate utilities to the standalone `translate` property,
+          which composes with `transform` rather than being overridden by it. */}
       <div
-        className="pointer-events-none absolute left-1/2 top-0 z-10 -translate-x-1/2"
+        className="pointer-events-none absolute left-1/2 top-0 z-10"
         style={{
           opacity: line ? 1 : 0,
           transform: `translate(-50%, ${line ? '0' : '6px'})`,
-          transition: 'opacity var(--dur-standard) var(--ease-out), transform var(--dur-standard) var(--ease-out)',
+          transition: 'opacity var(--dur-standard) var(--opus-ease-out), transform var(--dur-standard) var(--opus-ease-out)',
         }}
       >
         <div

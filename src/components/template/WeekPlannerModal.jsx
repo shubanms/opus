@@ -149,7 +149,7 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
                 {day.exercises.map((s) => (
                   <div key={s.exerciseId} className="flex items-center justify-between">
                     <span className="truncate font-sans text-xs" style={{ color: 'var(--color-text-primary)' }}>{exById[s.exerciseId]?.name ?? 'Exercise'}</span>
-                    <span className="ml-2 flex-shrink-0 font-mono text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>{s.targetSets}×{s.targetReps} · {s.targetRest}s</span>
+                    <span className="ml-2 shrink-0 font-mono text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>{s.targetSets}×{s.targetReps} · {s.targetRest}s</span>
                   </div>
                 ))}
               </div>

@@ -49,7 +49,7 @@ export default function Tour() {
       >
         <div
           className="flex h-20 w-20 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.4s var(--ease-out) infinite' }}
+          style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.4s var(--opus-ease-out) infinite' }}
         >
           <Icon size={34} style={{ color: 'var(--color-obsidian)' }} />
         </div>
@@ -70,7 +70,7 @@ export default function Tour() {
             style={{
               width: idx === i ? 20 : 8,
               background: idx === i ? 'var(--color-gold)' : 'var(--color-stone)',
-              transition: 'width var(--dur-standard) var(--ease-out)',
+              transition: 'width var(--dur-standard) var(--opus-ease-out)',
             }}
           />
         ))}

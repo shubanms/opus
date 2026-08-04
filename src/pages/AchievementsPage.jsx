@@ -30,7 +30,7 @@ export default function AchievementsPage() {
               style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)', opacity: it.unlocked ? 1 : 0.85 }}
             >
               <div
-                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                 style={{ background: it.unlocked ? 'var(--color-gold)' : 'var(--color-ivory)' }}
               >
                 {it.unlocked

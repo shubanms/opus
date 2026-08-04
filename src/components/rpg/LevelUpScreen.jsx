@@ -18,13 +18,13 @@ export default function LevelUpScreen({ level, title, onDismiss }) {
   return createPortal(
     <div
       className="fixed inset-0 z-[60] flex flex-col items-center justify-center px-8"
-      style={{ background: 'var(--color-obsidian)', animation: 'fadeIn 300ms var(--ease-out)' }}
+      style={{ background: 'var(--color-obsidian)', animation: 'fadeIn 300ms var(--opus-ease-out)' }}
       onClick={onDismiss}
     >
       <Particles count={28} />
       <p
         className="font-sans text-xs font-semibold uppercase tracking-[0.3em]"
-        style={{ color: 'var(--color-gold)', animation: 'fadeSlideUp 500ms var(--ease-out)' }}
+        style={{ color: 'var(--color-gold)', animation: 'fadeSlideUp 500ms var(--opus-ease-out)' }}
       >
         Level Up
       </p>
@@ -34,19 +34,19 @@ export default function LevelUpScreen({ level, title, onDismiss }) {
         style={{
           fontSize: 120,
           color: 'var(--color-gold)',
-          animation: 'scaleIn 600ms var(--ease-out)',
+          animation: 'scaleIn 600ms var(--opus-ease-out)',
         }}
       >
         {level}
       </p>
 
-      <div className="mt-6" style={{ animation: 'fadeSlideUp 700ms var(--ease-out) 400ms both' }}>
+      <div className="mt-6" style={{ animation: 'fadeSlideUp 700ms var(--opus-ease-out) 400ms both' }}>
         <TitleBadge title={title} />
       </div>
 
       <p
         className="mt-10 font-display text-2xl italic"
-        style={{ color: 'var(--color-ash)', animation: 'fadeIn 800ms var(--ease-out) 800ms both' }}
+        style={{ color: 'var(--color-ash)', animation: 'fadeIn 800ms var(--opus-ease-out) 800ms both' }}
       >
         Build your masterpiece.
       </p>

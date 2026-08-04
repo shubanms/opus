@@ -17,7 +17,7 @@ function Rung({ reached, current, left, right, sub }) {
       }}
     >
       <div
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
         style={{ background: current ? 'var(--color-obsidian)' : reached ? 'var(--color-gold)' : 'var(--color-ivory)' }}
       >
         {reached && !current

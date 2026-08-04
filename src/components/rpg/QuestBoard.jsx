@@ -56,7 +56,7 @@ export default function QuestBoard() {
               <div key={q.id} className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
                 <div className="flex items-center gap-2.5">
                   <div
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
                     style={{ background: q.claimed ? 'var(--color-sage)' : 'var(--color-chalk)' }}
                   >
                     {q.claimed
@@ -70,14 +70,14 @@ export default function QuestBoard() {
                   {claimable ? (
                     <button
                       onClick={() => handleClaim(q)}
-                      className="flex-shrink-0 rounded-lg px-3 py-1.5 font-sans text-xs font-semibold"
-                      style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', animation: 'goldPulse 2.6s var(--ease-out) infinite' }}
+                      className="shrink-0 rounded-lg px-3 py-1.5 font-sans text-xs font-semibold"
+                      style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', animation: 'goldPulse 2.6s var(--opus-ease-out) infinite' }}
                     >
                       +{q.xp} XP
                     </button>
                   ) : (
                     <span
-                      className="flex-shrink-0 font-mono text-xs"
+                      className="shrink-0 font-mono text-xs"
                       style={{ color: q.claimed ? 'var(--color-sage)' : 'var(--color-text-secondary)' }}
                     >
                       {q.claimed ? 'Claimed' : `${fmt(q, q.current)}/${fmt(q, q.target)}`}
@@ -88,7 +88,7 @@ export default function QuestBoard() {
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--color-chalk)' }}>
                     <div
                       className="h-full rounded-full"
-                      style={{ width: `${Math.round(q.pct * 100)}%`, background: q.done ? 'var(--color-gold)' : 'var(--color-sage)', transition: 'width 0.8s var(--ease-out)' }}
+                      style={{ width: `${Math.round(q.pct * 100)}%`, background: q.done ? 'var(--color-gold)' : 'var(--color-sage)', transition: 'width 0.8s var(--opus-ease-out)' }}
                     />
                   </div>
                 )}

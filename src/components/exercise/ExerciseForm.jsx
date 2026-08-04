@@ -11,7 +11,7 @@ const EQUIPMENT = ['barbell', 'dumbbell', 'bodyweight', 'cable', 'machine'];
 const fieldStyle = {
   background: 'var(--color-ivory)',
   color: 'var(--color-text-primary)',
-  borderRadius: 'var(--radius-md)',
+  borderRadius: 'var(--opus-radius-md)',
 };
 
 export default function ExerciseForm({ onSave, onCancel }) {

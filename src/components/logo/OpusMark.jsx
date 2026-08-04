@@ -58,7 +58,7 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
           objectFit: 'contain',
           transform: 'translate(-50%, -50%)',
           opacity: showImage ? 1 : 0,
-          transition: 'opacity 600ms var(--ease-out)',
+          transition: 'opacity 600ms var(--opus-ease-out)',
         }}
       />
       <svg
@@ -81,7 +81,7 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
               ? {
                   strokeDasharray: CIRCUMFERENCE,
                   strokeDashoffset: CIRCUMFERENCE,
-                  animation: 'ringDraw 900ms var(--ease-out) 300ms forwards',
+                  animation: 'ringDraw 900ms var(--opus-ease-out) 300ms forwards',
                 }
               : undefined
           }

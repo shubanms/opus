@@ -3,7 +3,7 @@
 The efficiency reference: what exists and where. Check here before grepping. Keep updated when adding a table, field, util, hook, route, store, or localStorage key.
 
 ## Stack
-Vite 5 · React 18 · Tailwind v3 · Dexie.js (IndexedDB) · Zustand · React Router v6 · Recharts · react-body-highlighter · lucide-react · vite-plugin-pwa. Vitest (node env) for unit tests, Biome for linting, Playwright for E2E (local only, not yet in CI). Deploy: GitHub Pages via `.github/workflows/deploy.yml` (test job runs **lint + test + build** and gates build-and-deploy; base path `/opus/`).
+Vite 5 · React 18 · Tailwind v4 (CSS-first, no tailwind.config.js) · Dexie.js (IndexedDB) · Zustand · React Router v6 · Recharts · react-body-highlighter · lucide-react · vite-plugin-pwa. Vitest (node env) for unit tests, Biome for linting, Playwright for E2E (local only, not yet in CI). Deploy: GitHub Pages via `.github/workflows/deploy.yml` (test job runs **lint + test + build** and gates build-and-deploy; base path `/opus/`).
 
 **Repo shape:** web-only. `src/` · `docs/` · `public/` · `tests/e2e/` · `scripts/` + root config. There is no native app, no `packages/`, and no monorepo tooling — `src/utils/*` is the single source of truth for pure logic.
 
@@ -51,3 +51,6 @@ useWorkout(useWorkouts/useLastSets/useWorkoutSets/useShareData) · useExercises 
 - **Week math**: `weekKeyOf/weekStartMs` (quests.js, Monday-aligned). **Month/year**: wrapped.js + snapshots `monthKeyOf`.
 - **Delete-revert**: deleteWorkout → recomputePRs + reconcileAchievements + reconcileQuests + recomputeProfile.
 - **Persisted prefs**: settingsStore `load()`/`persist()` localStorage pattern.
+- **Styling**: Tailwind v4 is configured in `src/index.css` via `@theme inline`; there is no `tailwind.config.js` and no `content` array (v4 auto-detects). `styles/tokens.css` stays the single source of colour truth and the theme block only *points* at it, so every Tailwind colour utility is theme-aware. Semantic utility names: `surface`/`surface-alt`/`panel`/`canvas`/`ink`/`ink-soft`/`ink-inverse`/`accent`/`warn`/`good`/`muted`.
+- **Token naming — do not reuse Tailwind namespaces.** Project tokens are `--opus-radius-*` and `--opus-ease-out` precisely because `--radius-*` and `--ease-*` are Tailwind v4 theme namespaces. `tokens.css` is unlayered so it silently *overrides* anything Tailwind puts in `@layer theme` — a plain `--radius-2xl` in tokens.css re-sizes every `rounded-2xl` in the app. Name new tokens `--opus-*` unless you intend that.
+- **Transforms**: v4 compiles `translate-*`/`scale-*`/`rotate-*` to the standalone `translate`/`scale`/`rotate` properties, which **compose with** an inline `transform` instead of losing to it. Never put a transform utility and an inline `transform` on the same element.

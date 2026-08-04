@@ -101,7 +101,7 @@ export default function TemplatesPage() {
         </div>
         <button
           onClick={openNew}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-gold)' }}
           aria-label="New routine"
         >
@@ -114,21 +114,21 @@ export default function TemplatesPage() {
       <div className="no-scrollbar -mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1">
         <button
           onClick={() => setProgramsOpen(true)}
-          className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
         >
           <BookOpen size={15} style={{ color: 'var(--color-gold)' }} /> Programs
         </button>
         <button
           onClick={() => setPlanOpen(true)}
-          className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
         >
           <CalendarRange size={15} style={{ color: 'var(--color-gold)' }} /> Plan week
         </button>
         <button
           onClick={() => setGenOpen(true)}
-          className="flex h-10 flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
+          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
         >
           <Sparkles size={15} style={{ color: 'var(--color-gold)' }} /> Auto

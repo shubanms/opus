@@ -32,7 +32,7 @@ export default function Particles({ count = 22 }) {
             background: b.color,
             '--tx': `${b.tx}px`,
             '--ty': `${b.ty}px`,
-            animation: `particleFly ${b.dur}ms var(--ease-out) ${b.delay}ms forwards`,
+            animation: `particleFly ${b.dur}ms var(--opus-ease-out) ${b.delay}ms forwards`,
           }}
         />
       ))}

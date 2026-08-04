@@ -146,7 +146,7 @@ export default function ExerciseDetailPage() {
         </h1>
         <button
           onClick={() => toggleFavorite(exercise.id)}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-ivory)' }}
           aria-label="Toggle favorite"
         >

@@ -17,8 +17,8 @@ export default function BottomNav() {
         background: 'var(--color-obsidian)',
         paddingTop: 'var(--space-3)',
         paddingBottom: 'calc(var(--space-3) + env(safe-area-inset-bottom))',
-        borderTopLeftRadius: 'var(--radius-xl)',
-        borderTopRightRadius: 'var(--radius-xl)',
+        borderTopLeftRadius: 'var(--opus-radius-xl)',
+        borderTopRightRadius: 'var(--opus-radius-xl)',
       }}
     >
       {tabs.map(({ to, label, Icon, center }) =>
@@ -42,7 +42,7 @@ export default function BottomNav() {
                   style={{
                     color: isActive ? 'var(--color-gold)' : 'var(--color-ash)',
                     transform: isActive ? 'translateY(-2px) scale(1.12)' : 'none',
-                    transition: 'transform var(--dur-standard) var(--ease-out), color var(--dur-standard)',
+                    transition: 'transform var(--dur-standard) var(--opus-ease-out), color var(--dur-standard)',
                   }}
                 />
                 <span
