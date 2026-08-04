@@ -16,7 +16,7 @@ export function levelCap(stats) {
   for (const b of BOSSES) {
     if (!stats || !b.test(stats)) return b.gate;
   }
-  return Infinity;
+  return Number.POSITIVE_INFINITY;
 }
 
 export function cappedLevel(rawLevel, stats) {

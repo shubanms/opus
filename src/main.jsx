@@ -5,6 +5,7 @@ import { router } from './router.jsx';
 import { db } from './db/db.js';
 import useSettingsStore from './store/settingsStore.js';
 import { applyTheme } from './utils/theme.js';
+import { requestPersistence } from './utils/storage.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import DbRecovery from './components/DbRecovery.jsx';
 import './styles/tokens.css';
@@ -16,6 +17,11 @@ applyTheme(useSettingsStore.getState().theme);
 window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
   if (useSettingsStore.getState().theme === 'system') applyTheme('system');
 });
+
+// Ask the browser not to evict our IndexedDB. There is no backend, so eviction
+// would destroy the user's entire history. Fire-and-forget: it never prompts
+// and never throws, and onboarding asks again once the user has engaged.
+requestPersistence();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

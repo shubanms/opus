@@ -4,6 +4,8 @@ Standing rules for all current and future work. (See `../CLAUDE.md` for the quic
 
 ## Hard constraints
 - **100% local-first PWA** — no backend, accounts, sync, or cloud. No leaderboards/multiplayer. Social = offline shareable cards only.
+- **Web only.** The native app, `@opus/core`, and the Capacitor project were deleted on 2026-08-04. Don't re-add native code, and don't split pure logic into a shared package — `src/utils/*` is the one source of truth.
+- **Local-only means storage is the app's weakest point.** `utils/storage.js` asks the browser to make IndexedDB persistent; keep that call on any new first-run path, and never weaken export/import.
 - **Weights stored in kg internally**; convert only at display via `utils/units.js` (`toDisplay`/`toKg`/`unitLabel`).
 - **DB migrations** = a new append-only `db.version(n)` block in `src/db/db.js`. Never edit a shipped version. Index only fields you query; everything else is unindexed.
 
@@ -23,9 +25,12 @@ Standing rules for all current and future work. (See `../CLAUDE.md` for the quic
 ## Wow in every feature (standing rule)
 Weave in **subtle animation, moving parts, and sound** where it fits — never gratuitous. Always gated by `settingsStore.effects`/`sound` and `prefers-reduced-motion`; keep motion GPU-friendly (opacity/transform). Reuse: `fx/Particles`, `fx/CountUp`, `useHaptics`, `utils/sound.js` `playChime`, `styles/animations.css`. Add new chimes/keyframes as needed.
 
-## Testing
-- New **pure logic → `src/utils/*.js` with a co-located `*.test.js`** (Vitest, node env). CI's `test` job gates every PR.
-- DOM/DB/React code is not node-testable here — extract the pure core and test that; verify the rest by code review + on-device checklist.
+## Testing & quality gates
+- CI's `test` job runs **`npm run lint` → `npm test` → `npm run build`**, and gates every PR. All three must pass.
+- **Lint:** Biome, configured in `biome.jsonc`. Linter on, **formatter off** (turning it on reformats all 199 files — that belongs in its own PR). Errors block the build; the ~234 existing warnings (`useButtonType`, `useExhaustiveDependencies`, `noArrayIndexKey`, label/keyboard a11y) are tracked debt. Don't add new ones.
+- **Build in CI matters:** vitest runs in a node env and never parses JSX, so a broken component passes the unit tests. The build step is what catches it — on the PR, not on main.
+- New **pure logic → `src/utils/*.js` with a co-located `*.test.js`** (Vitest, node env).
+- DOM/DB/React code is not node-testable here — extract the pure core and test that; verify the rest by code review + on-device checklist. Playwright E2E lives in `tests/e2e/` and runs locally via `npm run test:e2e` (adding it to CI is an open follow-up).
 - When a feature has real logic (math, selection, formatting, state transitions), pull it into a pure function so it can be tested.
 
 ## Workflow

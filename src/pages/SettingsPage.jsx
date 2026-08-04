@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, ShieldCheck } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import EquipmentModal from '../components/settings/EquipmentModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -14,6 +14,13 @@ import { playChime } from '../utils/sound.js';
 import { exportData, importData, exportSetsCsv, exportPdf } from '../utils/dataActions.js';
 import { logBodyStat } from '../utils/healthActions.js';
 import { toDisplay, toKg, unitLabel } from '../utils/units.js';
+import { describePersistence, persistenceState, PERSIST_UNSUPPORTED } from '../utils/storage.js';
+
+const persistTone = {
+  good: 'var(--color-sage)',
+  warn: 'var(--color-ember)',
+  neutral: 'var(--color-ash)',
+};
 
 const SEXES = ['Male', 'Female', 'Other'];
 
@@ -48,6 +55,15 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [reset, setReset] = useState(false);
   const [equip, setEquip] = useState(false);
+  const [persist, setPersist] = useState(PERSIST_UNSUPPORTED);
+
+  useEffect(() => {
+    let alive = true;
+    persistenceState().then((s) => { if (alive) setPersist(s); });
+    return () => { alive = false; };
+  }, []);
+
+  const storageInfo = describePersistence(persist);
   const { settings, perm, update, toggleType, setMaster } = useNotifications();
   const { profile } = useRPG();
 
@@ -194,7 +210,7 @@ export default function SettingsPage() {
           <input
             key={stepGoal}
             defaultValue={stepGoal}
-            onBlur={(e) => setStepGoal(Math.max(0, parseInt(e.target.value) || 0))}
+            onBlur={(e) => setStepGoal(Math.max(0, Number.parseInt(e.target.value) || 0))}
             type="number" inputMode="numeric"
             className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
@@ -205,7 +221,7 @@ export default function SettingsPage() {
           <input
             key={waterGoal}
             defaultValue={waterGoal}
-            onBlur={(e) => setWaterGoal(Math.max(1, parseInt(e.target.value) || 1))}
+            onBlur={(e) => setWaterGoal(Math.max(1, Number.parseInt(e.target.value) || 1))}
             type="number" inputMode="numeric"
             className="w-24 rounded-lg px-3 py-1.5 text-right font-mono text-sm outline-none"
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
@@ -375,6 +391,27 @@ export default function SettingsPage() {
         <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           Back up everything to a file, or restore from one.
         </p>
+
+        {/* Storage protection — IndexedDB is evictable unless the browser
+            grants persistence, and this app has no server-side copy. */}
+        <div
+          className="mb-3 flex items-start gap-2 rounded-xl p-3"
+          style={{ background: 'var(--color-ivory)' }}
+        >
+          <ShieldCheck
+            size={15}
+            className="mt-0.5 shrink-0"
+            style={{ color: persistTone[storageInfo.tone] }}
+          />
+          <div>
+            <p className="font-sans text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              Storage: {storageInfo.label}
+            </p>
+            <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {storageInfo.detail}
+            </p>
+          </div>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={exportData}

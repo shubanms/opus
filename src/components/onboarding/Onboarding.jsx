@@ -8,6 +8,7 @@ import { useExercises } from '../../hooks/useExercises.js';
 import { createTemplate } from '../../utils/templateActions.js';
 import { makeRng } from '../../utils/routineGenerator.js';
 import { planWeek, SPLIT_LIST } from '../../utils/weekPlanner.js';
+import { requestPersistence } from '../../utils/storage.js';
 
 const SEXES = ['Male', 'Female', 'Other'];
 const LEVELS = ['beginner', 'intermediate', 'advanced'];
@@ -17,8 +18,16 @@ export default function Onboarding() {
   const updateProfile = useUserStore((s) => s.updateProfile);
   const setBarWeight = useSettingsStore((s) => s.setBarWeight);
   const setUnit = useSettingsStore((s) => s.setUnit);
-  const completeOnboarding = useSettingsStore((s) => s.completeOnboarding);
+  const markOnboarded = useSettingsStore((s) => s.completeOnboarding);
   const allExercises = useExercises();
+
+  // Second (and best) chance to secure the database: browsers grant persistent
+  // storage far more readily once the origin has real engagement, so we ask
+  // again here rather than relying only on the quiet startup attempt.
+  function completeOnboarding() {
+    requestPersistence();
+    markOnboarded();
+  }
 
   const [step, setStep] = useState(0);
   const [unit, setUnitLocal] = useState('kg');

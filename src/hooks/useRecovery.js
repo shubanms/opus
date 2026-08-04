@@ -43,7 +43,7 @@ export function useRecovery() {
 
     let neglected = null;
     for (const m of ALL_MUSCLES) {
-      const score = byMuscle[m].daysSince == null ? Infinity : byMuscle[m].daysSince;
+      const score = byMuscle[m].daysSince == null ? Number.POSITIVE_INFINITY : byMuscle[m].daysSince;
       if (!neglected || score > neglected.score) neglected = { muscle: m, daysSince: byMuscle[m].daysSince, score };
     }
 

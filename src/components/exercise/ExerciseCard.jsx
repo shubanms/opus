@@ -39,7 +39,7 @@ export default function ExerciseCard({ exercise, onTap, selected = false, showAr
       <div className="relative flex-shrink-0">
         <div
           className="flex h-10 w-10 items-center justify-center rounded-full"
-          style={{ background: hue + '22' }}
+          style={{ background: `${hue}22` }}
         >
           <Icon size={18} style={{ color: hue }} />
         </div>
@@ -69,7 +69,7 @@ export default function ExerciseCard({ exercise, onTap, selected = false, showAr
           {exercise.difficulty && (
             <span
               className="flex-shrink-0 rounded-full px-1.5 py-0.5 font-sans text-xs capitalize"
-              style={{ background: diffColor + '22', color: diffColor }}
+              style={{ background: `${diffColor}22`, color: diffColor }}
             >
               {exercise.difficulty}
             </span>

@@ -9,7 +9,7 @@ describe('levelCap', () => {
   it('caps at the first uncleared gate', () => {
     expect(levelCap(none)).toBe(10);
     expect(levelCap(past10)).toBe(20);
-    expect(levelCap(all)).toBe(Infinity);
+    expect(levelCap(all)).toBe(Number.POSITIVE_INFINITY);
   });
   it('caps at 10 with no stats', () => {
     expect(levelCap(null)).toBe(10);

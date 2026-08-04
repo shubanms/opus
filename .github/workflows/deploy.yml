@@ -25,7 +25,12 @@ jobs:
         with:
           node-version: 20
       - run: npm install --no-audit --no-fund
+      - run: npm run lint
       - run: npm test
+      # The unit tests run in a node env and never parse JSX, so a broken
+      # component only surfaces at build time. Building here keeps that
+      # failure on the PR instead of on main after a merge.
+      - run: npm run build
 
   # Only builds + publishes on a push to main, and only if tests passed.
   build-and-deploy:

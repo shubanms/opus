@@ -58,7 +58,7 @@ export default function TemplatesPage() {
       placeholder: 'Routine name',
       defaultValue: template.name,
     });
-    if (name != null && name.trim() && name.trim() !== template.name) {
+    if (name?.trim() && name.trim() !== template.name) {
       await renameTemplate(template.id, name);
     }
   }

@@ -10,7 +10,7 @@ export default function CountUp({ value = 0, duration = 900, format = (n) => Mat
     cancelAnimationFrame(raf.current);
     const tick = (t) => {
       const p = Math.min((t - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
+      const eased = 1 - (1 - p) ** 3;
       setN(value * eased);
       if (p < 1) raf.current = requestAnimationFrame(tick);
     };

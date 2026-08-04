@@ -1,0 +1,56 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "include": ["src/**/*.js", "src/**/*.jsx"]
+  },
+  "organizeImports": { "enabled": false },
+  "formatter": {
+    // Deliberately off for now. Enabling it reformats all 199 files at once,
+    // which would bury real changes in review noise. Turn on in its own PR.
+    "enabled": false
+  },
+  "javascript": {
+    "globals": ["vi", "describe", "it", "expect", "beforeEach", "afterEach"]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        // Real debt, tracked as warnings so CI stays green while we work
+        // through it. useButtonType has no autofix and 192 call sites; the app
+        // has no <form> elements, so nothing submits by accident today.
+        "useButtonType": "warn",
+        "noLabelWithoutControl": "warn",
+        "useKeyWithClickEvents": "warn",
+        // Icons here are decorative and already have aria-labels on their button.
+        "noSvgWithoutTitle": "off",
+        // Autofocus in a bottom sheet is intentional on a phone.
+        "noAutofocus": "off"
+      },
+      "complexity": {
+        // forEach is idiomatic here; rewriting 13 call sites buys nothing.
+        "noForEach": "off"
+      },
+      "style": {
+        // Grouped declarators are used deliberately for the note-frequency
+        // table in sound.js and for loop accumulators. Splitting them reads
+        // worse, and the rule carries no correctness benefit.
+        "useSingleVarDeclarator": "off"
+      },
+      "correctness": {
+        // Needs per-hook judgement — adding a dep can introduce a render loop,
+        // so these get fixed individually rather than in bulk.
+        "useExhaustiveDependencies": "warn"
+      },
+      "suspicious": {
+        // Index keys are only used for static lists (chips, plate rows) today.
+        // Upgrade to error once those carry stable ids.
+        "noArrayIndexKey": "warn",
+        // `(bucket[key] ??= []).push(x)` is the grouping idiom used throughout
+        // the hooks. Splitting it into two statements reads worse, not better.
+        "noAssignInExpressions": "off"
+      }
+    }
+  }
+}

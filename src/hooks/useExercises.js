@@ -9,7 +9,7 @@ export function useExercises({ muscleGroup = null, search = '' } = {}) {
   }, []);
 
   const exercises = useLiveQuery(async () => {
-    let query = db.exercises;
+    const query = db.exercises;
     if (muscleGroup) {
       return query.where('muscleGroup').equals(muscleGroup).sortBy('name');
     }

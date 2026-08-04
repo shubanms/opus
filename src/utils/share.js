@@ -21,7 +21,7 @@ export async function shareCard(node, filename = 'opus-workout.png') {
   if (!blob) return;
   const file = new File([blob], filename, { type: 'image/png' });
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title: 'OPUS', text: 'Build your masterpiece.' });
       return;

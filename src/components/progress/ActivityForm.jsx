@@ -24,8 +24,8 @@ export default function ActivityForm({ isOpen, entry, onClose }) {
   async function save() {
     await logActivity({
       date,
-      steps: steps === '' ? 0 : Math.max(0, parseInt(steps) || 0),
-      water: water === '' ? 0 : Math.max(0, parseInt(water) || 0),
+      steps: steps === '' ? 0 : Math.max(0, Number.parseInt(steps) || 0),
+      water: water === '' ? 0 : Math.max(0, Number.parseInt(water) || 0),
     });
     onClose();
   }

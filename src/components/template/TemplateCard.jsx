@@ -75,7 +75,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
           {muscleGroups.map((m) => {
             const hue = MUSCLE_HUE[m] ?? '#8A8780';
             return (
-              <span key={m} className="rounded-full px-2 py-0.5 font-sans text-xs capitalize" style={{ background: hue + '22', color: hue }}>
+              <span key={m} className="rounded-full px-2 py-0.5 font-sans text-xs capitalize" style={{ background: `${hue}22`, color: hue }}>
                 {m.replace(/-/g, ' ')}
               </span>
             );

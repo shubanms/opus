@@ -47,7 +47,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
           </h3>
           <span
             className="mt-0.5 inline-block rounded-full px-2 py-0.5 font-sans text-xs capitalize"
-            style={{ background: hue + '22', color: hue }}
+            style={{ background: `${hue}22`, color: hue }}
           >
             {(muscleGroup ?? '').replace(/-/g, ' ')}
           </span>

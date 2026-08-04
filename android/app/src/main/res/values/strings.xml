@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Opus</string>
-    <string name="title_activity_main">Opus</string>
-    <string name="package_name">com.shubanms.opus</string>
-    <string name="custom_url_scheme">com.shubanms.opus</string>
-</resources>

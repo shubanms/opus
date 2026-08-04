@@ -3,16 +3,9 @@
 // delivery (gym nudge, weekly summary) needs push infrastructure we don't have.
 // Those toggles are preference-ready and fire on the relevant in-app event.
 //
-// Two delivery paths, transparent to callers:
-// - PWA / browser: navigator.serviceWorker.ready.showNotification(...) (required
-//   on Android; the `new Notification(...)` constructor is forbidden there).
-// - Capacitor APK: @capacitor/local-notifications via the native bridge —
-//   Service Workers don't register inside the WebView so the SW path hangs.
-
-import { Capacitor } from '@capacitor/core';
-
-const isNative = () => Capacitor?.isNativePlatform?.() ?? false;
-const loadLN = () => import('@capacitor/local-notifications').then((m) => m.LocalNotifications);
+// Delivery goes through navigator.serviceWorker.ready.showNotification(...),
+// which Android requires (the `new Notification(...)` constructor is forbidden
+// there); desktop browsers without a Service Worker fall back to the constructor.
 
 const SETTINGS_KEY = 'opus_notif_settings';
 const PROMPTED_KEY = 'opus_notif_prompted';
@@ -49,49 +42,19 @@ export function saveSettings(s) {
 }
 
 // Synchronous best-effort — used by the Settings UI to decide whether to
-// show the "Blocked in browser settings" hint. On native, we can't check
-// synchronously; assume 'default' so the toggle is usable. The actual
-// permission is requested at request/show time.
+// show the "Blocked in browser settings" hint.
 export function permission() {
-  if (isNative()) return 'default';
   return typeof Notification !== 'undefined' ? Notification.permission : 'unsupported';
 }
 
-// Async, accurate current permission — on native the sync `permission()` can't
-// read the real state (it returns 'default'), which left the Settings toggle
-// stuck off even when Android had already granted it. Callers resolve this on
-// mount to reflect the true state. No prompt is shown.
+// Async current permission. Callers resolve this on mount to reflect the true
+// state. No prompt is shown.
 export async function currentPermission() {
-  if (isNative()) {
-    try {
-      const LN = await loadLN();
-      const res = await LN.checkPermissions();
-      return res?.display === 'granted' ? 'granted'
-           : res?.display === 'denied'  ? 'denied'
-           : 'default';
-    } catch {
-      return 'default';
-    }
-  }
   if (typeof Notification === 'undefined') return 'unsupported';
   return Notification.permission;
 }
 
 export async function requestPermission() {
-  if (isNative()) {
-    try {
-      const LN = await loadLN();
-      // If the OS already granted it, checkPermissions returns 'granted' without
-      // a dialog — so an already-allowed app enables cleanly instead of stalling.
-      let res = await LN.checkPermissions();
-      if (res?.display !== 'granted') res = await LN.requestPermissions();
-      return res?.display === 'granted' ? 'granted'
-           : res?.display === 'denied'  ? 'denied'
-           : 'default';
-    } catch {
-      return 'default'; // plugin hiccup — don't hard-block the toggle
-    }
-  }
   if (typeof Notification === 'undefined') return 'unsupported';
   if (Notification.permission !== 'default') return Notification.permission;
   try { return await Notification.requestPermission(); } catch { return 'default'; }
@@ -111,24 +74,9 @@ function inDND(s) {
   return inQuietHours(s);
 }
 
-// Sends one notification through the right runtime:
-// - Native (Capacitor): @capacitor/local-notifications schedules immediately
-//   via Android NotificationManager. No SW, no constructor.
-// - PWA / browser: navigator.serviceWorker.ready.showNotification(...). Falls
-//   back to the constructor for desktop browsers without a SW.
+// Sends one notification via navigator.serviceWorker.ready.showNotification(...),
+// falling back to the constructor for desktop browsers without a SW.
 export async function showNotification(title, opts = {}) {
-  if (isNative()) {
-    const LN = await loadLN();
-    // Permissions are user-driven on native; if denied, schedule() will reject.
-    await LN.schedule({
-      notifications: [{
-        id: Math.floor(Math.random() * 2147483647),
-        title,
-        body: opts.body ?? '',
-      }],
-    });
-    return;
-  }
   if (typeof Notification === 'undefined') throw new Error('unsupported');
   if (Notification.permission !== 'granted') throw new Error('not-granted');
   const full = { icon: `${import.meta.env.BASE_URL}lifter.png`, ...opts };

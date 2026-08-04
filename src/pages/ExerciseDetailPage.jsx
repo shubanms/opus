@@ -70,7 +70,7 @@ export default function ExerciseDetailPage() {
   useEffect(() => {
     if (!exercise?.name) return;
     const ctrl = new AbortController();
-    const abs = (u) => (u && u.startsWith('/') ? `https://wger.de${u}` : u);
+    const abs = (u) => (u?.startsWith('/') ? `https://wger.de${u}` : u);
 
     async function loadDemo() {
       try {
@@ -160,7 +160,7 @@ export default function ExerciseDetailPage() {
         {exercise.difficulty && (
           <span
             className="rounded-full px-2 py-0.5 font-sans text-xs capitalize"
-            style={{ background: diffColor + '22', color: diffColor }}
+            style={{ background: `${diffColor}22`, color: diffColor }}
           >
             {exercise.difficulty}
           </span>

@@ -31,9 +31,14 @@ Vite · React 18 · Tailwind CSS v3 · Dexie.js (IndexedDB) · Zustand · React 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
+npm run lint     # Biome
+npm test         # Vitest unit tests
 npm run build    # production build → dist/
 npm run preview  # preview the build
+npm run test:e2e # Playwright end-to-end
 ```
+
+CI runs `lint`, `test` and `build` on every pull request.
 
 ## Deployment
 

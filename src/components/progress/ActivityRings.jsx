@@ -68,7 +68,7 @@ export default function ActivityRings() {
       defaultValue: steps ? String(steps) : '',
     });
     if (v !== null && v !== '') {
-      const next = Math.max(0, parseInt(v) || 0);
+      const next = Math.max(0, Number.parseInt(v) || 0);
       if (crossedGoal(steps, next, stepGoal)) celebrateGoal();
       setSteps(next);
     }

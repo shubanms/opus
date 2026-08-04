@@ -4,12 +4,16 @@
 > React 18 + Vite + Tailwind v3 · Dexie/IndexedDB · Zustand · React Router · Recharts ·
 > html2canvas · vite-plugin-pwa. 100% local, no backend. Live: https://shubanms.github.io/opus/
 
-## ⛔ FOCUS: PWA ONLY — native app is ON HOLD (set 2026-07-19)
-**Work exclusively in the web/PWA app (`src/`, `docs/`, root config). The native app is paused by the user's explicit instruction.**
-- **Do NOT touch, edit, create, build, or test anything under `apps/mobile/`** (the Expo/React Native app) — no code, no config, no docs, no PRs.
-- **Native parity is paused** — do not port web features to native or add native counterparts right now.
-- `packages/core/` (`@opus/core`, shared logic) is native-facing too — leave it alone unless the web genuinely needs it; the web uses its own `src/utils/*` copies, so PWA work does not require `packages/core` edits.
-- The user will set up a proper native environment later (their laptop/phone + Android Studio); native work resumes only when they explicitly say so.
+## FOCUS: PWA ONLY — native code has been REMOVED (2026-08-04)
+**This repo is the web/PWA app and nothing else** (`src/`, `docs/`, root config).
+- The Expo/React Native app (`apps/mobile/`), the shared `@opus/core` package (`packages/core/`), the Capacitor Android project (`android/`, `capacitor.config.json`), the native launcher `assets/`, and the `mobile-apk`/`android-release` workflows were all **deleted**. Native launcher icons went with them.
+- `src/utils/*` is now the single source of truth for pure logic — there is no second copy to keep in sync.
+- Recoverable from git history if native ever restarts; do not re-add it without an explicit ask.
+
+## Quality gates (every PR)
+`npm run lint` (Biome) · `npm test` (vitest) · `npm run build` — all three run in the CI `test` job.
+Biome config is `biome.jsonc`: linter on, **formatter off** (enabling it reformats all 199 files; that's its own PR).
+Errors block; ~234 known warnings (`useButtonType`, `useExhaustiveDependencies`, `noArrayIndexKey`, label/keyboard a11y) are tracked debt — don't add new ones.
 
 ## Start here (don't re-read the whole codebase)
 The `docs/` folder is the source of truth — read these first each session:

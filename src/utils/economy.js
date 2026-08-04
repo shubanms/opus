@@ -59,7 +59,7 @@ export function rollChest(seed, ownedIds = []) {
   const owned = new Set(ownedIds);
   const pool = COSMETICS.filter((c) => !owned.has(c.id));
   if (!pool.length) return null;
-  const weights = pool.map((c) => 1 / Math.pow((RARITY_ORDER[c.rarity] ?? 0) + 1, 2));
+  const weights = pool.map((c) => 1 / ((RARITY_ORDER[c.rarity] ?? 0) + 1) ** 2);
   const total = weights.reduce((a, b) => a + b, 0);
   let r = hashSeed(seed, 'chest') * total;
   for (let i = 0; i < pool.length; i++) {

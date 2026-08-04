@@ -62,12 +62,12 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   if (!exercise) return null;
 
   const showWeight = !isBodyweight || addWeight;
-  const weightNum = parseFloat(weight);
-  const repsNum = parseInt(reps);
+  const weightNum = Number.parseFloat(weight);
+  const repsNum = Number.parseInt(reps);
   const canLog = showWeight ? (weightNum > 0 || repsNum > 0) : repsNum > 0;
 
   function stepReps(d) {
-    setReps((r) => String(Math.max(0, (parseInt(r) || 0) + d)));
+    setReps((r) => String(Math.max(0, (Number.parseInt(r) || 0) + d)));
   }
 
   function handleLog() {

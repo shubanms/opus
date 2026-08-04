@@ -34,9 +34,9 @@ export default function CardioLogger({ exerciseId, onLogged }) {
 
   if (!exercise) return null;
 
-  const minutes = parseFloat(mins) || 0;
-  const speedKmh = imperial ? (parseFloat(speed) || 0) * KMH_PER_MPH : (parseFloat(speed) || 0);
-  const inclinePct = parseFloat(incline) || 0;
+  const minutes = Number.parseFloat(mins) || 0;
+  const speedKmh = imperial ? (Number.parseFloat(speed) || 0) * KMH_PER_MPH : (Number.parseFloat(speed) || 0);
+  const inclinePct = Number.parseFloat(incline) || 0;
   const isTreadmill = mode === 'treadmill';
 
   const kcal = isTreadmill

@@ -47,7 +47,7 @@ export default function RobotModel({ clip = CLIP.idle, gesture = 0, still = fals
     const oneShot = clip !== CLIP.idle;
     for (const a of Object.values(actions)) if (a !== target) a.fadeOut(0.25);
     target.reset();
-    target.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat, oneShot ? 1 : Infinity);
+    target.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat, oneShot ? 1 : Number.POSITIVE_INFINITY);
     target.fadeIn(0.25).play();
     let to;
     if (oneShot && idle) {
