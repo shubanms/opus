@@ -11,7 +11,6 @@ function compactVolume(kg, unit) {
   return v >= 10000 ? `${(v / 1000).toFixed(1)}k ${u}` : `${Math.round(v).toLocaleString()} ${u}`;
 }
 import ShareButton from '../share/ShareButton.jsx';
-import RecapCard from '../share/RecapCard.jsx';
 import CountUp from '../fx/CountUp.jsx';
 
 function Stat({ icon: Icon, value, label, countTo, effects }) {
@@ -76,7 +75,7 @@ export default function WeeklyRecap({ dismissible = true }) {
 
       <ShareButton
         data={shareData}
-        CardComponent={RecapCard}
+        kind="recap"
         filename="opus-week.png"
         label="Share my week"
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-semibold"

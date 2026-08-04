@@ -7,7 +7,6 @@ import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import CountUp from '../components/fx/CountUp.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
-import WrappedCard from '../components/share/WrappedCard.jsx';
 
 function Stat({ icon: Icon, value, label }) {
   return (
@@ -150,7 +149,7 @@ export default function WrappedPage() {
 
           <ShareButton
             data={shareData}
-            CardComponent={WrappedCard}
+            kind="wrapped"
             filename="opus-wrapped.png"
             label="Share Wrapped"
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"

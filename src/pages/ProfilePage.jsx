@@ -19,8 +19,6 @@ import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
 import TrophyCase from '../components/rpg/TrophyCase.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
-import ProfileCard from '../components/share/ProfileCard.jsx';
-import ChallengeCard from '../components/share/ChallengeCard.jsx';
 import CountUp from '../components/fx/CountUp.jsx';
 
 const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
@@ -230,7 +228,7 @@ export default function ProfilePage() {
 
       <ShareButton
         data={profileShareData}
-        CardComponent={ProfileCard}
+        kind="profile"
         filename="opus-profile.png"
         label="Share profile"
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
@@ -239,7 +237,7 @@ export default function ProfilePage() {
 
       <ShareButton
         data={challengeShareData}
-        CardComponent={ChallengeCard}
+        kind="challenge"
         filename="opus-challenge.png"
         label="Challenge a friend"
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"

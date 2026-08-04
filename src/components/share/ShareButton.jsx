@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Share2 } from 'lucide-react';
-import ShareableCard from './ShareableCard.jsx';
 import ShareSheet from './ShareSheet.jsx';
 
-// Opens a customizable share sheet (live preview + themes) for the given card.
-export default function ShareButton({ data, CardComponent = ShareableCard, filename = 'opus-card.png', label = 'Share', className, style }) {
+// Opens the share sheet (live canvas preview + theme pickers) for a card kind:
+// 'workout' | 'profile' | 'recap' | 'challenge' | 'wrapped'.
+export default function ShareButton({ data, kind = 'workout', filename = 'opus-card.png', label = 'Share', className, style }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <button
+        type="button"
         onClick={(e) => { e.stopPropagation(); if (data) setOpen(true); }}
         disabled={!data}
         className={className}
@@ -21,7 +22,7 @@ export default function ShareButton({ data, CardComponent = ShareableCard, filen
       <ShareSheet
         isOpen={open}
         onClose={() => setOpen(false)}
-        CardComponent={CardComponent}
+        kind={kind}
         data={data}
         filename={filename}
       />
