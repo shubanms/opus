@@ -3,6 +3,16 @@ import { test as base, expect } from '@playwright/test';
 // Collect console errors + uncaught page errors for every test, so a flow that
 // "looks" fine but logs a React error still fails the audit.
 const test = base.extend({
+  // Keep the suite hermetic. The app pulls webfonts from Google and exercise
+  // images from wger; if either hangs, the page's `load` event never fires and
+  // navigations time out — which has nothing to do with what we're testing, and
+  // is not reproducible between environments. Fail them fast instead. The app
+  // is designed to degrade to system fonts and hide the demo image.
+  page: async ({ page }, use) => {
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await page.route(/wger\.de/, (r) => r.abort());
+    await use(page);
+  },
   errors: async ({ page }, use) => {
     const errors = [];
     page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -26,16 +36,37 @@ const IGNORE = [
 ];
 const realErrors = (errors) => errors.filter((e) => !IGNORE.some((re) => re.test(e)));
 
+// Stable hook on every full-screen first-run overlay (onboarding steps + tour),
+// so the redesign can restyle or re-lay-out them without breaking this suite.
+const OVERLAY = '[data-testid="first-run-overlay"]';
+
+// First run puts three things in front of the app, in order: the profile form,
+// the "Plan your week" step, then the guided tour. Each must be dismissed
+// explicitly — `getByRole` name matching is substring-based, so a bare 'Skip'
+// also matches the planner's "Skip for now" and silently leaves the tour up.
 async function onboard(page, name = 'E2E Tester') {
-  await page.goto('home');
+  await goto(page, 'home');
   await expect(page.getByRole('heading', { name: 'Welcome to OPUS' })).toBeVisible();
   await page.getByPlaceholder('Athlete').fill(name);
   // Bodyweight is the first numeric field (used for bodyweight-aware volume).
   await page.locator('input[type="number"]').first().fill('80');
   await page.getByRole('button', { name: 'Begin' }).click();
-  // Tour overlay appears next — skip it.
-  await page.getByRole('button', { name: 'Skip' }).click();
+
+  await page.getByRole('button', { name: 'Skip for now' }).click();
+  await page.getByRole('button', { name: 'Skip', exact: true }).click();
+
+  // Assert the overlays are really gone. `toBeVisible()` on content behind them
+  // is not enough: it ignores occlusion, so a stuck full-screen overlay passes
+  // and only shows up later as an unrelated click timing out.
+  await expect(page.locator(OVERLAY)).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'OPUS', exact: true })).toBeVisible();
+}
+
+// The app is client-rendered, so waiting for `load` makes every navigation
+// hostage to subresources (webfonts, the companion GLB) that may be slow or
+// blocked. The assertions after each navigation are the real readiness gate.
+async function goto(page, path) {
+  await page.goto(path, { waitUntil: 'domcontentloaded' });
 }
 
 async function dismissCoach(page) {
@@ -49,7 +80,7 @@ async function gotoTab(page, label) {
 
 test.describe('OPUS end-to-end', () => {
   test('boots and shows onboarding on a fresh device', async ({ page, errors }) => {
-    await page.goto('home');
+    await goto(page, 'home');
     await expect(page.getByRole('heading', { name: 'Welcome to OPUS' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Begin' })).toBeVisible();
     expect(realErrors(errors)).toEqual([]);
@@ -79,7 +110,9 @@ test.describe('OPUS end-to-end', () => {
     await expect(page.getByRole('heading', { name: 'Concentration Curl' })).toBeVisible();
 
     // Log two sets. Weight field placeholder is the unit label (kg).
-    const logBtn = page.getByPlaceholder('reps').locator('xpath=following::button[1]');
+    // Target the log button by its accessible name — a positional locator broke
+    // silently when the rep +/- steppers were added between it and the input.
+    const logBtn = page.getByRole('button', { name: 'Log set' });
     await page.getByPlaceholder('kg').fill('20');
     await page.getByPlaceholder('reps').fill('10');
     await logBtn.click();
@@ -128,7 +161,7 @@ test.describe('OPUS end-to-end', () => {
     await onboard(page);
     await dismissCoach(page);
 
-    await page.goto('settings');
+    await goto(page, 'settings');
     await page.getByRole('button', { name: 'dark', exact: true }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
@@ -142,7 +175,7 @@ test.describe('OPUS end-to-end', () => {
   test('data export triggers a backup download', async ({ page, errors }) => {
     await onboard(page);
     await dismissCoach(page);
-    await page.goto('settings');
+    await goto(page, 'settings');
     const [download] = await Promise.all([
       page.waitForEvent('download'),
       page.getByRole('button', { name: 'Export' }).click(),
@@ -152,10 +185,12 @@ test.describe('OPUS end-to-end', () => {
   });
 
   test('all primary routes render without page errors', async ({ page, errors }) => {
+    // Ten full page loads, each re-booting React, Dexie and the seed catalogue.
+    test.setTimeout(180_000);
     await onboard(page);
     await dismissCoach(page);
     for (const path of ['home', 'progress', 'exercises', 'profile', 'history', 'achievements', 'progression', 'records', 'wrapped', 'templates']) {
-      await page.goto(path);
+      await goto(page, path);
       await dismissCoach(page);
       await page.waitForTimeout(400);
     }
@@ -163,15 +198,19 @@ test.describe('OPUS end-to-end', () => {
   });
 
   test('reset all data returns the app to onboarding', async ({ page, errors }) => {
+    // Wipe + full reload + re-seed on first boot.
+    test.setTimeout(120_000);
     await onboard(page, 'WipeMe');
     await dismissCoach(page);
-    await page.goto('settings');
+    await goto(page, 'settings');
     await page.getByRole('button', { name: 'Reset all data' }).click();
     // ResetDataModal requires typing the confirm phrase, then reloads to onboarding.
     await expect(page.getByRole('heading', { name: 'Reset everything' })).toBeVisible();
     await page.getByPlaceholder('DELETE').fill('DELETE');
     await page.getByRole('button', { name: 'Reset all data' }).last().click();
-    await expect(page.getByRole('heading', { name: 'Welcome to OPUS' })).toBeVisible({ timeout: 15_000 });
+    // Post-wipe boot re-opens the database and re-seeds the exercise catalogue
+    // behind the 4.4s intro screen; measured at ~18s on a slow runner.
+    await expect(page.getByRole('heading', { name: 'Welcome to OPUS' })).toBeVisible({ timeout: 60_000 });
     expect(realErrors(errors)).toEqual([]);
   });
 });

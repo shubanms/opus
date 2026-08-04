@@ -31,6 +31,7 @@ export default function Tour() {
 
   return createPortal(
     <div
+      data-testid="first-run-overlay"
       className="fixed inset-0 z-[75] flex flex-col items-center justify-center px-8"
       style={{ background: 'var(--color-obsidian)' }}
     >

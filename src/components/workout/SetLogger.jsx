@@ -249,6 +249,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         <button
           onClick={handleLog}
           disabled={!canLog}
+          aria-label="Log set"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: canLog ? 1 : 0.35 }}
         >

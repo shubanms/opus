@@ -18,6 +18,12 @@ export default defineConfig({
     hasTouch: true,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
+    // Sandboxes and CI images sometimes ship a Chromium that doesn't match the
+    // build Playwright expects. Point PW_CHROMIUM_PATH at it to reuse that one
+    // instead of downloading; unset, Playwright resolves its own as usual.
+    launchOptions: process.env.PW_CHROMIUM_PATH
+      ? { executablePath: process.env.PW_CHROMIUM_PATH }
+      : {},
   },
   webServer: {
     command: 'npm run preview -- --port 4173 --strictPort',

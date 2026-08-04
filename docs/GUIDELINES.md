@@ -30,7 +30,11 @@ Weave in **subtle animation, moving parts, and sound** where it fits — never g
 - **Lint:** Biome, configured in `biome.jsonc`. Linter on, **formatter off** (turning it on reformats all 199 files — that belongs in its own PR). Errors block the build; the ~234 existing warnings (`useButtonType`, `useExhaustiveDependencies`, `noArrayIndexKey`, label/keyboard a11y) are tracked debt. Don't add new ones.
 - **Build in CI matters:** vitest runs in a node env and never parses JSX, so a broken component passes the unit tests. The build step is what catches it — on the PR, not on main.
 - New **pure logic → `src/utils/*.js` with a co-located `*.test.js`** (Vitest, node env).
-- DOM/DB/React code is not node-testable here — extract the pure core and test that; verify the rest by code review + on-device checklist. Playwright E2E lives in `tests/e2e/` and runs locally via `npm run test:e2e` (adding it to CI is an open follow-up).
+- **Playwright E2E is the UI safety net** and runs in CI as its own `e2e` job — the unit tests never render a component, so E2E is the only thing that proves the app boots and works. `npm run test:e2e` locally; set `PW_CHROMIUM_PATH` to reuse a preinstalled Chromium.
+- The suite is **hermetic**: Google Fonts and wger are aborted at the network layer, because a hanging CDN stops the page's `load` event and times out navigations for reasons unrelated to the test.
+- Prefer **accessible names and `data-testid`** over positional or text-adjacent locators. Two of this suite's failures were positional locators that broke silently when unrelated UI landed nearby (`following::button[1]` started hitting a rep stepper; a `name: 'Skip'` substring started matching "Skip for now"). Both looked like app bugs and were not.
+- After dismissing a full-screen overlay, assert it is **gone** (`toHaveCount(0)`), not that content behind it is visible — `toBeVisible()` ignores occlusion, so a stuck overlay passes and fails later somewhere unrelated.
+- DOM/DB/React code is not node-testable here — extract the pure core and test that; verify the rest by code review + on-device checklist.
 - When a feature has real logic (math, selection, formatting, state transitions), pull it into a pure function so it can be tested.
 
 ## Workflow

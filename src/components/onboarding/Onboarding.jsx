@@ -87,7 +87,7 @@ export default function Onboarding() {
 
   if (step === 1) {
     return (
-      <div className="fixed inset-0 z-[55] flex flex-col items-center overflow-y-auto px-8 py-10" style={{ background: 'var(--color-obsidian)' }}>
+      <div data-testid="first-run-overlay" className="fixed inset-0 z-[55] flex flex-col items-center overflow-y-auto px-8 py-10" style={{ background: 'var(--color-obsidian)' }}>
         <OpusMark size={72} animate />
         <h1 className="mt-6 font-display text-3xl font-bold" style={{ color: 'var(--color-text-inverse)' }}>Plan your week</h1>
         <p className="mt-1 mb-6 max-w-xs text-center font-sans text-sm" style={{ color: 'var(--color-ash)' }}>
@@ -143,7 +143,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="fixed inset-0 z-[55] flex flex-col items-center overflow-y-auto px-8 py-10" style={{ background: 'var(--color-obsidian)' }}>
+    <div data-testid="first-run-overlay" className="fixed inset-0 z-[55] flex flex-col items-center overflow-y-auto px-8 py-10" style={{ background: 'var(--color-obsidian)' }}>
       <OpusMark size={84} animate />
       <h1 className="mt-6 font-display text-4xl font-bold" style={{ color: 'var(--color-text-inverse)' }}>Welcome to OPUS</h1>
       <p className="mt-1 mb-6 font-sans text-sm" style={{ color: 'var(--color-ash)' }}>Set up your character.</p>
