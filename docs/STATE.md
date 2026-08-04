@@ -1,7 +1,11 @@
 # OPUS — Project State
 
 Last updated: 2026-08-04
-Current sprint: toolchain hardening + native purge (below). App at v3.0.0. Next up: the "FORGE" UI redesign.
+Current sprint: **redesign readiness — DONE**. App at v3.0.0. Awaiting the user's pick from five design directions (`docs/design/README.md`), then the UI redesign begins.
+
+**Redesign readiness (2026-08-04) — complete.** Four PRs on one branch: (1) toolchain hardening + native purge, (2) canvas share cards replacing html2canvas, (3) Tailwind v4, (4) E2E fixed and CI-gated. The app is now safe to redesign: lint + unit tests + build + 8/8 Playwright E2E all gate every PR, there is no second copy of the game logic, share cards can render anything the new design uses, and the component registries we'd copy from (React Bits, Magic UI, Kokonut, Bklit) all target the Tailwind version we're now on.
+
+**Five design directions delivered for review** — `docs/design/` (source) + published artifacts. Forge / Brutal / Arcade / Atelier / Aurora, nine screens each from one shared content model. Recommendation: **Forge**, with Brutal's restraint on the data screens. Cross-direction findings: GSAP is now free including all plugins; Lenis is rejected everywhere (smooth-scroll hijacking fights Android pull-to-refresh in a PWA); Anime.js is redundant next to Motion.
 
 > **FOCUS (2026-08-04): web/PWA only — the native app has been DELETED**, not paused. See the entry below and the top of `CLAUDE.md`. Everything under "Native app → PWA parity program" further down this log is historical.
 
