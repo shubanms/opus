@@ -40,6 +40,15 @@ function Switch({ on, onChange, disabled }) {
   );
 }
 
+const SECTIONS = [
+  { id: 'profile', label: 'Profile' },
+  { id: 'notifications', label: 'Notifications' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'data', label: 'Data' },
+  { id: 'about', label: 'About' },
+  { id: 'danger', label: 'Reset' },
+];
+
 function Row({ label, children }) {
   return (
     <div className="flex items-center justify-between py-1.5">
@@ -113,8 +122,25 @@ export default function SettingsPage() {
         Settings
       </h1>
 
+      {/* Settings is a long single scroll — six sections deep to change your
+          units. This is a table of contents, not a search box: with a fixed and
+          known set of sections, jumping beats filtering. */}
+      <nav className="mb-5 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 scrollbar-hide" aria-label="Jump to settings section">
+        {SECTIONS.map((sec) => (
+          <button
+            key={sec.id}
+            type="button"
+            onClick={() => document.getElementById(`settings-${sec.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="shrink-0 rounded-full px-3 py-1.5 font-sans text-xs font-medium"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }}
+          >
+            {sec.label}
+          </button>
+        ))}
+      </nav>
+
       {/* Profile */}
-      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section id="settings-profile" className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <User size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -230,7 +256,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Notifications */}
-      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section id="settings-notifications" className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Bell size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -316,7 +342,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Experience */}
-      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section id="settings-experience" className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Sparkles size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -359,7 +385,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Data */}
-      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section id="settings-data" className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Database size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -430,7 +456,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Danger zone */}
-      <section className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #FF8FA355' }}>
+      <section id="settings-danger" className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #FF8FA355' }}>
         <div className="mb-1 flex items-center gap-2">
           <Trash2 size={14} style={{ color: 'var(--color-ember)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-ember)' }}>
@@ -450,7 +476,7 @@ export default function SettingsPage() {
       </section>
 
       {/* About */}
-      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section id="settings-about" className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Info size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>

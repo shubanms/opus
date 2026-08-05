@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Target, ChevronDown } from 'lucide-react';
 import { useWeeklyMuscleSets } from '../../hooks/useProgress.js';
 import {
@@ -9,6 +10,7 @@ import {
   weeklyBreakdown,
 } from '../../utils/muscleTargets.js';
 import { m, itemVariants, listVariants } from '../../motion/index.jsx';
+import EmptyState from '../ui/EmptyState.jsx';
 
 // This week's working sets per muscle, against a target.
 //
@@ -56,6 +58,7 @@ function Row({ row }) {
 
 export default function WeeklyMuscleTargets() {
   const byMuscle = useWeeklyMuscleSets();
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
 
   const rows = weeklyBreakdown(byMuscle);
@@ -65,9 +68,13 @@ export default function WeeklyMuscleTargets() {
 
   if (!trained.length) {
     return (
-      <p className="py-4 text-center font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-        No sets logged this week yet — targets show up once you train.
-      </p>
+      <EmptyState
+        icon={Target}
+        title="Nothing logged this week"
+        body="Targets appear once you train — they show which muscles you've covered and which you've missed."
+        actionLabel="Start a workout"
+        onAction={() => navigate('/workout')}
+      />
     );
   }
 

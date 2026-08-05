@@ -1,4 +1,7 @@
+import { useNavigate } from 'react-router-dom';
+import { Dumbbell } from 'lucide-react';
 import PageWrapper from '../components/layout/PageWrapper.jsx';
+import EmptyState from '../components/ui/EmptyState.jsx';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { monthLabel } from '../utils/dateKey.js';
@@ -14,19 +17,19 @@ import useSettingsStore from '../store/settingsStore.js';
 
 export default function HistoryPage() {
   const workouts = useWorkouts();
+  const navigate = useNavigate();
   const unit = useSettingsStore((s) => s.unit);
 
   if (workouts.length === 0) {
     return (
       <PageWrapper title="History" subtitle="Past workouts">
-        <div className="mt-20 text-center">
-          <p className="font-display text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            No workouts yet
-          </p>
-          <p className="mt-2 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Complete your first session to see it here
-          </p>
-        </div>
+        <EmptyState
+          icon={Dumbbell}
+          title="No workouts yet"
+          body="Every session you finish lands here, with its sets, volume and records."
+          actionLabel="Start a workout"
+          onAction={() => navigate('/workout')}
+        />
       </PageWrapper>
     );
   }

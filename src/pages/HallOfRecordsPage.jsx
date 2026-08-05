@@ -5,6 +5,7 @@ import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import { friendlyDate, todayKey } from '../utils/dateKey.js';
 import { m, itemVariants, listVariants } from '../motion/index.jsx';
+import EmptyState from '../components/ui/EmptyState.jsx';
 
 // Every record, newest first.
 //
@@ -60,12 +61,13 @@ export default function HallOfRecordsPage() {
       </p>
 
       {!latest ? (
-        <div className="mt-12 text-center">
-          <Trophy size={32} style={{ color: 'var(--color-ash)' }} className="mx-auto" />
-          <p className="mt-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            No records yet. Log a working set to start your legacy.
-          </p>
-        </div>
+        <EmptyState
+          icon={Trophy}
+          title="No records yet"
+          body="Your first working set sets your first record — every one after that has something to beat."
+          actionLabel="Start a workout"
+          onAction={() => navigate('/workout')}
+        />
       ) : (
         <>
           {/* The most recent record, displayed rather than listed. */}
