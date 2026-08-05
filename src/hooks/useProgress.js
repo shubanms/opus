@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
 import { epley1RM } from '../utils/oneRepMax.js';
+import { weekStartMs } from '../utils/quests.js';
 
 // Returns personal records for an exercise, newest first.
 export function usePRs(exerciseId) {
@@ -98,6 +99,35 @@ export function useWeeklyVolume(weeks = 8) {
     }
     return buckets.map((b) => ({ label: b.label, volume: Math.round(b.volume) }));
   }, [weeks]) ?? [];
+}
+
+// Working-set count per muscle group for the current training week
+// (Monday-aligned, matching quests). Lifetime totals cannot answer "am I doing
+// enough chest work?" — the question is always about this week.
+export function useWeeklyMuscleSets() {
+  return useLiveQuery(async () => {
+    const since = weekStartMs();
+    const workouts = await db.workouts.toArray();
+    const thisWeek = new Set(
+      workouts.filter((w) => (w.createdAt ?? 0) >= since).map((w) => w.id)
+    );
+    if (!thisWeek.size) return {};
+
+    const sets = (await db.sets.toArray()).filter((s) => !s.isWarmup && thisWeek.has(s.workoutId));
+    const exIds = [...new Set(sets.map((s) => s.exerciseId))];
+    const muscleByEx = {};
+    for (const id of exIds) {
+      const ex = await db.exercises.get(id);
+      if (ex?.muscleGroup) muscleByEx[id] = ex.muscleGroup;
+    }
+
+    const byMuscle = {};
+    for (const s of sets) {
+      const m = muscleByEx[s.exerciseId];
+      if (m) byMuscle[m] = (byMuscle[m] ?? 0) + 1;
+    }
+    return byMuscle;
+  }, []) ?? {};
 }
 
 // Working-set count per muscle group, most-trained first.

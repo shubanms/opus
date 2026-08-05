@@ -1,18 +1,16 @@
 import { useState } from 'react';
+import { MUSCLE_LABEL as LABELS } from '../../utils/muscleTargets.js';
 import Model from 'react-body-highlighter';
 import { Activity } from 'lucide-react';
 import { useRecovery } from '../../hooks/useRecovery.js';
 
-export const MUSCLE_LABEL = {
-  chest: 'Chest', triceps: 'Triceps', biceps: 'Biceps', 'front-deltoids': 'Front Delts',
-  'back-deltoids': 'Rear Delts', 'upper-back': 'Upper Back', 'lower-back': 'Lower Back',
-  trapezius: 'Traps', abs: 'Abs', obliques: 'Obliques', quadriceps: 'Quads',
-  hamstring: 'Hamstrings', gluteal: 'Glutes', calves: 'Calves', forearm: 'Forearms',
-};
+// Re-exported so the many existing `import { MUSCLE_LABEL } from RecoveryMap`
+// call sites keep working; it is defined in utils/muscleTargets.js.
+export { MUSCLE_LABEL } from '../../utils/muscleTargets.js';
 
 // The muscles react-body-highlighter can render (== the anatomical groups we
 // label). Anything else (e.g. 'cardio') must be filtered out before the map.
-const SUPPORTED_MUSCLES = new Set(Object.keys(MUSCLE_LABEL));
+const SUPPORTED_MUSCLES = new Set(Object.keys(LABELS));
 
 // frequency → highlightedColors index: 1=sage(2d), 2=gold(1d), 3=ember(today)
 const COLORS = ['#4FD8C4', '#8B7DFF', '#FF8FA3'];

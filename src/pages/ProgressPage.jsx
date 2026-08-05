@@ -9,6 +9,7 @@ import PageWrapper from '../components/layout/PageWrapper.jsx';
 import VolumeChart from '../components/charts/VolumeChart.jsx';
 import TrendChart from '../components/charts/TrendChart.jsx';
 import MuscleFrequency from '../components/progress/MuscleFrequency.jsx';
+import WeeklyMuscleTargets from '../components/progress/WeeklyMuscleTargets.jsx';
 import Heatmap from '../components/progress/Heatmap.jsx';
 import MonthCalendar from '../components/progress/MonthCalendar.jsx';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
@@ -136,6 +137,10 @@ function Overview() {
         <KpiTile icon={Clock} label="Hours" value={Math.round(lifetime.hours)} countTo={Math.round(lifetime.hours)} effects={effects} />
         <KpiTile icon={TrendingUp} label="Sets" value={lifetime.totalSets} countTo={lifetime.totalSets} effects={effects} />
       </div>
+
+      <Section title="This week by muscle">
+        <WeeklyMuscleTargets />
+      </Section>
 
       <Section title="Weekly volume (8 weeks)">
         {deltaPct != null && (
