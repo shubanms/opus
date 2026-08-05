@@ -36,7 +36,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
 
   return (
     <div
-      className="mb-4 rounded-2xl px-4 pb-4 pt-3"
+      className="glass mb-4 rounded-2xl px-4 pb-4 pt-3"
       style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
     >
       {/* Header */}

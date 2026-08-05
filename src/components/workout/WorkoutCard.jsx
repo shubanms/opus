@@ -65,7 +65,7 @@ export default function WorkoutCard({ workout }) {
 
   return (
     <div
-      className="mb-3 rounded-2xl px-4 py-3"
+      className="glass mb-3 rounded-2xl px-4 py-3"
       style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
     >
       <button onClick={() => setExpanded((v) => !v)} className="w-full text-left">

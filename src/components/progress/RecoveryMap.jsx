@@ -70,7 +70,7 @@ export default function RecoveryMap({ data: extData, onSelect, legend: extLegend
         : null;
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+    <div className="glass rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
       <div className="mb-3 flex items-center justify-between">
         <span className="flex items-center gap-2 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
           <Icon size={14} style={{ color: 'var(--color-ash)' }} /> {title}

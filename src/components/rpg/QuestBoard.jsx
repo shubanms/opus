@@ -38,7 +38,7 @@ export default function QuestBoard() {
   return (
     <>
       {burst && <Particles />}
-      <div className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <div className="glass rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center justify-between">
           <p className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
             This week's quests

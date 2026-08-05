@@ -114,7 +114,7 @@ export default function SettingsPage() {
       </h1>
 
       {/* Profile */}
-      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <User size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -230,7 +230,7 @@ export default function SettingsPage() {
       </section>
 
       {/* About */}
-      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Info size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -252,7 +252,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Notifications */}
-      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Bell size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -338,7 +338,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Experience */}
-      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Sparkles size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -381,7 +381,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Data */}
-      <section className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
           <Database size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>

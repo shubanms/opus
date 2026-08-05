@@ -26,7 +26,7 @@ export default function AchievementsPage() {
           return (
             <div
               key={it.key}
-              className="flex items-center gap-3 rounded-2xl px-4 py-3"
+              className="glass flex items-center gap-3 rounded-2xl px-4 py-3"
               style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)', opacity: it.unlocked ? 1 : 0.85 }}
             >
               <div

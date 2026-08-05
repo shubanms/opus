@@ -14,7 +14,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
 
   return (
     <div
-      className="mb-3 rounded-2xl px-4 py-3"
+      className="glass mb-3 rounded-2xl px-4 py-3"
       style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
     >
       <div className="flex items-start justify-between">

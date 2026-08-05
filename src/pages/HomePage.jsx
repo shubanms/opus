@@ -152,7 +152,7 @@ export default function HomePage() {
             animationDuration: scene.motionSpeed > 0 ? `${(7 - scene.motionSpeed * 3).toFixed(1)}s` : undefined,
           }}
         />
-        <div className="relative rounded-2xl px-4 py-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="glass relative rounded-2xl px-4 py-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
           <div className="flex items-start justify-between">
             <div className="min-w-0">
               <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
@@ -248,7 +248,7 @@ export default function HomePage() {
           />
         ) : today.type === 'rest' ? (
           <div
-            className="flex items-center gap-3 rounded-2xl px-5 py-4"
+            className="glass flex items-center gap-3 rounded-2xl px-5 py-4"
             style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>

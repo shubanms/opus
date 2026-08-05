@@ -60,7 +60,7 @@ export default function WeeklyPlanner({ templates }) {
       </div>
 
       {selected != null && (
-        <div className="mt-3 rounded-2xl p-3" style={{ background: 'var(--color-ivory)' }}>
+        <div className="glass mt-3 rounded-2xl p-3" style={{ background: 'var(--color-ivory)' }}>
           <p className="mb-2 font-sans text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
             Assign to {selLabel}
           </p>

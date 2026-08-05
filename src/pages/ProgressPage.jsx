@@ -37,7 +37,7 @@ const PR_LABEL = { weight: 'Best weight', reps: 'Best reps', volume: 'Best volum
 
 function Section({ title, children }) {
   return (
-    <div className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+    <div className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
       <h3 className="mb-3 font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
         {title}
       </h3>
@@ -48,7 +48,7 @@ function Section({ title, children }) {
 
 function KpiTile({ icon: Icon, label, value, countTo, effects, format }) {
   return (
-    <div className="rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+    <div className="glass rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
       <Icon size={14} style={{ color: 'var(--color-gold)' }} />
       <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
         {countTo != null && effects ? <CountUp value={countTo} format={format} /> : value}
@@ -146,14 +146,14 @@ function Overview() {
 
       <Section title="Calories burned">
         <div className="mb-3 grid grid-cols-2 gap-2.5">
-          <div className="rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+          <div className="glass rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
             <Flame size={14} style={{ color: 'var(--color-ember)' }} />
             <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
               {effects ? <CountUp value={weekCalories} /> : weekCalories.toLocaleString()}
             </p>
             <p className="mt-1 font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>kcal this week</p>
           </div>
-          <div className="rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+          <div className="glass rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
             <Flame size={14} style={{ color: 'var(--color-ember)' }} />
             <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
               {effects ? <CountUp value={lifetimeCalories} /> : lifetimeCalories.toLocaleString()}
@@ -384,7 +384,7 @@ function Body() {
       <Section title="Water intake (glasses)"><TrendChart data={waterTrend} empty="Log water to track intake." /></Section>
 
       {/* Activity log */}
-      <div className="mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <div className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
             Activity log

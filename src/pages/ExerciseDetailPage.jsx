@@ -28,7 +28,7 @@ function PRCard({ prs, unit }) {
 
   if (!weight && !reps && !volume) {
     return (
-      <div className="rounded-2xl p-4 text-center" style={{ background: 'var(--color-ivory)' }}>
+      <div className="glass rounded-2xl p-4 text-center" style={{ background: 'var(--color-ivory)' }}>
         <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           No records yet. Log a set to start tracking.
         </p>
@@ -37,7 +37,7 @@ function PRCard({ prs, unit }) {
   }
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+    <div className="glass rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
       <div className="mb-3 flex items-center gap-2">
         <Trophy size={15} style={{ color: 'var(--color-gold)' }} />
         <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -173,7 +173,7 @@ export default function ExerciseDetailPage() {
       </div>
 
       {/* Marking + coaching note */}
-      <div className="mt-5 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+      <div className="glass mt-5 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
         <div className="mb-2 flex items-center gap-2">
           <StickyNote size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -197,7 +197,7 @@ export default function ExerciseDetailPage() {
 
       {/* How to do it — always available via video; image when Wger has one */}
       <div
-        className="mt-5 overflow-hidden rounded-2xl"
+        className="glass mt-5 overflow-hidden rounded-2xl"
         style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
       >
         <div className="flex items-center gap-2 px-4 pt-4">
@@ -235,7 +235,7 @@ export default function ExerciseDetailPage() {
 
       {/* Estimated 1RM */}
       {e1rmRaw.length > 0 && (
-        <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+        <div className="glass mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
           <div className="mb-1 flex items-center gap-2">
             <TrendingUp size={15} style={{ color: 'var(--color-ash)' }} />
             <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -254,7 +254,7 @@ export default function ExerciseDetailPage() {
       )}
 
       {/* Volume history */}
-      <div className="mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+      <div className="glass mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
         <div className="mb-2 flex items-center gap-2">
           <TrendingUp size={15} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -267,7 +267,7 @@ export default function ExerciseDetailPage() {
       {exercise.isCustom && (
         <button
           onClick={handleDelete}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-medium"
+          className="glass mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-medium"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}
         >
           <Trash2 size={15} /> Delete exercise

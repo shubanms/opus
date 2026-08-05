@@ -5,6 +5,7 @@ import Onboarding from '../onboarding/Onboarding.jsx';
 import Tour from '../tour/Tour.jsx';
 import CoachMark from '../coach/CoachMark.jsx';
 import UiHost from '../ui/UiHost.jsx';
+import AuroraBackdrop from '../fx/AuroraBackdrop.jsx';
 import { useRPG } from '../../hooks/useRPG.js';
 import { useOnOpenReminders } from '../../hooks/useOnOpenReminders.js';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -46,6 +47,7 @@ export default function AppLayout() {
           <Outlet />
         </m.div>
       </main>
+      <AuroraBackdrop />
       <BottomNav />
       {loaded && !onboarded && <Onboarding />}
       {loaded && onboarded && !tourSeen && <Tour />}

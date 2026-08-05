@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router.jsx';
 import { db } from './db/db.js';
-import useSettingsStore from './store/settingsStore.js';
+import useSettingsStore, { applyEffects } from './store/settingsStore.js';
 import { applyTheme } from './utils/theme.js';
 import { requestPersistence } from './utils/storage.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
@@ -13,8 +13,10 @@ import './styles/tokens.css';
 import './styles/animations.css';
 import './index.css';
 
-// Apply the saved theme before first paint, and follow the OS while on 'system'.
+// Apply the saved theme and effects flag before first paint, so the first frame
+// already has the right palette and the right material.
 applyTheme(useSettingsStore.getState().theme);
+applyEffects(useSettingsStore.getState().effects);
 window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
   if (useSettingsStore.getState().theme === 'system') applyTheme('system');
 });

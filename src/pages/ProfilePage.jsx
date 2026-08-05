@@ -96,7 +96,7 @@ export default function ProfilePage() {
   return (
     <div className="px-5 pb-8 pt-8">
       {/* Identity + progression hero */}
-      <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+      <div className="glass mb-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="flex items-start justify-between">
           <div className="min-w-0">
             <h1 className="truncate font-display text-3xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
@@ -240,7 +240,7 @@ export default function ProfilePage() {
         kind="challenge"
         filename="opus-challenge.png"
         label="Challenge a friend"
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
+        className="glass mt-3 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
         style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
       />
     </div>

@@ -2,6 +2,14 @@ import { create } from 'zustand';
 
 import { applyTheme } from '../utils/theme.js';
 
+// Mirror the effects setting onto <html> so CSS can gate the expensive material
+// (backdrop-filter) centrally, in one selector, instead of every glass surface
+// needing to read the store.
+export function applyEffects(on) {
+  if (typeof document === 'undefined') return;
+  document.documentElement.dataset.fx = on ? 'on' : 'off';
+}
+
 const KEY = 'opus_prefs';
 const DEFAULTS = {
   barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', themeOnOpen: true,
@@ -118,6 +126,7 @@ const useSettingsStore = create((set, get) => ({
   },
   setEffects(effects) {
     set({ effects });
+    applyEffects(effects);
     get().persist();
   },
   setSound(sound) {

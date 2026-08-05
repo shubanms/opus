@@ -306,7 +306,7 @@ export default function WorkoutPage() {
 
       {/* Energy check-in */}
       {activeWorkout.energy == null && (
-        <div className="mb-4 rounded-2xl px-4 py-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="glass mb-4 rounded-2xl px-4 py-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
           <p className="mb-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
             How's your energy today?
           </p>

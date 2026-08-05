@@ -22,7 +22,7 @@ export default function MonthCalendar({ days, selected, onSelect }) {
   }
 
   return (
-    <div className="rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+    <div className="glass rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
       <div className="mb-3 flex items-center justify-between">
         <button
           onClick={() => { setYM(stepMonth(year, month, -1)); onSelect?.(null); }}

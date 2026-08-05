@@ -69,18 +69,40 @@ body {
 .glass {
   background: var(--color-ivory);
   border: 1px solid var(--glass-line);
+}
+/* Chrome that content scrolls beneath needs more than a tint — at 6% white the
+   page reads straight through it. Sit it on a heavier ground. */
+.glass-strong {
+  background: color-mix(in srgb, var(--color-chalk) 88%, transparent);
+}
+
+/* Blur is applied only when effects are on.
+   `data-fx` is stamped on <html> from the settings store, which makes this the
+   single switch for the most expensive thing in the app: backdrop-filter is the
+   heaviest effect you can put on a mid-range Android GPU, and every blurred
+   surface compounds. Without it the panels are still translucent and the aurora
+   still reads through — the design degrades rather than breaking. */
+html[data-fx='on'] .glass {
   backdrop-filter: blur(var(--glass-blur)) saturate(140%);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
 }
-/* Chrome that content scrolls beneath needs more than a tint — at 6% white the
-   page reads straight through it. Blur harder and sit it on a heavier ground. */
-.glass-strong {
-  background: color-mix(in srgb, var(--color-chalk) 88%, transparent);
+html[data-fx='on'] .glass-strong {
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
 }
-/* Devices that can't composite a backdrop cheaply fall back to a solid tint
-   rather than a transparent panel with unreadable text behind it. */
+
+/* Users who ask for less transparency get solid surfaces, not frosted ones. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong {
+    background: var(--color-chalk);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Devices that can't composite a backdrop fall back to a solid tint rather
+   than a transparent panel with unreadable text behind it. */
 @supports not (backdrop-filter: blur(1px)) {
   .glass,
   .glass-strong {
