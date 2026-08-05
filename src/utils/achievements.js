@@ -1,28 +1,58 @@
 import { db } from '../db/db.js';
 
-// Data-driven achievements. `test(stats)` decides unlock; `xp` is the reward;
-// `hidden` keeps the title/desc secret until earned (game-style).
+// Data-driven achievements.
+//
+// Threshold achievements declare the stat and the number they need; their
+// `test` is derived from that pair. Two reasons, both of which bit us: the
+// number lived in the description *and* in a hand-written predicate, so they
+// could drift apart silently — and with the target locked inside a closure,
+// nothing could show how close you were. A list of things you cannot see
+// yourself approaching is just a list.
+//
+// `hidden` keeps the title/desc secret until earned (game-style). Achievements
+// with no numeric scale (Early Bird, Night Owl) keep an explicit `test` and
+// simply have no progress to show.
+const at = (metric, target) => ({
+  metric,
+  target,
+  test: (s) => (s?.[metric] ?? 0) >= target,
+});
+
 export const ACHIEVEMENTS = [
-  { key: 'first',      title: 'First Rep',       desc: 'Complete your first workout',     xp: 50,   test: (s) => s.workouts >= 1 },
-  { key: 'w10',        title: 'Getting Serious', desc: 'Complete 10 workouts',            xp: 100,  test: (s) => s.workouts >= 10 },
-  { key: 'w50',        title: 'Devoted',         desc: 'Complete 50 workouts',            xp: 250,  test: (s) => s.workouts >= 50 },
-  { key: 'w100',       title: 'Centurion',       desc: 'Complete 100 workouts',           xp: 500,  test: (s) => s.workouts >= 100 },
-  { key: 'streak7',    title: 'Week Warrior',    desc: 'Reach a 7-day training streak',   xp: 100,  test: (s) => s.bestStreak >= 7 },
-  { key: 'streak30',   title: 'Unbreakable',     desc: 'Reach a 30-day training streak',  xp: 400,  test: (s) => s.bestStreak >= 30 },
-  { key: 'vol10k',     title: 'Ten Tonne',       desc: 'Lift 10,000 kg in total',         xp: 100,  test: (s) => s.totalVolume >= 10000 },
-  { key: 'vol100k',    title: 'Heavy Hitter',    desc: 'Lift 100,000 kg in total',        xp: 300,  test: (s) => s.totalVolume >= 100000 },
-  { key: 'vol1m',      title: 'Million Club',    desc: 'Lift 1,000,000 kg in total',      xp: 1000, test: (s) => s.totalVolume >= 1000000, hidden: true },
-  { key: 'sets100',    title: 'Set Machine',     desc: 'Log 100 working sets',            xp: 100,  test: (s) => s.totalSets >= 100 },
-  { key: 'sets1000',   title: 'Relentless',      desc: 'Log 1,000 working sets',          xp: 400,  test: (s) => s.totalSets >= 1000 },
-  { key: 'allMuscles', title: 'Well Rounded',    desc: 'Train all 15 muscle groups',      xp: 200,  test: (s) => s.muscleVariety >= 15 },
-  { key: 'pr10',       title: 'Record Breaker',  desc: 'Set 10 personal records',         xp: 150,  test: (s) => s.prCount >= 10 },
-  { key: 'pr50',       title: 'Peak Performer',  desc: 'Set 50 personal records',         xp: 400,  test: (s) => s.prCount >= 50 },
-  { key: 'level5',     title: 'Forged',          desc: 'Reach level 5',                   xp: 0,    test: (s) => s.level >= 5 },
-  { key: 'level10',    title: 'Magnum Opus',     desc: 'Reach level 10',                  xp: 0,    test: (s) => s.level >= 10 },
-  { key: 'earlyBird',  title: 'Early Bird',      desc: 'Finish a workout before 7am',     xp: 75,   test: (s) => s.earlyBird, hidden: true },
-  { key: 'nightOwl',   title: 'Night Owl',       desc: 'Finish a workout after 9pm',      xp: 75,   test: (s) => s.nightOwl, hidden: true },
-  { key: 'architect',  title: 'Architect',       desc: 'Create a custom exercise',        xp: 50,   test: (s) => s.customExercises >= 1, hidden: true },
+  { key: 'first',      title: 'First Rep',       desc: 'Complete your first workout',     xp: 50,   ...at('workouts', 1) },
+  { key: 'w10',        title: 'Getting Serious', desc: 'Complete 10 workouts',            xp: 100,  ...at('workouts', 10) },
+  { key: 'w50',        title: 'Devoted',         desc: 'Complete 50 workouts',            xp: 250,  ...at('workouts', 50) },
+  { key: 'w100',       title: 'Centurion',       desc: 'Complete 100 workouts',           xp: 500,  ...at('workouts', 100) },
+  { key: 'streak7',    title: 'Week Warrior',    desc: 'Reach a 7-day training streak',   xp: 100,  ...at('bestStreak', 7) },
+  { key: 'streak30',   title: 'Unbreakable',     desc: 'Reach a 30-day training streak',  xp: 400,  ...at('bestStreak', 30) },
+  { key: 'vol10k',     title: 'Ten Tonne',       desc: 'Lift 10,000 kg in total',         xp: 100,  ...at('totalVolume', 10000) },
+  { key: 'vol100k',    title: 'Heavy Hitter',    desc: 'Lift 100,000 kg in total',        xp: 300,  ...at('totalVolume', 100000) },
+  { key: 'vol1m',      title: 'Million Club',    desc: 'Lift 1,000,000 kg in total',      xp: 1000, ...at('totalVolume', 1000000), hidden: true },
+  { key: 'sets100',    title: 'Set Machine',     desc: 'Log 100 working sets',            xp: 100,  ...at('totalSets', 100) },
+  { key: 'sets1000',   title: 'Relentless',      desc: 'Log 1,000 working sets',          xp: 400,  ...at('totalSets', 1000) },
+  { key: 'allMuscles', title: 'Well Rounded',    desc: 'Train all 15 muscle groups',      xp: 200,  ...at('muscleVariety', 15) },
+  { key: 'pr10',       title: 'Record Breaker',  desc: 'Set 10 personal records',         xp: 150,  ...at('prCount', 10) },
+  { key: 'pr50',       title: 'Peak Performer',  desc: 'Set 50 personal records',         xp: 400,  ...at('prCount', 50) },
+  { key: 'level5',     title: 'Forged',          desc: 'Reach level 5',                   xp: 0,    ...at('level', 5) },
+  { key: 'level10',    title: 'Magnum Opus',     desc: 'Reach level 10',                  xp: 0,    ...at('level', 10) },
+  { key: 'earlyBird',  title: 'Early Bird',      desc: 'Finish a workout before 7am',     xp: 75,   test: (s) => Boolean(s?.earlyBird), hidden: true },
+  { key: 'nightOwl',   title: 'Night Owl',       desc: 'Finish a workout after 9pm',      xp: 75,   test: (s) => Boolean(s?.nightOwl), hidden: true },
+  { key: 'architect',  title: 'Architect',       desc: 'Create a custom exercise',        xp: 50,   ...at('customExercises', 1), hidden: true },
 ];
+
+/**
+ * How close a locked achievement is, or `null` if it has no numeric scale.
+ *
+ * `current` is capped at `target` so a finished one never reads "127 / 100",
+ * which looks like a bug rather than an overachievement.
+ */
+export function achievementProgress(def, stats) {
+  if (!def?.metric) return null;
+  const target = def.target > 0 ? def.target : 1;
+  const raw = Number(stats?.[def.metric]);
+  const current = Number.isFinite(raw) && raw > 0 ? Math.min(raw, target) : 0;
+  return { current, target, ratio: current / target };
+}
 
 // Lifetime aggregates used by achievement predicates.
 export async function computeStats() {

@@ -229,28 +229,6 @@ export default function SettingsPage() {
         </Row>
       </section>
 
-      {/* About */}
-      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <div className="mb-3 flex items-center gap-2">
-          <Info size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            About
-          </span>
-        </div>
-        <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>OPUS</p>
-        <p className="font-sans text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>Build your masterpiece.</p>
-        <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-ash)' }}>v3.0.0</p>
-        <a
-          href="https://github.com/shubanms/opus"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 flex items-center gap-2 font-sans text-sm font-medium"
-          style={{ color: 'var(--color-gold)' }}
-        >
-          <Github size={15} /> View on GitHub
-        </a>
-      </section>
-
       {/* Notifications */}
       <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="mb-3 flex items-center gap-2">
@@ -469,6 +447,28 @@ export default function SettingsPage() {
         >
           Reset all data
         </button>
+      </section>
+
+      {/* About */}
+      <section className="glass mb-5 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+        <div className="mb-3 flex items-center gap-2">
+          <Info size={14} style={{ color: 'var(--color-ash)' }} />
+          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            About
+          </span>
+        </div>
+        <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>OPUS</p>
+        <p className="font-sans text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>Build your masterpiece.</p>
+        <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-ash)' }}>v3.0.0</p>
+        <a
+          href="https://github.com/shubanms/opus"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex items-center gap-2 font-sans text-sm font-medium"
+          style={{ color: 'var(--color-gold)' }}
+        >
+          <Github size={15} /> View on GitHub
+        </a>
       </section>
 
       <ResetDataModal isOpen={reset} onClose={() => setReset(false)} />

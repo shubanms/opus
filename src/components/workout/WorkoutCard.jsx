@@ -7,6 +7,7 @@ import { fmtVolume, toDisplay } from '../../utils/units.js';
 import { avgRest, avgRestAcross, formatRest } from '../../utils/restStats.js';
 import { setWorkoutNote, setWorkoutColor, setWorkoutName, setWorkoutTags } from '../../utils/noteActions.js';
 import { workoutCalories } from '../../utils/calories.js';
+import { friendlyDate } from '../../utils/dateKey.js';
 import { playChime } from '../../utils/sound.js';
 import ShareButton from '../share/ShareButton.jsx';
 import ColorPicker from '../ui/ColorPicker.jsx';
@@ -21,11 +22,6 @@ function formatDuration(secs) {
   const m = Math.floor(secs / 60);
   const h = Math.floor(m / 60);
   return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
-}
-
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default function WorkoutCard({ workout }) {
@@ -65,7 +61,7 @@ export default function WorkoutCard({ workout }) {
 
   return (
     <div
-      className="glass mb-3 rounded-2xl px-4 py-3"
+      className="glass mb-2 rounded-2xl px-4 py-3"
       style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
     >
       <button onClick={() => setExpanded((v) => !v)} className="w-full text-left">
@@ -74,9 +70,6 @@ export default function WorkoutCard({ workout }) {
             <p className="flex items-center gap-2 font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
               {workout.color && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: workout.color }} />}
               {workout.name}
-            </p>
-            <p className="mt-0.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              {formatDate(workout.date)}
             </p>
             {tags.length > 0 && (
               <div className="mt-1.5 flex flex-wrap gap-1">
@@ -101,7 +94,10 @@ export default function WorkoutCard({ workout }) {
           </div>
         </div>
 
-        <div className="mt-3 flex gap-4">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="font-sans text-xs font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            {friendlyDate(workout.date)}
+          </span>
           <span className="flex items-center gap-1.5 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             <Clock size={12} />
             {formatDuration(workout.duration)}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { todayKey, parseKey, daysBetween } from './dateKey.js';
+import { todayKey, parseKey, daysBetween, friendlyDate, monthLabel } from './dateKey.js';
 
 describe('todayKey', () => {
   it('formats a local calendar date as YYYY-MM-DD', () => {
@@ -58,5 +58,42 @@ describe('daysBetween', () => {
   });
   it('advances exactly one day across a month boundary', () => {
     expect(daysBetween('2026-07-31', '2026-08-01')).toBe(1);
+  });
+});
+
+describe('friendlyDate', () => {
+  const now = new Date(2026, 7, 5, 14, 0); // 5 Aug 2026
+
+  it('names today and yesterday', () => {
+    expect(friendlyDate('2026-08-05', now)).toBe('Today');
+    expect(friendlyDate('2026-08-04', now)).toBe('Yesterday');
+  });
+
+  it('crosses a month boundary correctly', () => {
+    // "Yesterday" from the 1st is the last day of the previous month.
+    expect(friendlyDate('2026-07-31', new Date(2026, 7, 1, 9, 0))).toBe('Yesterday');
+  });
+
+  it('drops the year while it is obvious and states it once it is not', () => {
+    expect(friendlyDate('2026-03-14', now)).toBe('14 Mar');
+    expect(friendlyDate('2025-12-31', now)).toBe('31 Dec 2025');
+  });
+
+  it('returns empty for junk rather than "Invalid Date"', () => {
+    expect(friendlyDate('', now)).toBe('');
+    expect(friendlyDate(undefined, now)).toBe('');
+    expect(friendlyDate('not-a-date', now)).toBe('');
+  });
+});
+
+describe('monthLabel', () => {
+  it('spells the month out', () => {
+    expect(monthLabel('2026-08-05')).toBe('August 2026');
+    expect(monthLabel('2025-01-31')).toBe('January 2025');
+  });
+
+  it('returns empty for junk', () => {
+    expect(monthLabel('nope')).toBe('');
+    expect(monthLabel(null)).toBe('');
   });
 });

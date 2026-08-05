@@ -28,3 +28,36 @@ export function daysBetween(aKey, bKey) {
   const d = Math.floor((b - a) / 86400000);
   return d > 0 ? d : 0;
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * A date key as a person would say it: "Today", "Yesterday", "5 Aug", and
+ * "5 Aug 2025" once the year stops being obvious.
+ *
+ * Screens that group by day were printing the raw key — "2026-08-05" is a
+ * storage format, not a date you read. Deliberately not `toLocaleDateString`:
+ * the app formats numbers locale-free everywhere else (see cardLayout) so that
+ * what ships is what was designed, rather than whatever the device decides.
+ */
+export function friendlyDate(key, now = new Date()) {
+  const d = parseKey(key);
+  if (!d) return '';
+  const today = todayKey(now);
+  if (key === today) return 'Today';
+  const yesterdayKey = todayKey(new Date(parseKey(today).getTime() - 86400000));
+  if (key === yesterdayKey) return 'Yesterday';
+  const label = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
+  return d.getFullYear() === now.getFullYear() ? label : `${label} ${d.getFullYear()}`;
+}
+
+/** "August 2026" — the heading a list of days is grouped under. */
+export function monthLabel(key) {
+  const d = parseKey(key);
+  if (!d) return '';
+  const full = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  return `${full[d.getMonth()]} ${d.getFullYear()}`;
+}

@@ -10,7 +10,12 @@ export function useWrapped(period) {
     const now = new Date();
     const workouts = await db.workouts.toArray();
     const periods = availablePeriods(workouts, now);
-    const sel = period ?? { kind: 'month', key: monthKeyOf(now), label: '', current: true };
+    // Default to the current month as `availablePeriods` describes it, rather
+    // than a hand-built stand-in — that one carried `label: ''`, and the page's
+    // `??` fallback does not fire on an empty string, so the period picker
+    // rendered blank until an arrow was pressed. With one month of history both
+    // arrows are disabled, so it never recovered.
+    const sel = period ?? periods.months[0] ?? { kind: 'month', key: monthKeyOf(now), current: true };
     const sets = await db.sets.toArray();
     const prs = await db.prs.toArray();
     const exercises = await db.exercises.toArray();

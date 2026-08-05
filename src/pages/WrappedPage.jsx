@@ -88,7 +88,7 @@ export default function WrappedPage() {
         <button onClick={() => step(1)} disabled={idx >= list.length - 1} aria-label="Older" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx >= list.length - 1 ? 0.3 : 1 }}>
           <ChevronLeft size={18} style={{ color: 'var(--color-text-primary)' }} />
         </button>
-        <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{active?.label ?? data?.label ?? '—'}</span>
+        <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{active?.label || data?.label || '—'}</span>
         <button onClick={() => step(-1)} disabled={idx <= 0} aria-label="Newer" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx <= 0 ? 0.3 : 1 }}>
           <ChevronRight size={18} style={{ color: 'var(--color-text-primary)' }} />
         </button>
@@ -98,7 +98,7 @@ export default function WrappedPage() {
         <div className="mt-12 text-center">
           <Sparkles size={32} style={{ color: 'var(--color-ash)' }} className="mx-auto" />
           <p className="mt-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            No training logged in {data?.label ?? 'this period'} yet.
+            No training logged in {data?.label || 'this period'} yet.
           </p>
         </div>
       ) : (
@@ -153,7 +153,7 @@ export default function WrappedPage() {
             filename="opus-wrapped.png"
             label="Share Wrapped"
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
+            style={{ background: 'var(--grad-accent)', color: 'var(--color-obsidian)', boxShadow: 'var(--glow-accent)' }}
           />
         </>
       )}

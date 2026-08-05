@@ -93,6 +93,9 @@ export default function ExercisePage() {
           exercises={exercises}
           onSelect={(ex) => navigate(`/exercises/${ex.id}`)}
           showArrow
+          // Only the full catalogue gets letter headings; a search result is
+          // short enough that they would be noise.
+          grouped={!search}
         />
       </div>
 

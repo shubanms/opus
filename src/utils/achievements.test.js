@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ACHIEVEMENTS } from './achievements.js';
+import { ACHIEVEMENTS, achievementProgress } from './achievements.js';
 
 const find = (key) => ACHIEVEMENTS.find((a) => a.key === key);
 const base = {
@@ -37,5 +37,58 @@ describe('achievement predicates', () => {
       expect(typeof a.title).toBe('string');
       expect(typeof a.test).toBe('function');
     });
+  });
+});
+
+describe('achievementProgress', () => {
+  const find = (key) => ACHIEVEMENTS.find((a) => a.key === key);
+
+  it('reports how close a locked achievement is', () => {
+    const p = achievementProgress(find('w50'), { workouts: 12 });
+    expect(p).toEqual({ current: 12, target: 50, ratio: 12 / 50 });
+  });
+
+  it('caps at the target so a finished one never reads 127 / 100', () => {
+    const p = achievementProgress(find('sets100'), { totalSets: 4200 });
+    expect(p.current).toBe(100);
+    expect(p.ratio).toBe(1);
+  });
+
+  it('is null for achievements with no numeric scale', () => {
+    expect(achievementProgress(find('earlyBird'), {})).toBe(null);
+    expect(achievementProgress(find('nightOwl'), {})).toBe(null);
+  });
+
+  it('treats missing or junk stats as zero', () => {
+    expect(achievementProgress(find('w10'), {}).current).toBe(0);
+    expect(achievementProgress(find('w10'), undefined).current).toBe(0);
+    expect(achievementProgress(find('w10'), { workouts: Number.NaN }).current).toBe(0);
+    expect(achievementProgress(find('w10'), { workouts: -5 }).current).toBe(0);
+  });
+
+  it('survives a malformed definition', () => {
+    expect(achievementProgress(null, {})).toBe(null);
+    expect(achievementProgress({ metric: 'x', target: 0 }, { x: 3 }).ratio).toBe(1);
+  });
+});
+
+describe('achievement definitions', () => {
+  it('states the same number in the description as it tests for', () => {
+    // The whole point of declaring `target` as data: before this, the number
+    // lived in the prose AND in a hand-written predicate, free to drift.
+    for (const a of ACHIEVEMENTS) {
+      if (!a.metric) continue;
+      const inDesc = (a.desc.match(/[\d,]+/g) ?? []).map((n) => Number(n.replace(/,/g, '')));
+      if (!inDesc.length) continue;
+      expect(inDesc).toContain(a.target);
+    }
+  });
+
+  it('unlocks exactly at the target and not one short', () => {
+    for (const a of ACHIEVEMENTS) {
+      if (!a.metric) continue;
+      expect(a.test({ [a.metric]: a.target })).toBe(true);
+      expect(a.test({ [a.metric]: a.target - 1 })).toBe(false);
+    }
   });
 });
