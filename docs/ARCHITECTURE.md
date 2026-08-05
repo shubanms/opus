@@ -43,6 +43,8 @@ useWorkout(useWorkouts/useLastSets/useWorkoutSets/useShareData) · useExercises 
 - rpg: CharacterCard (radar + monthly overlay), XPBar, LevelBadge, TitleBadge, LevelUpScreen, AchievementToast/Badge, TrophyCase, QuestBoard
 - progress: VolumeChart, TrendChart, MuscleFrequency, Heatmap, RecoveryMap (prop-driven: `data/onSelect/legend/title/icon`; falls back to `useRecovery`; exports `MUSCLE_LABEL`), ActivityRings, WeeklyRecap, ActivityForm, BodyStatsForm, SleepForm, PRBadge
 - share: ShareSheet (canvas preview + theme/accent pickers), ShareButton (`kind` + `data`). The cards themselves are **not components** — they are canvas renderers in `utils/shareCards.js`.
+- logo: **OpusMark** — the OPUS monogram, an "O" drawn as a living ring of light on **canvas 2D** (not SVG, not a raster). Conic accent gradient + a rotating specular arc; `level` thickens it and adds a stud per level, `prestige` adds a crown. Animation gated on `effects` + reduced-motion (static frame otherwise). `LoadingScreen` composes it with a letter-by-letter wordmark.
+- **App icons** are generated, not hand-made: `node scripts/make-icons.mjs` renders `public/icon-{192,512}.png` from the same monogram via headless Chromium, so the icon can't drift from the palette. Maskable-safe (mark inside the inner 60%, ground bleeds to the edge).
 - fx: Particles, CountUp · logo: OpusMark (evolves by level/prestige), LoadingScreen · ui: Modal, UiHost, ColorPicker · coach: CoachMark · tour: Tour · settings: EquipmentModal, ResetDataModal
 
 ## Reusable patterns

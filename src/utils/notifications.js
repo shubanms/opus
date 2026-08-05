@@ -79,7 +79,7 @@ function inDND(s) {
 export async function showNotification(title, opts = {}) {
   if (typeof Notification === 'undefined') throw new Error('unsupported');
   if (Notification.permission !== 'granted') throw new Error('not-granted');
-  const full = { icon: `${import.meta.env.BASE_URL}lifter.png`, ...opts };
+  const full = { icon: `${import.meta.env.BASE_URL}icon-192.png`, ...opts };
   if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
     try {
       const reg = await navigator.serviceWorker.ready;

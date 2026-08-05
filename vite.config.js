@@ -11,21 +11,23 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['lifter.png', 'robots.txt'],
+      includeAssets: ['icon-192.png', 'icon-512.png', 'robots.txt'],
       manifest: {
         name: 'OPUS',
         short_name: 'OPUS',
         description: 'Build your masterpiece.',
-        theme_color: '#111010',
-        background_color: '#111010',
+        theme_color: '#0b1020',
+        background_color: '#0b1020',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/opus/',
         scope: '/opus/',
         icons: [
-          { src: '/opus/lifter.png', sizes: '192x192', type: 'image/png' },
-          { src: '/opus/lifter.png', sizes: '512x512', type: 'image/png' },
-          { src: '/opus/lifter.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: '/opus/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/opus/icon-512.png', sizes: '512x512', type: 'image/png' },
+          // Maskable: the mark sits inside the inner 60% and the ground bleeds
+          // to the edges, so Android can crop to any shape without clipping it.
+          { src: '/opus/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {

@@ -1,38 +1,123 @@
-import { useEffect, useState } from 'react';
-import lifter from '../../assets/lifter.png';
+import { useEffect, useRef } from 'react';
+import useSettingsStore from '../../store/settingsStore.js';
 
-// Gold ring + lifter image. r=90 in a 200x200 viewBox → circumference ≈ 565.
-const CIRCUMFERENCE = 565;
-const BRIGHT_GOLD = '#C4BCFF';
+// The OPUS monogram: an "O" drawn as a living ring of light.
+//
+// Canvas 2D rather than SVG or a raster image. The previous mark was a gold PNG
+// of a lifter — it couldn't be recoloured with the palette (it stayed gold
+// through the whole Aurora migration), couldn't animate, and softened at large
+// sizes. A canvas ring is resolution-independent, takes its colour from the
+// theme, and can actually move.
+//
+// The mark still evolves with progression: `level` thickens the ring and adds
+// one stud per level, `prestige` adds a crown and a brighter halo.
 
-// Point on the ring at a clock angle (0 = 12 o'clock), given a radius.
-function pointAt(angleDeg, radius) {
-  const a = ((angleDeg - 90) * Math.PI) / 180;
-  return [100 + radius * Math.cos(a), 100 + radius * Math.sin(a)];
-}
+const ACCENT = '#8b7dff';
+const ACCENT_2 = '#4fd8c4';
+const BRIGHT = '#c4bcff';
 
-// The character mark evolves with `level` (1–10) and `prestige` (0+):
-// the ring gains studs (one per level), a brightening halo, and — once
-// prestiging — a slow rotating sweep plus a row of gems. Passing no level
-// (the default) renders the plain branding mark used on loading/onboarding.
 export default function OpusMark({ size = 200, dark = true, animate = false, level = 0, prestige = 0 }) {
-  const [showImage, setShowImage] = useState(!animate);
+  const ref = useRef(null);
+  const effects = useSettingsStore((s) => s.effects);
 
   useEffect(() => {
-    if (!animate) return;
-    const t = setTimeout(() => setShowImage(true), 800);
-    return () => clearTimeout(t);
-  }, [animate]);
+    const canvas = ref.current;
+    if (!canvas) return undefined;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return undefined;
 
-  const bg = dark ? 'var(--color-obsidian)' : 'var(--color-chalk)';
+    const reduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const moving = animate && effects && !reduced;
 
-  const lv = Math.max(0, Math.min(level, 10));
-  const p = Math.max(0, Math.min(prestige, 5)); // clamp so the halo stays tasteful
-  const ringWidth = 4 + (lv >= 4 ? 1 : 0) + (lv >= 8 ? 1 : 0);
-  const glowAlpha = lv >= 3 ? Math.min(0.1 + (lv - 3) * 0.03 + p * 0.05, 0.4) : 0;
-  const glowBlur = Math.round(6 + lv * 1.3 + p * 2.2);
-  const studs = lv >= 2 ? Array.from({ length: lv }, (_, i) => pointAt((i * 360) / lv, 90)) : [];
-  const gems = p;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+
+    const lv = Math.max(0, Math.min(level, 10));
+    const p = Math.max(0, Math.min(prestige, 5));
+    const R = size * 0.42;
+    const width = size * (0.028 + (lv >= 4 ? 0.006 : 0) + (lv >= 8 ? 0.006 : 0));
+    const c = size / 2;
+
+    let raf;
+    const start = performance.now();
+
+    function frame(now) {
+      // `intro` draws the ring on over the first 900ms; `spin` is the endless
+      // specular sweep that keeps the mark alive.
+      const t = (now - start) / 1000;
+      const intro = animate ? Math.min(t / 0.9, 1) : 1;
+      const eased = 1 - (1 - intro) ** 3;
+      const spin = moving ? t * 0.5 : 0.6;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, size, size);
+
+      ctx.save();
+      ctx.translate(c, c);
+      ctx.rotate(-Math.PI / 2);
+
+      // Base ring, swept through the accent gradient.
+      const grad = ctx.createConicGradient
+        ? ctx.createConicGradient(0, 0, 0)
+        : ctx.createLinearGradient(-R, -R, R, R);
+      grad.addColorStop(0, ACCENT);
+      grad.addColorStop(0.5, ACCENT_2);
+      grad.addColorStop(1, ACCENT);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(0, 0, R, 0, Math.PI * 2 * eased);
+      ctx.stroke();
+
+      if (eased >= 1) {
+        // Specular highlight travelling around the ring.
+        ctx.strokeStyle = BRIGHT;
+        ctx.globalAlpha = 0.9;
+        ctx.lineWidth = width * 0.9;
+        ctx.beginPath();
+        ctx.arc(0, 0, R, spin, spin + 0.5);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // One stud per level, seated on the ring.
+        if (lv >= 2) {
+          ctx.fillStyle = ACCENT;
+          for (let i = 0; i < lv; i += 1) {
+            const a = (Math.PI * 2 * i) / lv;
+            ctx.beginPath();
+            ctx.arc(Math.cos(a) * R, Math.sin(a) * R, width * 0.55, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+      ctx.restore();
+
+      // Prestige crown — diamonds above the ring.
+      if (p > 0 && eased >= 1) {
+        ctx.fillStyle = BRIGHT;
+        for (let i = 0; i < p; i += 1) {
+          const x = c + (i - (p - 1) / 2) * size * 0.075;
+          ctx.save();
+          ctx.translate(x, c - R - size * 0.055);
+          ctx.rotate(Math.PI / 4);
+          const s = size * 0.032;
+          ctx.fillRect(-s / 2, -s / 2, s, s);
+          ctx.restore();
+        }
+      }
+
+      if (moving || intro < 1) raf = requestAnimationFrame(frame);
+    }
+
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [size, animate, level, prestige, effects]);
+
+  const glow = Math.min(0.1 + Math.max(0, level - 3) * 0.03 + prestige * 0.05, 0.4);
 
   return (
     <div
@@ -41,89 +126,14 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
         width: size,
         height: size,
         borderRadius: '50%',
-        overflow: 'hidden',
-        background: bg,
-        boxShadow: glowAlpha > 0 ? `0 0 ${glowBlur}px rgba(139, 125, 255,${glowAlpha})` : undefined,
+        background: dark ? 'transparent' : 'var(--color-ivory)',
+        boxShadow:
+          level >= 3
+            ? `0 0 ${Math.round(10 + level * 1.6 + prestige * 3)}px rgba(139,125,255,${glow})`
+            : undefined,
       }}
     >
-      <img
-        src={lifter}
-        alt="OPUS"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          width: '78%',
-          height: '78%',
-          objectFit: 'contain',
-          transform: 'translate(-50%, -50%)',
-          opacity: showImage ? 1 : 0,
-          transition: 'opacity 600ms var(--opus-ease-out)',
-        }}
-      />
-      <svg
-        viewBox="0 0 200 200"
-        width={size}
-        height={size}
-        style={{ position: 'absolute', top: 0, left: 0 }}
-      >
-        <circle
-          cx="100"
-          cy="100"
-          r="90"
-          fill="none"
-          stroke="var(--color-gold)"
-          strokeWidth={ringWidth}
-          strokeLinecap="round"
-          transform="rotate(-90 100 100)"
-          style={
-            animate
-              ? {
-                  strokeDasharray: CIRCUMFERENCE,
-                  strokeDashoffset: CIRCUMFERENCE,
-                  animation: 'ringDraw 900ms var(--opus-ease-out) 300ms forwards',
-                }
-              : undefined
-          }
-        />
-
-        {/* Prestige: a slow rotating bright sweep over the ring. */}
-        {prestige > 0 && (
-          <g className="anim-spin-slow" style={{ transformOrigin: '100px 100px' }}>
-            <circle
-              cx="100"
-              cy="100"
-              r="90"
-              fill="none"
-              stroke={BRIGHT_GOLD}
-              strokeWidth={ringWidth}
-              strokeLinecap="round"
-              strokeDasharray={`${Math.round(CIRCUMFERENCE * 0.18)} ${CIRCUMFERENCE}`}
-            />
-          </g>
-        )}
-
-        {/* Level studs around the ring (one per level). */}
-        {studs.map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r={ringWidth >= 5 ? 3.4 : 3} fill="var(--color-gold)" />
-        ))}
-
-        {/* Prestige gems — a small crown at the top. */}
-        {Array.from({ length: gems }, (_, i) => {
-          const cx = 100 + (i - (gems - 1) / 2) * 15;
-          return (
-            <rect
-              key={`g${i}`}
-              x={cx - 3.2}
-              y={16.8}
-              width={6.4}
-              height={6.4}
-              fill={BRIGHT_GOLD}
-              transform={`rotate(45 ${cx} 20)`}
-            />
-          );
-        })}
-      </svg>
+      <canvas ref={ref} role="img" aria-label="OPUS" style={{ width: size, height: size, display: 'block' }} />
     </div>
   );
 }
