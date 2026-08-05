@@ -19,19 +19,15 @@ import { supersetRuns, noRestIds } from '../utils/supersets.js';
 import { sessionIron } from '../utils/economy.js';
 import { db } from '../db/db.js';
 import useUIStore from '../store/uiStore.js';
+import { useElapsed } from '../hooks/useElapsed.js';
+import { formatDuration } from '../utils/duration.js';
 import useCinematicStore from '../store/cinematicStore.js';
 
 function ElapsedTimer({ startedAt }) {
-  const [secs, setSecs] = useState(Math.round((Date.now() - startedAt) / 1000));
-  useEffect(() => {
-    const id = setInterval(() => setSecs(Math.round((Date.now() - startedAt) / 1000)), 1000);
-    return () => clearInterval(id);
-  }, [startedAt]);
-  const m = Math.floor(secs / 60);
-  const h = Math.floor(m / 60);
+  const secs = useElapsed(startedAt);
   return (
     <span className="mt-1 block font-mono text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-      {h > 0 ? `${h}h ${m % 60}m` : `${m}m`}
+      {formatDuration(secs)}
     </span>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatDuration } from '../../utils/duration.js';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucide-react';
 import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
@@ -17,12 +18,6 @@ import useSettingsStore from '../../store/settingsStore.js';
 
 // Friendly muscle-group tags a user can attach to a past session.
 const MUSCLE_TAGS = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Cardio', 'Full Body'];
-
-function formatDuration(secs) {
-  const m = Math.floor(secs / 60);
-  const h = Math.floor(m / 60);
-  return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
-}
 
 export default function WorkoutCard({ workout }) {
   const [expanded, setExpanded] = useState(false);

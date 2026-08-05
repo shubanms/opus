@@ -316,4 +316,30 @@ test.describe('OPUS end-to-end', () => {
 
     expect(realErrors(errors)).toEqual([]);
   });
+
+  test('an open session stays visible from every tab', async ({ page, errors }) => {
+    // Nothing outside the workout screen used to suggest a session was open, so
+    // wandering to Progress mid-session made the app look idle.
+    test.setTimeout(90_000);
+    await onboard(page, 'Mid Session');
+    await dismissCoach(page);
+
+    const clock = page.locator('[data-testid="session-clock"]');
+    await expect(clock).toHaveCount(0);
+
+    await gotoTab(page, 'Workout');
+    await dismissCoach(page);
+    await page.getByRole('button', { name: 'Quick start (empty)' }).click();
+    await expect(clock).toBeVisible();
+
+    for (const tab of ['Progress', 'Exercises', 'Home']) {
+      await gotoTab(page, tab);
+      await dismissCoach(page);
+      await expect(clock).toBeVisible();
+    }
+
+    // The centre action announces the session rather than offering a new one.
+    await expect(page.getByRole('button', { name: /^Session in progress/ })).toBeVisible();
+    expect(realErrors(errors)).toEqual([]);
+  });
 });

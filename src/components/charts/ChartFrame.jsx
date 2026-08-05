@@ -15,9 +15,16 @@ const TOP = 12;
 // half of it hanging outside the frame.
 const RIGHT = 8;
 const BOTTOM = 20;
-/** Advance width of one DM Mono glyph at AXIS_FONT, plus breathing room. */
-const CHAR = 6;
-const LABEL_GAP = 14;
+/**
+ * Advance width of one axis glyph at AXIS_FONT, plus breathing room.
+ *
+ * Deliberately wider than DM Mono actually measures. The label budget is an
+ * estimate, and it has to hold when the webfont has *not* loaded — offline
+ * first paint, a blocked CDN — because the system fallback is wider and the
+ * labels then overlap ("6/156/22"). Erring wide costs at most one label.
+ */
+const CHAR = 7;
+const LABEL_GAP = 18;
 
 /** Rough width of a right-aligned axis label at AXIS_FONT in the mono face. */
 function gutterFor(ticks) {

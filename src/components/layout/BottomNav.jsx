@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, BarChart3, Plus, Dumbbell, User, CalendarCheck, Zap, ListChecks } from 'lucide-react';
+import { Home, BarChart3, Plus, Dumbbell, User, CalendarCheck, Zap, ListChecks, Timer } from 'lucide-react';
 import { AnimatePresence, m, SPRING, TWEEN, useMotionEnabled } from '../../motion/index.jsx';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
 import { useToday } from '../../hooks/useTemplates.js';
 import useWorkoutStore from '../../store/workoutStore.js';
+import { useElapsed } from '../../hooks/useElapsed.js';
+import { formatClock } from '../../utils/duration.js';
 
 const tabs = [
   { to: '/home', label: 'Home', Icon: Home },
@@ -58,12 +60,19 @@ export default function BottomNav() {
   const [quickOpen, setQuickOpen] = useState(false);
   const today = useToday();
   const startFromTemplate = useWorkoutStore((s) => s.startFromTemplate);
+  // Nothing outside the workout screen used to suggest a session was open — you
+  // could wander to Progress mid-session and the app looked idle.
+  const activeWorkout = useWorkoutStore((s) => s.activeWorkout);
+  const live = Boolean(activeWorkout?.startedAt);
+  const elapsed = useElapsed(activeWorkout?.startedAt);
   let pressTimer;
 
   // Long-press the centre action for the ways a session actually starts,
   // instead of always landing on the workout tab and choosing from there.
   // Each entry does real work — no route that nothing handles.
-  const quick = [
+  const quick = live
+    ? [{ label: 'Back to your session', Icon: Timer, run: () => navigate('/workout') }]
+    : [
     { label: 'Empty session', Icon: Zap, run: () => navigate('/workout') },
     today.type === 'template' && {
       label: today.template.name,
@@ -144,7 +153,11 @@ export default function BottomNav() {
               <div key={to} className="relative flex flex-1 justify-center">
                 <m.button
                   type="button"
-                  aria-label="Workout — tap to start, press and hold for quick actions"
+                  aria-label={
+                    live
+                      ? `Session in progress, ${formatClock(elapsed)} — tap to return`
+                      : 'Workout — tap to start, press and hold for quick actions'
+                  }
                   className="-mt-7 flex h-14 w-14 items-center justify-center"
                   style={{
                     background: 'var(--grad-accent)',
@@ -163,6 +176,36 @@ export default function BottomNav() {
                 >
                   <Icon size={26} strokeWidth={2.5} />
                 </m.button>
+
+                {/* A breathing halo behind the button, plus the running clock —
+                    visible from any tab, and the clock answers the question the
+                    dot raises ("how long have I been in here?"). */}
+                {live && !quickOpen && (
+                  <>
+                    <m.span
+                      aria-hidden
+                      className="pointer-events-none absolute -mt-7 h-14 w-14"
+                      style={{
+                        borderRadius: 'var(--opus-radius-lg)',
+                        border: '2px solid var(--color-sage)',
+                      }}
+                      initial={{ opacity: 0.9, scale: 1 }}
+                      animate={motionOn ? { opacity: [0.9, 0, 0.9], scale: [1, 1.35, 1] } : { opacity: 0.9 }}
+                      transition={motionOn ? { duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeOut' } : undefined}
+                    />
+                    <span
+                      data-testid="session-clock"
+                      className="pointer-events-none absolute -top-8 whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold"
+                      style={{
+                        background: 'var(--color-sage)',
+                        color: 'var(--color-obsidian)',
+                        boxShadow: 'var(--elev-2)',
+                      }}
+                    >
+                      {formatClock(elapsed)}
+                    </span>
+                  </>
+                )}
               </div>
             ) : (
               <NavItem key={to} to={to} label={label} Icon={Icon} />

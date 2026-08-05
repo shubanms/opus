@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { formatDuration } from '../../utils/duration.js';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Trophy, Clock, Zap, BookmarkPlus, Check } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
@@ -16,12 +17,6 @@ import { useRPG } from '../../hooks/useRPG.js';
 import XPBar from '../rpg/XPBar.jsx';
 import ShareButton from '../share/ShareButton.jsx';
 import CountUp from '../fx/CountUp.jsx';
-
-function formatDuration(secs) {
-  const m = Math.floor(secs / 60);
-  const h = Math.floor(m / 60);
-  return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
-}
 
 export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, onSave, onClose }) {
   const { profile } = useRPG();
