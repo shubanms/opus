@@ -13,6 +13,7 @@ import { diffsBySetNumber } from '../../utils/setDiff.js';
 import { rollCrit, comboCount, bonusXp as critBonusXp, CRIT_CHANCE } from '../../utils/crit.js';
 import { todaysDungeon, affixEffects } from '../../utils/dungeon.js';
 import Particles from '../fx/Particles.jsx';
+import { AnimatePresence, m, SPRING } from '../../motion/index.jsx';
 import PlateCalculator from './PlateCalculator.jsx';
 
 // Compact "vs last session" badge for a logged working set.
@@ -157,9 +158,23 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         </div>
       )}
 
-      {/* Logged sets */}
+      {/* Logged sets. `layout` + AnimatePresence so a new set slides in and a
+          removed one collapses, instead of the list jumping. */}
+      <AnimatePresence initial={false}>
       {exercise.sets.map((s) => (
-        <div key={s.setNumber} className="mb-1 rounded-xl px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
+        <m.div
+          key={s.setNumber}
+          layout
+          transition={SPRING.layout}
+          initial={{ opacity: 0, y: -6, scaleY: 0.9 }}
+          animate={{ opacity: 1, y: 0, scaleY: 1 }}
+          exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+          className="mb-1 overflow-hidden rounded-xl px-3 py-2.5"
+          style={{
+            background: s.crit ? 'var(--accent-wash)' : 'var(--color-ivory)',
+            border: s.crit ? '1px solid var(--accent-line)' : '1px solid transparent',
+          }}
+        >
           <div className="flex items-center gap-2">
             <button
               onClick={() => toggleWarmup(exerciseId, s.setNumber)}
@@ -171,25 +186,28 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
                 ? <Flame size={12} style={{ color: 'var(--color-ember)' }} />
                 : <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>{s.setNumber}</span>}
             </button>
-            <span className="flex-1 font-mono text-sm" style={{ color: 'var(--color-text-primary)' }}>
+            <span className="flex-1 font-mono text-base" style={{ color: 'var(--color-text-primary)' }}>
               {fmt(s)}
             </span>
             {!s.isWarmup && <SetDelta diff={setDeltas[s.setNumber]} unit={unit} />}
             {s.rpe && (
               <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>RPE {s.rpe}</span>
             )}
-            <button onClick={() => editNote(s.setNumber, s.note)} aria-label="Set note">
-              <StickyNote size={13} style={{ color: s.note ? 'var(--color-gold)' : 'var(--color-ash)' }} />
+            {/* Padded to a real touch target — these were 13px icons with no
+                padding, which is a hard tap with chalky hands. */}
+            <button type="button" onClick={() => editNote(s.setNumber, s.note)} aria-label="Set note" className="-m-2 p-2">
+              <StickyNote size={15} style={{ color: s.note ? 'var(--color-gold)' : 'var(--color-ash)' }} />
             </button>
-            <button onClick={() => removeSet(exerciseId, s.setNumber)} aria-label="Remove set">
-              <Trash2 size={13} style={{ color: 'var(--color-ash)' }} />
+            <button type="button" onClick={() => removeSet(exerciseId, s.setNumber)} aria-label="Remove set" className="-m-2 p-2">
+              <Trash2 size={15} style={{ color: 'var(--color-ash)' }} />
             </button>
           </div>
           {s.note && (
             <p className="mt-1 pl-8 font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>{s.note}</p>
           )}
-        </div>
+        </m.div>
       ))}
+      </AnimatePresence>
 
       {/* Input row */}
       <div className="relative mt-2 flex items-center gap-1.5">
@@ -208,14 +226,14 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         )}
         {showWeight && (
           <>
-            <div className="flex min-w-0 flex-1 items-center gap-1 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
+            <div className="flex min-w-0 flex-1 items-center gap-1 rounded-2xl px-3 py-3" style={{ background: 'var(--color-ivory)' }}>
               <input
                 value={weight}
                 onChange={(e) => { setWeight(e.target.value); setShowPlates(false); }}
                 placeholder={unitLabel(unit)}
                 type="number"
                 inputMode="decimal"
-                className="min-w-0 flex-1 bg-transparent font-mono text-sm outline-none"
+                className="min-w-0 flex-1 bg-transparent font-mono text-lg outline-none"
                 style={{ color: 'var(--color-text-primary)' }}
               />
               {weightNum > 0 && (
@@ -228,8 +246,8 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
           </>
         )}
 
-        <div className="flex min-w-0 flex-1 items-center rounded-xl" style={{ background: 'var(--color-ivory)' }}>
-          <button onClick={() => stepReps(-1)} className="flex h-full shrink-0 items-center px-2 py-2.5" aria-label="Fewer reps">
+        <div className="flex min-w-0 flex-1 items-center rounded-2xl" style={{ background: 'var(--color-ivory)' }}>
+          <button onClick={() => stepReps(-1)} className="flex h-full shrink-0 items-center px-2 py-3" aria-label="Fewer reps">
             <Minus size={14} style={{ color: 'var(--color-ash)' }} />
           </button>
           <input
@@ -238,10 +256,10 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
             placeholder="reps"
             type="number"
             inputMode="numeric"
-            className="min-w-0 flex-1 bg-transparent text-center font-mono text-sm outline-none"
+            className="min-w-0 flex-1 bg-transparent text-center font-mono text-lg outline-none"
             style={{ color: 'var(--color-text-primary)' }}
           />
-          <button onClick={() => stepReps(1)} className="flex h-full shrink-0 items-center px-2 py-2.5" aria-label="More reps">
+          <button onClick={() => stepReps(1)} className="flex h-full shrink-0 items-center px-2 py-3" aria-label="More reps">
             <Plus size={14} style={{ color: 'var(--color-ash)' }} />
           </button>
         </div>
@@ -250,8 +268,14 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
           onClick={handleLog}
           disabled={!canLog}
           aria-label="Log set"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: canLog ? 1 : 0.35 }}
+          className="flex h-12 w-12 shrink-0 items-center justify-center"
+          style={{
+            background: 'var(--grad-accent)',
+            color: 'var(--color-obsidian)',
+            borderRadius: 'var(--opus-radius-md)',
+            boxShadow: canLog ? 'var(--glow-accent)' : 'none',
+            opacity: canLog ? 1 : 0.35,
+          }}
         >
           <Plus size={18} strokeWidth={2.5} />
         </button>

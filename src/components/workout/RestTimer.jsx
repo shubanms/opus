@@ -56,12 +56,12 @@ export default function RestTimer({ duration = 90, onComplete, onSkip, onSetDefa
           width={44} height={44} viewBox="0 0 44 44"
           style={{ flexShrink: 0, animation: urgent ? 'timerPulse 1s var(--opus-ease-out) infinite' : 'none' }}
         >
-          <circle cx={22} cy={22} r={R} fill="none" stroke="#444" strokeWidth={3} />
+          <circle cx={22} cy={22} r={R} fill="none" stroke="var(--track, rgba(255,255,255,0.12))" strokeWidth={3.5} />
           <circle
             cx={22} cy={22} r={R}
             fill="none"
             stroke={ringColor}
-            strokeWidth={3}
+            strokeWidth={3.5}
             strokeLinecap="round"
             strokeDasharray={C}
             strokeDashoffset={dashoffset}

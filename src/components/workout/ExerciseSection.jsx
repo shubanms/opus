@@ -16,7 +16,7 @@ const MUSCLE_HUE = {
   abs: '#8B7DFF', obliques: '#8B7DFF',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, isCardio, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
+export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, isCardio, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, active = false, done = false }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#7B83A6';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
@@ -35,9 +35,16 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
   const cardioMin = Math.round(exercise.sets.reduce((a, s) => a + (s.durationSec || 0), 0) / 60);
 
   return (
+    // Three states, so a glance answers "where am I?" without reading every
+    // card: the one you're on is lit, finished ones recede, the rest are plain.
     <div
       className="glass mb-4 rounded-2xl px-4 pb-4 pt-3"
-      style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
+      style={{
+        background: 'var(--color-chalk)',
+        border: `1px solid ${active ? 'var(--accent-line)' : 'var(--color-ivory)'}`,
+        boxShadow: active ? 'var(--glow-accent)' : undefined,
+        opacity: done ? 0.72 : 1,
+      }}
     >
       {/* Header */}
       <div className="flex items-start justify-between">

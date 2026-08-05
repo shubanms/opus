@@ -38,7 +38,7 @@ function ElapsedTimer({ startedAt }) {
   );
 }
 
-function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
+function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, active, done }) {
   const exerciseData = useExercise(ex.exerciseId);
   const muscleGroup = exerciseData?.muscleGroup ?? null;
   // `layout` makes reordering animate for free: move up/down already rewrites
@@ -61,6 +61,8 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, li
       onMoveDown={onMoveDown}
       canMoveUp={canMoveUp}
       canMoveDown={canMoveDown}
+      active={active}
+      done={done}
     />
     </m.div>
   );
@@ -97,6 +99,23 @@ export default function WorkoutPage() {
   const alreadyAdded = activeWorkout?.exercises.map((e) => e.exerciseId) ?? [];
 
   const exercises = activeWorkout?.exercises ?? [];
+  // "Done" only means a target was actually met. An ad-hoc session has no
+  // targets, so nothing is dimmed — logging two sets of bench doesn't mean
+  // you're finished with bench.
+  const isDone = (ex) => {
+    const working = ex.sets.filter((x) => !x.isWarmup).length;
+    return Boolean(ex.targetSets) && working >= ex.targetSets;
+  };
+  // "Active" is where you actually are: the exercise you logged to most
+  // recently. Before anything is logged, it's the first one that isn't done.
+  const lastLogged = exercises.reduce(
+    (best, ex) => {
+      const t = Math.max(0, ...ex.sets.map((x) => x.completedAt ?? 0));
+      return t > best.t ? { t, id: ex.exerciseId } : best;
+    },
+    { t: 0, id: null },
+  );
+  const activeId = lastLogged.id ?? exercises.find((ex) => !isDone(ex))?.exerciseId ?? null;
   const runs = supersetRuns(exercises);
   const noRest = noRestIds(exercises);
 
@@ -357,6 +376,8 @@ export default function WorkoutPage() {
               onMoveDown={() => moveExercise(ex.exerciseId, 1)}
               canMoveUp={idx > 0}
               canMoveDown={idx < exercises.length - 1}
+              active={ex.exerciseId === activeId}
+              done={isDone(ex)}
             />
           );
         };
