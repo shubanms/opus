@@ -20,6 +20,7 @@ import { sessionIron } from '../utils/economy.js';
 import { db } from '../db/db.js';
 import useUIStore from '../store/uiStore.js';
 import { useElapsed } from '../hooks/useElapsed.js';
+import { suggestRest } from '../utils/effort.js';
 import { formatDuration } from '../utils/duration.js';
 import useCinematicStore from '../store/cinematicStore.js';
 
@@ -32,7 +33,7 @@ function ElapsedTimer({ startedAt }) {
   );
 }
 
-function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, active, done }) {
+function ExerciseSectionWrapper({ ex, onSetLogged, onEffortRated, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, active, done }) {
   const exerciseData = useExercise(ex.exerciseId);
   const muscleGroup = exerciseData?.muscleGroup ?? null;
   // `layout` makes reordering animate for free: move up/down already rewrites
@@ -41,6 +42,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, li
   return (
     <m.div layout transition={SPRING.layout}>
     <ExerciseSection
+      onEffortRated={onEffortRated}
       exercise={ex}
       muscleGroup={muscleGroup}
       isBodyweight={exerciseData?.equipment === 'bodyweight'}
@@ -73,6 +75,7 @@ export default function WorkoutPage() {
   const [showRest, setShowRest] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [restKey, setRestKey] = useState(0);
+  const [restSuggested, setRestSuggested] = useState(null);
   const restDuration = useSettingsStore((s) => s.restDuration);
   const setRestDuration = useSettingsStore((s) => s.setRestDuration);
   const nameRef = useRef();
@@ -112,6 +115,7 @@ export default function WorkoutPage() {
 
   function handleSetLogged(exerciseId) {
     setRestKey((k) => k + 1);
+    setRestSuggested(null);
     setShowRest(!(exerciseId != null && noRest.has(exerciseId)));
   }
 
@@ -326,6 +330,7 @@ export default function WorkoutPage() {
           <RestTimer
             key={restKey}
             duration={restDuration}
+            suggested={restSuggested}
             onComplete={() => setShowRest(false)}
             onSkip={() => setShowRest(false)}
             onSetDefault={setRestDuration}
@@ -340,6 +345,7 @@ export default function WorkoutPage() {
           const linked = idx > 0 && ex.supersetId != null && ex.supersetId === exercises[idx - 1].supersetId;
           return (
             <ExerciseSectionWrapper
+              onEffortRated={(rpe) => setRestSuggested(suggestRest(rpe, restDuration))}
               key={ex.exerciseId}
               ex={ex}
               canLink={idx > 0}

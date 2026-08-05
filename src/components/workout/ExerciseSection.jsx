@@ -16,7 +16,7 @@ const MUSCLE_HUE = {
   abs: '#8B7DFF', obliques: '#8B7DFF',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, isCardio, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, active = false, done = false }) {
+export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, isCardio, onSetLogged, onEffortRated, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, active = false, done = false }) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#7B83A6';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
@@ -166,7 +166,8 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
             <OverloadNudge exerciseId={exercise.exerciseId} />
           </div>
 
-          <SetLogger exerciseId={exercise.exerciseId} onSetLogged={() => onSetLogged?.(exercise.exerciseId)} isBodyweight={isBodyweight} />
+          <SetLogger
+        onEffortRated={onEffortRated} exerciseId={exercise.exerciseId} onSetLogged={() => onSetLogged?.(exercise.exerciseId)} isBodyweight={isBodyweight} />
         </>
       )}
 

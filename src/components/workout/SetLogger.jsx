@@ -37,7 +37,7 @@ function SetDelta({ diff, unit }) {
   );
 }
 
-export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = false }) {
+export default function SetLogger({ exerciseId, onSetLogged, onEffortRated, isBodyweight = false }) {
   const { activeWorkout, logSet, removeSet, toggleWarmup, setSetNote, setSetRpe } = useWorkoutStore();
   const unit = useSettingsStore((s) => s.unit);
   const haptic = useHaptics();
@@ -261,6 +261,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
                   onClick={() => {
                     setSetRpe(exerciseId, s.setNumber, level.rpe);
                     haptic('tap');
+                    onEffortRated?.(level.rpe);
                   }}
                   className="rounded-full px-3 py-2 font-sans text-xs font-semibold"
                   style={{ background: 'var(--color-chalk)', color: level.color }}

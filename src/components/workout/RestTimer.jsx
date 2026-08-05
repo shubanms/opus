@@ -7,7 +7,7 @@ const R = 18;
 const C = 2 * Math.PI * R; // ≈ 113
 const PRESETS = [60, 90, 120, 180];
 
-export default function RestTimer({ duration = 90, onComplete, onSkip, onSetDefault }) {
+export default function RestTimer({ duration = 90, suggested = null, onComplete, onSkip, onSetDefault }) {
   const [total, setTotal] = useState(duration);
   const [remaining, setRemaining] = useState(duration);
   const ref = useRef();
@@ -28,6 +28,17 @@ export default function RestTimer({ duration = 90, onComplete, onSkip, onSetDefa
     }, 1000);
     return () => clearInterval(ref.current);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The effort rating arrives *after* the timer has started — you log the set,
+  // the clock runs, then you tap how it felt. Retarget in place rather than
+  // restarting, or the seconds already rested would be thrown away.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: retarget on the suggestion only
+  useEffect(() => {
+    if (!suggested || suggested === total) return;
+    const elapsed = total - remaining;
+    setTotal(suggested);
+    setRemaining(Math.max(0, suggested - elapsed));
+  }, [suggested]);
 
   function setDuration(secs) {
     const v = Math.max(5, secs);

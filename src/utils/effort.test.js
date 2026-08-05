@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { EFFORT, EFFORT_LEVELS, effortMeta, effortFromRpe, sessionEffort } from './effort.js';
+import { EFFORT, EFFORT_LEVELS, effortMeta, effortFromRpe, sessionEffort, suggestRest } from './effort.js';
 
 describe('EFFORT_LEVELS', () => {
   it('maps every preset onto the stored 6-10 scale', () => {
@@ -86,5 +86,45 @@ describe('sessionEffort', () => {
     expect(sessionEffort([]).rated).toBe(0);
     expect(sessionEffort(undefined).rated).toBe(0);
     expect(sessionEffort([null, undefined]).total).toBe(0);
+  });
+});
+
+describe('suggestRest', () => {
+  it('rests longer after a harder set', () => {
+    const easy = suggestRest(7, 90);
+    const hard = suggestRest(9, 90);
+    const max = suggestRest(10, 90);
+    expect(easy).toBeLessThan(hard);
+    expect(hard).toBeLessThan(max);
+  });
+
+  it("scales from the user's own default rather than overriding it", () => {
+    // Someone who set 60s likes short rests; "Max" should stretch that, not
+    // replace it with a flat three minutes.
+    expect(suggestRest(10, 60)).toBeLessThan(suggestRest(10, 120));
+    expect(suggestRest(7, 60)).toBeLessThan(suggestRest(7, 120));
+  });
+
+  it('leaves an unrated set on the default', () => {
+    expect(suggestRest(null, 90)).toBe(90);
+    expect(suggestRest(0, 120)).toBe(120);
+    expect(suggestRest(undefined, 75)).toBe(75);
+  });
+
+  it('lands on round numbers a timer can show', () => {
+    for (const rpe of [7, 8, 9, 10]) {
+      expect(suggestRest(rpe, 90) % 5).toBe(0);
+    }
+  });
+
+  it('stays inside sane bounds', () => {
+    expect(suggestRest(7, 10)).toBeGreaterThanOrEqual(30);
+    expect(suggestRest(10, 600)).toBeLessThanOrEqual(300);
+  });
+
+  it('survives junk', () => {
+    expect(suggestRest(9, 0)).toBeGreaterThan(0);
+    expect(suggestRest(9, undefined)).toBeGreaterThan(0);
+    expect(suggestRest('abc', 90)).toBe(90);
   });
 });

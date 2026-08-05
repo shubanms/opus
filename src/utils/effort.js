@@ -73,3 +73,25 @@ export function sessionEffort(sets) {
     coverage: working.length ? rated.length / working.length : 0,
   };
 }
+
+// Rest scales with how hard the set was, but relative to the rest length the
+// user already chose — someone whose default is 60s likes short rests, and
+// overriding that with a flat 3 minutes because they tapped "Max" would be
+// presumptuous. A multiplier adapts without arguing.
+const REST_MULTIPLIER = { 10: 1.75, 9: 1.25, 8: 1.25 };
+const MIN_REST = 30;
+const MAX_REST = 300;
+
+/**
+ * How long to rest after a set of this effort, given the user's own default.
+ *
+ * Returns the default unchanged for an unrated set, so this can be called
+ * unconditionally.
+ */
+export function suggestRest(rpe, defaultSecs = 90) {
+  const base = Number(defaultSecs) > 0 ? Number(defaultSecs) : 90;
+  const n = Number(rpe);
+  if (!Number.isFinite(n) || n <= 0) return Math.round(base);
+  const mult = REST_MULTIPLIER[Math.min(10, Math.round(n))] ?? 0.75;
+  return Math.max(MIN_REST, Math.min(MAX_REST, Math.round((base * mult) / 5) * 5));
+}
