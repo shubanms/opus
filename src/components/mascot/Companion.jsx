@@ -11,7 +11,7 @@ const MET_KEY = 'opus_mascot_met';
 const wasMet = () => { try { return localStorage.getItem(MET_KEY) === '1'; } catch { return true; } };
 const markMet = () => { try { localStorage.setItem(MET_KEY, '1'); } catch { /* ignore */ } };
 
-export default function Companion({ autoGreet = true }) {
+export default function Companion({ autoGreet = true, size = 164, bubbleWidth = 260 }) {
   const { profile } = useRPG();
   const effects = useSettingsStore((s) => s.effects);
   const haptic = useHaptics();
@@ -65,33 +65,17 @@ export default function Companion({ autoGreet = true }) {
   }, [haptic, say]);
 
   return (
-    <div className="relative mb-5 flex flex-col items-center">
-      {/* Speech bubble. The inline transform owns the horizontal centring — a
-          `-translate-x-1/2` utility here would double it, because Tailwind v4
-          compiles translate utilities to the standalone `translate` property,
-          which composes with `transform` rather than being overridden by it. */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-0 z-10"
-        style={{
-          opacity: line ? 1 : 0,
-          transform: `translate(-50%, ${line ? '0' : '6px'})`,
-          transition: 'opacity var(--dur-standard) var(--opus-ease-out), transform var(--dur-standard) var(--opus-ease-out)',
-        }}
-      >
-        <div
-          className="max-w-[260px] rounded-2xl px-3.5 py-2 text-center font-sans text-xs"
-          style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)', border: '1px solid var(--color-gold)', boxShadow: '0 6px 20px rgba(0,0,0,0.25)' }}
-        >
-          <span className="font-semibold" style={{ color: 'var(--color-gold)' }}>{MASCOT_NAME}:</span> {line}
-        </div>
-      </div>
-
+    // Magnus and his line sit side by side, like a chat. The bubble used to be
+    // absolutely positioned above him, which reserved a tall empty band on Home
+    // whether or not he was speaking — and inside a narrow tile it wrapped into
+    // a column that covered him completely.
+    <div className="flex items-center gap-2">
       {/* 3D companion */}
       <button
         onClick={onTap}
         aria-label={`Talk to ${MASCOT_NAME}`}
-        className="mt-10 h-[164px] w-[164px] cursor-pointer"
-        style={{ background: 'transparent', touchAction: 'manipulation' }}
+        className="shrink-0 cursor-pointer"
+        style={{ height: size, width: size, background: 'transparent', touchAction: 'manipulation' }}
       >
         <Canvas
           camera={{ fov: 32, position: [0, 0, 5.8] }}
@@ -108,6 +92,31 @@ export default function Companion({ autoGreet = true }) {
           </Suspense>
         </Canvas>
       </button>
+
+      {/* His line. Always rendered so the row keeps a stable height and the
+          layout doesn't jump each time he speaks. */}
+      <div
+        className="pointer-events-none min-w-0 flex-1"
+        style={{
+          opacity: line ? 1 : 0,
+          transform: line ? 'none' : 'translateX(-4px)',
+          transition:
+            'opacity var(--dur-standard) var(--opus-ease-out), transform var(--dur-standard) var(--opus-ease-out)',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: bubbleWidth,
+            background: 'var(--color-obsidian)',
+            color: 'var(--color-text-inverse)',
+            border: '1px solid var(--color-gold)',
+            boxShadow: 'var(--elev-2)',
+          }}
+          className="rounded-2xl px-3 py-2 font-sans text-xs leading-snug"
+        >
+          <span className="font-semibold" style={{ color: 'var(--color-gold)' }}>{MASCOT_NAME}:</span> {line}
+        </div>
+      </div>
     </div>
   );
 }

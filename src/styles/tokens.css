@@ -51,6 +51,7 @@
 
   --grad-accent: linear-gradient(135deg, #8b7dff, #4fd8c4);
   --grad-accent-soft: linear-gradient(135deg, rgba(139, 125, 255, 0.18), rgba(79, 216, 196, 0.12));
+  --accent-wash: rgba(139, 125, 255, 0.14); /* selected-state fill behind an active item */
   --glass-line: rgba(20, 26, 46, 0.09);
   --glass-blur: 18px;
   /* Chrome the page scrolls beneath. Near-opaque on purpose: at anything

@@ -15,6 +15,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
 import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
+import { useWeeklyRecap } from '../hooks/useWeeklyRecap.js';
+import { toDisplay, unitLabel } from '../utils/units.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
@@ -98,6 +100,8 @@ export default function HomePage() {
   const recent = workouts.slice(0, 2);
 
   const effects = useSettingsStore((s) => s.effects);
+  const unit = useSettingsStore((s) => s.unit);
+  const week = useWeeklyRecap();
   const bossStats = useBossStats();
 
   // Streak shield / rest token. Tokens are derived from history (workouts +
@@ -210,10 +214,38 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Magnus — 3D training companion */}
-      <Suspense fallback={<div style={{ height: 130 }} />}>
-        <Companion />
-      </Suspense>
+      {/* Bento row. Magnus previously floated between two full-width cards with
+          a tall empty band above him — the speech bubble is absolutely
+          positioned, so its space was reserved whether or not he was talking.
+          Giving him a tile turns that reserved space into deliberate padding,
+          and the stats beside him fill the row. */}
+      <div className="mb-4 flex flex-col gap-3">
+        <div className="glass rounded-2xl px-3 py-2">
+          <Suspense fallback={<div style={{ height: 116 }} />}>
+            <Companion size={116} bubbleWidth={220} />
+          </Suspense>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { k: 'This week', v: String(week.sessions), u: week.sessions === 1 ? 'session' : 'sessions' },
+            { k: 'Volume', v: Math.round(toDisplay(week.volumeKg, unit)).toLocaleString(), u: `${unitLabel(unit)} lifted` },
+            { k: 'Records', v: String(week.prCount), u: week.prCount === 1 ? 'PR' : 'PRs' },
+          ].map((t) => (
+            <div key={t.k} className="glass rounded-2xl px-3 py-3">
+              <p className="font-sans text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+                {t.k}
+              </p>
+              <p className="mt-1.5 truncate font-mono text-xl leading-none" style={{ color: 'var(--color-text-primary)' }}>
+                {t.v}
+              </p>
+              <p className="mt-1 truncate font-sans text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
+                {t.u}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Boss gate — blocks the next milestone level until cleared */}
       {boss && (

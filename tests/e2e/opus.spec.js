@@ -80,8 +80,15 @@ async function dismissCoach(page) {
   if (await got.isVisible().catch(() => false)) await got.click();
 }
 
+// Four tabs are links; the centre action is a button, because it both
+// navigates on tap and opens quick actions on long-press.
 async function gotoTab(page, label) {
-  await page.getByRole('link', { name: label, exact: true }).click();
+  const link = page.getByRole('link', { name: label, exact: true });
+  if (await link.count()) {
+    await link.click();
+    return;
+  }
+  await page.getByRole('button', { name: new RegExp(`^${label}`, 'i') }).first().click();
 }
 
 test.describe('OPUS end-to-end', () => {
@@ -164,6 +171,8 @@ test.describe('OPUS end-to-end', () => {
   });
 
   test('settings: dark theme and lbs units apply and persist', async ({ page, errors }) => {
+    // Boots the app twice (onboarding, then a reload to prove persistence).
+    test.setTimeout(90_000);
     await onboard(page);
     await dismissCoach(page);
 
