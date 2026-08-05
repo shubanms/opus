@@ -133,7 +133,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="anim-fade-slide-up px-5 pb-24 pt-6">
+    <div className="px-5 pb-24 pt-6">
       {/* Compact hero — greeting + level/XP merged into one card (declutters
           three former full-width strips into one), over a living aura. */}
       <div className="relative mb-4">

@@ -69,6 +69,12 @@ async function goto(page, path) {
   await page.goto(path, { waitUntil: 'domcontentloaded' });
 }
 
+// Same reasoning as `goto`. Motion's feature bundle is fetched lazily after
+// first paint, so waiting for `load` makes a reload hostage to that request.
+async function reload(page) {
+  await page.reload({ waitUntil: 'domcontentloaded' });
+}
+
 async function dismissCoach(page) {
   const got = page.getByRole('button', { name: 'Got it' });
   if (await got.isVisible().catch(() => false)) await got.click();
@@ -166,7 +172,7 @@ test.describe('OPUS end-to-end', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     await page.getByRole('button', { name: 'lbs', exact: true }).click();
-    await page.reload();
+    await reload(page);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(page.getByText('Bodyweight (lbs)')).toBeVisible();
     expect(realErrors(errors)).toEqual([]);

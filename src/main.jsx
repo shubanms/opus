@@ -7,6 +7,7 @@ import useSettingsStore from './store/settingsStore.js';
 import { applyTheme } from './utils/theme.js';
 import { requestPersistence } from './utils/storage.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import MotionProvider from './motion/index.jsx';
 import DbRecovery from './components/DbRecovery.jsx';
 import './styles/tokens.css';
 import './styles/animations.css';
@@ -29,7 +30,9 @@ function renderApp() {
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
-        <RouterProvider router={router} />
+        <MotionProvider>
+          <RouterProvider router={router} />
+        </MotionProvider>
       </ErrorBoundary>
     </React.StrictMode>
   );

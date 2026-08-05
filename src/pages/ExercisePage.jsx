@@ -28,7 +28,7 @@ export default function ExercisePage() {
       : `${Array.isArray(exercises) ? exercises.length : '…'} exercises`;
 
   return (
-    <div className="anim-fade-slide-up px-5 pb-6 pt-6">
+    <div className="px-5 pb-6 pt-6">
       {/* Header */}
       <div className="mb-4 flex items-end justify-between">
         <div>

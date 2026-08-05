@@ -1,22 +1,44 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { animate, useReducedMotion } from 'motion/react';
+import { TWEEN, useMotionEnabled } from '../../motion/index.jsx';
 
-// Animated odometer that eases from 0 → value on mount / value change.
-export default function CountUp({ value = 0, duration = 900, format = (n) => Math.round(n).toLocaleString(), className, style }) {
-  const [n, setN] = useState(0);
-  const raf = useRef();
+/**
+ * Odometer that counts from 0 → value on mount and on change.
+ *
+ * Honours both motion gates: with `effects` off or reduced-motion requested it
+ * renders the final figure immediately. It previously animated regardless,
+ * which is the one thing a reduced-motion user has explicitly asked not to
+ * happen — and a counting number is exactly the kind of movement that causes
+ * vestibular discomfort.
+ */
+export default function CountUp({
+  value = 0,
+  duration = 0.9,
+  format = (n) => Math.round(n).toLocaleString(),
+  className,
+  style,
+}) {
+  const motionOn = useMotionEnabled();
+  const reduced = useReducedMotion();
+  const animateIt = motionOn && !reduced;
+  const [n, setN] = useState(animateIt ? 0 : value);
 
   useEffect(() => {
-    const start = performance.now();
-    cancelAnimationFrame(raf.current);
-    const tick = (t) => {
-      const p = Math.min((t - start) / duration, 1);
-      const eased = 1 - (1 - p) ** 3;
-      setN(value * eased);
-      if (p < 1) raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf.current);
-  }, [value, duration]);
+    if (!animateIt) {
+      setN(value);
+      return undefined;
+    }
+    const controls = animate(0, value, {
+      duration,
+      ease: TWEEN.enter.ease,
+      onUpdate: setN,
+    });
+    return () => controls.stop();
+  }, [value, duration, animateIt]);
 
-  return <span className={className} style={style}>{format(n)}</span>;
+  return (
+    <span className={className} style={style}>
+      {format(n)}
+    </span>
+  );
 }

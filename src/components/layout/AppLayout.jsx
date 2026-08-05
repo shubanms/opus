@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import { m, pageVariants } from '../../motion/index.jsx';
 import BottomNav from './BottomNav.jsx';
 import Onboarding from '../onboarding/Onboarding.jsx';
 import Tour from '../tour/Tour.jsx';
@@ -13,6 +14,7 @@ export default function AppLayout() {
   const { loaded } = useRPG();
   const onboarded = useSettingsStore((s) => s.onboarded);
   const tourSeen = useSettingsStore((s) => s.tourSeen);
+  const { pathname } = useLocation();
   useOnOpenReminders();
 
   return (
@@ -29,8 +31,20 @@ export default function AppLayout() {
         paddingRight: 'env(safe-area-inset-right)',
       }}
     >
+      {/*
+        Route transition. Keyed on pathname so each route mounts fresh and
+        animates in.
+
+        Deliberately enter-only — no AnimatePresence exit. An exit animation
+        keeps the outgoing page mounted while the new one arrives, which on a
+        tabbed app means two copies of the same landmark in the DOM mid-swap:
+        bad for assistive tech, and a source of ambiguous-locator flake in the
+        E2E suite. Leaving instantly and arriving smoothly reads as fast.
+      */}
       <main className="mx-auto w-full max-w-md pb-24">
-        <Outlet />
+        <m.div key={pathname} variants={pageVariants} initial="initial" animate="animate">
+          <Outlet />
+        </m.div>
       </main>
       <BottomNav />
       {loaded && !onboarded && <Onboarding />}

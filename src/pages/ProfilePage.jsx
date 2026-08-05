@@ -94,7 +94,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="anim-fade-slide-up px-5 pb-8 pt-8">
+    <div className="px-5 pb-8 pt-8">
       {/* Identity + progression hero */}
       <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         <div className="flex items-start justify-between">

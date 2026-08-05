@@ -84,7 +84,7 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="anim-fade-slide-up px-5 pb-24 pt-8">
+    <div className="px-5 pb-24 pt-8">
       <button onClick={() => navigate(-1)} className="mb-5 flex items-center gap-2">
         <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
         <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>

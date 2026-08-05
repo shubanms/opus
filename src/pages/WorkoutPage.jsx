@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ChevronRight, RotateCcw } from 'lucide-react';
 import useWorkoutStore from '../store/workoutStore.js';
+import { m, SPRING } from '../motion/index.jsx';
 import ExerciseSection from '../components/workout/ExerciseSection.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import RestTimer from '../components/workout/RestTimer.jsx';
@@ -40,7 +41,11 @@ function ElapsedTimer({ startedAt }) {
 function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
   const exerciseData = useExercise(ex.exerciseId);
   const muscleGroup = exerciseData?.muscleGroup ?? null;
+  // `layout` makes reordering animate for free: move up/down already rewrites
+  // the array, and Motion tweens each section from its old box to its new one
+  // instead of the list snapping.
   return (
+    <m.div layout transition={SPRING.layout}>
     <ExerciseSection
       exercise={ex}
       muscleGroup={muscleGroup}
@@ -57,6 +62,7 @@ function ExerciseSectionWrapper({ ex, onSetLogged, onRemove, onSwap, canLink, li
       canMoveUp={canMoveUp}
       canMoveDown={canMoveDown}
     />
+    </m.div>
   );
 }
 
@@ -193,7 +199,7 @@ export default function WorkoutPage() {
         {levelUp && (
           <LevelUpScreen level={levelUp.level} title={levelUp.title} onDismiss={() => setLevelUp(null)} />
         )}
-        <div className="anim-fade-slide-up px-5 pb-24 pt-8">
+        <div className="px-5 pb-24 pt-8">
         <h1 className="font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
           Ready?
         </h1>
@@ -244,7 +250,7 @@ export default function WorkoutPage() {
     <div className="px-5 pb-40 pt-8">
       {resumed && (
         <div
-          className="anim-fade-slide-up mb-4 flex items-center gap-2 rounded-xl px-3 py-2"
+          className="mb-4 flex items-center gap-2 rounded-xl px-3 py-2"
           style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-gold)' }}
         >
           <RotateCcw size={14} style={{ color: 'var(--color-gold)' }} />
