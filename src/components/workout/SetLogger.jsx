@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Minus, Trash2, Flame, Dumbbell, StickyNote, Trophy } from 'lucide-react';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -11,6 +11,9 @@ import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import { calcSetXP } from '../../utils/rpg.js';
 import { diffsBySetNumber } from '../../utils/setDiff.js';
 import { EFFORT_LEVELS, effortFromRpe } from '../../utils/effort.js';
+import { prefillFrom, smallestIncrement, stepWeight } from '../../utils/loadStep.js';
+import { effectivePlates } from '../../utils/inventory.js';
+import { PLATES_KG, PLATES_LB } from '../../utils/plateCalc.js';
 import { rollCrit, comboCount, bonusXp as critBonusXp, CRIT_CHANCE } from '../../utils/crit.js';
 import { todaysDungeon, affixEffects } from '../../utils/dungeon.js';
 import Particles from '../fx/Particles.jsx';
@@ -58,11 +61,33 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
   const showPR = fromTemplate && (weightPR || repsPR);
 
   const [weight, setWeight] = useState('');
+  // Step by a pair of the lightest plate at the current location, in display
+  // units — 2.5 kg on a standard rack, 5 lb in pounds, more on a sparse one.
+  const inventory = useSettingsStore((s) => s.inventory);
+  const increment = smallestIncrement(
+    effectivePlates(inventory?.[inventory?.active] ?? {}, unit, unit === 'lbs' ? PLATES_LB : PLATES_KG)
+  );
   const [reps, setReps] = useState('');
   const [showPlates, setShowPlates] = useState(false);
   const [addWeight, setAddWeight] = useState(false);
   const [xpFloat, setXpFloat] = useState(null);
   const [critBurst, setCritBurst] = useState(null);
+
+  // Prefill from the last set you actually did — this session's if there is
+  // one, otherwise the last time you trained this lift. Only ever fills empty
+  // fields, so it can never overwrite something you typed.
+  const doneSets = exercise?.sets?.length ?? 0;
+  const seenLast = lastSets?.length ?? 0;
+  // Keyed on the two counts on purpose: depending on the arrays themselves
+  // re-runs on every live-query tick and fights the user's own edits.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on counts, by design
+  useEffect(() => {
+    if (weight !== '' || reps !== '') return;
+    const pre = prefillFrom(exercise?.sets, lastSets);
+    if (!pre) return;
+    if (pre.weight > 0) setWeight(String(Math.round(toDisplay(pre.weight, unit) * 100) / 100));
+    if (pre.reps > 0) setReps(String(pre.reps));
+  }, [doneSets, seenLast, unit]);
 
   if (!exercise) return null;
 
@@ -116,7 +141,9 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
     if (crit) { setCritBurst(Date.now()); setTimeout(() => setCritBurst(null), 1300); }
     setXpFloat({ key: Date.now(), xp: base + bonus, pr: isPR, crit, combo });
     onSetLogged?.();
-    setReps('');
+    // Deliberately NOT cleared. Most sets repeat the one before them, so
+    // leaving the numbers in place makes "same again" a single tap and a step
+    // up two taps — instead of retyping both fields twenty times a session.
   }
 
   async function editNote(setNumber, current) {
@@ -268,18 +295,41 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         )}
         {showWeight && (
           <>
-            <div className="flex min-w-0 flex-1 items-center gap-1 rounded-2xl px-3 py-3" style={{ background: 'var(--color-ivory)' }}>
+            <div className="flex min-w-0 flex-1 items-center rounded-2xl" style={{ background: 'var(--color-ivory)' }}>
+              {/* Steps by a pair of your lightest plate, so every tap lands on
+                  a weight you can actually load. */}
+              <button
+                type="button"
+                onClick={() => { setWeight(String(stepWeight(weight, -1, increment))); setShowPlates(false); }}
+                className="flex h-full shrink-0 items-center px-2 py-3"
+                aria-label="Less weight"
+              >
+                <Minus size={14} style={{ color: 'var(--color-ash)' }} />
+              </button>
               <input
                 value={weight}
                 onChange={(e) => { setWeight(e.target.value); setShowPlates(false); }}
                 placeholder={unitLabel(unit)}
                 type="number"
                 inputMode="decimal"
-                className="min-w-0 flex-1 bg-transparent font-mono text-lg outline-none"
+                className="min-w-0 flex-1 bg-transparent text-center font-mono text-lg outline-none"
                 style={{ color: 'var(--color-text-primary)' }}
               />
+              <button
+                type="button"
+                onClick={() => { setWeight(String(stepWeight(weight, 1, increment))); setShowPlates(false); }}
+                className="flex h-full shrink-0 items-center px-2 py-3"
+                aria-label="More weight"
+              >
+                <Plus size={14} style={{ color: 'var(--color-ash)' }} />
+              </button>
               {weightNum > 0 && (
-                <button onClick={() => setShowPlates((v) => !v)} aria-label="Plate calculator">
+                <button
+                  type="button"
+                  onClick={() => setShowPlates((v) => !v)}
+                  aria-label="Plate calculator"
+                  className="shrink-0 pr-3"
+                >
                   <Dumbbell size={13} style={{ color: showPlates ? 'var(--color-gold)' : 'var(--color-ash)' }} />
                 </button>
               )}
