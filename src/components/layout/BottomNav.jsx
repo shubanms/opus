@@ -12,13 +12,15 @@ const tabs = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-40 flex w-full max-w-md -translate-x-1/2 items-center justify-around"
+      className="glass glass-strong fixed bottom-0 left-1/2 z-40 flex w-full max-w-md -translate-x-1/2 items-center justify-around"
       style={{
-        background: 'var(--color-obsidian)',
         paddingTop: 'var(--space-3)',
         paddingBottom: 'calc(var(--space-3) + env(safe-area-inset-bottom))',
-        borderTopLeftRadius: 'var(--opus-radius-xl)',
-        borderTopRightRadius: 'var(--opus-radius-xl)',
+        borderTopLeftRadius: 'var(--opus-radius-2xl)',
+        borderTopRightRadius: 'var(--opus-radius-2xl)',
+        borderBottom: 0,
+        borderLeft: 0,
+        borderRight: 0,
       }}
     >
       {tabs.map(({ to, label, Icon, center }) =>
@@ -26,8 +28,13 @@ export default function BottomNav() {
           <NavLink key={to} to={to} aria-label={label} className="-mt-6">
             {() => (
               <span
-                className="flex h-14 w-14 items-center justify-center rounded-full"
-                style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+                className="flex h-14 w-14 items-center justify-center"
+                style={{
+                  background: 'var(--grad-accent)',
+                  color: 'var(--color-obsidian)',
+                  borderRadius: 'var(--opus-radius-lg)',
+                  boxShadow: 'var(--glow-accent)',
+                }}
               >
                 <Icon size={26} strokeWidth={2.5} />
               </span>
@@ -47,7 +54,7 @@ export default function BottomNav() {
                 />
                 <span
                   className="font-sans text-[10px]"
-                  style={{ color: isActive ? 'var(--color-text-inverse)' : 'var(--color-ash)' }}
+                  style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-ash)' }}
                 >
                   {label}
                 </span>

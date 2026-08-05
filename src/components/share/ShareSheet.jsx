@@ -92,7 +92,7 @@ export default function ShareSheet({ isOpen, onClose, kind, data, filename = 'op
             style={{ background: a.color }}
             aria-label={a.id}
           >
-            {accentIdx === i && <Check size={16} style={{ color: '#111010' }} strokeWidth={3} />}
+            {accentIdx === i && <Check size={16} style={{ color: '#0A0E1C' }} strokeWidth={3} />}
           </button>
         ))}
       </div>

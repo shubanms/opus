@@ -266,7 +266,7 @@ function ByExercise() {
               title="Muscle map"
               icon={Dumbbell}
               data={mapData}
-              legend={[['#D4622A', 'Most trained'], ['#C9A84C', 'Moderate'], ['#6B8F71', 'Least']]}
+              legend={[['#FF8FA3', 'Most trained'], ['#8B7DFF', 'Moderate'], ['#4FD8C4', 'Least']]}
               selectedMuscle={muscleFilter}
               onSelect={(m) => setMuscleFilter((prev) => (prev === m ? null : m))}
             />

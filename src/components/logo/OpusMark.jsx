@@ -3,7 +3,7 @@ import lifter from '../../assets/lifter.png';
 
 // Gold ring + lifter image. r=90 in a 200x200 viewBox → circumference ≈ 565.
 const CIRCUMFERENCE = 565;
-const BRIGHT_GOLD = '#E8D48A';
+const BRIGHT_GOLD = '#C4BCFF';
 
 // Point on the ring at a clock angle (0 = 12 o'clock), given a radius.
 function pointAt(angleDeg, radius) {
@@ -43,7 +43,7 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
         borderRadius: '50%',
         overflow: 'hidden',
         background: bg,
-        boxShadow: glowAlpha > 0 ? `0 0 ${glowBlur}px rgba(201,168,76,${glowAlpha})` : undefined,
+        boxShadow: glowAlpha > 0 ? `0 0 ${glowBlur}px rgba(139, 125, 255,${glowAlpha})` : undefined,
       }}
     >
       <img

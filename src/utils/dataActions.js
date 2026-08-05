@@ -82,14 +82,14 @@ export async function exportPdf(unit = 'kg') {
 
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>OPUS — Training Report</title>
 <style>
-  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a;margin:40px;}
+  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#141A2E;margin:40px;}
   h1{font-size:28px;margin:0;}
-  .sub{color:#8a8780;margin:4px 0 24px;font-size:13px;}
+  .sub{color:#7B83A6;margin:4px 0 24px;font-size:13px;}
   .stats{display:flex;gap:32px;margin-bottom:28px;}
-  .stat .v{font-size:26px;font-weight:600;} .stat .l{color:#8a8780;font-size:12px;}
+  .stat .v{font-size:26px;font-weight:600;} .stat .l{color:#7B83A6;font-size:12px;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #eee;}
-  th{color:#8a8780;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
+  th{color:#7B83A6;text-transform:uppercase;font-size:11px;letter-spacing:1px;}
   td.n,th.n{text-align:right;}
   @media print{body{margin:0;}}
 </style></head><body>

@@ -12,7 +12,7 @@ export default function LevelBadge({ level, size = 'md', prestige = 0 }) {
         fontSize: font,
         background: 'var(--color-gold)',
         color: 'var(--color-obsidian)',
-        boxShadow: prestige > 0 ? '0 0 0 2px var(--color-stone), 0 0 0 3.5px #E8D48A' : undefined,
+        boxShadow: prestige > 0 ? '0 0 0 2px var(--color-stone), 0 0 0 3.5px #C4BCFF' : undefined,
       }}
     >
       {level}

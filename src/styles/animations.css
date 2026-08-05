@@ -41,10 +41,10 @@
 @keyframes goldPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(201, 168, 76, 0);
+    box-shadow: 0 0 0 0 rgba(139, 125, 255, 0);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(201, 168, 76, 0.3);
+    box-shadow: 0 0 0 8px rgba(139, 125, 255, 0.3);
   }
 }
 

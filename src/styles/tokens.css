@@ -1,22 +1,65 @@
+/* OPUS design tokens — AURORA.
+ *
+ * Every component styles through these, so this file is the whole visual
+ * identity in one place. The names are kept from the previous palette on
+ * purpose: ~1000 call sites already reference them, and renaming would turn a
+ * design change into a mechanical refactor with no design value.
+ *
+ * Read the names semantically, not literally:
+ *   chalk    → app canvas           ivory    → card / panel surface
+ *   stone    → solid field          obsidian → ink that sits on the accent
+ *   gold     → accent               ash      → tertiary ink
+ *
+ * Token families that belong to Tailwind (--radius-*, --ease-*) are prefixed
+ * --opus-* — tokens.css is unlayered and would otherwise silently override
+ * Tailwind's own theme values. See docs/ARCHITECTURE.md.
+ */
+
 :root {
-  /* Backgrounds */
-  --color-chalk: #f7f5f2;
-  --color-ivory: #edeae5;
-  --color-stone: #2c2c2c;
-  --color-obsidian: #111010;
+  /* ── Ground ──────────────────────────────────────────────────────────── */
+  --color-chalk: #f4f6fd;      /* app canvas */
+  --color-ivory: #ffffffb8;    /* card / panel — translucent so the aurora reads through */
+  /* Deliberately dark in BOTH themes. `stone` is the deep-panel device — a
+     dark block on the light canvas (rest timer, plate calculator, character
+     card) and the field colour on full-screen dark overlays (onboarding, tour).
+     Every one of those pairs it with `text-inverse`, so flipping it to a light
+     value would put light text on a light ground. */
+  --color-stone: #161b2e;
+  --color-obsidian: #0a0e1c;   /* ink on accent, and the darkest ground */
 
-  /* Text */
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #8a8780;
-  --color-text-inverse: #f7f5f2;
+  /* ── Ink ─────────────────────────────────────────────────────────────── */
+  --color-text-primary: #141a2e;
+  --color-text-secondary: #5c6484;
+  --color-text-inverse: #eef1fa;
 
-  /* Accents */
-  --color-gold: #c9a84c;
-  --color-ember: #d4622a;
-  --color-sage: #6b8f71;
-  --color-ash: #8a8780;
+  /* ── Accent + semantics ──────────────────────────────────────────────── */
+  /* The accent and its ink stay constant across themes so that every
+     `background: gold / color: obsidian` pairing keeps its contrast. */
+  --color-gold: #8b7dff;       /* accent — violet */
+  --color-ember: #ff8fa3;      /* warning / destructive — blush */
+  --color-sage: #4fd8c4;       /* success — teal */
+  --color-ash: #7b83a6;        /* tertiary ink, icons */
 
-  /* Spacing scale */
+  /* ── Material ────────────────────────────────────────────────────────── */
+  /* The aurora is three soft lights behind everything; glass panels float on
+     top. Kept as a token so a later phase can swap the backdrop for a live
+     shader without touching a single component. */
+  --aurora:
+    radial-gradient(72% 46% at 82% -4%, rgba(139, 125, 255, 0.26), transparent 62%),
+    radial-gradient(62% 44% at 8% 14%, rgba(79, 216, 196, 0.18), transparent 60%),
+    radial-gradient(56% 40% at 46% 104%, rgba(255, 143, 163, 0.14), transparent 62%);
+
+  --grad-accent: linear-gradient(135deg, #8b7dff, #4fd8c4);
+  --grad-accent-soft: linear-gradient(135deg, rgba(139, 125, 255, 0.18), rgba(79, 216, 196, 0.12));
+  --glass-line: rgba(20, 26, 46, 0.09);
+  --glass-blur: 18px;
+  --glow-accent: 0 10px 30px rgba(139, 125, 255, 0.3);
+
+  --elev-1: 0 1px 2px rgba(11, 16, 32, 0.05);
+  --elev-2: 0 6px 18px rgba(11, 16, 32, 0.08);
+  --elev-3: 0 18px 44px rgba(11, 16, 32, 0.12);
+
+  /* ── Spacing ─────────────────────────────────────────────────────────── */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -25,28 +68,42 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  /* Border radius */
-  --opus-radius-sm: 8px;
-  --opus-radius-md: 12px;
-  --opus-radius-lg: 16px;
-  --opus-radius-xl: 20px;
-  --opus-radius-2xl: 24px;
+  /* ── Radius ──────────────────────────────────────────────────────────── */
+  /* Aurora is generous — every step moved up from the previous scale. */
+  --opus-radius-sm: 12px;
+  --opus-radius-md: 14px;
+  --opus-radius-lg: 18px;
+  --opus-radius-xl: 22px;
+  --opus-radius-2xl: 26px;
   --opus-radius-full: 9999px;
 
-  /* Motion */
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  /* One spec, so components stop inventing their own curves. */
   --opus-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-micro: 150ms;
-  --dur-standard: 250ms;
-  --dur-enter: 350ms;
+  --opus-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot */
+  --dur-micro: 140ms;
+  --dur-standard: 240ms;
+  --dur-enter: 340ms;
   --dur-loading: 600ms;
 }
 
-/* Dark theme: only background/surface/text tokens flip. The literal palette
-   (stone, obsidian, accents, text-inverse) stays fixed so "light text/icon on
-   dark surface" usages keep their contrast. */
+/* Dark is this direction's home ground: deep slate, brighter aurora, glass
+   built from white alpha instead of white. Only ground and ink flip — the
+   accent and its ink stay put so contrast pairings hold in both themes. */
 :root[data-theme='dark'] {
-  --color-chalk: #1a1614;
-  --color-ivory: #262220;
-  --color-text-primary: #f3efe9;
-  --color-text-secondary: #a09a90;
+  --color-chalk: #0b1020;
+  --color-ivory: #ffffff0f;
+  --color-text-primary: #eef1fa;
+  --color-text-secondary: #9ba3c4;
+  --color-ash: #8b93b5;
+
+  --aurora:
+    radial-gradient(72% 46% at 82% -4%, rgba(139, 125, 255, 0.3), transparent 62%),
+    radial-gradient(62% 44% at 8% 14%, rgba(79, 216, 196, 0.18), transparent 60%),
+    radial-gradient(56% 40% at 46% 104%, rgba(255, 143, 163, 0.13), transparent 62%);
+
+  --glass-line: rgba(255, 255, 255, 0.1);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --elev-2: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --elev-3: 0 24px 60px rgba(0, 0, 0, 0.5);
 }

@@ -1,7 +1,10 @@
 # OPUS — Project State
 
 Last updated: 2026-08-04
-Current sprint: **redesign readiness — DONE**. App at v3.0.0. Awaiting the user's pick from five design directions (`docs/design/README.md`), then the UI redesign begins.
+Current sprint: **AURORA redesign, Phase 1 (foundation) DONE**. App at v3.0.0.
+
+**AURORA picked (2026-08-05)** from the five directions in `docs/design/`. Phase 1 — token + material foundation — shipped: because every component styles through `var(--color-*)`, replacing the token layer restyled all 199 files at once with no component rewrites. Palette: deep slate canvas, translucent glass surfaces, violet→teal accent, aurora light fixed behind the viewport. Also in this phase: 75 hardcoded old-palette hexes remapped (charts, muscle map, difficulty dots, logo, share-card themes); gold rgba glows → violet; Magnus retinted at the material level (the GLB bakes a gold body, so relighting alone left him amber — materials are cloned before tinting so the cached GLTF isn't permanently altered); glass nav; gradient FAB; radius scale up a step; motion spec (`--opus-ease-spring`). Two contrast traps found and avoided: `--color-stone` must stay dark in both themes (every use pairs it with `text-inverse`), and the nav's active label had to move off `text-inverse` once the nav became glass. Verified: 368 unit tests, 8/8 E2E, lint + build clean, screenshots in both themes.
+**Next phases:** 2 — Motion (route transitions, spring sheets, NumberTicker); 3 — real glass + shader backdrop; 4 — nav/Home (dock, bento); 5 — workout screen; 6 — charts; 7 — cinematics; 8 — long tail.
 
 **Redesign readiness (2026-08-04) — complete.** Four PRs on one branch: (1) toolchain hardening + native purge, (2) canvas share cards replacing html2canvas, (3) Tailwind v4, (4) E2E fixed and CI-gated. The app is now safe to redesign: lint + unit tests + build + 8/8 Playwright E2E all gate every PR, there is no second copy of the game logic, share cards can render anything the new design uses, and the component registries we'd copy from (React Bits, Magic UI, Kokonut, Bklit) all target the Tailwind version we're now on.
 

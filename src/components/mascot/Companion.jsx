@@ -100,9 +100,9 @@ export default function Companion({ autoGreet = true }) {
           gl={{ alpha: true, antialias: true }}
           style={{ background: 'transparent' }}
         >
-          <hemisphereLight args={[0xffffff, 0x4a4438, 1.1]} />
-          <directionalLight position={[3, 6, 5]} intensity={2.2} color="#fff2d6" />
-          <directionalLight position={[-4, 3, -4]} intensity={1.4} color="#c9a84c" />
+          <hemisphereLight args={[0xffffff, 0x2a2440, 1.15]} />
+          <directionalLight position={[3, 6, 5]} intensity={2.2} color="#e6ecff" />
+          <directionalLight position={[-4, 3, -4]} intensity={1.4} color="#8B7DFF" />
           <Suspense fallback={null}>
             <RobotModel clip={clip} gesture={gesture} still={!animate} />
           </Suspense>

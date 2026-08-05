@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 
-const COLORS = ['#C9A84C', '#D4622A', '#F7F5F2', '#6B8F71'];
+const COLORS = ['#8B7DFF', '#FF8FA3', '#F4F6FD', '#4FD8C4'];
 
 // Full-screen one-shot gold particle burst from the centre. Parent renders it
 // briefly (e.g. for ~1.2s) then unmounts.

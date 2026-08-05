@@ -21,7 +21,7 @@ export default function ResetDataModal({ isOpen, onClose }) {
 
   return (
     <Modal isOpen={isOpen} onClose={() => { setText(''); onClose(); }} title="Reset everything">
-      <div className="mb-4 flex items-start gap-2 rounded-xl px-3 py-3" style={{ background: '#D4622A18', border: '1px solid #D4622A44' }}>
+      <div className="mb-4 flex items-start gap-2 rounded-xl px-3 py-3" style={{ background: '#FF8FA318', border: '1px solid #FF8FA344' }}>
         <AlertTriangle size={16} style={{ color: 'var(--color-ember)', marginTop: 1, flexShrink: 0 }} />
         <p className="font-sans text-xs" style={{ color: 'var(--color-text-primary)' }}>
           This permanently deletes <b>all</b> workouts, routines, personal records, body stats, sleep logs, and progress. It can't be undone.

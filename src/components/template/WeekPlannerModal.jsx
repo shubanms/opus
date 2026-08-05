@@ -103,7 +103,7 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
               key={s.key}
               onClick={() => pickSplit(s.key)}
               className="rounded-xl border px-4 py-3 text-left"
-              style={{ borderColor: on ? 'var(--color-gold)' : 'transparent', background: on ? 'var(--color-gold-soft, rgba(201,168,76,0.12))' : 'var(--color-ivory)' }}
+              style={{ borderColor: on ? 'var(--color-gold)' : 'transparent', background: on ? 'var(--color-gold-soft, rgba(139, 125, 255,0.12))' : 'var(--color-ivory)' }}
             >
               <div className="flex items-center justify-between">
                 <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{s.label}</span>

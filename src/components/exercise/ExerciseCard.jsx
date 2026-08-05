@@ -9,23 +9,23 @@ const EQUIP_ICON = {
 };
 
 const MUSCLE_HUE = {
-  chest: '#D4622A', triceps: '#D4622A', 'front-deltoids': '#D4622A',
-  biceps: '#C9A84C', forearm: '#C9A84C',
-  'upper-back': '#6B8F71', 'lower-back': '#6B8F71', trapezius: '#6B8F71', 'back-deltoids': '#6B8F71',
-  quadriceps: '#8A8780', hamstring: '#8A8780', gluteal: '#8A8780', calves: '#8A8780',
-  abs: '#C9A84C', obliques: '#C9A84C',
+  chest: '#FF8FA3', triceps: '#FF8FA3', 'front-deltoids': '#FF8FA3',
+  biceps: '#8B7DFF', forearm: '#8B7DFF',
+  'upper-back': '#4FD8C4', 'lower-back': '#4FD8C4', trapezius: '#4FD8C4', 'back-deltoids': '#4FD8C4',
+  quadriceps: '#7B83A6', hamstring: '#7B83A6', gluteal: '#7B83A6', calves: '#7B83A6',
+  abs: '#8B7DFF', obliques: '#8B7DFF',
 };
 
 const DIFFICULTY_COLOR = {
-  beginner:     '#6B8F71',
-  intermediate: '#C9A84C',
-  advanced:     '#D4622A',
+  beginner:     '#4FD8C4',
+  intermediate: '#8B7DFF',
+  advanced:     '#FF8FA3',
 };
 
 export default function ExerciseCard({ exercise, onTap, selected = false, showArrow = false }) {
   const Icon = EQUIP_ICON[exercise.equipment] ?? Dumbbell;
-  const hue = MUSCLE_HUE[exercise.muscleGroup] ?? '#8A8780';
-  const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#8A8780';
+  const hue = MUSCLE_HUE[exercise.muscleGroup] ?? '#7B83A6';
+  const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#7B83A6';
 
   return (
     <button

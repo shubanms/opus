@@ -164,7 +164,7 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
             <button
               onClick={() => toggleWarmup(exerciseId, s.setNumber)}
               className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-              style={{ background: s.isWarmup ? '#D4622A22' : 'transparent' }}
+              style={{ background: s.isWarmup ? '#FF8FA322' : 'transparent' }}
               title="Toggle warmup"
             >
               {s.isWarmup

@@ -38,7 +38,11 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-obsidian);
+  /* The aurora sits under everything and stays put while the page scrolls.
+     `fixed` attachment keeps the light source anchored to the viewport rather
+     than sliding away with the content. */
+  background: var(--aurora), var(--color-chalk);
+  background-attachment: fixed;
   color: var(--color-text-primary);
   font-family: 'DM Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -58,8 +62,37 @@ body {
   display: none;
 }
 
-/* Smooth theme switches: animate colour-only properties. */
-* {
+/* Glass — Aurora's core material.
+   Applied by class rather than to every surface, because `backdrop-filter` is
+   the most expensive thing you can put on a mid-range Android GPU. Reserved for
+   chrome that genuinely floats: the nav, sheets, and the hero. */
+.glass {
+  background: var(--color-ivory);
+  border: 1px solid var(--glass-line);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+/* Chrome that content scrolls beneath needs more than a tint — at 6% white the
+   page reads straight through it. Blur harder and sit it on a heavier ground. */
+.glass-strong {
+  background: color-mix(in srgb, var(--color-chalk) 88%, transparent);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+}
+/* Devices that can't composite a backdrop cheaply fall back to a solid tint
+   rather than a transparent panel with unreadable text behind it. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass,
+  .glass-strong {
+    background: var(--color-chalk);
+  }
+}
+
+/* Smooth theme switches: animate colour-only properties.
+   Scoped to the moment of the switch — as a permanent global rule this is a
+   paint cost on every element in every long list. `applyTheme` stamps the
+   attribute and clears it once the transition has run. */
+html[data-theme-anim] * {
   transition: background-color var(--dur-standard) var(--opus-ease-out),
     border-color var(--dur-standard) var(--opus-ease-out),
     color var(--dur-standard) var(--opus-ease-out);

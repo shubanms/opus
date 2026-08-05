@@ -452,7 +452,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Danger zone */}
-      <section className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #D4622A55' }}>
+      <section className="rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #FF8FA355' }}>
         <div className="mb-1 flex items-center gap-2">
           <Trash2 size={14} style={{ color: 'var(--color-ember)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-ember)' }}>

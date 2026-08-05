@@ -9,15 +9,15 @@ import { useExerciseNote } from '../../hooks/useExercises.js';
 import { toDisplay, unitLabel, fmtVolume } from '../../utils/units.js';
 
 const MUSCLE_HUE = {
-  chest: '#D4622A', triceps: '#D4622A', 'front-deltoids': '#D4622A',
-  biceps: '#C9A84C', forearm: '#C9A84C',
-  'upper-back': '#6B8F71', 'lower-back': '#6B8F71', trapezius: '#6B8F71', 'back-deltoids': '#6B8F71',
-  quadriceps: '#8A8780', hamstring: '#8A8780', gluteal: '#8A8780', calves: '#8A8780',
-  abs: '#C9A84C', obliques: '#C9A84C',
+  chest: '#FF8FA3', triceps: '#FF8FA3', 'front-deltoids': '#FF8FA3',
+  biceps: '#8B7DFF', forearm: '#8B7DFF',
+  'upper-back': '#4FD8C4', 'lower-back': '#4FD8C4', trapezius: '#4FD8C4', 'back-deltoids': '#4FD8C4',
+  quadriceps: '#7B83A6', hamstring: '#7B83A6', gluteal: '#7B83A6', calves: '#7B83A6',
+  abs: '#8B7DFF', obliques: '#8B7DFF',
 };
 
 export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, isCardio, onSetLogged, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown }) {
-  const hue = MUSCLE_HUE[muscleGroup] ?? '#8A8780';
+  const hue = MUSCLE_HUE[muscleGroup] ?? '#7B83A6';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
   const [infoOpen, setInfoOpen] = useState(false);

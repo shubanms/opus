@@ -15,9 +15,9 @@ import PRBadge from '../components/progress/PRBadge.jsx';
 import ColorPicker from '../components/ui/ColorPicker.jsx';
 
 const DIFFICULTY_COLOR = {
-  beginner:     '#6B8F71',
-  intermediate: '#C9A84C',
-  advanced:     '#D4622A',
+  beginner:     '#4FD8C4',
+  intermediate: '#8B7DFF',
+  advanced:     '#FF8FA3',
 };
 
 function PRCard({ prs, unit }) {
@@ -116,7 +116,7 @@ export default function ExerciseDetailPage() {
     );
   }
 
-  const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#8A8780';
+  const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#7B83A6';
 
   async function handleDelete() {
     const ok = await useUIStore.getState().confirm({

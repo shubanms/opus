@@ -15,8 +15,8 @@ export const MUSCLE_LABEL = {
 const SUPPORTED_MUSCLES = new Set(Object.keys(MUSCLE_LABEL));
 
 // frequency → highlightedColors index: 1=sage(2d), 2=gold(1d), 3=ember(today)
-const COLORS = ['#6B8F71', '#C9A84C', '#D4622A'];
-const RECOVERY_LEGEND = [['#D4622A', 'Worked today'], ['#C9A84C', '1 day'], ['#6B8F71', '2 days'], ['var(--color-ivory)', 'Ready']];
+const COLORS = ['#4FD8C4', '#8B7DFF', '#FF8FA3'];
+const RECOVERY_LEGEND = [['#FF8FA3', 'Worked today'], ['#8B7DFF', '1 day'], ['#4FD8C4', '2 days'], ['var(--color-ivory)', 'Ready']];
 
 // A body muscle-map card. By default it visualises training *recovery*
 // (days-since-trained) from useRecovery — this is the Home widget. Pass
@@ -111,7 +111,7 @@ export default function RecoveryMap({ data: extData, onSelect, legend: extLegend
         <p className="mt-3 text-center font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{selText}</p>
       )}
       {nudge && (
-        <p className="mt-2 rounded-xl px-3 py-2 text-center font-sans text-xs" style={{ background: '#C9A84C18', color: 'var(--color-text-primary)' }}>
+        <p className="mt-2 rounded-xl px-3 py-2 text-center font-sans text-xs" style={{ background: '#8B7DFF18', color: 'var(--color-text-primary)' }}>
           {nudge}
         </p>
       )}

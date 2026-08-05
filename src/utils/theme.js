@@ -9,10 +9,25 @@ export function resolveTheme(theme) {
   return theme === 'dark' ? 'dark' : 'light';
 }
 
+let animTimer;
+
 export function applyTheme(theme) {
   if (typeof document === 'undefined') return;
+  const root = document.documentElement;
   const resolved = resolveTheme(theme);
-  document.documentElement.dataset.theme = resolved;
+  const changed = root.dataset.theme && root.dataset.theme !== resolved;
+
+  // Cross-fade the palette only while it's actually changing. The colour
+  // transition is a per-element paint cost, so it must not stay on permanently.
+  if (changed) {
+    root.dataset.themeAnim = '';
+    clearTimeout(animTimer);
+    animTimer = setTimeout(() => {
+      delete root.dataset.themeAnim;
+    }, 400);
+  }
+
+  root.dataset.theme = resolved;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#111010' : '#f7f5f2');
+  if (meta) meta.setAttribute('content', resolved === 'dark' ? '#0b1020' : '#f4f6fd');
 }

@@ -23,10 +23,15 @@ describe('CARD', () => {
 });
 
 describe('resolveTheme', () => {
+  // Asserted against the palette rather than literal hexes, so a design change
+  // to THEMES/ACCENTS doesn't fail a test about resolution logic.
   it('resolves a known theme + accent pair', () => {
-    const t = resolveTheme('chalk', 'sage');
-    expect(t.bg).toBe('#F7F5F2');
-    expect(t.accent).toBe('#6B8F71');
+    const theme = THEMES[2];
+    const accent = ACCENTS[2];
+    const t = resolveTheme(theme.id, accent.id);
+    expect(t.bg).toBe(theme.bg);
+    expect(t.text).toBe(theme.text);
+    expect(t.accent).toBe(accent.color);
   });
 
   it('falls back to the first theme and accent for unknown ids', () => {

@@ -19,7 +19,9 @@ export default function AppLayout() {
     <div
       className="min-h-full"
       style={{
-        background: 'var(--color-chalk)',
+        // Transparent so the body's fixed aurora shows through — the light
+        // source stays anchored to the viewport instead of scrolling away.
+        background: 'transparent',
         // Clear the status bar / notch on edge-to-edge devices (Android 15+,
         // iOS notch). Zero on platforms that don't report insets.
         paddingTop: 'env(safe-area-inset-top)',

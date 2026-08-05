@@ -3,10 +3,10 @@ import { Play, Pencil, Trash2, Copy, Shuffle } from 'lucide-react';
 const DAY_LABEL = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
 
 const MUSCLE_HUE = {
-  chest: '#D4622A', triceps: '#D4622A', 'front-deltoids': '#D4622A',
-  biceps: '#C9A84C', forearm: '#C9A84C', abs: '#C9A84C', obliques: '#C9A84C',
-  'upper-back': '#6B8F71', 'lower-back': '#6B8F71', trapezius: '#6B8F71', 'back-deltoids': '#6B8F71',
-  quadriceps: '#8A8780', hamstring: '#8A8780', gluteal: '#8A8780', calves: '#8A8780',
+  chest: '#FF8FA3', triceps: '#FF8FA3', 'front-deltoids': '#FF8FA3',
+  biceps: '#8B7DFF', forearm: '#8B7DFF', abs: '#8B7DFF', obliques: '#8B7DFF',
+  'upper-back': '#4FD8C4', 'lower-back': '#4FD8C4', trapezius: '#4FD8C4', 'back-deltoids': '#4FD8C4',
+  quadriceps: '#7B83A6', hamstring: '#7B83A6', gluteal: '#7B83A6', calves: '#7B83A6',
 };
 
 export default function TemplateCard({ template, onStart, onEdit, onDelete, onDuplicate, onShuffle, onRename, stale }) {
@@ -73,7 +73,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
       {muscleGroups.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {muscleGroups.map((m) => {
-            const hue = MUSCLE_HUE[m] ?? '#8A8780';
+            const hue = MUSCLE_HUE[m] ?? '#7B83A6';
             return (
               <span key={m} className="rounded-full px-2 py-0.5 font-sans text-xs capitalize" style={{ background: `${hue}22`, color: hue }}>
                 {m.replace(/-/g, ' ')}

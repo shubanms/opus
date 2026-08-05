@@ -1,7 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const GOLD = '#C9A84C';
-const ASH = '#8A8780';
+const GOLD = '#8B7DFF';
+const ASH = '#7B83A6';
 
 export default function TrendChart({ data, unit = '', empty = 'No data yet.' }) {
   if (!data || data.length === 0) {
@@ -19,8 +19,8 @@ export default function TrendChart({ data, unit = '', empty = 'No data yet.' }) 
         <XAxis dataKey="label" tick={{ fill: ASH, fontSize: 10, fontFamily: 'DM Mono, monospace' }} axisLine={false} tickLine={false} />
         <YAxis tick={{ fill: ASH, fontSize: 10, fontFamily: 'DM Mono, monospace' }} axisLine={false} tickLine={false} width={40} domain={['auto', 'auto']} />
         <Tooltip
-          contentStyle={{ background: '#2C2C2C', border: 'none', borderRadius: 12, fontFamily: 'DM Sans, sans-serif', fontSize: 12 }}
-          labelStyle={{ color: '#F7F5F2' }}
+          contentStyle={{ background: '#161B2E', border: 'none', borderRadius: 12, fontFamily: 'DM Sans, sans-serif', fontSize: 12 }}
+          labelStyle={{ color: '#F4F6FD' }}
           itemStyle={{ color: GOLD }}
           formatter={(v) => [`${v}${unit ? ` ${unit}` : ''}`, '']}
         />

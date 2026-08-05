@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const GOLD = '#C9A84C';
-const ASH = '#8A8780';
+const GOLD = '#8B7DFF';
+const ASH = '#7B83A6';
 
 export default function VolumeChart({ data, unit = 'kg' }) {
   if (!data || data.length === 0) {
@@ -31,13 +31,13 @@ export default function VolumeChart({ data, unit = 'kg' }) {
         <Tooltip
           cursor={{ fill: GOLD, fillOpacity: 0.08 }}
           contentStyle={{
-            background: '#2C2C2C',
+            background: '#161B2E',
             border: 'none',
             borderRadius: 12,
             fontFamily: 'DM Sans, sans-serif',
             fontSize: 12,
           }}
-          labelStyle={{ color: '#F7F5F2' }}
+          labelStyle={{ color: '#F4F6FD' }}
           itemStyle={{ color: GOLD }}
           formatter={(v) => [`${v.toLocaleString()} ${unit}`, 'Volume']}
         />

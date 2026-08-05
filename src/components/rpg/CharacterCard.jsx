@@ -10,8 +10,8 @@ import OpusMark from '../logo/OpusMark.jsx';
 import TitleBadge from './TitleBadge.jsx';
 import XPBar from './XPBar.jsx';
 
-const GOLD = '#C9A84C';
-const ASH = '#8A8780';
+const GOLD = '#8B7DFF';
+const ASH = '#7B83A6';
 
 export default function CharacterCard({ profile }) {
   const stats = useCharacterStats();

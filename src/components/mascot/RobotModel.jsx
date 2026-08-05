@@ -33,7 +33,26 @@ export default function RobotModel({ clip = CLIP.idle, gesture = 0, still = fals
     const s = 2 / Math.max(size.x, size.y, size.z);
     scene.scale.setScalar(s);
     scene.position.set(-center.x * s, -center.y * s, -center.z * s);
-    scene.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });
+    // Retint to the accent. The GLB ships a gold body baked into its materials,
+    // so relighting alone leaves him amber against a violet UI. Materials are
+    // cloned first — they're shared with the cached GLTF, and mutating them in
+    // place would tint every future mount permanently.
+    scene.traverse((o) => {
+      if (!o.isMesh) return;
+      o.frustumCulled = false;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      o.material = mats.map((m) => {
+        if (!m?.color) return m;
+        const next = m.clone();
+        // Preserve each material's own lightness so the model keeps its shading
+        // and metal/plastic separation; only the hue is moved onto the accent.
+        const hsl = { h: 0, s: 0, l: 0 };
+        next.color.getHSL(hsl);
+        next.color.setHSL(0.71, hsl.s > 0.08 ? 0.55 : hsl.s, hsl.l);
+        return next;
+      });
+      if (!Array.isArray(o.material)) o.material = o.material[0];
+    });
   }, [scene]);
 
   useEffect(() => {

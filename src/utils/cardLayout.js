@@ -13,15 +13,15 @@ export const CARD = {
 };
 
 export const THEMES = [
-  { id: 'slate', label: 'Slate', bg: '#2C2C2C', text: '#F7F5F2', sub: '#8A8780' },
-  { id: 'obsidian', label: 'Black', bg: '#111010', text: '#F7F5F2', sub: '#8A8780' },
-  { id: 'chalk', label: 'Light', bg: '#F7F5F2', text: '#1A1A1A', sub: '#8A8780' },
+  { id: 'slate', label: 'Slate', bg: '#161B2E', text: '#F4F6FD', sub: '#7B83A6' },
+  { id: 'obsidian', label: 'Black', bg: '#0A0E1C', text: '#F4F6FD', sub: '#7B83A6' },
+  { id: 'chalk', label: 'Light', bg: '#F4F6FD', text: '#141A2E', sub: '#7B83A6' },
 ];
 
 export const ACCENTS = [
-  { id: 'gold', color: '#C9A84C' },
-  { id: 'ember', color: '#D4622A' },
-  { id: 'sage', color: '#6B8F71' },
+  { id: 'gold', color: '#8B7DFF' },
+  { id: 'ember', color: '#FF8FA3' },
+  { id: 'sage', color: '#4FD8C4' },
 ];
 
 export const DEFAULT_THEME = { ...THEMES[0], accent: ACCENTS[0].color };
