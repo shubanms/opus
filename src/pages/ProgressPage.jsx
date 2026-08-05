@@ -5,8 +5,8 @@ import { playChime } from '../utils/sound.js';
 
 const del = (fn, id) => { playChime('delete'); fn(id); };
 import PageWrapper from '../components/layout/PageWrapper.jsx';
-import VolumeChart from '../components/progress/VolumeChart.jsx';
-import TrendChart from '../components/progress/TrendChart.jsx';
+import VolumeChart from '../components/charts/VolumeChart.jsx';
+import TrendChart from '../components/charts/TrendChart.jsx';
 import MuscleFrequency from '../components/progress/MuscleFrequency.jsx';
 import Heatmap from '../components/progress/Heatmap.jsx';
 import MonthCalendar from '../components/progress/MonthCalendar.jsx';

@@ -24,7 +24,7 @@ A free, offline-first Progressive Web App for gym tracking with RPG progression.
 
 ## Tech stack
 
-Vite · React 18 · Tailwind CSS v3 · Dexie.js (IndexedDB) · Zustand · React Router · Recharts · react-body-highlighter · lucide-react · vite-plugin-pwa · html2canvas
+Vite · React 18 · Tailwind CSS v4 (CSS-first) · Dexie.js (IndexedDB) · Zustand · React Router · Motion · visx (charts) · Paper Shaders · react-body-highlighter · lucide-react · vite-plugin-pwa
 
 ## Development
 

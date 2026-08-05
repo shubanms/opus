@@ -4,7 +4,7 @@ import useSettingsStore from '../store/settingsStore.js';
 // Fetched as its own chunk once the app has painted — see features.js.
 const loadFeatures = () => import('./features.js').then((mod) => mod.default);
 
-export { m, AnimatePresence } from 'motion/react';
+export { m, AnimatePresence, useReducedMotion } from 'motion/react';
 export * from './spec.js';
 
 /**

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts';
+import RadarChart from '../charts/RadarChart.jsx';
 import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../../utils/rpg.js';
 import { useCharacterStats } from '../../hooks/useRPG.js';
 import { useBossStats } from '../../hooks/useBosses.js';
@@ -9,9 +9,6 @@ import { monthKeyOf, saveSnapshot, getSnapshots, previousSnapshot, mergeRadarSer
 import OpusMark from '../logo/OpusMark.jsx';
 import TitleBadge from './TitleBadge.jsx';
 import XPBar from './XPBar.jsx';
-
-const GOLD = '#8B7DFF';
-const ASH = '#7B83A6';
 
 export default function CharacterCard({ profile }) {
   const stats = useCharacterStats();
@@ -28,7 +25,6 @@ export default function CharacterCard({ profile }) {
   }, [stats]);
   const prev = previousSnapshot(getSnapshots(), monthKeyOf());
   const radarData = mergeRadarSeries(stats, prev);
-  const showHistory = !!prev;
 
   return (
     <div
@@ -48,29 +44,7 @@ export default function CharacterCard({ profile }) {
       </div>
 
       <div className="mt-2">
-        <ResponsiveContainer width="100%" height={240}>
-          <RadarChart data={radarData} outerRadius="72%">
-            <PolarGrid stroke={ASH} strokeOpacity={0.3} />
-            <PolarAngleAxis
-              dataKey="axis"
-              tick={{ fill: ASH, fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}
-            />
-            {showHistory && (
-              <Radar dataKey="valuePrev" stroke={ASH} fill={ASH} fillOpacity={0.12} strokeDasharray="4 4" />
-            )}
-            <Radar dataKey="value" stroke={GOLD} fill={GOLD} fillOpacity={0.45} />
-          </RadarChart>
-        </ResponsiveContainer>
-        {showHistory && (
-          <div className="-mt-1 flex items-center justify-center gap-4">
-            <span className="flex items-center gap-1.5 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
-              <span style={{ width: 10, height: 3, borderRadius: 2, background: GOLD }} /> Now
-            </span>
-            <span className="flex items-center gap-1.5 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
-              <span style={{ width: 10, height: 0, borderTop: `2px dashed ${ASH}` }} /> Last month
-            </span>
-          </div>
-        )}
+        <RadarChart data={radarData} />
       </div>
 
       <div className="mt-2">

@@ -1,8 +1,9 @@
 # CLAUDE.md — OPUS project memory
 
 > OPUS is a **free, offline-first gym-tracking PWA with RPG progression**.
-> React 18 + Vite + Tailwind v3 · Dexie/IndexedDB · Zustand · React Router · Recharts ·
-> html2canvas · vite-plugin-pwa. 100% local, no backend. Live: https://shubanms.github.io/opus/
+> React 18 + Vite + Tailwind v4 (CSS-first) · Dexie/IndexedDB · Zustand · React Router ·
+> Motion · visx (charts) · Paper Shaders · canvas-2D share cards · vite-plugin-pwa.
+> 100% local, no backend. Live: https://shubanms.github.io/opus/
 
 ## FOCUS: PWA ONLY — native code has been REMOVED (2026-08-04)
 **This repo is the web/PWA app and nothing else** (`src/`, `docs/`, root config).

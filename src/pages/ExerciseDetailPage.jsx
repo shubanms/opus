@@ -9,8 +9,8 @@ import { toDisplay, unitLabel } from '../utils/units.js';
 import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
-import VolumeChart from '../components/progress/VolumeChart.jsx';
-import TrendChart from '../components/progress/TrendChart.jsx';
+import VolumeChart from '../components/charts/VolumeChart.jsx';
+import TrendChart from '../components/charts/TrendChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
 import ColorPicker from '../components/ui/ColorPicker.jsx';
 
