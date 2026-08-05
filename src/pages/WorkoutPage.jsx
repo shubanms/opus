@@ -8,9 +8,6 @@ import ExercisePicker from '../components/workout/ExercisePicker.jsx';
 import RestTimer from '../components/workout/RestTimer.jsx';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal.jsx';
 import TemplateCard from '../components/template/TemplateCard.jsx';
-import LevelUpScreen from '../components/rpg/LevelUpScreen.jsx';
-import AchievementToast from '../components/rpg/AchievementToast.jsx';
-import Particles from '../components/fx/Particles.jsx';
 import { useExercise } from '../hooks/useExercises.js';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useHaptics } from '../hooks/useHaptics.js';
@@ -22,6 +19,7 @@ import { supersetRuns, noRestIds } from '../utils/supersets.js';
 import { sessionIron } from '../utils/economy.js';
 import { db } from '../db/db.js';
 import useUIStore from '../store/uiStore.js';
+import useCinematicStore from '../store/cinematicStore.js';
 
 function ElapsedTimer({ startedAt }) {
   const [secs, setSecs] = useState(Math.round((Date.now() - startedAt) / 1000));
@@ -78,9 +76,6 @@ export default function WorkoutPage() {
   const [endOpen, setEndOpen] = useState(false);
   const [showRest, setShowRest] = useState(false);
   const [editingName, setEditingName] = useState(false);
-  const [levelUp, setLevelUp] = useState(null);
-  const [celebrate, setCelebrate] = useState(false);
-  const [unlocked, setUnlocked] = useState(null);
   const [restKey, setRestKey] = useState(0);
   const restDuration = useSettingsStore((s) => s.restDuration);
   const setRestDuration = useSettingsStore((s) => s.setRestDuration);
@@ -154,17 +149,13 @@ export default function WorkoutPage() {
       console.error('Reward feedback failed (workout still saved):', e);
     }
 
-    // Daily Dungeon clear — the Iron + XP bonus were already awarded in the
-    // store; celebrate it here.
-    if (result?.dungeon?.cleared) {
-      const d = result.dungeon;
-      useUIStore.getState().showToast(
-        d.alreadyCleared
-          ? `⚔ ${d.name} — already cleared today`
-          : `⚔ Dungeon cleared! ◆ +${d.iron} Iron${d.xpBonus ? ` · +${d.xpBonus} bonus XP` : ''}`,
-        { type: 'success' },
-      );
-      if (!d.alreadyCleared) { haptic('pr'); playChime('quest'); setCelebrate(true); setTimeout(() => setCelebrate(false), 1300); }
+    // A real dungeon clear gets its own cinematic below. Re-running a dungeon
+    // already banked today rewards nothing, so it stays a plain toast — a
+    // fanfare for no reward would be a lie.
+    if (result?.dungeon?.alreadyCleared) {
+      useUIStore.getState().showToast(`⚔ ${result.dungeon.name} — already cleared today`, {
+        type: 'success',
+      });
     }
 
     // Advance the routine's targets by its progression scheme (if any).
@@ -194,30 +185,19 @@ export default function WorkoutPage() {
     if (result?.prCount > 0) {
       notifyPR(`You set ${result.prCount} new record${result.prCount === 1 ? '' : 's'} this session.`);
     }
-    if (result?.leveledUp) {
-      setLevelUp({ level: result.newLevel, title: result.newTitle });
-    } else if (result?.prCount > 0) {
-      haptic('pr');
-      playChime('pr');
-      setCelebrate(true);
-      setTimeout(() => setCelebrate(false), 1300);
-    } else {
+    // Everything worth celebrating goes to one queue, which owns the order and
+    // — since none of it can be skipped — the pacing. Each cinematic fires its
+    // own sound and haptic, so the only cue left here is the ordinary finish.
+    const celebrating = useCinematicStore.getState().celebrate(result);
+    if (!celebrating) {
       haptic('success');
       playChime('success');
-    }
-    if (result?.newAchievements?.length) {
-      setUnlocked(result.newAchievements);
     }
   }
 
   if (!activeWorkout) {
     return (
       <>
-        {celebrate && <Particles />}
-        {unlocked && <AchievementToast achievements={unlocked} onDismiss={() => setUnlocked(null)} />}
-        {levelUp && (
-          <LevelUpScreen level={levelUp.level} title={levelUp.title} onDismiss={() => setLevelUp(null)} />
-        )}
         <div className="px-5 pb-24 pt-8">
         <h1 className="font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
           Ready?

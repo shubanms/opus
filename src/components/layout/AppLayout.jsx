@@ -5,6 +5,7 @@ import Onboarding from '../onboarding/Onboarding.jsx';
 import Tour from '../tour/Tour.jsx';
 import CoachMark from '../coach/CoachMark.jsx';
 import UiHost from '../ui/UiHost.jsx';
+import CinematicHost from '../cinematic/CinematicHost.jsx';
 import AuroraBackdrop from '../fx/AuroraBackdrop.jsx';
 import { useRPG } from '../../hooks/useRPG.js';
 import { useOnOpenReminders } from '../../hooks/useOnOpenReminders.js';
@@ -58,6 +59,7 @@ export default function AppLayout() {
       {loaded && onboarded && !tourSeen && <Tour />}
       {loaded && onboarded && tourSeen && <CoachMark />}
       <UiHost />
+      <CinematicHost />
     </div>
   );
 }

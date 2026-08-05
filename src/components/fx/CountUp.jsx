@@ -13,6 +13,11 @@ import { TWEEN, useMotionEnabled } from '../../motion/index.jsx';
  */
 export default function CountUp({
   value = 0,
+  /**
+   * Where to count from. Defaults to zero, but a record is a story about the
+   * number it beat — starting at the old record lets you watch it get passed.
+   */
+  from = 0,
   duration = 0.9,
   format = (n) => Math.round(n).toLocaleString(),
   className,
@@ -21,20 +26,20 @@ export default function CountUp({
   const motionOn = useMotionEnabled();
   const reduced = useReducedMotion();
   const animateIt = motionOn && !reduced;
-  const [n, setN] = useState(animateIt ? 0 : value);
+  const [n, setN] = useState(animateIt ? from : value);
 
   useEffect(() => {
     if (!animateIt) {
       setN(value);
       return undefined;
     }
-    const controls = animate(0, value, {
+    const controls = animate(from, value, {
       duration,
       ease: TWEEN.enter.ease,
       onUpdate: setN,
     });
     return () => controls.stop();
-  }, [value, duration, animateIt]);
+  }, [value, from, duration, animateIt]);
 
   return (
     <span className={className} style={style}>

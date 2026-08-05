@@ -228,4 +228,48 @@ test.describe('OPUS end-to-end', () => {
     await expect(page.getByRole('heading', { name: 'Welcome to OPUS' })).toBeVisible({ timeout: 60_000 });
     expect(realErrors(errors)).toEqual([]);
   });
+
+  test('celebrations play and always clear themselves', async ({ page, errors }) => {
+    // The cinematics have no skip button by design, so the only thing that ends
+    // one is a timer. That makes "the queue always drains" a correctness
+    // property, not a nicety: if it ever fails, the app is stuck behind a
+    // full-screen overlay with no way out but a force-quit.
+    test.setTimeout(120_000);
+    await onboard(page, 'Celebrator');
+    await dismissCoach(page);
+
+    await gotoTab(page, 'Workout');
+    await dismissCoach(page);
+    await page.getByRole('button', { name: 'Quick start (empty)' }).click();
+    await page.getByRole('button', { name: 'Add exercise' }).click();
+    await page.getByPlaceholder('Search exercises…').fill('Concentration Curl');
+    await page.getByRole('button', { name: /Concentration Curl/ }).click();
+
+    // A first-ever session sets records and clears level 1, so at least one
+    // cinematic is guaranteed.
+    const logBtn = page.getByRole('button', { name: 'Log set' });
+    for (const [w, r] of [[40, 10], [45, 8], [50, 6]]) {
+      await page.getByPlaceholder('kg').fill(String(w));
+      await page.getByPlaceholder('reps').fill(String(r));
+      await logBtn.click();
+    }
+
+    await page.getByRole('button', { name: 'Finish' }).click();
+    await page.getByRole('button', { name: 'Save & finish' }).click();
+
+    // Something is celebrated...
+    const cinematic = page.locator('[aria-live="polite"][aria-label^="New record"]');
+    await expect(cinematic).toBeVisible({ timeout: 15_000 });
+
+    // ...and everything clears on its own, with no tap anywhere. 20s is far
+    // beyond the worst-case queue (four events, ~5.5s) — this asserts the
+    // timer fires at all, not its exact length.
+    await expect(page.locator('[aria-live="polite"]')).toHaveCount(0, { timeout: 20_000 });
+
+    // The app is usable again, not left behind a transparent overlay.
+    await gotoTab(page, 'Home');
+    await dismissCoach(page);
+    await expect(page.getByText('Recent')).toBeVisible();
+    expect(realErrors(errors)).toEqual([]);
+  });
 });

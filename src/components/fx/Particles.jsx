@@ -3,9 +3,13 @@ import { createPortal } from 'react-dom';
 
 const COLORS = ['#8B7DFF', '#FF8FA3', '#F4F6FD', '#4FD8C4'];
 
-// Full-screen one-shot gold particle burst from the centre. Parent renders it
+// Full-screen one-shot particle burst from the centre. Parent renders it
 // briefly (e.g. for ~1.2s) then unmounts.
-export default function Particles({ count = 22 }) {
+//
+// `z` exists because a burst has to sit above whatever it is celebrating: the
+// default clears ordinary page content, while a full-screen cinematic — which
+// itself sits above the toast layer — has to lift it further.
+export default function Particles({ count = 22, z = 70 }) {
   const bits = useMemo(
     () =>
       Array.from({ length: count }).map(() => ({
@@ -20,7 +24,7 @@ export default function Particles({ count = 22 }) {
   );
 
   return createPortal(
-    <div className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center">
+    <div className="pointer-events-none fixed inset-0 flex items-center justify-center" style={{ zIndex: z }}>
       {bits.map((b, i) => (
         <span
           key={i}

@@ -353,8 +353,10 @@ const useWorkoutStore = create((set, get) => ({
       await db.energyLogs.add({ workoutId, level: w.energy });
     }
 
-    // PR detection
+    // PR detection. `prs` carries enough detail to celebrate a record by name
+    // and show what it beat — a bare count can only say "1 new record".
     let prBonus = 0;
+    const prs = [];
     for (const ex of w.exercises) {
       const working = ex.sets.filter(s => !s.isWarmup && (s.weight > 0 || s.reps > 0));
       if (!working.length) continue;
@@ -370,6 +372,13 @@ const useWorkoutStore = create((set, get) => ({
           if (prev) await db.prs.put({ ...prev, ...record });
           else await db.prs.add(record);
           prBonus += PR_BONUS;
+          prs.push({
+            exerciseId: ex.exerciseId,
+            name: ex.name,
+            type,
+            value,
+            prev: prev?.value ?? null,
+          });
         }
       };
       await upsert('weight', maxWeight);
@@ -384,7 +393,7 @@ const useWorkoutStore = create((set, get) => ({
     // chunk fetch.
     const userStore = useUserStore.getState();
     const profile = userStore.profile;
-    const prCount = prBonus / PR_BONUS;
+    const prCount = prs.length;
 
     // Daily Dungeon: if this was today's dungeon session and it cleared the
     // working-set objective, award its Iron (once per day) and apply the affix
@@ -409,6 +418,7 @@ const useWorkoutStore = create((set, get) => ({
     const result = {
       workoutId,
       prCount,
+      prs,
       xpEarned: xpEarned + prBonus,
       leveledUp: false,
       newLevel: profile?.level ?? 1,
