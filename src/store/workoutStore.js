@@ -171,6 +171,24 @@ const useWorkoutStore = create((set, get) => ({
     });
   },
 
+  // Rate a set after the fact. The RPE picker asked *before* logging, which is
+  // both the wrong moment and an extra gate on the core action; this is what
+  // the post-set effort chips write through.
+  setSetRpe(exerciseId, setNumber, rpe) {
+    const w = get().activeWorkout;
+    if (!w) return;
+    set({
+      activeWorkout: {
+        ...w,
+        exercises: w.exercises.map(e =>
+          e.exerciseId !== exerciseId
+            ? e
+            : { ...e, sets: e.sets.map(s => (s.setNumber === setNumber ? { ...s, rpe } : s)) }
+        ),
+      },
+    });
+  },
+
   setSetNote(exerciseId, setNumber, note) {
     const w = get().activeWorkout;
     if (!w) return;

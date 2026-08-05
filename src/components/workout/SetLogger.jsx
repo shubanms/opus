@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Minus, Trash2, Flame, Dumbbell, StickyNote, Info, Trophy } from 'lucide-react';
+import { Plus, Minus, Trash2, Flame, Dumbbell, StickyNote, Trophy } from 'lucide-react';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import useUIStore from '../../store/uiStore.js';
@@ -10,6 +10,7 @@ import { playChime } from '../../utils/sound.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
 import { calcSetXP } from '../../utils/rpg.js';
 import { diffsBySetNumber } from '../../utils/setDiff.js';
+import { EFFORT_LEVELS, effortFromRpe } from '../../utils/effort.js';
 import { rollCrit, comboCount, bonusXp as critBonusXp, CRIT_CHANCE } from '../../utils/crit.js';
 import { todaysDungeon, affixEffects } from '../../utils/dungeon.js';
 import Particles from '../fx/Particles.jsx';
@@ -33,14 +34,20 @@ function SetDelta({ diff, unit }) {
   );
 }
 
-const RPE_CHIPS = [6, 7, 8, 9, 10];
-
 export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = false }) {
-  const { activeWorkout, logSet, removeSet, toggleWarmup, setSetNote } = useWorkoutStore();
+  const { activeWorkout, logSet, removeSet, toggleWarmup, setSetNote, setSetRpe } = useWorkoutStore();
   const unit = useSettingsStore((s) => s.unit);
   const haptic = useHaptics();
   const exercise = activeWorkout?.exercises.find((e) => e.exerciseId === exerciseId);
   const lastSets = useLastSets(exerciseId);
+  // Which set to ask about: the most recently logged working set that hasn't
+  // been rated yet. Exactly one at a time — a chip row under every set would be
+  // clutter, and re-asking about older sets is nagging.
+  const rateableSet = (() => {
+    const working = (exercise?.sets ?? []).filter((x) => !x.isWarmup);
+    const last = working[working.length - 1];
+    return last && !(last.rpe > 0) ? last.setNumber : null;
+  })();
   const prs = usePRs(exerciseId);
   // When following a routine, surface the best PR to chase instead of the last
   // session's numbers.
@@ -52,9 +59,6 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
   const [weight, setWeight] = useState('');
   const [reps, setReps] = useState('');
-  const [rpe, setRpe] = useState(null);
-  const [showRpe, setShowRpe] = useState(false);
-  const [showRpeInfo, setShowRpeInfo] = useState(false);
   const [showPlates, setShowPlates] = useState(false);
   const [addWeight, setAddWeight] = useState(false);
   const [xpFloat, setXpFloat] = useState(null);
@@ -101,7 +105,8 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
     logSet(exerciseId, {
       weight: weightKg,
       reps: r,
-      rpe: showRpe ? rpe : null,
+      // Rated after the fact, on the logged row — never before the set.
+      rpe: null,
       isWarmup: false,
       crit,
       bonusXp: bonus,
@@ -112,7 +117,6 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
     setXpFloat({ key: Date.now(), xp: base + bonus, pr: isPR, crit, combo });
     onSetLogged?.();
     setReps('');
-    setRpe(null);
   }
 
   async function editNote(setNumber, current) {
@@ -190,8 +194,22 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
               {fmt(s)}
             </span>
             {!s.isWarmup && <SetDelta diff={setDeltas[s.setNumber]} unit={unit} />}
-            {s.rpe && (
-              <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>RPE {s.rpe}</span>
+            {s.rpe > 0 && (
+              <button
+                type="button"
+                onClick={() => setSetRpe(exerciseId, s.setNumber, null)}
+                aria-label={`Effort: ${effortFromRpe(s.rpe)?.label ?? s.rpe}. Tap to clear.`}
+                className="-my-1 flex items-center gap-1 rounded-full px-2 py-1"
+                style={{ background: 'var(--color-chalk)' }}
+              >
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ background: effortFromRpe(s.rpe)?.color ?? 'var(--color-ash)' }}
+                />
+                <span className="font-mono text-[11px]" style={{ color: 'var(--color-ash)' }}>
+                  {effortFromRpe(s.rpe)?.label ?? `RPE ${s.rpe}`}
+                </span>
+              </button>
             )}
             {/* Padded to a real touch target — these were 13px icons with no
                 padding, which is a hard tap with chalky hands. */}
@@ -202,6 +220,30 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
               <Trash2 size={15} style={{ color: 'var(--color-ash)' }} />
             </button>
           </div>
+          {/* Asked once, on the set you just finished — the only moment you
+              actually remember how it felt. Skipping it costs nothing. */}
+          {s.setNumber === rateableSet && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-8">
+              <span className="font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                How did that feel?
+              </span>
+              {EFFORT_LEVELS.map((level) => (
+                <button
+                  key={level.key}
+                  type="button"
+                  onClick={() => {
+                    setSetRpe(exerciseId, s.setNumber, level.rpe);
+                    haptic('tap');
+                  }}
+                  className="rounded-full px-3 py-2 font-sans text-xs font-semibold"
+                  style={{ background: 'var(--color-chalk)', color: level.color }}
+                  title={`${level.label} — ${level.rir}`}
+                >
+                  {level.label}
+                </button>
+              ))}
+            </div>
+          )}
           {s.note && (
             <p className="mt-1 pl-8 font-sans text-xs italic" style={{ color: 'var(--color-text-secondary)' }}>{s.note}</p>
           )}
@@ -283,12 +325,6 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
 
       {/* Toggles */}
       <div className="mt-1 flex items-center gap-4">
-        <button onClick={() => setShowRpe((v) => !v)} className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          {showRpe ? 'Hide effort' : '+ Add effort (RPE)'}
-        </button>
-        <button onClick={() => setShowRpeInfo((v) => !v)} aria-label="What is RPE?" className="flex items-center">
-          <Info size={13} style={{ color: 'var(--color-ash)' }} />
-        </button>
         {isBodyweight && (
           <button
             onClick={() => { setAddWeight((v) => !v); setWeight(''); setShowPlates(false); }}
@@ -300,32 +336,6 @@ export default function SetLogger({ exerciseId, onSetLogged, isBodyweight = fals
         )}
       </div>
 
-      {showRpeInfo && (
-        <p className="mt-2 rounded-xl px-3 py-2 font-sans text-xs" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }}>
-          <b style={{ color: 'var(--color-text-primary)' }}>RPE</b> = how hard the set felt, 1–10. Think "reps left in the tank":
-          10 = all-out, 9 ≈ 1 left, 8 ≈ 2 left. It's optional — it helps track intensity over time.
-        </p>
-      )}
-
-      {showRpe && (
-        <div className="mt-2">
-          <div className="flex gap-1.5">
-            {RPE_CHIPS.map((n) => (
-              <button
-                key={n}
-                onClick={() => setRpe(rpe === n ? null : n)}
-                className="h-10 flex-1 rounded-lg font-mono text-sm font-medium"
-                style={{
-                  background: rpe === n ? 'var(--color-gold)' : 'var(--color-ivory)',
-                  color: rpe === n ? 'var(--color-obsidian)' : 'var(--color-text-primary)',
-                }}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Plate calculator */}
       {showPlates && weightNum > 0 && (
