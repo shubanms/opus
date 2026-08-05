@@ -3,6 +3,7 @@ import useSettingsStore from '../../store/settingsStore.js';
 import useUserStore from '../../store/userStore.js';
 import { sceneParams } from '../../utils/ambient.js';
 import { getPrestige } from '../../utils/rpg.js';
+import { currentStreak } from '../../utils/streak.js';
 
 // Own chunk: the WebGL library must never be in the critical path of a PWA
 // that has to open fast, and most of the time it isn't rendered at all.
@@ -104,7 +105,7 @@ export default function AuroraBackdrop() {
   if (!effects || !allowed || !idle) return null;
 
   const scene = sceneParams({
-    streak: profile?.streak ?? 0,
+    streak: currentStreak(profile),
     level: profile?.level ?? 1,
     prestige: getPrestige(profile?.totalXp ?? 0),
   });

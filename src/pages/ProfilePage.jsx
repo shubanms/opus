@@ -11,6 +11,7 @@ import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js'
 import { useBossStats } from '../hooks/useBosses.js';
 import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { decayInfo } from '../utils/decay.js';
+import { streakState } from '../utils/streak.js';
 import { cappedLevel, activeBoss } from '../utils/bosses.js';
 import { fmtWeight, fmtVolume } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
@@ -58,6 +59,9 @@ export default function ProfilePage() {
 
   const totalXp = profile.totalXp ?? 0;
   const { effectiveXp, decaying, lost } = decayInfo(profile);
+  // Live, not the stored number: `profile.streak` is only written when a
+  // workout completes, so it keeps reporting the old count until you train.
+  const streak = streakState(profile);
   const { level: rawLevel } = getXPProgress(effectiveXp);
   const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
   const boss = bossStats ? activeBoss(rawLevel, bossStats) : null;
@@ -79,7 +83,7 @@ export default function ProfilePage() {
     title: getRankLabel(effectiveXp),
     stats: charStats,
     workouts: workouts.length,
-    streak: profile.streak ?? 0,
+    streak: streak.count,
     totalXp,
   };
 
@@ -211,7 +215,7 @@ export default function ProfilePage() {
 
       {/* Current streak + XP */}
       <div className="mt-3 grid grid-cols-2 gap-3">
-        <StatTile icon={Flame} value={profile.streak ?? 0} countTo={profile.streak ?? 0} label="Current streak" accent={(profile.streak ?? 0) > 0 ? 'var(--color-ember)' : undefined} />
+        <StatTile icon={Flame} value={streak.count} countTo={streak.count} label="Current streak" accent={streak.count > 0 ? 'var(--color-ember)' : undefined} />
         <StatTile icon={Zap} value={totalXp.toLocaleString()} countTo={totalXp} label="Total XP" accent="var(--color-gold)" />
       </div>
 

@@ -7,6 +7,7 @@ import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
 import { decayInfo, streakBreakPenalty } from '../utils/decay.js';
+import { STREAK, streakLabel, streakState } from '../utils/streak.js';
 import { tokensEarned, tokenBalance, isShieldActive, shieldedDecay } from '../utils/streakShield.js';
 import { cappedLevel, activeBoss } from '../utils/bosses.js';
 import { useBossStats } from '../hooks/useBosses.js';
@@ -116,7 +117,11 @@ export default function HomePage() {
   const shieldTokens = tokenBalance(tokensEarned({ workouts: life.workouts, questClaims }) + (tokensPurchased || 0), tokensSpent);
   const rawDecay = decayInfo(profile ?? {});
   const shieldActive = isShieldActive(shieldedLapseDate, profile?.lastWorkoutDate);
+  // Deliberately the STORED streak, not the live one: this is the penalty for
+  // the streak you *lost*, and the live count is 0 once it has broken — passing
+  // that here would silently zero the penalty and kill the rest-token mechanic.
   const streakPenalty = streakBreakPenalty(rawDecay.days, profile?.streak ?? 0);
+  const streak = streakState(profile);
   const { effectiveXp, decaying, lost } = shieldedDecay(rawDecay, { active: shieldActive, streakPenalty, earnedXp: profile?.totalXp ?? 0 });
   const canShield = rawDecay.decaying && streakPenalty > 0 && !shieldActive && shieldTokens > 0;
   const { level: rawLevel } = getXPProgress(effectiveXp);
@@ -128,7 +133,7 @@ export default function HomePage() {
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
-  const scene = sceneParams({ streak: profile?.streak ?? 0, level, prestige, reducedMotion: reducedMotion || !effects });
+  const scene = sceneParams({ streak: streak.count, level, prestige, reducedMotion: reducedMotion || !effects });
 
   function startTemplate() {
     playChime('start');
@@ -166,9 +171,24 @@ export default function HomePage() {
                 {profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}
               </p>
             </div>
-            {profile?.streak > 0 && (
-              <span className="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold" style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}>
-                <Flame size={12} />{profile.streak}
+            {/* Only shown while the streak is actually standing. It used to
+                read `profile.streak`, which is frozen at the last workout — so
+                a streak that ended three weeks ago still displayed its old
+                count. At risk (trained yesterday, not today) is called out
+                rather than looking identical to safe. */}
+            {streak.count > 0 && (
+              <span
+                className="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold"
+                style={{
+                  background: streak.state === STREAK.AT_RISK ? 'var(--accent-wash)' : 'var(--color-ivory)',
+                  color: 'var(--color-ember)',
+                  border: streak.state === STREAK.AT_RISK ? '1px solid var(--color-ember)' : '1px solid transparent',
+                }}
+                title={streakLabel(streak)}
+                aria-label={streakLabel(streak)}
+              >
+                <Flame size={12} />
+                {streak.count}
               </span>
             )}
           </div>

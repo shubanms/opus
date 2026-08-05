@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, ChevronRight, Trash2, Pencil, Footprints, Droplet, Search, ArrowLeft, Trophy, Dumbbell, Layers, Clock, Flame, TrendingUp, TrendingDown } from 'lucide-react';
 import { deleteBodyStat, deleteSleep, deleteActivity } from '../utils/healthActions.js';
 import { playChime } from '../utils/sound.js';
+import { currentStreak } from '../utils/streak.js';
 
 const del = (fn, id) => { playChime('delete'); fn(id); };
 import PageWrapper from '../components/layout/PageWrapper.jsx';
@@ -82,6 +83,8 @@ function Overview() {
   const unit = useSettingsStore((s) => s.unit);
   const effects = useSettingsStore((s) => s.effects);
   const { profile } = useRPG();
+  // The stored streak goes stale the moment a day passes — derive it.
+  const liveStreak = currentStreak(profile);
   const lifetime = useLifetimeStats();
   const weeklyRaw = useWeeklyVolume(8);
   const weekly = weeklyRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
@@ -129,7 +132,7 @@ function Overview() {
         <KpiTile icon={Dumbbell} label="Workouts" value={lifetime.workouts} countTo={lifetime.workouts} effects={effects} />
         <KpiTile icon={Layers} label="Volume" value={fmtVolume(lifetime.totalVolume, unit)} countTo={lifetime.totalVolume} format={(n) => fmtVolume(n, unit)} effects={effects} />
         <KpiTile icon={Trophy} label="PRs" value={lifetime.prCount} countTo={lifetime.prCount} effects={effects} />
-        <KpiTile icon={Flame} label="Streak" value={profile?.streak ?? 0} countTo={profile?.streak ?? 0} effects={effects} />
+        <KpiTile icon={Flame} label="Streak" value={liveStreak} countTo={liveStreak} effects={effects} />
         <KpiTile icon={Clock} label="Hours" value={Math.round(lifetime.hours)} countTo={Math.round(lifetime.hours)} effects={effects} />
         <KpiTile icon={TrendingUp} label="Sets" value={lifetime.totalSets} countTo={lifetime.totalSets} effects={effects} />
       </div>

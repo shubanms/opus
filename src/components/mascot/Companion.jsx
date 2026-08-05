@@ -5,6 +5,7 @@ import { useRPG } from '../../hooks/useRPG.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
+import { currentStreak } from '../../utils/streak.js';
 import { CLIP, MASCOT_NAME, ambientClip, clipForKind, pickLine } from '../../utils/mascot.js';
 
 const MET_KEY = 'opus_mascot_met';
@@ -30,14 +31,17 @@ export default function Companion({ autoGreet = true, size = 164, bubbleWidth = 
     if (animate) setGesture((g) => ({ clip: nextClip, gesture: g.gesture + 1 }));
   }, [animate]);
 
+  // Derived out here so the callback depends on a stable number rather than
+  // the whole profile object, which changes identity on every live-query tick.
+  const streak = currentStreak(profile);
+
   const say = useCallback((kind) => {
-    const streak = profile?.streak ?? 0;
     const hour = new Date().getHours();
     setLine(pickLine({ kind, streak, hour }));
     play(clipForKind(kind));
     clearTimeout(hideRef.current);
     hideRef.current = setTimeout(() => setLine(''), 5200);
-  }, [profile?.streak, play]);
+  }, [streak, play]);
 
   // Greeting on mount (Home only). Intro the very first time ever.
   useEffect(() => {

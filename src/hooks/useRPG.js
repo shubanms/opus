@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import useUserStore from '../store/userStore.js';
 import { db } from '../db/db.js';
+import { currentStreak } from '../utils/streak.js';
 import { getCharacterStats } from '../utils/rpg.js';
 
 // Initialises and returns the user profile.
@@ -47,7 +48,7 @@ export function useCharacterStats() {
       maxWeight,
       avgVolume,
       avgSets,
-      streak: profile?.streak ?? 0,
+      streak: currentStreak(profile),
       workoutsPerWeek,
       muscleVariety: muscles.size,
     });

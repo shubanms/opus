@@ -272,4 +272,48 @@ test.describe('OPUS end-to-end', () => {
     await expect(page.getByText('Recent')).toBeVisible();
     expect(realErrors(errors)).toEqual([]);
   });
+
+  test('a streak that ended is reported as ended, not frozen', async ({ page, errors }) => {
+    // Regression guard. `profile.streak` is only written when a workout
+    // completes, so nothing recomputes it as days pass — a 12-day streak that
+    // ended last week kept displaying "12" on every screen until you trained
+    // again. The displays now derive the live count.
+    test.setTimeout(90_000);
+    await onboard(page, 'Streaky');
+    await dismissCoach(page);
+
+    // A 12-day streak whose last session was five days ago.
+    await page.evaluate(
+      () =>
+        new Promise((resolve, reject) => {
+          const req = indexedDB.open('OpusDB');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const db = req.result;
+            const tx = db.transaction(['userProfile'], 'readwrite');
+            const store = tx.objectStore('userProfile');
+            const get = store.get(1);
+            get.onsuccess = () => {
+              const d = new Date(Date.now() - 5 * 86400000);
+              const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              store.put({ ...(get.result || {}), id: 1, streak: 12, lastWorkoutDate: key });
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        })
+    );
+
+    await goto(page, 'profile');
+    await dismissCoach(page);
+    await expect(page.getByText('Current streak')).toBeVisible();
+
+    // The stale count must not appear anywhere on the screen.
+    const tile = page
+      .locator('div', { hasText: /^\d+Current streak$/ })
+      .last();
+    await expect(tile).toHaveText(/^0Current streak$/);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
 });
