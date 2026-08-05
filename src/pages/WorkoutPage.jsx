@@ -5,6 +5,7 @@ import useWorkoutStore from '../store/workoutStore.js';
 import { m, SPRING } from '../motion/index.jsx';
 import ExerciseSection from '../components/workout/ExerciseSection.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
+import SwapSheet from '../components/workout/SwapSheet.jsx';
 import RestTimer from '../components/workout/RestTimer.jsx';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal.jsx';
 import TemplateCard from '../components/template/TemplateCard.jsx';
@@ -71,6 +72,7 @@ export default function WorkoutPage() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [swapId, setSwapId] = useState(null); // exercise being swapped, or null
+  const [swapOpen, setSwapOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [showRest, setShowRest] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -352,7 +354,7 @@ export default function WorkoutPage() {
               linked={linked}
               onSetLogged={handleSetLogged}
               onRemove={() => removeExercise(ex.exerciseId)}
-              onSwap={() => { setSwapId(ex.exerciseId); setPickerOpen(true); }}
+              onSwap={() => { setSwapId(ex.exerciseId); setSwapOpen(true); }}
               onToggleSuperset={() => toggleSuperset(ex.exerciseId)}
               onMoveUp={() => moveExercise(ex.exerciseId, -1)}
               onMoveDown={() => moveExercise(ex.exerciseId, 1)}
@@ -395,6 +397,15 @@ export default function WorkoutPage() {
         rows={2}
         className="mt-4 w-full resize-none rounded-2xl px-4 py-3 font-sans text-sm outline-none"
         style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)', color: 'var(--color-text-primary)' }}
+      />
+
+      <SwapSheet
+        isOpen={swapOpen}
+        currentId={swapId}
+        exclude={exercises.map((e) => e.exerciseId)}
+        onClose={() => { setSwapOpen(false); setSwapId(null); }}
+        onSelect={(ex) => { playChime('tap'); swapExercise(swapId, ex); setSwapOpen(false); setSwapId(null); }}
+        onBrowseAll={() => { setSwapOpen(false); setPickerOpen(true); }}
       />
 
       <ExercisePicker
