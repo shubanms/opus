@@ -42,7 +42,12 @@ export default function AppLayout() {
         bad for assistive tech, and a source of ambiguous-locator flake in the
         E2E suite. Leaving instantly and arriving smoothly reads as fast.
       */}
-      <main className="mx-auto w-full max-w-md pb-24">
+      {/* Clear the nav properly. A fixed pb-24 ignored the safe-area inset, so
+          on a gesture-nav phone the last card sat under the bar. */}
+      <main
+        className="mx-auto w-full max-w-md"
+        style={{ paddingBottom: 'calc(104px + env(safe-area-inset-bottom))' }}
+      >
         <m.div key={pathname} variants={pageVariants} initial="initial" animate="animate">
           <Outlet />
         </m.div>

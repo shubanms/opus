@@ -53,6 +53,11 @@
   --grad-accent-soft: linear-gradient(135deg, rgba(139, 125, 255, 0.18), rgba(79, 216, 196, 0.12));
   --glass-line: rgba(20, 26, 46, 0.09);
   --glass-blur: 18px;
+  /* Chrome the page scrolls beneath. Near-opaque on purpose: at anything
+     lighter the content underneath stays legible through it, which reads as a
+     rendering fault rather than as glass. Stated explicitly rather than
+     computed, so what ships is exactly what's written here. */
+  --glass-chrome: rgba(244, 246, 253, 0.94);
   --glow-accent: 0 10px 30px rgba(139, 125, 255, 0.3);
 
   --elev-1: 0 1px 2px rgba(11, 16, 32, 0.05);
@@ -103,6 +108,7 @@
     radial-gradient(56% 40% at 46% 104%, rgba(255, 143, 163, 0.13), transparent 62%);
 
   --glass-line: rgba(255, 255, 255, 0.1);
+  --glass-chrome: rgba(11, 16, 32, 0.94);
   --elev-1: 0 1px 2px rgba(0, 0, 0, 0.3);
   --elev-2: 0 8px 24px rgba(0, 0, 0, 0.36);
   --elev-3: 0 24px 60px rgba(0, 0, 0, 0.5);

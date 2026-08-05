@@ -40,8 +40,13 @@ export default function RobotModel({ clip = CLIP.idle, gesture = 0, still = fals
     scene.traverse((o) => {
       if (!o.isMesh) return;
       o.frustumCulled = false;
-      const mats = Array.isArray(o.material) ? o.material : [o.material];
-      o.material = mats.map((m) => {
+      // Whether the mesh was multi-material must be captured BEFORE mapping:
+      // checking afterwards always sees the array we just built, so a
+      // single-material mesh kept a one-element array. Three.js needs matching
+      // geometry groups to draw an array material and finds none, so it
+      // silently rendered nothing — Magnus disappeared entirely.
+      const wasArray = Array.isArray(o.material);
+      const tinted = (wasArray ? o.material : [o.material]).map((m) => {
         if (!m?.color) return m;
         const next = m.clone();
         // Preserve each material's own lightness so the model keeps its shading
@@ -51,7 +56,7 @@ export default function RobotModel({ clip = CLIP.idle, gesture = 0, still = fals
         next.color.setHSL(0.71, hsl.s > 0.08 ? 0.55 : hsl.s, hsl.l);
         return next;
       });
-      if (!Array.isArray(o.material)) o.material = o.material[0];
+      o.material = wasArray ? tinted : tinted[0];
     });
   }, [scene]);
 

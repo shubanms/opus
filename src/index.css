@@ -70,10 +70,10 @@ body {
   background: var(--color-ivory);
   border: 1px solid var(--glass-line);
 }
-/* Chrome that content scrolls beneath needs more than a tint — at 6% white the
-   page reads straight through it. Sit it on a heavier ground. */
+/* Chrome that content scrolls beneath. `.glass`'s 6%-white tint is nowhere near
+   enough — the page reads straight through it. */
 .glass-strong {
-  background: color-mix(in srgb, var(--color-chalk) 88%, transparent);
+  background: var(--glass-chrome);
 }
 
 /* Blur is applied only when effects are on.
