@@ -66,11 +66,98 @@ export function calcSetXP(weight, reps) {
   return Math.round((weight * reps) / 10);
 }
 
-export function calcWorkoutXP(sets) {
+// ---------------------------------------------------------------------------
+// Quality weighting
+//
+// Base XP is weight × reps, which is volume, which means the way to earn more
+// is to do *more* — and the cheapest more is light filler sets. The game and
+// the training were on opposite sides.
+//
+// The fix has to rest on something you cannot simply assert. Intensity relative
+// to your own best on that exact lift is exactly that: 90% of your best bench
+// is objectively hard, and the only way to move the number is to actually lift
+// more. Every threshold is per-exercise, so a 20 kg lateral raise against a
+// 22.5 kg best scores as high as a heavy squat — accessories are not punished
+// for being light in absolute terms.
+// ---------------------------------------------------------------------------
+
+/** Multiplier from load relative to your best working weight on that lift. */
+export function intensityFactor(weight, best) {
+  // No record yet, or a bodyweight movement — nothing to measure against, so
+  // score it neutral rather than guessing.
+  if (!best || best <= 0 || !weight || weight <= 0) return 1;
+  const ratio = weight / best;
+  if (ratio >= 1) return 1.5;
+  if (ratio >= 0.85) return 1.3;
+  if (ratio >= 0.7) return 1.15;
+  if (ratio >= 0.5) return 1;
+  return 0.8;
+}
+
+/**
+ * Multiplier from how hard the set felt.
+ *
+ * Deliberately upside-only and small. It is self-reported, so it is gameable;
+ * capping the whole lie at +10% makes it not worth telling. Leaving a set
+ * unrated costs nothing, because punishing a blank field just teaches people to
+ * rate only their hard sets, which corrupts the data the rest of the app reads.
+ */
+export function effortFactor(rpe) {
+  if (!Number.isFinite(rpe)) return 1;
+  if (rpe >= 10) return 1.1;
+  if (rpe >= 9) return 1.05;
+  return 1;
+}
+
+/** What one set is worth, over its raw volume. */
+export function setQuality(set, best) {
+  return intensityFactor(set?.weight, best) * effortFactor(set?.rpe);
+}
+
+/**
+ * Session-level view of the same numbers, for telling someone *why* their XP
+ * moved. A multiplier with no explanation is just a number that changed.
+ */
+export function sessionQuality(sets, bests = {}) {
+  const working = (sets ?? []).filter((s) => !s.isWarmup);
+  let base = 0;
+  let weighted = 0;
+  let heavy = 0;
+  let filler = 0;
+  for (const s of working) {
+    const xp = calcSetXP(s.weight, s.reps);
+    const f = intensityFactor(s.weight, bests[s.exerciseId]);
+    base += xp;
+    weighted += xp * setQuality(s, bests[s.exerciseId]);
+    if (f >= 1.3) heavy += 1;
+    if (f < 1) filler += 1;
+  }
+  return {
+    mult: base > 0 ? weighted / base : 1,
+    heavy,
+    filler,
+    sets: working.length,
+  };
+}
+
+/**
+ * @param sets  Working + warm-up sets; each needs `exerciseId` for its own best.
+ * @param bests exerciseId → best working weight, as it stood *before* this
+ *              session. Called from the end-of-session modal, where the PR rows
+ *              have not been written yet, so a record-setting set scores against
+ *              the record it beat rather than against itself.
+ */
+export function calcWorkoutXP(sets, bests = {}) {
   const working = sets.filter((s) => !s.isWarmup);
   // Per-set crit + combo bonus (utils/crit.js) is baked into each set's stored
   // `bonusXp`, so it's part of the total and reverts cleanly when a set is gone.
-  const setXP = working.reduce((sum, s) => sum + calcSetXP(s.weight, s.reps) + (s.bonusXp || 0), 0);
+  // It is added *after* the multiplier: a crit is a dice roll, not an
+  // achievement, and scaling it would compound luck with merit.
+  const setXP = working.reduce(
+    (sum, s) =>
+      sum + Math.round(calcSetXP(s.weight, s.reps) * setQuality(s, bests[s.exerciseId])) + (s.bonusXp || 0),
+    0
+  );
   return setXP + COMPLETE_BONUS;
 }
 

@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Trophy, Clock, Zap, BookmarkPlus, Check } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { db } from '../../db/db.js';
-import { calcWorkoutXP } from '../../utils/rpg.js';
+import { calcWorkoutXP, sessionQuality } from '../../utils/rpg.js';
 import { computeVolume } from '../../utils/volume.js';
 import { getCurrentBodyweight } from '../../utils/healthActions.js';
 import { deriveRoutineName } from '../../utils/routineName.js';
@@ -21,17 +21,34 @@ import CountUp from '../fx/CountUp.jsx';
 export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, onSave, onClose }) {
   const { profile } = useRPG();
   const unit = useSettingsStore((s) => s.unit);
+  // Best working weight per lift, as it stands *right now* — the PR rows are
+  // written at completion, which happens after this modal, so a record-setting
+  // set is scored against the record it beat rather than against itself.
+  const bests = useLiveQuery(async () => {
+    const rows = await db.prs.where('type').equals('weight').toArray();
+    const map = {};
+    for (const p of rows) map[p.exerciseId] = Math.max(map[p.exerciseId] ?? 0, p.value ?? 0);
+    return map;
+  }, []);
+
   const stats = useMemo(() => {
     if (!activeWorkout) return null;
-    const allSets = activeWorkout.exercises.flatMap((e) => e.sets);
+    // Sets carry no exerciseId of their own — it lives on the exercise, and
+    // quality is measured per lift, so it has to come along.
+    const allSets = activeWorkout.exercises.flatMap((e) =>
+      e.sets.map((s) => ({ ...s, exerciseId: e.exerciseId }))
+    );
     const workingSets = allSets.filter((s) => !s.isWarmup);
-    const xp = calcWorkoutXP(workingSets);
+    // Undefined while the query is in flight: treat as "no records", which is
+    // the neutral case, not a discount.
+    const best = bests ?? {};
     return {
       exercises: activeWorkout.exercises.length,
       sets: workingSets.length,
-      xp,
+      xp: calcWorkoutXP(workingSets, best),
+      quality: sessionQuality(workingSets, best),
     };
-  }, [activeWorkout]);
+  }, [activeWorkout, bests]);
 
   const totalVolume = useLiveQuery(async () => {
     if (!activeWorkout) return 0;
@@ -79,6 +96,23 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
   }, [derived.name, touched]);
 
   if (!stats) return null;
+
+  // Below 3% either way is rounding, not a story worth telling.
+  const q = stats.quality;
+  const qualityNote =
+    q.mult >= 1.03
+      ? {
+          color: 'var(--color-gold)',
+          text: q.heavy
+            ? `${q.heavy} set${q.heavy === 1 ? '' : 's'} near your best`
+            : 'heavier work than usual',
+        }
+      : q.mult <= 0.97
+        ? {
+            color: 'var(--color-ember)',
+            text: `${q.filler} set${q.filler === 1 ? '' : 's'} well under your best`,
+          }
+        : null;
 
   const handleSave = () => {
     const trimmed = routineName.trim();
@@ -131,6 +165,23 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>XP earned</p>
         </div>
       </div>
+
+      {/* Why the XP is what it is. A multiplier nobody explains is just a
+          number that changed — and the whole point of weighting XP by quality
+          is that it tells you something about the session. */}
+      {qualityNote && (
+        <div
+          className="mb-3 flex items-center justify-center gap-2 rounded-xl px-3 py-2"
+          style={{ background: 'var(--accent-wash)' }}
+        >
+          <span className="font-mono text-sm font-bold" style={{ color: qualityNote.color }}>
+            ×{stats.quality.mult.toFixed(2)}
+          </span>
+          <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            {qualityNote.text}
+          </span>
+        </div>
+      )}
 
       {/* Iron reward — legible so you know what the session pays into the Vault. */}
       <div className="mb-3 flex items-center justify-center gap-2 rounded-xl py-2.5" style={{ background: 'var(--color-obsidian)' }}>

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   calcSetXP, calcWorkoutXP, getLevelFromTotalXP, getTitle, getXPProgress,
   getPrestige, prestigeXp, roman, getRankLabel, getCharacterStats,
+  intensityFactor, effortFactor, setQuality, sessionQuality,
   COMPLETE_BONUS, RANKS,
 } from './rpg.js';
 
@@ -23,6 +24,124 @@ describe('calcWorkoutXP', () => {
       { weight: 999, reps: 5, isWarmup: true },
     ];
     expect(calcWorkoutXP(sets)).toBe(100 + COMPLETE_BONUS);
+  });
+
+  it('is unchanged for anyone with no records yet', () => {
+    // Nothing to measure intensity against, so a new account earns exactly what
+    // it earned before quality weighting existed.
+    const sets = [
+      { exerciseId: 1, weight: 100, reps: 10, isWarmup: false },
+      { exerciseId: 2, weight: 40, reps: 12, isWarmup: false },
+    ];
+    expect(calcWorkoutXP(sets, {})).toBe(100 + 48 + COMPLETE_BONUS);
+  });
+
+  it('pays more for a session near your best than for the same volume light', () => {
+    const heavy = [{ exerciseId: 1, weight: 100, reps: 5, isWarmup: false }];
+    const light = [{ exerciseId: 1, weight: 25, reps: 20, isWarmup: false }];
+    const bests = { 1: 110 };
+    // Identical volume (500), so the base XP is identical — only quality differs.
+    expect(calcSetXP(100, 5)).toBe(calcSetXP(25, 20));
+    expect(calcWorkoutXP(heavy, bests)).toBeGreaterThan(calcWorkoutXP(light, bests));
+  });
+
+  it('does not scale the crit bonus', () => {
+    // A crit is a dice roll, not an achievement; scaling it would compound luck
+    // with merit.
+    const sets = [{ exerciseId: 1, weight: 100, reps: 10, isWarmup: false, bonusXp: 50 }];
+    expect(calcWorkoutXP(sets, { 1: 100 })).toBe(Math.round(100 * 1.5) + 50 + COMPLETE_BONUS);
+  });
+
+  it('warm-ups stay worthless however heavy they are', () => {
+    const sets = [{ exerciseId: 1, weight: 200, reps: 10, isWarmup: true }];
+    expect(calcWorkoutXP(sets, { 1: 100 })).toBe(COMPLETE_BONUS);
+  });
+});
+
+describe('intensityFactor', () => {
+  it('scores load against your own best on that lift', () => {
+    expect(intensityFactor(120, 100)).toBe(1.5); // a new record
+    expect(intensityFactor(100, 100)).toBe(1.5);
+    expect(intensityFactor(90, 100)).toBe(1.3);
+    expect(intensityFactor(75, 100)).toBe(1.15);
+    expect(intensityFactor(60, 100)).toBe(1);
+    expect(intensityFactor(40, 100)).toBe(0.8); // filler
+  });
+
+  it('judges accessories against their own record, not an absolute weight', () => {
+    // 20 kg is trivial next to a squat and near-maximal for a lateral raise.
+    // Per-exercise anchoring is the whole reason this is fair.
+    expect(intensityFactor(20, 22.5)).toBe(1.3);
+    expect(intensityFactor(20, 200)).toBe(0.8);
+  });
+
+  it('stays neutral when there is nothing to compare against', () => {
+    expect(intensityFactor(100, 0)).toBe(1);
+    expect(intensityFactor(100, null)).toBe(1);
+    expect(intensityFactor(100, undefined)).toBe(1);
+    // Bodyweight movements carry no load to measure.
+    expect(intensityFactor(0, 100)).toBe(1);
+  });
+});
+
+describe('effortFactor', () => {
+  it('rewards hard sets a little', () => {
+    expect(effortFactor(10)).toBe(1.1);
+    expect(effortFactor(9)).toBe(1.05);
+  });
+
+  it('never punishes an easy or unrated set', () => {
+    // Docking unrated sets teaches people to rate only the hard ones, which
+    // corrupts the effort data the rest of the app reads.
+    expect(effortFactor(7)).toBe(1);
+    expect(effortFactor(null)).toBe(1);
+    expect(effortFactor(undefined)).toBe(1);
+  });
+
+  it('caps what a lie is worth', () => {
+    // Self-reported, therefore gameable; +10% is not worth lying for.
+    expect(effortFactor(10)).toBeLessThanOrEqual(1.1);
+  });
+});
+
+describe('setQuality', () => {
+  it('combines the objective and the self-reported halves', () => {
+    expect(setQuality({ weight: 90, reps: 5, rpe: 10 }, 100)).toBeCloseTo(1.3 * 1.1);
+  });
+
+  it('survives a missing set', () => {
+    expect(setQuality(null, 100)).toBe(1);
+    expect(setQuality({}, 100)).toBe(1);
+  });
+});
+
+describe('sessionQuality', () => {
+  const bests = { 1: 100, 2: 50 };
+
+  it('reports the multiplier the session actually earned', () => {
+    const sets = [
+      { exerciseId: 1, weight: 90, reps: 5, isWarmup: false },
+      { exerciseId: 2, weight: 45, reps: 10, isWarmup: false },
+    ];
+    expect(sessionQuality(sets, bests).mult).toBeCloseTo(1.3);
+  });
+
+  it('counts the heavy sets and the filler', () => {
+    const sets = [
+      { exerciseId: 1, weight: 95, reps: 3, isWarmup: false },
+      { exerciseId: 1, weight: 30, reps: 15, isWarmup: false },
+      { exerciseId: 1, weight: 70, reps: 8, isWarmup: false },
+      { exerciseId: 1, weight: 200, reps: 5, isWarmup: true },
+    ];
+    const q = sessionQuality(sets, bests);
+    expect(q.heavy).toBe(1);
+    expect(q.filler).toBe(1);
+    expect(q.sets).toBe(3); // the warm-up is not a set for this purpose
+  });
+
+  it('reads as neutral rather than dividing by zero on an empty session', () => {
+    expect(sessionQuality([], bests).mult).toBe(1);
+    expect(sessionQuality(undefined).mult).toBe(1);
   });
 });
 

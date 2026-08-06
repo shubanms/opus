@@ -438,6 +438,69 @@ test.describe('OPUS end-to-end', () => {
     expect(realErrors(errors)).toEqual([]);
   });
 
+  test('XP is weighted by how heavy the work was, and says so', async ({ page, errors }) => {
+    // The multiplier is computed against PR rows read from the database at the
+    // moment the modal opens. Unit tests prove the arithmetic; only a browser
+    // proves the modal is looking at the right rows at the right time — the
+    // records for *this* session are written afterwards, so reading them a beat
+    // later would score every heavy set against itself.
+    test.setTimeout(120_000);
+    await onboard(page, 'Quality');
+    await dismissCoach(page);
+
+    // A 100 kg best on the lift we're about to train, with the rep and volume
+    // records set out of reach so nothing here is a PR (records have their own
+    // reward, and a cinematic would just be in the way).
+    await page.evaluate(
+      () =>
+        new Promise((resolve, reject) => {
+          const req = indexedDB.open('OpusDB');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const tx = req.result.transaction(['exercises', 'prs'], 'readwrite');
+            const all = tx.objectStore('exercises').getAll();
+            all.onsuccess = () => {
+              const ex = all.result.find((e) => e.name === 'Concentration Curl');
+              const prs = tx.objectStore('prs');
+              prs.put({ exerciseId: ex.id, type: 'weight', value: 100, achievedAt: 1, workoutId: 1 });
+              prs.put({ exerciseId: ex.id, type: 'reps', value: 50, achievedAt: 1, workoutId: 1 });
+              prs.put({ exerciseId: ex.id, type: 'volume', value: 99999, achievedAt: 1, workoutId: 1 });
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        })
+    );
+
+    await gotoTab(page, 'Workout');
+    await dismissCoach(page);
+    await page.getByRole('button', { name: 'Quick start (empty)' }).click();
+    await page.getByRole('button', { name: 'Add exercise' }).click();
+    await page.getByPlaceholder('Search exercises…').fill('Concentration Curl');
+    await page.getByRole('button', { name: /Concentration Curl/ }).click();
+
+    // Exactly one set, at 95 of a 100 best — 95%, which lands in the 1.30 band.
+    // One, because the session's first working set is a guaranteed crit and
+    // every set after it rolls: one set makes the total arithmetic exact
+    // instead of "somewhere in this range".
+    await page.getByPlaceholder('kg').fill('95');
+    await page.getByPlaceholder('reps').fill('10');
+    await page.getByRole('button', { name: 'Log set' }).click();
+
+    await page.getByRole('button', { name: 'Finish' }).click();
+    await expect(page.getByRole('heading', { name: 'Workout complete' })).toBeVisible();
+    await expect(page.getByText('×1.30')).toBeVisible();
+    await expect(page.getByText('1 set near your best')).toBeVisible();
+
+    // round(95 × 1.30) base, the same again for the guaranteed crit, plus the
+    // completion bonus. Unweighted this session would pay 210 — asserting the
+    // number and not just the badge, because a badge can be right while the XP
+    // it is explaining is not.
+    const base = Math.round(95 * 1.3);
+    await expect(page.getByText(`+${base * 2 + 20}`)).toBeVisible();
+    expect(realErrors(errors)).toEqual([]);
+  });
+
   test('the verdict closes the loop it opened last session', async ({ page, errors }) => {
     // `buildVerdict` is unit-tested to death; what is not is the seam in
     // `completeWorkout` that has to find the *previous* session's stored advice

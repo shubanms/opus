@@ -8,7 +8,7 @@ import { usePRs } from '../../hooks/useProgress.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
 import { toKg, toDisplay, unitLabel } from '../../utils/units.js';
-import { calcSetXP } from '../../utils/rpg.js';
+import { calcSetXP, intensityFactor } from '../../utils/rpg.js';
 import { diffsBySetNumber } from '../../utils/setDiff.js';
 import { EFFORT_LEVELS, effortFromRpe } from '../../utils/effort.js';
 import { prefillFrom, smallestIncrement, stepWeight } from '../../utils/loadStep.js';
@@ -124,7 +124,10 @@ export default function SetLogger({ exerciseId, onSetLogged, onEffortRated, isBo
       .flatMap((e) => e.sets.filter((x) => !x.isWarmup).map((x) => x.completedAt))
       .filter(Boolean);
     const combo = comboCount([...times, Date.now()]);
-    const base = calcSetXP(weightKg, r);
+    // The float has to agree with what the end-of-session modal will total, so
+    // it applies the same intensity weighting. Effort is deliberately not in
+    // here: the set has not been rated yet at this instant.
+    const base = Math.round(calcSetXP(weightKg, r) * intensityFactor(weightKg, weightPR?.value));
     const bonus = critBonusXp(base, { crit, combo });
 
     logSet(exerciseId, {
