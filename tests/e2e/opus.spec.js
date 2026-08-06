@@ -91,6 +91,85 @@ async function gotoTab(page, label) {
   await page.getByRole('button', { name: new RegExp(`^${label}`, 'i') }).first().click();
 }
 
+/**
+ * Put real training history in the database.
+ *
+ * The route sweep used to run on a brand-new account, which meant every screen
+ * rendered its empty state and the code paths that touch actual data never
+ * executed. A crash shipped that way: RecoveryMap only dereferences its labels
+ * once there is a neglected muscle to name, so an empty account rendered it
+ * perfectly and a real one threw. Empty is the easy case; populated is the one
+ * worth sweeping.
+ */
+async function seedHistory(page) {
+  await page.evaluate(
+    () =>
+      new Promise((resolve, reject) => {
+        const req = indexedDB.open('OpusDB');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction(['workouts', 'sets', 'prs', 'bodyStats'], 'readwrite');
+          const workouts = tx.objectStore('workouts');
+          const sets = tx.objectStore('sets');
+          const prs = tx.objectStore('prs');
+          const stats = tx.objectStore('bodyStats');
+          const now = Date.now();
+          const day = 86400000;
+
+          for (let i = 0; i < 6; i += 1) {
+            const when = now - i * 3 * day;
+            const id = 500 + i;
+            workouts.put({
+              id,
+              date: new Date(when).toISOString().slice(0, 10),
+              name: i % 2 ? 'Upper' : 'Lower',
+              status: 'completed',
+              duration: 3300,
+              createdAt: when,
+              totalVolume: 8000 + i * 250,
+              totalSets: 9,
+              bodyweightKg: 80,
+              xpEarned: 150,
+            });
+            for (let e = 1; e <= 3; e += 1) {
+              for (let n = 0; n < 3; n += 1) {
+                sets.put({
+                  workoutId: id,
+                  exerciseId: e,
+                  setNumber: e * 3 + n,
+                  reps: 8,
+                  weight: 60 + n * 5,
+                  isWarmup: false,
+                  rpe: n === 2 ? 9 : null,
+                  completedAt: when,
+                });
+              }
+            }
+            stats.put({ date: new Date(when).toISOString().slice(0, 10), weight: 80 - i * 0.2 });
+          }
+          for (const [i, type] of ['weight', 'reps', 'volume'].entries()) {
+            prs.put({
+              exerciseId: 1,
+              type,
+              value: type === 'reps' ? 12 : 110,
+              achievedAt: now - i * day,
+              workoutId: 500,
+            });
+          }
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        };
+      })
+  );
+}
+
+/** In-page tabs worth opening during the route sweep. */
+const PAGE_TABS = {
+  home: ['Recovery', 'Quests', 'Activity'],
+  progress: ['By Exercise', 'Body', 'Overview'],
+};
+
 test.describe('OPUS end-to-end', () => {
   test('boots and shows onboarding on a fresh device', async ({ page, errors }) => {
     await goto(page, 'home');
@@ -201,13 +280,29 @@ test.describe('OPUS end-to-end', () => {
 
   test('all primary routes render without page errors', async ({ page, errors }) => {
     // Ten full page loads, each re-booting React, Dexie and the seed catalogue.
-    test.setTimeout(180_000);
+    test.setTimeout(240_000);
     await onboard(page);
     await dismissCoach(page);
+    // With history, so the data-dependent branches actually run — see seedHistory.
+    await seedHistory(page);
     for (const path of ['home', 'progress', 'exercises', 'profile', 'history', 'achievements', 'progression', 'records', 'wrapped', 'templates']) {
       await goto(page, path);
       await dismissCoach(page);
       await page.waitForTimeout(400);
+
+      // Open the in-page tabs too. Loading a route only renders its default
+      // tab, and a shipped crash lived behind two of these: the muscle map is
+      // under Home's Recovery tab (which only appears once you have workouts,
+      // hence seedHistory) and under Progress's By Exercise tab. A sweep that
+      // never clicks anything sees neither.
+      for (const label of PAGE_TABS[path] ?? []) {
+        const tab = page.getByRole('button', { name: label, exact: true });
+        if (await tab.count()) {
+          await tab.first().click();
+          await page.waitForTimeout(700);
+          await dismissCoach(page);
+        }
+      }
     }
     expect(realErrors(errors)).toEqual([]);
   });

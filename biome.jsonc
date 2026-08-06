@@ -41,7 +41,13 @@
       "correctness": {
         // Needs per-hook judgement — adding a dep can introduce a render loop,
         // so these get fixed individually rather than in bulk.
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "warn",
+        // ERROR, not warn. A shipped crash came from `export { X } from '...'`,
+        // which forwards a name without creating a local binding, leaving six
+        // uses of it undefined at runtime. Neither the build nor the type-free
+        // toolchain notices; this rule pinpoints it, and the codebase has zero
+        // other violations, so it costs nothing to hold at error.
+        "noUndeclaredVariables": "error"
       },
       "suspicious": {
         // Index keys are only used for static lists (chips, plate rows) today.

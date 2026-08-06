@@ -1,16 +1,20 @@
 import { useState } from 'react';
-import { MUSCLE_LABEL as LABELS } from '../../utils/muscleTargets.js';
+import { MUSCLE_LABEL } from '../../utils/muscleTargets.js';
 import Model from 'react-body-highlighter';
 import { Activity } from 'lucide-react';
 import { useRecovery } from '../../hooks/useRecovery.js';
 
-// Re-exported so the many existing `import { MUSCLE_LABEL } from RecoveryMap`
-// call sites keep working; it is defined in utils/muscleTargets.js.
-export { MUSCLE_LABEL } from '../../utils/muscleTargets.js';
+// Re-exported so the existing `import { MUSCLE_LABEL } from RecoveryMap` call
+// sites keep working; it is defined in utils/muscleTargets.js.
+//
+// Note this re-exports the *imported binding* rather than
+// `export { MUSCLE_LABEL } from '...'`. That form forwards the name without
+// creating a local one, so every use below it was a ReferenceError at runtime.
+export { MUSCLE_LABEL };
 
 // The muscles react-body-highlighter can render (== the anatomical groups we
 // label). Anything else (e.g. 'cardio') must be filtered out before the map.
-const SUPPORTED_MUSCLES = new Set(Object.keys(LABELS));
+const SUPPORTED_MUSCLES = new Set(Object.keys(MUSCLE_LABEL));
 
 // frequency → highlightedColors index: 1=sage(2d), 2=gold(1d), 3=ember(today)
 const COLORS = ['#4FD8C4', '#8B7DFF', '#FF8FA3'];
