@@ -147,8 +147,19 @@ export async function renameTemplate(templateId, name) {
 }
 
 export async function deleteTemplate(templateId) {
+  const template = await db.templates.get(templateId);
+  if (!template) return null;
+  const links = await db.templateExercises.where('templateId').equals(templateId).toArray();
   await db.templateExercises.where('templateId').equals(templateId).delete();
   await db.templates.delete(templateId);
+  return { template, links };
+}
+
+/** Put a deleted routine back, exercises and order intact. */
+export async function restoreTemplate(snapshot) {
+  if (!snapshot?.template) return;
+  await db.templates.put(snapshot.template);
+  if (snapshot.links?.length) await db.templateExercises.bulkPut(snapshot.links);
 }
 
 export async function duplicateTemplate(templateId) {

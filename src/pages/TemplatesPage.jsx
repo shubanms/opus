@@ -4,7 +4,8 @@ import { ArrowLeft, Plus, Sparkles, CalendarRange, BookOpen } from 'lucide-react
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useExercises } from '../hooks/useExercises.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
-import { deleteTemplate, duplicateTemplate, updateTemplate, renameTemplate } from '../utils/templateActions.js';
+import { deleteTemplate, restoreTemplate, duplicateTemplate, updateTemplate, renameTemplate } from '../utils/templateActions.js';
+import { deleteWithUndo } from '../utils/undoable.js';
 import { reshuffleRoutine, makeRng } from '../utils/routineGenerator.js';
 import { sessionCounts, isStaleRoutine } from '../utils/staleRoutine.js';
 import { playChime } from '../utils/sound.js';
@@ -39,13 +40,11 @@ export default function TemplatesPage() {
   }
 
   async function handleDelete(template) {
-    const ok = await useUIStore.getState().confirm({
-      title: 'Delete routine?',
-      message: `"${template.name}" will be removed.`,
-      confirmLabel: 'Delete',
-      danger: true,
+    await deleteWithUndo({
+      label: template.name || 'Routine',
+      remove: () => deleteTemplate(template.id),
+      restore: restoreTemplate,
     });
-    if (ok) await deleteTemplate(template.id);
   }
 
   async function handleDuplicate(template) {

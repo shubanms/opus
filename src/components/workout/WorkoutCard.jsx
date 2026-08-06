@@ -3,17 +3,16 @@ import { formatDuration } from '../../utils/duration.js';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucide-react';
 import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
-import { deleteWorkout } from '../../utils/workoutActions.js';
+import { deleteWorkout, restoreWorkout } from '../../utils/workoutActions.js';
+import { deleteWithUndo } from '../../utils/undoable.js';
 import { fmtVolume, toDisplay } from '../../utils/units.js';
 import { avgRest, avgRestAcross, formatRest } from '../../utils/restStats.js';
 import { setWorkoutNote, setWorkoutColor, setWorkoutName, setWorkoutTags } from '../../utils/noteActions.js';
 import { workoutCalories } from '../../utils/calories.js';
 import { friendlyDate } from '../../utils/dateKey.js';
-import { playChime } from '../../utils/sound.js';
 import ShareButton from '../share/ShareButton.jsx';
 import ColorPicker from '../ui/ColorPicker.jsx';
 import useWorkoutStore from '../../store/workoutStore.js';
-import useUIStore from '../../store/uiStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 
 // Friendly muscle-group tags a user can attach to a past session.
@@ -42,16 +41,11 @@ export default function WorkoutCard({ workout }) {
 
   async function handleDelete(e) {
     e.stopPropagation();
-    const ok = await useUIStore.getState().confirm({
-      title: 'Delete workout?',
-      message: `"${workout.name}" and its sets will be removed, and the XP it earned reverted. This can't be undone.`,
-      confirmLabel: 'Delete',
-      danger: true,
+    await deleteWithUndo({
+      label: workout.name || 'Workout',
+      remove: () => deleteWorkout(workout.id),
+      restore: restoreWorkout,
     });
-    if (ok) {
-      playChime('delete');
-      await deleteWorkout(workout.id);
-    }
   }
 
   return (

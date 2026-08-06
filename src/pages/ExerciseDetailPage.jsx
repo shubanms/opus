@@ -3,12 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote } from 'lucide-react';
 import { useExercise, useExerciseNote } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume, useExerciseOneRepMax } from '../hooks/useProgress.js';
-import { deleteCustomExercise, toggleFavorite, setExerciseColor } from '../utils/exerciseActions.js';
+import { deleteCustomExercise, restoreCustomExercise, toggleFavorite, setExerciseColor } from '../utils/exerciseActions.js';
+import { deleteWithUndo } from '../utils/undoable.js';
 import { setExerciseNote } from '../utils/noteActions.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
-import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
-import useUIStore from '../store/uiStore.js';
 import VolumeChart from '../components/charts/VolumeChart.jsx';
 import TrendChart from '../components/charts/TrendChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
@@ -119,17 +118,16 @@ export default function ExerciseDetailPage() {
   const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#7B83A6';
 
   async function handleDelete() {
-    const ok = await useUIStore.getState().confirm({
-      title: 'Delete exercise?',
-      message: `"${exercise.name}" and all its logged history will be removed. This can't be undone.`,
-      confirmLabel: 'Delete',
-      danger: true,
+    const snapshot = await deleteWithUndo({
+      label: exercise.name || 'Exercise',
+      remove: () => deleteCustomExercise(exercise.id),
+      restore: restoreCustomExercise,
+      // Deleting from the detail page navigates away, so undoing has to bring
+      // you back — otherwise the exercise returns and you are left staring at
+      // a list wondering whether it worked.
+      onUndo: () => navigate(`/exercises/${exercise.id}`),
     });
-    if (ok) {
-      playChime('delete');
-      await deleteCustomExercise(exercise.id);
-      navigate('/exercises');
-    }
+    if (snapshot) navigate('/exercises');
   }
 
   return (

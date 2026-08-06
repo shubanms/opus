@@ -11,10 +11,12 @@ function Toasts() {
   return createPortal(
     <div className="pointer-events-none fixed inset-x-0 bottom-28 z-[80] flex flex-col items-center gap-2 px-5">
       {toasts.map((t) => (
-        <button
+        // A toast with an action is a div with two controls inside it, not one
+        // big button — nesting the Undo inside the dismiss button would make
+        // every undo tap a coin flip between the two.
+        <div
           key={t.id}
-          onClick={() => dismiss(t.id)}
-          className="anim-fade-slide-up pointer-events-auto w-full max-w-md rounded-xl px-4 py-3 text-left font-sans text-sm"
+          className="anim-fade-slide-up pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl px-4 py-3 font-sans text-sm"
           style={{
             background: 'var(--color-obsidian)',
             color: 'var(--color-text-inverse)',
@@ -22,8 +24,25 @@ function Toasts() {
             boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
           }}
         >
-          {t.message}
-        </button>
+          <button
+            type="button"
+            onClick={() => dismiss(t.id)}
+            className="flex-1 text-left font-sans text-sm"
+            style={{ color: 'inherit' }}
+          >
+            {t.message}
+          </button>
+          {t.action && (
+            <button
+              type="button"
+              onClick={() => { dismiss(t.id); t.action.onAction(); }}
+              className="-my-1 shrink-0 rounded-lg px-3 py-2 font-sans text-sm font-semibold"
+              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+            >
+              {t.action.label}
+            </button>
+          )}
+        </div>
       ))}
     </div>,
     document.body

@@ -7,10 +7,14 @@ const useUIStore = create((set, get) => ({
   confirmState: null, // { title, message, confirmLabel, cancelLabel, danger, resolve }
   promptState: null,  // { title, message, placeholder, defaultValue, resolve }
 
+  // `opts.action` is `{ label, onAction }` — the undo affordance. A toast that
+  // carries one gets longer on screen by default, because the whole point is
+  // that it has to outlast the moment you realise you tapped the wrong row.
   showToast(message, opts = {}) {
     const id = ++idSeq;
-    set((s) => ({ toasts: [...s.toasts, { id, message, type: opts.type ?? 'info' }] }));
-    setTimeout(() => get().dismissToast(id), opts.duration ?? 3000);
+    const action = opts.action ?? null;
+    set((s) => ({ toasts: [...s.toasts, { id, message, type: opts.type ?? 'info', action }] }));
+    setTimeout(() => get().dismissToast(id), opts.duration ?? (action ? 7000 : 3000));
     return id;
   },
   dismissToast(id) {

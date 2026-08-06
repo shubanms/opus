@@ -57,12 +57,27 @@ export async function recomputeProfile() {
 
 // Deletes a workout and reverses everything it contributed:
 // its sets, energy log, PR records (recomputed), and XP/level/streak.
+/**
+ * Delete a workout, returning everything needed to put it back.
+ *
+ * The snapshot is the rows themselves, keys included, so a restore is a
+ * `bulkPut` rather than a re-derivation — the workout comes back with its own
+ * id, and everything keyed to that id lines up again. In memory only: an undo
+ * that survives a reload is not something anyone expects, and persisting one
+ * would mean a second copy of every deleted workout on disk.
+ */
 export async function deleteWorkout(workoutId) {
   const workout = await db.workouts.get(workoutId);
-  if (!workout) return;
+  if (!workout) return null;
 
   const sets = await db.sets.where('workoutId').equals(workoutId).toArray();
+  const energyLogs = await db.energyLogs.where('workoutId').equals(workoutId).toArray();
   const affected = [...new Set(sets.map((s) => s.exerciseId))];
+  // Unlocked badges and claimed quests are taken away by the reconciles below,
+  // and a claim in particular cannot be re-derived — claiming is a deliberate
+  // act, not a consequence of the data. So they are snapshotted, not recomputed.
+  const achievements = await db.achievements.toArray();
+  const questClaims = await db.questClaims.toArray();
 
   await db.sets.where('workoutId').equals(workoutId).delete();
   await db.energyLogs.where('workoutId').equals(workoutId).delete();
@@ -71,5 +86,26 @@ export async function deleteWorkout(workoutId) {
   for (const exId of affected) await recomputePRs(exId);
   await reconcileAchievements();
   await reconcileQuests();
+  await recomputeProfile();
+
+  return { workout, sets, energyLogs, achievements, questClaims };
+}
+
+/** Put a deleted workout back, and re-derive everything the delete reverted. */
+export async function restoreWorkout(snapshot) {
+  if (!snapshot?.workout) return;
+  await db.workouts.put(snapshot.workout);
+  if (snapshot.sets?.length) await db.sets.bulkPut(snapshot.sets);
+  if (snapshot.energyLogs?.length) await db.energyLogs.bulkPut(snapshot.energyLogs);
+
+  // Records are derived, so recomputing brings them back exactly. Badges and
+  // quest claims are not: `reconcile*` only ever *removes*, so re-running them
+  // here would restore nothing. The snapshot is put back instead — which is
+  // also the only way a claimed quest can return at all.
+  if (snapshot.achievements?.length) await db.achievements.bulkPut(snapshot.achievements);
+  if (snapshot.questClaims?.length) await db.questClaims.bulkPut(snapshot.questClaims);
+
+  const affected = [...new Set((snapshot.sets ?? []).map((s) => s.exerciseId))];
+  for (const exId of affected) await recomputePRs(exId);
   await recomputeProfile();
 }

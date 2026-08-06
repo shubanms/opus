@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Trash2, X, GitCompare } from 'lucide-react';
 import { usePhotos } from '../../hooks/useProgress.js';
-import { addPhoto, deletePhoto, PHOTO_CATEGORIES } from '../../utils/photoActions.js';
+import { addPhoto, deletePhoto, restorePhoto, PHOTO_CATEGORIES } from '../../utils/photoActions.js';
+import { deleteWithUndo } from '../../utils/undoable.js';
 import useUIStore from '../../store/uiStore.js';
 import { parseKey } from '../../utils/dateKey.js';
 
@@ -36,8 +37,7 @@ export default function ProgressPhotos() {
   }
 
   async function remove(p) {
-    const ok = await useUIStore.getState().confirm({ title: 'Delete photo?', message: 'This removes it from this device.', confirmLabel: 'Delete', danger: true });
-    if (ok) deletePhoto(p.id);
+    await deleteWithUndo({ label: 'Photo', remove: () => deletePhoto(p.id), restore: restorePhoto });
   }
 
   const oldest = photos[photos.length - 1];

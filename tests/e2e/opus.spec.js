@@ -412,6 +412,73 @@ test.describe('OPUS end-to-end', () => {
     expect(realErrors(errors)).toEqual([]);
   });
 
+  test('a deleted workout can be taken back, XP and all', async ({ page, errors }) => {
+    // A confirm dialog taxes the 99% of deletes that were meant to protect the
+    // 1% that were not — and by the third dialog the second tap is muscle
+    // memory anyway. Undo inverts that. The claim worth testing is not that the
+    // row comes back but that everything *derived* from it does: XP, records,
+    // achievements and quests are all recomputed on delete, so a restore that
+    // only put the row back would leave the profile permanently short.
+    test.setTimeout(150_000);
+    await onboard(page, 'Undoer');
+    await dismissCoach(page);
+
+    await gotoTab(page, 'Workout');
+    await dismissCoach(page);
+    await page.getByRole('button', { name: 'Quick start (empty)' }).click();
+    await page.getByRole('button', { name: 'Add exercise' }).click();
+    await page.getByPlaceholder('Search exercises…').fill('Concentration Curl');
+    await page.getByRole('button', { name: /Concentration Curl/ }).click();
+    await page.getByPlaceholder('kg').fill('40');
+    await page.getByPlaceholder('reps').fill('10');
+    await page.getByRole('button', { name: 'Log set' }).click();
+    await page.getByRole('button', { name: 'Finish' }).click();
+    await page.getByRole('button', { name: 'Save & finish' }).click();
+
+    const xpOf = () =>
+      page.evaluate(
+        () =>
+          new Promise((resolve, reject) => {
+            const req = indexedDB.open('OpusDB');
+            req.onerror = () => reject(req.error);
+            req.onsuccess = () => {
+              const tx = req.result.transaction(['userProfile', 'prs'], 'readonly');
+              const p = tx.objectStore('userProfile').get(1);
+              const r = tx.objectStore('prs').count();
+              tx.oncomplete = () => resolve({ xp: p.result?.totalXp ?? 0, prs: r.result });
+              tx.onerror = () => reject(tx.error);
+            };
+          })
+      );
+
+    // Completion is async and fires cinematics on the way; poll for the XP
+    // landing rather than assuming the click finished the write. Then let the
+    // celebration queue drain so nothing is covering the screen.
+    await expect.poll(async () => (await xpOf()).xp, { timeout: 30_000 }).toBeGreaterThan(0);
+    await expect(page.locator('[aria-live="polite"]')).toHaveCount(0, { timeout: 25_000 });
+    const before = await xpOf();
+    expect(before.prs).toBeGreaterThan(0);
+
+    await goto(page, 'history');
+    await dismissCoach(page);
+    // The delete control lives inside the expanded card.
+    await page.getByRole('button', { name: /Workout/ }).first().click();
+    // Deleting is one tap now — no dialog stands between it and the toast.
+    await page.getByRole('button', { name: 'Delete workout' }).first().click();
+    await expect(page.getByText(/deleted$/)).toBeVisible();
+    const after = await xpOf();
+    expect(after.xp).toBeLessThan(before.xp);
+
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByText(/restored$/)).toBeVisible();
+
+    // Back to exactly where it was — not approximately, and not just the row.
+    await expect.poll(async () => (await xpOf()).xp).toBe(before.xp);
+    expect((await xpOf()).prs).toBe(before.prs);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
   test('a planned rest day is not a lapse', async ({ page, errors }) => {
     // The day-streak calls every rest day a threat, which is the one thing every
     // programme in the app prescribes. With a plan, the streak counts sessions

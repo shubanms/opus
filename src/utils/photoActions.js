@@ -33,5 +33,14 @@ export async function addPhoto(file, { category = 'front', note = '', date = tod
 }
 
 export async function deletePhoto(id) {
+  const photo = await db.photos.get(id);
+  if (!photo) return null;
   await db.photos.delete(id);
+  return { photo };
+}
+
+/** Put a deleted photo back, blob and all. */
+export async function restorePhoto(snapshot) {
+  if (!snapshot?.photo) return;
+  await db.photos.put(snapshot.photo);
 }
