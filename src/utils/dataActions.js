@@ -1,6 +1,7 @@
 import { db } from '../db/db.js';
 import { setsToCsv } from './csv.js';
 import { toDisplay, unitLabel } from './units.js';
+import { buildIcs } from './ics.js';
 
 function download(content, filename, type) {
   const blob = new Blob([content], { type });
@@ -44,6 +45,21 @@ export async function exportData() {
   a.download = `opus-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Downloads the weekly plan as a calendar file.
+ *
+ * Returns false when nothing is scheduled, so the caller can say why rather
+ * than handing over an empty file. See `utils/ics.js` for why a calendar is the
+ * reminder path and a notification is not.
+ */
+export async function exportPlanIcs(hour = 18) {
+  const templates = await db.templates.toArray();
+  const ics = buildIcs({ templates, hour });
+  if (!ics) return false;
+  download(ics, 'opus-training-plan.ics', 'text/calendar;charset=utf-8');
+  return true;
 }
 
 // Downloads a CSV of every logged set (joined with workout + exercise names).

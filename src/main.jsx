@@ -6,6 +6,7 @@ import { db } from './db/db.js';
 import useSettingsStore, { applyEffects } from './store/settingsStore.js';
 import { applyTheme } from './utils/theme.js';
 import { requestPersistence } from './utils/storage.js';
+import { updateStreakSync } from './utils/periodicSync.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import MotionProvider from './motion/index.jsx';
 import DbRecovery from './components/DbRecovery.jsx';
@@ -25,6 +26,12 @@ window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',
 // would destroy the user's entire history. Fire-and-forget: it never prompts
 // and never throws, and onboarding asks again once the user has engaged.
 requestPersistence();
+
+// Re-assert the streak nudge on every boot. It is registered per install and
+// the browser can drop it; re-registering is a no-op when it is already there.
+// Returns a status string rather than throwing on the many platforms that do
+// not support it at all — see utils/periodicSync.js.
+updateStreakSync();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

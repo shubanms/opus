@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, ChevronRight, RotateCcw } from 'lucide-react';
 import useWorkoutStore from '../store/workoutStore.js';
 import { m, SPRING } from '../motion/index.jsx';
@@ -10,7 +10,7 @@ import RestTimer from '../components/workout/RestTimer.jsx';
 import EndWorkoutModal from '../components/workout/EndWorkoutModal.jsx';
 import TemplateCard from '../components/template/TemplateCard.jsx';
 import { useExercise } from '../hooks/useExercises.js';
-import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
+import { useTemplatesWithExercises, useToday } from '../hooks/useTemplates.js';
 import { useHaptics } from '../hooks/useHaptics.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { maybePromptPermission, notifyPR } from '../utils/notifications.js';
@@ -69,6 +69,8 @@ export default function WorkoutPage() {
   const { activeWorkout, resumed, dismissResumed, startWorkout, startFromTemplate, addExercise, removeExercise, swapExercise, discardWorkout, completeWorkout, setWorkoutName, setEnergy, setWorkoutNotes, toggleSuperset, moveExercise } = useWorkoutStore();
   const navigate = useNavigate();
   const templates = useTemplatesWithExercises();
+  const [params, setParams] = useSearchParams();
+  const today = useToday();
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [swapId, setSwapId] = useState(null); // exercise being swapped, or null
@@ -82,6 +84,27 @@ export default function WorkoutPage() {
   const setRestDuration = useSettingsStore((s) => s.setRestDuration);
   const nameRef = useRef();
   const haptic = useHaptics();
+
+  // Home-screen shortcuts (long-press the installed icon) land here with an
+  // intent. A shortcut that only *navigates* saves one tap and is not worth a
+  // menu entry, so these actually begin the session.
+  const start = params.get('start');
+  // biome-ignore lint/correctness/useExhaustiveDependencies: store actions and setParams are stable, and `today.template` must not retrigger this — it arrives with `today.type`, which is in the list.
+  useEffect(() => {
+    if (!start) return;
+    // Never stomp a session already in progress — the shortcut is a shortcut,
+    // not a reset. `today` resolves asynchronously, so wait for the routine
+    // rather than silently downgrading to an empty session.
+    if (activeWorkout) { setParams({}, { replace: true }); return; }
+    if (start === 'today') {
+      if (today.type === 'template' && today.template) startFromTemplate(today.template);
+      else if (today.type === 'fresh') startWorkout();
+      else return; // still resolving, or a rest day — leave the screen as it is
+    } else if (start === 'empty') {
+      startWorkout();
+    }
+    setParams({}, { replace: true });
+  }, [start, today.type, activeWorkout]);
 
   // Gentle cue when a session was restored from a lock/reload.
   useEffect(() => {

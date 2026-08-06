@@ -1,5 +1,11 @@
 # OPUS — Roadmap v6 (the app talks back)
 
+> **Status: complete (2026-08-06).** All nine shipped. See `docs/STATE.md` for
+> what each one actually turned out to be, and for the two design calls that
+> moved during the build: the streak rescue had to become schedule-aware (PR 5
+> reached back into PR 4), and undo had to snapshot badges and quest claims
+> rather than re-derive them.
+
 Everything left over from `docs/ROADMAP_V5.md`, sequenced. `STATE.md` tracks
 live status.
 

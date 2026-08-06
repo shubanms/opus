@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { getSettings, saveSettings, permission, currentPermission, requestPermission } from '../utils/notifications.js';
+import { updateStreakSync } from '../utils/periodicSync.js';
 
 export function useNotifications() {
   const [settings, setSettings] = useState(getSettings);
@@ -18,6 +19,10 @@ export function useNotifications() {
     const next = { ...getSettings(), ...patch };
     saveSettings(next);
     setSettings(next);
+    // The service worker has no localStorage, so preferences reach it through
+    // IndexedDB — and turning notifications off has to actually drop the
+    // registered sync, not just stop the app from firing anything.
+    updateStreakSync(next);
   }, []);
 
   const toggleType = useCallback((key) => {

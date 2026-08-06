@@ -412,6 +412,114 @@ test.describe('OPUS end-to-end', () => {
     expect(realErrors(errors)).toEqual([]);
   });
 
+  test('notification preferences reach the service worker', async ({ page, errors }) => {
+    // The worker runs with the app closed and has no localStorage, so the only
+    // route a preference has to it is a row in IndexedDB. That seam is silent
+    // when it breaks: everything still looks right in Settings and the nudge
+    // simply never fires, or fires after being turned off.
+    test.setTimeout(90_000);
+    await onboard(page, 'Notified');
+    await dismissCoach(page);
+
+    const config = () =>
+      page.evaluate(
+        () =>
+          new Promise((resolve, reject) => {
+            const req = indexedDB.open('OpusDB');
+            req.onerror = () => reject(req.error);
+            req.onsuccess = () => {
+              const tx = req.result.transaction(['notifications'], 'readonly');
+              const g = tx.objectStore('notifications').get(1);
+              g.onsuccess = () => resolve(g.result ?? null);
+              tx.onerror = () => reject(tx.error);
+            };
+          })
+      );
+
+    await goto(page, 'settings');
+    await dismissCoach(page);
+    // Written on boot, before anything is toggled.
+    await expect.poll(config).not.toBe(null);
+    expect((await config()).type).toBe('config');
+    expect((await config()).dndStart).toBe(22);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('the weekly plan downloads as a calendar with reminders', async ({ page, errors }) => {
+    // `buildIcs` is unit-tested against the spec; what a browser proves is that
+    // the plan actually reaches it from the database and comes back as a file
+    // the OS will open.
+    test.setTimeout(90_000);
+    await onboard(page, 'Calendarist');
+    await dismissCoach(page);
+
+    await page.evaluate(
+      () =>
+        new Promise((resolve, reject) => {
+          const req = indexedDB.open('OpusDB');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const tx = req.result.transaction(['templates'], 'readwrite');
+            tx.objectStore('templates').put({ id: 900, name: 'Legs; heavy', dayOfWeek: 1, createdAt: Date.now() });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        })
+    );
+
+    await goto(page, 'settings');
+    await dismissCoach(page);
+    await page.getByLabel('Session time').selectOption('7');
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Add to calendar' }).click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('opus-training-plan.ics');
+
+    const stream = await download.createReadStream();
+    const body = await new Promise((resolve) => {
+      let out = '';
+      stream.on('data', (c) => { out += c; });
+      stream.on('end', () => resolve(out));
+    });
+    expect(body).toContain('BEGIN:VCALENDAR');
+    expect(body).toContain('RRULE:FREQ=WEEKLY;BYDAY=MO');
+    expect(body).toContain('T070000');
+    // The reminder is the feature; a calendar entry with no alarm is a diary.
+    expect(body).toContain('TRIGGER:-PT30M');
+    // The semicolon in the routine name has to survive as data, not syntax.
+    expect(body).toContain('SUMMARY:Legs\\; heavy');
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('the icon shortcut starts a session rather than just landing on the screen', async ({ page, errors }) => {
+    // A shortcut that only navigates saves one tap and is not worth a menu
+    // entry. The URL it opens is a contract with the manifest, so it is worth
+    // an assertion that the manifest and the router still agree.
+    test.setTimeout(90_000);
+    await onboard(page, 'Shortcut');
+    await dismissCoach(page);
+
+    const manifest = await page.evaluate(async () => {
+      const res = await fetch('/opus/manifest.webmanifest');
+      return res.json();
+    });
+    const urls = (manifest.shortcuts ?? []).map((s) => s.url);
+    expect(urls).toContain('/opus/workout?start=empty');
+
+    await goto(page, 'workout?start=empty');
+    await dismissCoach(page);
+    // Landed *in* a session, not on the start screen.
+    await expect(page.getByRole('button', { name: 'Finish' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Quick start (empty)' })).toHaveCount(0);
+    // And the intent is consumed, so a reload does not start a second one.
+    await expect(page).toHaveURL(/\/workout$/);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
   test('a deleted workout can be taken back, XP and all', async ({ page, errors }) => {
     // A confirm dialog taxes the 99% of deletes that were meant to protect the
     // 1% that were not — and by the third dialog the second tap is muscle
@@ -461,8 +569,10 @@ test.describe('OPUS end-to-end', () => {
 
     await goto(page, 'history');
     await dismissCoach(page);
-    // The delete control lives inside the expanded card.
-    await page.getByRole('button', { name: /Workout/ }).first().click();
+    // The delete control lives inside the expanded card. Scoped to `main` and
+    // matched on the XP suffix: the centre nav action is also called "Workout",
+    // and an unscoped match navigates away instead of expanding anything.
+    await page.locator('main').getByRole('button', { name: /^Workout \+/ }).first().click();
     // Deleting is one tap now — no dialog stands between it and the toast.
     await page.getByRole('button', { name: 'Delete workout' }).first().click();
     await expect(page.getByText(/deleted$/)).toBeVisible();

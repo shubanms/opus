@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, ShieldCheck, CalendarPlus } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import EquipmentModal from '../components/settings/EquipmentModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -11,7 +11,7 @@ import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
 import { NOTIF_TYPES, requestPermission, showNotification } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
-import { exportData, importData, exportSetsCsv, exportPdf } from '../utils/dataActions.js';
+import { exportData, importData, exportSetsCsv, exportPdf, exportPlanIcs } from '../utils/dataActions.js';
 import { logBodyStat } from '../utils/healthActions.js';
 import { toDisplay, toKg, unitLabel } from '../utils/units.js';
 import { describePersistence, persistenceState, PERSIST_UNSUPPORTED } from '../utils/storage.js';
@@ -65,6 +65,7 @@ export default function SettingsPage() {
   const [reset, setReset] = useState(false);
   const [equip, setEquip] = useState(false);
   const [persist, setPersist] = useState(PERSIST_UNSUPPORTED);
+  const [icsHour, setIcsHour] = useState(18);
 
   useEffect(() => {
     let alive = true;
@@ -97,6 +98,15 @@ export default function SettingsPage() {
   const setWaterGoal = useSettingsStore((s) => s.setWaterGoal);
   const bodyweight = useCurrentBodyweight();
   const fileRef = useRef();
+
+  async function handleCalendar() {
+    const ok = await exportPlanIcs(icsHour);
+    // No plan means no file. Saying so beats downloading an empty calendar and
+    // letting someone work out for themselves why nothing appeared.
+    if (!ok) {
+      useUIStore.getState().showToast('Assign routines to days first — Routines → edit a routine', { type: 'error' });
+    }
+  }
   const age = profile?.birthYear ? new Date().getFullYear() - profile.birthYear : '';
 
   async function handleImport(e) {
@@ -432,6 +442,36 @@ export default function SettingsPage() {
             <Upload size={15} /> Import
           </button>
           <input ref={fileRef} type="file" accept="application/json" onChange={handleImport} className="hidden" />
+        </div>
+
+        {/* Calendar export. The v5 research settled that this is the only
+            reminder path with no platform gaps, no permission prompt and no
+            server: a calendar already has a scheduler, already syncs across
+            your devices, and already knows how to nag you. */}
+        <p className="mb-2 mt-4 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          Put your weekly plan in your calendar, with a reminder 30 minutes before:
+        </p>
+        <div className="flex gap-2">
+          <label className="sr-only" htmlFor="ics-hour">Session time</label>
+          <select
+            id="ics-hour"
+            value={icsHour}
+            onChange={(e) => setIcsHour(Number(e.target.value))}
+            className="rounded-xl px-3 py-2.5 font-mono text-sm outline-none"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            {Array.from({ length: 17 }, (_, i) => i + 5).map((h) => (
+              <option key={h} value={h}>{`${String(h).padStart(2, '0')}:00`}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleCalendar}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
+            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          >
+            <CalendarPlus size={15} /> Add to calendar
+          </button>
         </div>
 
         <p className="mb-2 mt-4 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
