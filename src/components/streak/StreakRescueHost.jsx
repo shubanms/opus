@@ -1,5 +1,6 @@
 import { useRPG } from '../../hooks/useRPG.js';
 import { useRestTokens } from '../../hooks/useRestTokens.js';
+import { useStreak } from '../../hooks/useStreak.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import useUserStore from '../../store/userStore.js';
 import { graceFromOffer, rescueOffer } from '../../utils/streak.js';
@@ -19,6 +20,7 @@ import StreakRescueModal from './StreakRescueModal.jsx';
 export default function StreakRescueHost() {
   const { profile, loaded } = useRPG();
   const tokens = useRestTokens();
+  const streak = useStreak();
   const onboarded = useSettingsStore((s) => s.onboarded);
   const declinedFor = useSettingsStore((s) => s.rescueDeclinedFor);
   const declineRescue = useSettingsStore((s) => s.declineRescue);
@@ -26,7 +28,10 @@ export default function StreakRescueHost() {
   const updateProfile = useUserStore((s) => s.updateProfile);
 
   if (!loaded || !onboarded || !profile) return null;
-  const offer = rescueOffer(profile, tokens);
+  // The live state is passed in so a plan's rest days are not mistaken for a
+  // lapse: without it, someone on Mon/Wed/Fri would be offered a rescue every
+  // Wednesday for a streak their own plan says is intact.
+  const offer = rescueOffer(profile, tokens, undefined, streak);
   if (!offer) return null;
   if (declinedFor && declinedFor === profile.lastWorkoutDate) return null;
 
@@ -34,7 +39,11 @@ export default function StreakRescueHost() {
     // One action, both effects. The XP shield and the streak rescue were always
     // the same token; splitting them would mean paying twice for one lapse.
     spendShield(profile.lastWorkoutDate, offer.cost);
-    updateProfile({ streakGrace: graceFromOffer(offer) });
+    updateProfile(
+      offer.scheduled
+        ? { creditedDays: [...new Set([...(profile.creditedDays ?? []), ...offer.credited])] }
+        : { streakGrace: graceFromOffer(offer) }
+    );
   }
 
   return (

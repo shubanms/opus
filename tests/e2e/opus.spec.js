@@ -412,6 +412,65 @@ test.describe('OPUS end-to-end', () => {
     expect(realErrors(errors)).toEqual([]);
   });
 
+  test('a planned rest day is not a lapse', async ({ page, errors }) => {
+    // The day-streak calls every rest day a threat, which is the one thing every
+    // programme in the app prescribes. With a plan, the streak counts sessions
+    // hit — and, just as importantly, the rescue prompt must not fire on a day
+    // you were never meant to train.
+    test.setTimeout(120_000);
+    await onboard(page, 'Planner');
+    await dismissCoach(page);
+
+    // A plan on every weekday *except* today and yesterday, plus a session
+    // three days ago and a 6-session streak. Under the day-streak this reads as
+    // broken; under the plan the next session simply is not due yet.
+    await page.evaluate(() => {
+      const prefs = JSON.parse(localStorage.getItem('opus_prefs') || '{}');
+      localStorage.setItem('opus_prefs', JSON.stringify({ ...prefs, tokensPurchased: 3 }));
+      const key = (offset) => {
+        const d = new Date(Date.now() - offset * 86400000);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      };
+      const dow = (offset) => new Date(Date.now() - offset * 86400000).getDay();
+      const rest = new Set([dow(0), dow(1), dow(2)]);
+      const trainingDays = [0, 1, 2, 3, 4, 5, 6].filter((d) => !rest.has(d));
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('OpusDB');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const tx = req.result.transaction(['templates', 'userProfile', 'workouts'], 'readwrite');
+          const templates = tx.objectStore('templates');
+          trainingDays.forEach((d, i) => {
+            templates.put({ id: 800 + i, name: `Day ${d}`, dayOfWeek: d, createdAt: Date.now() });
+          });
+          // One session in each of the last four training-day slots.
+          const workouts = tx.objectStore('workouts');
+          [3, 4, 5, 6].forEach((back, i) => {
+            workouts.put({
+              id: 700 + i, date: key(back), name: 'Planned', status: 'completed', duration: 3000,
+              createdAt: Date.now() - back * 86400000, totalVolume: 8000, totalSets: 9, xpEarned: 100,
+            });
+          });
+          const profile = tx.objectStore('userProfile');
+          const get = profile.get(1);
+          get.onsuccess = () => profile.put({ ...(get.result || {}), id: 1, streak: 6, lastWorkoutDate: key(3) });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        };
+      });
+    });
+
+    await goto(page, 'home');
+    await dismissCoach(page);
+
+    // No rescue prompt: nothing has lapsed.
+    await expect(page.getByRole('heading', { name: 'Your streak ended' })).toHaveCount(0);
+    // And the streak is counted in sessions, not days.
+    await expect(page.locator('[aria-label*="session streak"]')).toBeVisible();
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
   test('a lapse is caught on the way back in, and can be bought back', async ({ page, errors }) => {
     // The whole design rests on being *retroactive*: a PWA cannot reliably wake
     // you, so the lapse has to be noticed when you next open the app. That means

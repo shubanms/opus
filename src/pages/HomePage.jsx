@@ -7,7 +7,8 @@ import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
 import { decayInfo, streakBreakPenalty } from '../utils/decay.js';
-import { STREAK, rescueOffer, streakLabel, streakState } from '../utils/streak.js';
+import { STREAK, rescueOffer, streakLabel } from '../utils/streak.js';
+import { useStreak } from '../hooks/useStreak.js';
 import { isShieldActive, shieldedDecay } from '../utils/streakShield.js';
 import { useRestTokens } from '../hooks/useRestTokens.js';
 import { cappedLevel, activeBoss } from '../utils/bosses.js';
@@ -119,7 +120,7 @@ export default function HomePage() {
   // the streak you *lost*, and the live count is 0 once it has broken — passing
   // that here would silently zero the penalty and kill the rest-token mechanic.
   const streakPenalty = streakBreakPenalty(rawDecay.days, profile?.streak ?? 0);
-  const streak = streakState(profile);
+  const streak = useStreak();
   // The offer itself lives in StreakRescueHost, app-wide. This is only the way
   // back to it after "let it go" — a lapse you dismissed once should still be
   // recoverable while it is still recoverable, and Home is where you look.

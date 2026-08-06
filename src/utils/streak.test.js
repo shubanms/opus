@@ -192,3 +192,57 @@ describe('rescueOffer', () => {
     expect(graceFromOffer({})).toBe(null);
   });
 });
+
+describe('streakLabel on a schedule', () => {
+  it('counts sessions rather than days', () => {
+    // Calling it "12-day" when eight of those days were prescribed rest is the
+    // same lie the consecutive-day streak told.
+    expect(streakLabel({ state: STREAK.SAFE, count: 12, scheduled: true })).toBe('12-session streak');
+    expect(streakLabel({ state: STREAK.BROKEN, lost: 12, scheduled: true })).toBe('12-session streak ended');
+  });
+
+  it('does not promise a deadline it cannot know', () => {
+    // On a plan the window may run for days, so "train today" would be wrong.
+    expect(streakLabel({ state: STREAK.AT_RISK, count: 4, scheduled: true })).toBe(
+      '4-session streak · a session is due'
+    );
+  });
+
+  it('is unchanged without a plan', () => {
+    expect(streakLabel({ state: STREAK.SAFE, count: 5 })).toBe('5-day streak');
+    expect(streakLabel({ state: STREAK.AT_RISK, count: 5 })).toContain('train today');
+  });
+});
+
+describe('rescueOffer on a schedule', () => {
+  const scheduled = (over) => ({
+    state: STREAK.BROKEN, count: 0, lost: 6, scheduled: true, missedSlots: ['2026-08-05'], ...over,
+  });
+
+  it('prices a rescue in missed sessions, not missed days', () => {
+    const o = rescueOffer(profile(6, '2026-08-01'), 5, '2026-08-08', scheduled());
+    expect(o.cost).toBe(1);
+    expect(o.scheduled).toBe(true);
+    expect(o.credited).toEqual(['2026-08-05']);
+  });
+
+  it('never fires on a rest day the plan asked for', () => {
+    // This is the whole reason the state is passed in. The day-streak would say
+    // BROKEN every Wednesday for someone training Mon/Wed/Fri.
+    const healthy = { state: STREAK.SAFE, count: 6, lost: 0, scheduled: true };
+    expect(rescueOffer(profile(6, '2026-08-01'), 5, '2026-08-08', healthy)).toBe(null);
+  });
+
+  it('will not sell back a plan abandoned for weeks', () => {
+    const many = scheduled({ missedSlots: ['2026-08-05', '2026-08-03', '2026-07-31', '2026-07-29'] });
+    expect(rescueOffer(profile(6, '2026-07-27'), 9, '2026-08-08', many)).toBe(null);
+  });
+
+  it('writes credited days, not a grace', () => {
+    // The schedule streak is computed from dates, so the honest way to buy a
+    // slot back is to credit that slot. A grace would do nothing here.
+    const o = rescueOffer(profile(6, '2026-08-01'), 5, '2026-08-08', scheduled());
+    expect(graceFromOffer(o)).toBe(null);
+    expect(o.credited.length).toBe(1);
+  });
+});

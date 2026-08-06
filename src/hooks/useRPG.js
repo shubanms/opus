@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import useUserStore from '../store/userStore.js';
 import { db } from '../db/db.js';
 import { currentStreak } from '../utils/streak.js';
+import { planDays, scheduleStreak } from '../utils/scheduleStreak.js';
 import { getCharacterStats } from '../utils/rpg.js';
 
 // Initialises and returns the user profile.
@@ -43,12 +44,17 @@ export function useCharacterStats() {
     }
 
     const profile = await db.userProfile.get(1);
+    // Consistency has to mean the same thing here as it does on Home, or the
+    // radar quietly contradicts the number next to it.
+    const plan = planDays(await db.templates.toArray());
+    const credited = profile?.creditedDays ?? [];
+    const scheduled = plan.size ? scheduleStreak({ plan, dates: [...dates, ...credited] }) : null;
 
     return getCharacterStats({
       maxWeight,
       avgVolume,
       avgSets,
-      streak: currentStreak(profile),
+      streak: scheduled ? scheduled.count : currentStreak(profile),
       workoutsPerWeek,
       muscleVariety: muscles.size,
     });

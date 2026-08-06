@@ -5,7 +5,7 @@ import { useRPG } from '../../hooks/useRPG.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
-import { currentStreak } from '../../utils/streak.js';
+import { useStreak } from '../../hooks/useStreak.js';
 import { CLIP, MASCOT_NAME, ambientClip, clipForKind, pickLine } from '../../utils/mascot.js';
 
 const MET_KEY = 'opus_mascot_met';
@@ -33,7 +33,7 @@ export default function Companion({ autoGreet = true, size = 164, bubbleWidth = 
 
   // Derived out here so the callback depends on a stable number rather than
   // the whole profile object, which changes identity on every live-query tick.
-  const streak = currentStreak(profile);
+  const streak = useStreak().count;
 
   const say = useCallback((kind) => {
     const hour = new Date().getHours();

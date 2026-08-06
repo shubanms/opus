@@ -80,13 +80,19 @@ export function currentStreak(profile, today = todayKey()) {
  */
 export function streakLabel(state) {
   const s = state ?? {};
+  // A schedule-aware streak counts sessions, not days — calling it "12-day"
+  // when eight of those days were prescribed rest is the same lie the
+  // consecutive-day streak told.
+  const unit = s.scheduled ? 'session' : 'day';
   switch (s.state) {
     case STREAK.SAFE:
-      return `${s.count}-day streak`;
+      return `${s.count}-${unit} streak`;
     case STREAK.AT_RISK:
-      return `${s.count}-day streak · train today to keep it`;
+      return s.scheduled
+        ? `${s.count}-session streak · a session is due`
+        : `${s.count}-day streak · train today to keep it`;
     case STREAK.BROKEN:
-      return s.lost > 1 ? `${s.lost}-day streak ended` : 'Streak ended';
+      return s.lost > 1 ? `${s.lost}-${unit} streak ended` : 'Streak ended';
     default:
       return 'No streak yet';
   }
@@ -117,10 +123,32 @@ export const MIN_RESCUABLE_STREAK = 3;
  * day, landing you on "train today to keep it" rather than on safety. Paying to
  * skip a day should not also buy you a day off.
  */
-export function rescueOffer(profile, tokens = 0, today = todayKey()) {
-  const s = streakState(profile, today);
+export function rescueOffer(profile, tokens = 0, today = todayKey(), state = null) {
+  // The live state is passed in when the caller has a better one than we can
+  // compute here — specifically the schedule-aware streak, which needs the
+  // user's plan and their workout dates. Without this, someone on a
+  // Mon/Wed/Fri plan would be offered a rescue every Wednesday for a streak
+  // their own plan says is perfectly intact.
+  const s = state ?? streakState(profile, today);
   if (s.state !== STREAK.BROKEN) return null;
   if (s.lost < MIN_RESCUABLE_STREAK) return null;
+
+  if (s.scheduled) {
+    // On a plan the unit is a missed session, not a missed day.
+    const slots = s.missedSlots ?? [];
+    if (!slots.length || slots.length > MAX_RESCUE_DAYS) return null;
+    return {
+      scheduled: true,
+      missed: slots.length,
+      cost: slots.length,
+      lost: s.lost,
+      affordable: (tokens || 0) >= slots.length,
+      /** The scheduled days this buys back, credited as if trained. */
+      credited: slots,
+      through: null,
+      for: profile?.lastWorkoutDate ?? null,
+    };
+  }
 
   // daysSince 2 means exactly one day (yesterday) went by unworked; today is
   // still open, so it is not yet a day missed.
@@ -128,10 +156,12 @@ export function rescueOffer(profile, tokens = 0, today = todayKey()) {
   if (missed < 1 || missed > MAX_RESCUE_DAYS) return null;
 
   return {
+    scheduled: false,
     missed,
     cost: missed,
     lost: s.lost,
     affordable: (tokens || 0) >= missed,
+    credited: [],
     /** Where the grace lands: yesterday, i.e. back on the brink. */
     through: shiftKey(today, -1),
     /** Stamped so the grace dies when the workout it was bought against does. */
@@ -139,7 +169,14 @@ export function rescueOffer(profile, tokens = 0, today = todayKey()) {
   };
 }
 
-/** The grace record a taken offer writes onto the profile. */
+/**
+ * The grace record a taken offer writes onto the profile (day-streak only).
+ *
+ * A scheduled rescue writes `creditedDays` instead: the schedule streak is
+ * computed from dates rather than a stored count, so the honest way to buy a
+ * slot back is to credit that slot, and unlike a grace the credit has to be
+ * permanent — training again must not revoke a session you paid for.
+ */
 export function graceFromOffer(offer) {
   if (!offer?.through || !offer.for) return null;
   return { through: offer.through, for: offer.for };

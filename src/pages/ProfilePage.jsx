@@ -11,7 +11,8 @@ import { useCurrentBodyweight, useLifetimeStats } from '../hooks/useProgress.js'
 import { useBossStats } from '../hooks/useBosses.js';
 import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { decayInfo } from '../utils/decay.js';
-import { streakState } from '../utils/streak.js';
+import {} from '../utils/streak.js';
+import { useStreak } from '../hooks/useStreak.js';
 import { cappedLevel, activeBoss } from '../utils/bosses.js';
 import { fmtWeight, fmtVolume } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
@@ -51,6 +52,9 @@ export default function ProfilePage() {
   const dungeonIron = useSettingsStore((s) => s.dungeonIron);
   const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
   const [vaultOpen, setVaultOpen] = useState(false);
+  // Above the early return: hooks cannot live behind a conditional, and this
+  // page returns null until the profile loads.
+  const streak = useStreak();
 
   if (!loaded || !profile) return null;
 
@@ -59,9 +63,9 @@ export default function ProfilePage() {
 
   const totalXp = profile.totalXp ?? 0;
   const { effectiveXp, decaying, lost } = decayInfo(profile);
-  // Live, not the stored number: `profile.streak` is only written when a
-  // workout completes, so it keeps reporting the old count until you train.
-  const streak = streakState(profile);
+  // `streak` is live, not the stored number: `profile.streak` is only written
+  // when a workout completes, so it keeps reporting the old count until you
+  // train. Schedule-aware when there is a weekly plan — see hooks/useStreak.
   const { level: rawLevel } = getXPProgress(effectiveXp);
   const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
   const boss = bossStats ? activeBoss(rawLevel, bossStats) : null;

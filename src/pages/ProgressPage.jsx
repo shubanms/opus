@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, ChevronRight, Trash2, Pencil, Footprints, Droplet, Search, ArrowLeft, Trophy, Dumbbell, Layers, Clock, Flame, TrendingUp, TrendingDown } from 'lucide-react';
 import { deleteBodyStat, deleteSleep, deleteActivity } from '../utils/healthActions.js';
 import { playChime } from '../utils/sound.js';
-import { currentStreak } from '../utils/streak.js';
+import { useStreak } from '../hooks/useStreak.js';
 
 const del = (fn, id) => { playChime('delete'); fn(id); };
 import PageWrapper from '../components/layout/PageWrapper.jsx';
@@ -85,7 +85,7 @@ function Overview() {
   const effects = useSettingsStore((s) => s.effects);
   const { profile } = useRPG();
   // The stored streak goes stale the moment a day passes — derive it.
-  const liveStreak = currentStreak(profile);
+  const liveStreak = useStreak().count;
   const lifetime = useLifetimeStats();
   const weeklyRaw = useWeeklyVolume(8);
   const weekly = weeklyRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));

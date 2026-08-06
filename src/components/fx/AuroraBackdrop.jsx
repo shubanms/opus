@@ -3,7 +3,7 @@ import useSettingsStore from '../../store/settingsStore.js';
 import useUserStore from '../../store/userStore.js';
 import { sceneParams } from '../../utils/ambient.js';
 import { getPrestige } from '../../utils/rpg.js';
-import { currentStreak } from '../../utils/streak.js';
+import { useStreak } from '../../hooks/useStreak.js';
 
 // Own chunk: the WebGL library must never be in the critical path of a PWA
 // that has to open fast, and most of the time it isn't rendered at all.
@@ -59,6 +59,9 @@ export default function AuroraBackdrop() {
   // also *initialises* the profile, and a second initialiser mounting in the
   // same tick as AppLayout's raced the first into creating two rows.
   const profile = useUserStore((s) => s.profile);
+  // Safe here for the same reason: useStreak reads the store directly and
+  // initialises nothing.
+  const streak = useStreak().count;
 
   const [allowed, setAllowed] = useState(false);
   const [dark, setDark] = useState(false);
@@ -105,7 +108,7 @@ export default function AuroraBackdrop() {
   if (!effects || !allowed || !idle) return null;
 
   const scene = sceneParams({
-    streak: currentStreak(profile),
+    streak,
     level: profile?.level ?? 1,
     prestige: getPrestige(profile?.totalXp ?? 0),
   });

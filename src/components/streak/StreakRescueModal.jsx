@@ -20,7 +20,10 @@ export default function StreakRescueModal({ offer, tokens, onRescue, onDecline }
   const haptic = useHaptics();
   if (!offer) return null;
 
-  const { cost, lost, missed, affordable } = offer;
+  const { cost, lost, missed, affordable, scheduled } = offer;
+  // On a plan the unit is a session, not a day — "you missed a day" is exactly
+  // the framing schedule-aware streaks exist to stop using.
+  const noun = scheduled ? 'session' : 'day';
 
   function rescue() {
     haptic('pr');
@@ -41,10 +44,10 @@ export default function StreakRescueModal({ offer, tokens, onRescue, onDecline }
           <Flame size={30} style={{ color: 'var(--color-ember)' }} />
         </m.div>
         <p className="font-display text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-          {lost} days
+          {lost} {noun}s
         </p>
         <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          {missed === 1 ? 'You missed a day.' : `You missed ${missed} days.`} That run is over
+          {missed === 1 ? `You missed a ${noun}.` : `You missed ${missed} ${noun}s.`} That run is over
           unless you spend {cost === 1 ? 'a rest token' : `${cost} rest tokens`}.
         </p>
       </div>
@@ -58,8 +61,9 @@ export default function StreakRescueModal({ offer, tokens, onRescue, onDecline }
         <p className="font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
           Rest tokens come from training — one for every 10 sessions and every 3 quests you
           finish. You have <strong style={{ color: 'var(--color-text-primary)' }}>{tokens}</strong>.
-          Spending them here keeps the streak alive, but only up to today:{' '}
-          <strong style={{ color: 'var(--color-text-primary)' }}>you still have to train today</strong>.
+          {scheduled
+            ? ' Spending them here buys back the sessions you missed — the next one on your plan is still yours to hit.'
+            : ' Spending them here keeps the streak alive, but only up to today: you still have to train today.'}
         </p>
       </div>
 
