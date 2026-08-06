@@ -10,6 +10,7 @@ import { getCurrentBodyweight } from '../utils/healthActions.js';
 import { serialize, deserialize, isStale } from '../utils/workoutSession.js';
 import { moveItem } from '../utils/reorder.js';
 import { todayKey } from '../utils/dateKey.js';
+import { buildVerdict } from '../utils/verdict.js';
 
 const ACTIVE_KEY = 'opus_active_workout';
 
@@ -472,6 +473,24 @@ const useWorkoutStore = create((set, get) => ({
     } catch (e) {
       console.error('Achievement check failed (workout still saved):', e);
       result.newAchievements = [];
+    }
+
+    // The verdict: one honest line about the session, stored on the row so it
+    // survives, can be re-read in History, and reverts naturally with a delete.
+    // Wrapped because a failure here must never cost someone their workout.
+    try {
+      const previous = (await db.workouts.orderBy('createdAt').reverse().limit(9).toArray())
+        .filter((w) => w.id !== workoutId)
+        .map((w) => w.totalVolume ?? 0);
+      const verdict = buildVerdict({
+        session: { totalVolume, totalSets, prCount },
+        sets: flatSets,
+        recentVolumes: previous,
+      });
+      await db.workouts.update(workoutId, { verdict: verdict.text, advice: verdict.advice });
+      result.verdict = verdict;
+    } catch (e) {
+      console.error('Verdict failed (workout still saved):', e);
     }
 
     set({ activeWorkout: null, resumed: false });

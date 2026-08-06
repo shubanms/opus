@@ -25,12 +25,15 @@ function pct(a, b) {
 /**
  * Everything the verdict needs, derived from rows the caller already has.
  *
- * `recentVolumes` is previous sessions only, newest first — the session being
- * judged must not be in its own baseline.
+ * `session` is a merged view of the finished workout: the stored row plus the
+ * `prCount` that only the completion result knows. `recentVolumes` is previous
+ * sessions only — the session being judged must not be in its own baseline.
  */
-export function sessionSignals({ workout, sets, recentVolumes = [] }) {
-  const volume = Math.max(0, Math.round(workout?.totalVolume ?? 0));
-  const history = recentVolumes.filter((v) => Number.isFinite(v) && v > 0).slice(0, 8);
+export function sessionSignals({ session, sets, recentVolumes } = {}) {
+  const volume = Math.max(0, Math.round(session?.totalVolume ?? 0));
+  // `?? []` rather than a default parameter: a default only covers `undefined`,
+  // and a live query that has not resolved yet hands back `null`.
+  const history = (recentVolumes ?? []).filter((v) => Number.isFinite(v) && v > 0).slice(0, 8);
   const avg = history.length ? history.reduce((a, b) => a + b, 0) / history.length : null;
 
   return {
@@ -38,8 +41,8 @@ export function sessionSignals({ workout, sets, recentVolumes = [] }) {
     avgVolume: avg,
     hasBaseline: history.length >= MIN_HISTORY,
     volumeDelta: avg ? pct(volume, avg) : 0,
-    prCount: Math.max(0, workout?.prCount ?? 0),
-    sets: Math.max(0, workout?.totalSets ?? 0),
+    prCount: Math.max(0, session?.prCount ?? 0),
+    sets: Math.max(0, session?.totalSets ?? 0),
     effort: sessionEffort(sets),
   };
 }

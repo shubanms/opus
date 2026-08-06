@@ -22,6 +22,7 @@ import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
 import RecoveryMap from '../components/progress/RecoveryMap.jsx';
+import SessionVerdict from '../components/progress/SessionVerdict.jsx';
 import ActivityRings from '../components/progress/ActivityRings.jsx';
 import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import QuestBoard from '../components/rpg/QuestBoard.jsx';
@@ -233,6 +234,8 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
+      <SessionVerdict workout={recent[0]} />
 
       {/* Bento row. Magnus previously floated between two full-width cards with
           a tall empty band above him — the speech bubble is absolutely
