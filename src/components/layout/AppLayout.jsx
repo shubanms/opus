@@ -7,6 +7,7 @@ import CoachMark from '../coach/CoachMark.jsx';
 import UiHost from '../ui/UiHost.jsx';
 import CinematicHost from '../cinematic/CinematicHost.jsx';
 import AuroraBackdrop from '../fx/AuroraBackdrop.jsx';
+import StreakRescueHost from '../streak/StreakRescueHost.jsx';
 import { useRPG } from '../../hooks/useRPG.js';
 import { useOnOpenReminders } from '../../hooks/useOnOpenReminders.js';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -58,6 +59,9 @@ export default function AppLayout() {
       {loaded && !onboarded && <Onboarding />}
       {loaded && onboarded && !tourSeen && <Tour />}
       {loaded && onboarded && tourSeen && <CoachMark />}
+      {/* After the tour, so a first-run account is never met with a lapse
+          it could not possibly have had. */}
+      {loaded && onboarded && tourSeen && <StreakRescueHost />}
       <UiHost />
       <CinematicHost />
     </div>

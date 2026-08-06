@@ -412,6 +412,65 @@ test.describe('OPUS end-to-end', () => {
     expect(realErrors(errors)).toEqual([]);
   });
 
+  test('a lapse is caught on the way back in, and can be bought back', async ({ page, errors }) => {
+    // The whole design rests on being *retroactive*: a PWA cannot reliably wake
+    // you, so the lapse has to be noticed when you next open the app. That means
+    // the offer has to survive a cold boot and appear without being navigated
+    // to — which is exactly what a unit test cannot show.
+    test.setTimeout(120_000);
+    await onboard(page, 'Rescuer');
+    await dismissCoach(page);
+
+    // A 12-day streak whose last session was the day before yesterday: one day
+    // missed, today still open. Plus three bought tokens, so the offer is
+    // affordable without seeding ten workouts to earn them.
+    await page.evaluate(() => {
+      const prefs = JSON.parse(localStorage.getItem('opus_prefs') || '{}');
+      localStorage.setItem('opus_prefs', JSON.stringify({ ...prefs, tokensPurchased: 3 }));
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open('OpusDB');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const tx = req.result.transaction(['userProfile'], 'readwrite');
+          const store = tx.objectStore('userProfile');
+          const get = store.get(1);
+          get.onsuccess = () => {
+            const d = new Date(Date.now() - 2 * 86400000);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            store.put({ ...(get.result || {}), id: 1, streak: 12, lastWorkoutDate: key });
+          };
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        };
+      });
+    });
+
+    // Deliberately landing on Progress, not Home: the offer is app-wide because
+    // a lapse should be caught wherever you come back to.
+    await goto(page, 'progress');
+    await expect(page.getByRole('heading', { name: 'Your streak ended' })).toBeVisible();
+    await expect(page.getByText('12 days')).toBeVisible();
+    await expect(page.getByText('You missed a day.')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Spend 1' }).click();
+    await expect(page.getByRole('heading', { name: 'Your streak ended' })).toHaveCount(0);
+
+    // The streak is back, and back on the brink — a rescue buys you to today's
+    // deadline, not past it.
+    await gotoTab(page, 'Home');
+    await dismissCoach(page);
+    await expect(page.getByLabel('12-day streak · train today to keep it')).toBeVisible();
+
+    // And it survives a cold boot rather than living in a React state that a
+    // reload would quietly discard.
+    await reload(page);
+    await dismissCoach(page);
+    await expect(page.getByLabel('12-day streak · train today to keep it')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Your streak ended' })).toHaveCount(0);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
   test('an open session stays visible from every tab', async ({ page, errors }) => {
     // Nothing outside the workout screen used to suggest a session was open, so
     // wandering to Progress mid-session made the app look idle.

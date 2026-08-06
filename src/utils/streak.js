@@ -1,4 +1,4 @@
-import { daysBetween, todayKey } from './dateKey.js';
+import { daysBetween, shiftKey, todayKey } from './dateKey.js';
 
 // Whether the training streak is actually still standing, right now.
 //
@@ -24,6 +24,22 @@ export const STREAK = {
 };
 
 /**
+ * The date the streak should be measured from.
+ *
+ * Normally the last workout. After a rescue it is the day the spent tokens
+ * bought, which is how a streak survives a gap without the workout history
+ * being altered to pretend a session happened. The grace is stamped with the
+ * `lastWorkoutDate` it was bought against, so it evaporates the moment that
+ * changes — training again, or deleting the workout it was anchored to.
+ */
+export function effectiveLastDate(profile) {
+  const last = profile?.lastWorkoutDate ?? null;
+  const grace = profile?.streakGrace;
+  if (!last || !grace?.through || grace.for !== last) return last;
+  return grace.through > last ? grace.through : last;
+}
+
+/**
  * Live streak state for a profile.
  *
  * `count` is what the user actually has right now (0 once broken); `lost`
@@ -32,7 +48,7 @@ export const STREAK = {
  */
 export function streakState(profile, today = todayKey()) {
   const stored = Math.max(0, Math.trunc(profile?.streak ?? 0) || 0);
-  const last = profile?.lastWorkoutDate ?? null;
+  const last = effectiveLastDate(profile);
 
   if (!last || stored <= 0) {
     return { count: 0, state: STREAK.NONE, lost: 0, daysSince: 0 };
@@ -74,4 +90,57 @@ export function streakLabel(state) {
     default:
       return 'No streak yet';
   }
+}
+
+// ---------------------------------------------------------------------------
+// Rescue
+//
+// A PWA cannot rely on waking you (see the v5 notification research), so the
+// lapse cannot be caught the moment it happens — it is caught the next time you
+// open the app, and the offer is made *there*. Retroactive by design.
+//
+// Rest tokens already existed but only ever waived an XP penalty, and sat on
+// Home as an unexplained "🛡️ 2 banked". Here they buy back the thing people
+// actually care about.
+// ---------------------------------------------------------------------------
+
+/** The most missed days a rescue can bridge. Past this the streak is gone. */
+export const MAX_RESCUE_DAYS = 3;
+/** Below this, a rescue prompt is noise rather than a rescue. */
+export const MIN_RESCUABLE_STREAK = 3;
+
+/**
+ * What it would take to save the streak that just ended, or null if there is
+ * nothing to offer.
+ *
+ * The rescue deliberately buys you back to the *brink* — one token per missed
+ * day, landing you on "train today to keep it" rather than on safety. Paying to
+ * skip a day should not also buy you a day off.
+ */
+export function rescueOffer(profile, tokens = 0, today = todayKey()) {
+  const s = streakState(profile, today);
+  if (s.state !== STREAK.BROKEN) return null;
+  if (s.lost < MIN_RESCUABLE_STREAK) return null;
+
+  // daysSince 2 means exactly one day (yesterday) went by unworked; today is
+  // still open, so it is not yet a day missed.
+  const missed = s.daysSince - 1;
+  if (missed < 1 || missed > MAX_RESCUE_DAYS) return null;
+
+  return {
+    missed,
+    cost: missed,
+    lost: s.lost,
+    affordable: (tokens || 0) >= missed,
+    /** Where the grace lands: yesterday, i.e. back on the brink. */
+    through: shiftKey(today, -1),
+    /** Stamped so the grace dies when the workout it was bought against does. */
+    for: profile?.lastWorkoutDate ?? null,
+  };
+}
+
+/** The grace record a taken offer writes onto the profile. */
+export function graceFromOffer(offer) {
+  if (!offer?.through || !offer.for) return null;
+  return { through: offer.through, for: offer.for };
 }

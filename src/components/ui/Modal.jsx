@@ -32,8 +32,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
       {isOpen && (
         <div className="fixed inset-0 z-[62] flex items-end justify-center">
           <m.div
-            className="absolute inset-0"
-            style={{ background: 'rgba(6, 9, 20, 0.62)', backdropFilter: 'blur(3px)' }}
+            className="modal-scrim absolute inset-0"
             variants={backdropVariants}
             initial="initial"
             animate="animate"

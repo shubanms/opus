@@ -29,6 +29,15 @@ export function daysBetween(aKey, bKey) {
   return d > 0 ? d : 0;
 }
 
+// Shift a date key by whole local days. Goes through a local Date so month
+// ends, leap days and DST transitions are the calendar's problem, not ours.
+export function shiftKey(key, days) {
+  const d = parseKey(key);
+  if (!d) return null;
+  d.setDate(d.getDate() + days);
+  return todayKey(d);
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /**

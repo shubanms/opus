@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { STREAK, streakState, currentStreak, streakLabel } from './streak.js';
+import {
+  STREAK, streakState, currentStreak, streakLabel,
+  effectiveLastDate, rescueOffer, graceFromOffer, MAX_RESCUE_DAYS,
+} from './streak.js';
 
 const profile = (streak, lastWorkoutDate) => ({ streak, lastWorkoutDate });
 
@@ -82,5 +85,110 @@ describe('streakLabel', () => {
   it('survives junk', () => {
     expect(streakLabel(undefined)).toBe('No streak yet');
     expect(streakLabel({})).toBe('No streak yet');
+  });
+});
+
+// --- rescue -----------------------------------------------------------------
+
+const lapsed = (streak, last, grace) => ({ streak, lastWorkoutDate: last, streakGrace: grace });
+
+describe('effectiveLastDate', () => {
+  it('is the last workout when there is no grace', () => {
+    expect(effectiveLastDate(lapsed(5, '2026-08-01'))).toBe('2026-08-01');
+  });
+
+  it('moves forward to a grace bought for this lapse', () => {
+    const g = { through: '2026-08-04', for: '2026-08-01' };
+    expect(effectiveLastDate(lapsed(5, '2026-08-01', g))).toBe('2026-08-04');
+  });
+
+  it('ignores a grace bought against a different lapse', () => {
+    // You trained again, so lastWorkoutDate moved and the old grace is spent
+    // history. Without this stamp a single rescue would protect every future
+    // gap forever.
+    const g = { through: '2026-08-04', for: '2026-08-01' };
+    expect(effectiveLastDate(lapsed(5, '2026-08-06', g))).toBe('2026-08-06');
+  });
+
+  it('never moves backwards', () => {
+    const g = { through: '2026-07-01', for: '2026-08-01' };
+    expect(effectiveLastDate(lapsed(5, '2026-08-01', g))).toBe('2026-08-01');
+  });
+
+  it('survives junk', () => {
+    expect(effectiveLastDate(null)).toBe(null);
+    expect(effectiveLastDate({})).toBe(null);
+    expect(effectiveLastDate(lapsed(5, '2026-08-01', {}))).toBe('2026-08-01');
+  });
+});
+
+describe('rescueOffer', () => {
+  const today = '2026-08-06';
+
+  it('offers nothing while the streak is still standing', () => {
+    expect(rescueOffer(profile(9, today), 5, today)).toBe(null);
+    expect(rescueOffer(profile(9, '2026-08-05'), 5, today)).toBe(null); // at risk
+  });
+
+  it('costs one token per day actually missed', () => {
+    // Trained the 4th, today is the 6th: the 5th went by unworked, and today
+    // is still open — one day missed, one token.
+    expect(rescueOffer(profile(9, '2026-08-04'), 5, today).cost).toBe(1);
+    expect(rescueOffer(profile(9, '2026-08-03'), 5, today).cost).toBe(2);
+    expect(rescueOffer(profile(9, '2026-08-02'), 5, today).cost).toBe(3);
+  });
+
+  it('will not sell back a streak abandoned weeks ago', () => {
+    expect(rescueOffer(profile(9, '2026-08-01'), 99, today)).toBe(null);
+    expect(rescueOffer(profile(9, '2026-06-01'), 99, today)).toBe(null);
+  });
+
+  it('does not nag about a streak too small to mourn', () => {
+    expect(rescueOffer(profile(2, '2026-08-04'), 5, today)).toBe(null);
+    expect(rescueOffer(profile(3, '2026-08-04'), 5, today)).not.toBe(null);
+  });
+
+  it('still describes an offer you cannot afford', () => {
+    // Told what it would cost, rather than the offer silently not existing —
+    // that is how someone learns rest tokens are worth having.
+    const o = rescueOffer(profile(9, '2026-08-03'), 1, today);
+    expect(o.cost).toBe(2);
+    expect(o.affordable).toBe(false);
+    expect(rescueOffer(profile(9, '2026-08-03'), 2, today).affordable).toBe(true);
+  });
+
+  it('buys you back to the brink, not to safety', () => {
+    // Paying to skip a day must not also buy a day off.
+    const o = rescueOffer(profile(9, '2026-08-03'), 5, today);
+    const after = streakState(lapsed(9, '2026-08-03', graceFromOffer(o)), today);
+    expect(after.state).toBe(STREAK.AT_RISK);
+    expect(after.count).toBe(9);
+  });
+
+  it('restores the exact streak that was lost', () => {
+    const o = rescueOffer(profile(12, '2026-08-04'), 5, today);
+    expect(o.lost).toBe(12);
+    expect(streakState(lapsed(12, '2026-08-04', graceFromOffer(o)), today).count).toBe(12);
+  });
+
+  it('a rescue does not survive into the next lapse', () => {
+    // Rescue on the 6th, train that day, then lapse again a week later. The
+    // grace is stamped to the old lastWorkoutDate and must not apply.
+    const o = rescueOffer(profile(9, '2026-08-04'), 5, today);
+    const later = lapsed(10, '2026-08-06', graceFromOffer(o));
+    expect(streakState(later, '2026-08-13').state).toBe(STREAK.BROKEN);
+  });
+
+  it('caps at MAX_RESCUE_DAYS', () => {
+    const edge = rescueOffer(profile(9, '2026-08-02'), 9, today);
+    expect(edge.cost).toBe(MAX_RESCUE_DAYS);
+    expect(rescueOffer(profile(9, '2026-08-01'), 9, today)).toBe(null);
+  });
+
+  it('survives junk', () => {
+    expect(rescueOffer(null, 5, today)).toBe(null);
+    expect(rescueOffer({}, 5, today)).toBe(null);
+    expect(graceFromOffer(null)).toBe(null);
+    expect(graceFromOffer({})).toBe(null);
   });
 });

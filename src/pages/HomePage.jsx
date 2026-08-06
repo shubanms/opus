@@ -7,11 +7,11 @@ import { useToday } from '../hooks/useTemplates.js';
 import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
 import { decayInfo, streakBreakPenalty } from '../utils/decay.js';
-import { STREAK, streakLabel, streakState } from '../utils/streak.js';
-import { tokensEarned, tokenBalance, isShieldActive, shieldedDecay } from '../utils/streakShield.js';
+import { STREAK, rescueOffer, streakLabel, streakState } from '../utils/streak.js';
+import { isShieldActive, shieldedDecay } from '../utils/streakShield.js';
+import { useRestTokens } from '../hooks/useRestTokens.js';
 import { cappedLevel, activeBoss } from '../utils/bosses.js';
 import { useBossStats } from '../hooks/useBosses.js';
-import { useLifetimeStats } from '../hooks/useProgress.js';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
 import { playChime } from '../utils/sound.js';
@@ -109,13 +109,10 @@ export default function HomePage() {
   // Streak shield / rest token. Tokens are derived from history (workouts +
   // claimed quests), so they're already earned; spending one waives the
   // streak-break penalty on the current lapse.
-  const life = useLifetimeStats();
-  const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
-  const tokensSpent = useSettingsStore((s) => s.tokensSpent);
-  const tokensPurchased = useSettingsStore((s) => s.tokensPurchased);
   const shieldedLapseDate = useSettingsStore((s) => s.shieldedLapseDate);
   const spendShield = useSettingsStore((s) => s.spendShield);
-  const shieldTokens = tokenBalance(tokensEarned({ workouts: life.workouts, questClaims }) + (tokensPurchased || 0), tokensSpent);
+  const declineRescue = useSettingsStore((s) => s.declineRescue);
+  const shieldTokens = useRestTokens();
   const rawDecay = decayInfo(profile ?? {});
   const shieldActive = isShieldActive(shieldedLapseDate, profile?.lastWorkoutDate);
   // Deliberately the STORED streak, not the live one: this is the penalty for
@@ -123,6 +120,10 @@ export default function HomePage() {
   // that here would silently zero the penalty and kill the rest-token mechanic.
   const streakPenalty = streakBreakPenalty(rawDecay.days, profile?.streak ?? 0);
   const streak = streakState(profile);
+  // The offer itself lives in StreakRescueHost, app-wide. This is only the way
+  // back to it after "let it go" — a lapse you dismissed once should still be
+  // recoverable while it is still recoverable, and Home is where you look.
+  const offer = rescueOffer(profile, shieldTokens);
   const { effectiveXp, decaying, lost } = shieldedDecay(rawDecay, { active: shieldActive, streakPenalty, earnedXp: profile?.totalXp ?? 0 });
   const canShield = rawDecay.decaying && streakPenalty > 0 && !shieldActive && shieldTokens > 0;
   const { level: rawLevel } = getXPProgress(effectiveXp);
@@ -225,7 +226,25 @@ export default function HomePage() {
                   🛡️ Streak shielded — your rest day is protected
                 </p>
               )}
-              {!decaying && !shieldActive && shieldTokens > 0 && (
+              {/* A streak you can still buy back. The prompt on app-open is the
+                  primary offer; this is the way back to it, and it replaces the
+                  old bare "🛡️ 2 banked" line — a number with no mechanic
+                  attached, in the one place it could never be spent. */}
+              {offer && (
+                <button
+                  type="button"
+                  onClick={() => { declineRescue(null); playChime('tick'); }}
+                  className="mt-2 flex w-full items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-sans text-xs font-semibold"
+                  style={{ background: 'var(--accent-wash)', color: 'var(--color-ember)' }}
+                >
+                  <Flame size={12} />
+                  {offer.lost}-day streak ended
+                  <span className="ml-auto font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                    {offer.affordable ? `Rescue · ${offer.cost} token${offer.cost === 1 ? '' : 's'}` : 'See what it costs'}
+                  </span>
+                </button>
+              )}
+              {!offer && !decaying && !shieldActive && shieldTokens > 0 && (
                 <p className="mt-2 font-mono text-[11px]" style={{ color: 'var(--color-ash)' }}>
                   🛡️ {shieldTokens} rest {shieldTokens === 1 ? 'token' : 'tokens'} banked
                 </p>

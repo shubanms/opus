@@ -17,6 +17,9 @@ const DEFAULTS = {
   // Streak shield / rest token: tokens spent, tokens bought with Iron, and the
   // lapse date a shield protects. Balance = earned-from-history + bought − spent.
   tokensSpent: 0, tokensPurchased: 0, shieldedLapseDate: null,
+  // The lapse a streak-rescue offer was turned down for, so declining once does
+  // not re-prompt on every app open until you train again.
+  rescueDeclinedFor: null,
   // Iron economy: spent Iron + owned/equipped cosmetics (balance is derived).
   ironSpent: 0, ownedCosmetics: [], equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
   // Daily dungeon: claimed bonus Iron + the date key of the last claim.
@@ -41,15 +44,21 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
+    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
   },
   claimDungeon(amount, dateKey) {
     set((s) => (s.lastDungeonClaim === dateKey ? s : { dungeonIron: (s.dungeonIron || 0) + amount, lastDungeonClaim: dateKey }));
     get().persist();
   },
-  spendShield(lapseDate) {
-    set((s) => ({ tokensSpent: (s.tokensSpent || 0) + 1, shieldedLapseDate: lapseDate ?? null }));
+  // `count` because a streak rescue costs one token per day missed, while the
+  // XP shield has always cost exactly one.
+  spendShield(lapseDate, count = 1) {
+    set((s) => ({ tokensSpent: (s.tokensSpent || 0) + Math.max(1, count), shieldedLapseDate: lapseDate ?? null }));
+    get().persist();
+  },
+  declineRescue(lapseDate) {
+    set({ rescueDeclinedFor: lapseDate ?? null });
     get().persist();
   },
   // Buy a rest token with Iron: record the Iron spend + one purchased token.

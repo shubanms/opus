@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { todayKey, parseKey, daysBetween, friendlyDate, monthLabel } from './dateKey.js';
+import { todayKey, parseKey, daysBetween, friendlyDate, monthLabel, shiftKey } from './dateKey.js';
 
 describe('todayKey', () => {
   it('formats a local calendar date as YYYY-MM-DD', () => {
@@ -95,5 +95,24 @@ describe('monthLabel', () => {
   it('returns empty for junk', () => {
     expect(monthLabel('nope')).toBe('');
     expect(monthLabel(null)).toBe('');
+  });
+});
+
+describe('shiftKey', () => {
+  it('moves whole days in either direction', () => {
+    expect(shiftKey('2026-08-06', -1)).toBe('2026-08-05');
+    expect(shiftKey('2026-08-06', 3)).toBe('2026-08-09');
+    expect(shiftKey('2026-08-06', 0)).toBe('2026-08-06');
+  });
+
+  it('lets the calendar handle month ends and leap days', () => {
+    expect(shiftKey('2026-03-01', -1)).toBe('2026-02-28');
+    expect(shiftKey('2024-03-01', -1)).toBe('2024-02-29');
+    expect(shiftKey('2026-12-31', 1)).toBe('2027-01-01');
+  });
+
+  it('returns null rather than a bogus date', () => {
+    expect(shiftKey(null, -1)).toBe(null);
+    expect(shiftKey('nonsense', -1)).toBe(null);
   });
 });
