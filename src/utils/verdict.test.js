@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sessionSignals, pickPraise, pickConcern, buildVerdict } from './verdict.js';
+import { sessionSignals, pickPraise, pickConcern, buildVerdict, checkAdvice } from './verdict.js';
 
 const set = (rpe = null, isWarmup = false) => ({ rpe, isWarmup, weight: 60, reps: 8 });
 const typical = [8000, 8200, 7800, 8100];
@@ -139,5 +139,101 @@ describe('buildVerdict', () => {
   it('always produces text, however broken the input', () => {
     expect(buildVerdict({}).text.length).toBeGreaterThan(0);
     expect(buildVerdict({ session: null, sets: null, recentVolumes: null }).text.length).toBeGreaterThan(0);
+  });
+});
+
+describe('checkAdvice', () => {
+  const signals = (over) => sessionSignals(input(over));
+
+  it('notices the volume came back', () => {
+    const out = checkAdvice(
+      { key: 'volumeDown', metric: 'volume', target: 8000 },
+      signals({ session: { totalVolume: 9000, totalSets: 9 } })
+    );
+    expect(out.key).toBe('volumeDown');
+    expect(out.text).toContain('brought the volume back');
+  });
+
+  it('says nothing when it did not happen', () => {
+    // Repeating the same criticism every session is nagging; the new session's
+    // own concern will raise it again on its own merits if it still applies.
+    const out = checkAdvice(
+      { key: 'volumeDown', metric: 'volume', target: 8000 },
+      signals({ session: { totalVolume: 5000, totalSets: 9 } })
+    );
+    expect(out).toBe(null);
+  });
+
+  it('notices you started rating sets', () => {
+    const out = checkAdvice(
+      { key: 'unrated', metric: 'coverage', target: 0.5 },
+      signals({ sets: [set(9), set(9), set(9)] })
+    );
+    expect(out.key).toBe('unrated');
+  });
+
+  it('notices you pushed harder', () => {
+    const out = checkAdvice(
+      { key: 'easy', metric: 'avgRpe', target: 8 },
+      signals({ sets: [set(9), set(10), set(9)] })
+    );
+    expect(out.key).toBe('easy');
+  });
+
+  it('ages out advice this build no longer understands', () => {
+    // Stored by an older version — it should go quiet, not throw.
+    expect(checkAdvice({ key: 'gone', metric: 'nonsense', target: 1 }, signals())).toBe(null);
+    expect(checkAdvice({ key: 'volumeDown', metric: 'nonsense', target: 1 }, signals())).toBe(null);
+  });
+
+  it('handles no open advice at all', () => {
+    expect(checkAdvice(null, signals())).toBe(null);
+    expect(checkAdvice({}, signals())).toBe(null);
+  });
+
+  it('does not fire on a metric that was never measured', () => {
+    // avgRpe is null for an unrated session — that is not "target met".
+    const out = checkAdvice(
+      { key: 'easy', metric: 'avgRpe', target: 8 },
+      signals({ sets: [set(), set(), set()] })
+    );
+    expect(out).toBe(null);
+  });
+});
+
+describe('buildVerdict with an open piece of advice', () => {
+  it('leads with the acknowledgement', () => {
+    const v = buildVerdict({
+      ...input({ session: { totalVolume: 9000, totalSets: 9, prCount: 2 } }),
+      openAdvice: { key: 'volumeDown', metric: 'volume', target: 8000 },
+    });
+    expect(v.closedKey).toBe('volumeDown');
+    expect(v.text.startsWith('You brought the volume back')).toBe(true);
+  });
+
+  it('replaces the praise rather than stacking with it', () => {
+    // "You did the thing I asked" is the compliment; three clauses is a
+    // paragraph nobody finishes.
+    const v = buildVerdict({
+      ...input({ session: { totalVolume: 9000, totalSets: 9, prCount: 2 } }),
+      openAdvice: { key: 'volumeDown', metric: 'volume', target: 8000 },
+    });
+    expect(v.praiseKey).toBe(null);
+    expect(v.text).not.toContain('new record');
+  });
+
+  it('still raises a new concern alongside it', () => {
+    const v = buildVerdict({
+      ...input({ session: { totalVolume: 9000, totalSets: 9 }, sets: [set(7), set(7), set(7)] }),
+      openAdvice: { key: 'volumeDown', metric: 'volume', target: 8000 },
+    });
+    expect(v.closedKey).toBe('volumeDown');
+    expect(v.concernKey).toBe('easy');
+  });
+
+  it('behaves exactly as before when there is no open advice', () => {
+    const withNone = buildVerdict(input({ session: { totalVolume: 8000, totalSets: 1, prCount: 1 } }));
+    expect(withNone.closedKey).toBe(null);
+    expect(withNone.praiseKey).toBe('records');
   });
 });

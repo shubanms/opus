@@ -437,4 +437,81 @@ test.describe('OPUS end-to-end', () => {
     await expect(page.getByRole('button', { name: /^Session in progress/ })).toBeVisible();
     expect(realErrors(errors)).toEqual([]);
   });
+
+  test('the verdict closes the loop it opened last session', async ({ page, errors }) => {
+    // `buildVerdict` is unit-tested to death; what is not is the seam in
+    // `completeWorkout` that has to find the *previous* session's stored advice
+    // and hand it back in. Get that wrong — wrong row, wrong field, the just-
+    // finished workout included in its own history — and every unit test still
+    // passes while the loop never closes for anyone.
+    test.setTimeout(120_000);
+    await onboard(page, 'Looper');
+    await dismissCoach(page);
+    await seedHistory(page);
+
+    // Last session ended with a concern: volume was down, come back above 8000.
+    await page.evaluate(
+      () =>
+        new Promise((resolve, reject) => {
+          const req = indexedDB.open('OpusDB');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const tx = req.result.transaction(['workouts'], 'readwrite');
+            const store = tx.objectStore('workouts');
+            // Id 500 is the newest seeded session — see seedHistory.
+            const get = store.get(500);
+            get.onsuccess = () => {
+              store.put({
+                ...get.result,
+                verdict: 'Volume was 20% below your recent average.',
+                advice: { key: 'volumeDown', metric: 'volume', target: 8000 },
+              });
+            };
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        })
+    );
+
+    await gotoTab(page, 'Workout');
+    await dismissCoach(page);
+    await page.getByRole('button', { name: 'Quick start (empty)' }).click();
+    await page.getByRole('button', { name: 'Add exercise' }).click();
+    await page.getByPlaceholder('Search exercises…').fill('Concentration Curl');
+    await page.getByRole('button', { name: /Concentration Curl/ }).click();
+
+    // 3 × 150 kg × 20 = 9000, comfortably over the 8000 the advice asked for,
+    // so the check is about the wiring and not a threshold this test sits on.
+    const logBtn = page.getByRole('button', { name: 'Log set' });
+    for (let i = 0; i < 3; i += 1) {
+      await page.getByPlaceholder('kg').fill('150');
+      await page.getByPlaceholder('reps').fill('20');
+      await logBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    await page.getByRole('button', { name: 'Finish' }).click();
+    await expect(page.getByRole('heading', { name: 'Workout complete' })).toBeVisible();
+    await page.getByRole('button', { name: 'Save & finish' }).click();
+
+    // Records set here queue cinematics; let them drain rather than clicking
+    // through a full-screen overlay.
+    await expect(page.locator('[aria-live="polite"]')).toHaveCount(0, { timeout: 25_000 });
+    await gotoTab(page, 'Home');
+    await dismissCoach(page);
+
+    // The acknowledgement leads the paragraph, and the card is marked as a
+    // follow-through rather than an ordinary verdict.
+    const card = page.getByText(/brought the volume back/);
+    await expect(card).toBeVisible();
+    await expect(page.getByText('You followed through')).toBeVisible();
+
+    // And it has to be on screen, not merely in the DOM below three folds.
+    const box = await card.boundingBox();
+    const height = page.viewportSize().height;
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeLessThan(height);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
 });

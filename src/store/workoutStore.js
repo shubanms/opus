@@ -479,15 +479,26 @@ const useWorkoutStore = create((set, get) => ({
     // survives, can be re-read in History, and reverts naturally with a delete.
     // Wrapped because a failure here must never cost someone their workout.
     try {
-      const previous = (await db.workouts.orderBy('createdAt').reverse().limit(9).toArray())
-        .filter((w) => w.id !== workoutId)
-        .map((w) => w.totalVolume ?? 0);
+      const previous = (await db.workouts.orderBy('createdAt').reverse().limit(9).toArray()).filter(
+        (w) => w.id !== workoutId
+      );
+      // Only the immediately-preceding session's advice is open. Advice has a
+      // shelf life of exactly one session: if you skipped it, the new session
+      // raises its own concern on its own merits rather than the app relitigating
+      // something you were told three weeks ago.
       const verdict = buildVerdict({
         session: { totalVolume, totalSets, prCount },
         sets: flatSets,
-        recentVolumes: previous,
+        recentVolumes: previous.map((w) => w.totalVolume ?? 0),
+        openAdvice: previous[0]?.advice ?? null,
       });
-      await db.workouts.update(workoutId, { verdict: verdict.text, advice: verdict.advice });
+      await db.workouts.update(workoutId, {
+        verdict: verdict.text,
+        advice: verdict.advice,
+        // Unindexed, so no migration. Stored only so the card can mark the
+        // sessions where you actually did the thing it asked for.
+        closedAdvice: verdict.closedKey,
+      });
       result.verdict = verdict;
     } catch (e) {
       console.error('Verdict failed (workout still saved):', e);

@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+import { Sparkles, CheckCircle2 } from 'lucide-react';
 import { m, TWEEN } from '../../motion/index.jsx';
 import { friendlyDate } from '../../utils/dateKey.js';
 
@@ -15,6 +15,12 @@ import { friendlyDate } from '../../utils/dateKey.js';
 export default function SessionVerdict({ workout }) {
   if (!workout?.verdict) return null;
 
+  // Sessions that answered the last verdict's ask get a different mark. The
+  // loop only means anything if you can see it closed.
+  const closed = Boolean(workout.closedAdvice);
+  const Icon = closed ? CheckCircle2 : Sparkles;
+  const accent = closed ? 'var(--color-sage)' : 'var(--color-gold)';
+
   return (
     <m.div
       className="glass mb-4 rounded-2xl px-4 py-3.5"
@@ -24,12 +30,12 @@ export default function SessionVerdict({ workout }) {
       transition={TWEEN.enter}
     >
       <div className="mb-1.5 flex items-center gap-1.5">
-        <Sparkles size={12} style={{ color: 'var(--color-gold)' }} />
+        <Icon size={12} style={{ color: accent }} />
         <span
           className="font-sans text-[10px] font-semibold uppercase"
-          style={{ color: 'var(--color-gold)', letterSpacing: '0.18em' }}
+          style={{ color: accent, letterSpacing: '0.18em' }}
         >
-          Last session
+          {closed ? 'You followed through' : 'Last session'}
         </span>
         <span className="ml-auto font-mono text-[10px]" style={{ color: 'var(--color-ash)' }}>
           {friendlyDate(workout.date)}

@@ -107,6 +107,49 @@ export function pickConcern(s) {
 }
 
 /**
+ * Read whatever metric an open piece of advice was about.
+ *
+ * Returns null for a metric this version no longer knows how to measure, so
+ * advice stored by an older build ages out quietly instead of throwing.
+ */
+function readMetric(metric, s) {
+  switch (metric) {
+    case 'volume':
+      return s.volume;
+    case 'coverage':
+      return s.effort.coverage;
+    case 'avgRpe':
+      return s.effort.avgRpe;
+    default:
+      return null;
+  }
+}
+
+const RESOLVED = {
+  volumeDown: (a, actual) =>
+    `You brought the volume back — ${actual.toLocaleString()} against the ${a.target.toLocaleString()} you were averaging.`,
+  unrated: () => 'You rated this one, so there is finally something to judge it on.',
+  easy: () => 'That was harder than last time — exactly the adjustment.',
+};
+
+/**
+ * Did the thing the last verdict asked for actually happen?
+ *
+ * This is the beat almost no fitness app has: the app remembers what it said,
+ * notices you acted on it, and says so. Silence when it did *not* happen is
+ * deliberate — repeating the same criticism every session is nagging, and the
+ * new session's own concern will raise it again on its own merits if it still
+ * applies.
+ */
+export function checkAdvice(advice, signals) {
+  if (!advice?.metric || !RESOLVED[advice.key]) return null;
+  const actual = readMetric(advice.metric, signals);
+  if (actual === null || !Number.isFinite(actual)) return null;
+  if (actual < advice.target) return null;
+  return { key: advice.key, text: RESOLVED[advice.key](advice, actual) };
+}
+
+/**
  * The verdict itself.
  *
  * `advice` is the concern in a form the next session can check. It is separate
@@ -115,17 +158,23 @@ export function pickConcern(s) {
  */
 export function buildVerdict(input) {
   const s = sessionSignals(input);
+  const closed = checkAdvice(input?.openAdvice, s);
   const praise = pickPraise(s);
   const concern = pickConcern(s);
 
   const parts = [];
-  if (praise) parts.push(praise.text);
+  // The acknowledgement leads, and it replaces the praise rather than stacking
+  // with it — "you did the thing I asked" *is* the compliment, and three
+  // clauses is a paragraph nobody finishes.
+  if (closed) parts.push(closed.text);
+  else if (praise) parts.push(praise.text);
   if (concern) parts.push(concern.text);
   if (!parts.length) parts.push('Solid, unremarkable session — those are most of them.');
 
   return {
     text: parts.join(' '),
-    praiseKey: praise?.key ?? null,
+    closedKey: closed?.key ?? null,
+    praiseKey: closed ? null : (praise?.key ?? null),
     concernKey: concern?.key ?? null,
     advice: concern?.metric
       ? { key: concern.key, metric: concern.metric, target: concern.target }
