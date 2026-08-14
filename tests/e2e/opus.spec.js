@@ -412,6 +412,147 @@ test.describe('OPUS end-to-end', () => {
     expect(realErrors(errors)).toEqual([]);
   });
 
+  test('a wiped database is announced, not absorbed', async ({ page, errors }) => {
+    // The exact failure this was written for: a browser wipe takes IndexedDB
+    // but leaves localStorage, so the app skips onboarding, auto-creates a
+    // blank profile and opens on a tidy set of zeroes. It looks like a new
+    // account. Someone lost a month that way and only worked out what had
+    // happened a week later, because nothing ever said anything.
+    test.setTimeout(120_000);
+    await onboard(page, 'Wiped');
+    await dismissCoach(page);
+    await seedHistory(page);
+
+    // Open once *with* the history, so the app records that data existed.
+    await goto(page, 'home');
+    await dismissCoach(page);
+    await expect(page.getByRole('heading', { name: 'Your history is missing' })).toHaveCount(0);
+
+    // Now empty IndexedDB and leave localStorage standing — what Chrome's
+    // "Cookies, cache and other site data" leaves this app looking like.
+    //
+    // Clearing the stores rather than calling `deleteDatabase`: the page holds
+    // an open Dexie connection, so a delete blocks indefinitely and the test
+    // hangs on a detail of Dexie's lifecycle rather than on the behaviour under
+    // test. What the alert actually keys on is a history that used to exist and
+    // now has zero rows, which is exactly this.
+    await page.evaluate(
+      () =>
+        new Promise((resolve, reject) => {
+          const req = indexedDB.open('OpusDB');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const names = ['workouts', 'sets', 'prs', 'bodyStats', 'userProfile'];
+            const tx = req.result.transaction(names, 'readwrite');
+            for (const n of names) tx.objectStore(n).clear();
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        })
+    );
+
+    await reload(page);
+    // Not a cheerful set of zeroes.
+    await expect(page.getByRole('heading', { name: 'Your history is missing' })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/6 logged sessions/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Restore a backup' })).toBeVisible();
+
+    // And it re-arms rather than nagging forever once you accept the loss.
+    await page.getByRole('button', { name: 'Start fresh', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Your history is missing' })).toHaveCount(0);
+    await reload(page);
+    await dismissCoach(page);
+    await expect(page.getByRole('heading', { name: 'Your history is missing' })).toHaveCount(0);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('the weekly backup writes a file, and only when there is something new', async ({ page, errors }) => {
+    // Two claims worth a browser: the file actually reaches Downloads without
+    // anyone asking for it, and a week with no new training does not drop
+    // another copy of the same data in there. The second one is the whole
+    // answer to "don't fill up my storage".
+    test.setTimeout(120_000);
+    await onboard(page, 'Backer');
+    await dismissCoach(page);
+    await seedHistory(page);
+
+    // Never backed up, with real history: opening the app is enough.
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 30_000 }),
+      goto(page, 'home'),
+    ]);
+    expect(download.suggestedFilename()).toMatch(/^opus-backup-\d{4}-\d{2}-\d{2}\.json$/);
+
+    const stream = await download.createReadStream();
+    const body = await new Promise((resolve) => {
+      let out = '';
+      stream.on('data', (c) => { out += c; });
+      stream.on('end', () => resolve(out));
+    });
+    const parsed = JSON.parse(body);
+    expect(parsed.data.workouts.length).toBe(6);
+    expect(parsed.data.sets.length).toBeGreaterThan(0);
+    // The stock catalogue is re-seeded on boot; carrying it every week would be
+    // 16 KB of the same 82 rows.
+    expect(parsed.data.exercises.length).toBe(0);
+
+    // The loud card stands down once a backup is fresh — a permanent banner is
+    // furniture — but it does not go silent. The automatic write cannot be
+    // verified (a browser can refuse a gesture-less download without saying so),
+    // so a quiet line stays, naming where the copy is.
+    await dismissCoach(page);
+    await expect(page.getByText('Never backed up')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Back up now' })).toHaveCount(0);
+    await expect(page.getByText('Backed up today — in your Downloads folder')).toBeVisible();
+
+    // Backdate the record by a fortnight without touching the data, then
+    // reopen: due, but nothing has changed, so no second file.
+    await page.evaluate(() => {
+      const prefs = JSON.parse(localStorage.getItem('opus_prefs') || '{}');
+      prefs.lastBackupAt = Date.now() - 14 * 86400000;
+      localStorage.setItem('opus_prefs', JSON.stringify(prefs));
+    });
+    let extra = 0;
+    page.on('download', () => { extra += 1; });
+    await reload(page);
+    await dismissCoach(page);
+    await page.waitForTimeout(3000);
+    expect(extra).toBe(0);
+
+    // But a new session does produce one, because now there is something in it
+    // the last file does not have. Backdated again: a check that finds nothing
+    // new counts as "verified safe today" and resets the weekly clock.
+    await page.evaluate(() => {
+      const prefs = JSON.parse(localStorage.getItem('opus_prefs') || '{}');
+      prefs.lastBackupAt = Date.now() - 14 * 86400000;
+      localStorage.setItem('opus_prefs', JSON.stringify(prefs));
+    });
+    await page.evaluate(
+      () =>
+        new Promise((resolve, reject) => {
+          const req = indexedDB.open('OpusDB');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => {
+            const tx = req.result.transaction(['workouts'], 'readwrite');
+            tx.objectStore('workouts').put({
+              id: 777, date: '2026-08-14', name: 'New', status: 'completed', duration: 900,
+              createdAt: Date.now(), totalVolume: 5000, totalSets: 8, xpEarned: 120,
+            });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        })
+    );
+    const [second] = await Promise.all([
+      page.waitForEvent('download', { timeout: 30_000 }),
+      reload(page),
+    ]);
+    expect(second.suggestedFilename()).toMatch(/^opus-backup-/);
+
+    expect(realErrors(errors)).toEqual([]);
+  });
+
   test('notification preferences reach the service worker', async ({ page, errors }) => {
     // The worker runs with the app closed and has no localStorage, so the only
     // route a preference has to it is a row in IndexedDB. That seam is silent

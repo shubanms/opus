@@ -8,6 +8,8 @@ import UiHost from '../ui/UiHost.jsx';
 import CinematicHost from '../cinematic/CinematicHost.jsx';
 import AuroraBackdrop from '../fx/AuroraBackdrop.jsx';
 import StreakRescueHost from '../streak/StreakRescueHost.jsx';
+import WipeAlert from '../backup/WipeAlert.jsx';
+import { useAutoBackup } from '../../hooks/useBackup.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import { useOnOpenReminders } from '../../hooks/useOnOpenReminders.js';
 import useSettingsStore from '../../store/settingsStore.js';
@@ -19,6 +21,8 @@ export default function AppLayout() {
   const tourSeen = useSettingsStore((s) => s.tourSeen);
   const { pathname } = useLocation();
   useOnOpenReminders();
+  // Weekly, and only when the data has actually moved — see hooks/useBackup.
+  useAutoBackup();
 
   return (
     <div
@@ -61,6 +65,8 @@ export default function AppLayout() {
       {loaded && onboarded && tourSeen && <CoachMark />}
       {/* After the tour, so a first-run account is never met with a lapse
           it could not possibly have had. */}
+      {/* Before the streak prompt: losing everything outranks losing a streak. */}
+      {loaded && onboarded && <WipeAlert />}
       {loaded && onboarded && tourSeen && <StreakRescueHost />}
       <UiHost />
       <CinematicHost />

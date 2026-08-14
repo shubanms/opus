@@ -24,6 +24,7 @@ import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
 import RecoveryMap from '../components/progress/RecoveryMap.jsx';
 import SessionVerdict from '../components/progress/SessionVerdict.jsx';
+import BackupCard from '../components/backup/BackupCard.jsx';
 import ActivityRings from '../components/progress/ActivityRings.jsx';
 import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import QuestBoard from '../components/rpg/QuestBoard.jsx';
@@ -254,6 +255,8 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
+      <BackupCard />
 
       <SessionVerdict workout={recent[0]} />
 

@@ -2,6 +2,7 @@ import { db } from '../db/db.js';
 import { setsToCsv } from './csv.js';
 import { toDisplay, unitLabel } from './units.js';
 import { buildIcs } from './ics.js';
+import { backupFilename, slimExercises } from './backup.js';
 
 function download(content, filename, type) {
   const blob = new Blob([content], { type });
@@ -31,20 +32,70 @@ export async function wipeAllData() {
 // Progress photos are large local-only blobs — never part of the portable backup.
 const EXPORT_SKIP = new Set(['photos']);
 
-export async function exportData() {
+/**
+ * Everything worth keeping, as one object.
+ *
+ * Split out from the download so the weekly auto-backup can build it, hash it,
+ * and decide there is nothing new to write — without that, a week where you
+ * did not train still drops a file in Downloads.
+ *
+ * The stock exercise catalogue is dropped: it is re-seeded on first boot and
+ * identical in every backup, so carrying it is 16 KB of the same 82 rows every
+ * time. Custom exercises are the only ones that are actually yours to lose.
+ */
+export async function buildBackup() {
   const data = {};
   for (const t of db.tables) {
     if (EXPORT_SKIP.has(t.name)) continue;
     data[t.name] = await t.toArray();
   }
-  const payload = { app: 'OPUS', version: 1, exportedAt: new Date().toISOString(), data };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `opus-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  data.exercises = slimExercises(data.exercises);
+  return { app: 'OPUS', version: 1, exportedAt: new Date().toISOString(), data };
+}
+
+/**
+ * Serialise a backup for writing.
+ *
+ * Not pretty-printed: indentation was 36% of the file, and this is read by a
+ * machine far more often than by a person. It is still plain JSON rather than
+ * something compressed, because being able to open the file and see your own
+ * sets in it is worth more than the last 50 KB — that inspectability is what
+ * confirmed a real backup was intact when one was needed.
+ */
+export function serializeBackup(payload) {
+  return JSON.stringify(payload);
+}
+
+function saveBackup(text, filename) {
+  download(text, filename, 'application/json');
+}
+
+export async function exportData() {
+  const payload = await buildBackup();
+  const text = serializeBackup(payload);
+  saveBackup(text, backupFilename());
+  return { text, payload };
+}
+
+/**
+ * Hand the backup to the OS share sheet — Drive, Keep, email, anywhere.
+ *
+ * Downloads survive "Delete browsing data" but not a lost phone. This is the
+ * one path that puts a copy somewhere the device does not own. Returns false
+ * where the API is missing (most desktops) so the caller can offer the
+ * download instead of a dead button.
+ */
+export async function shareBackup() {
+  const payload = await buildBackup();
+  const file = new File([serializeBackup(payload)], backupFilename(), { type: 'application/json' });
+  if (!navigator.canShare?.({ files: [file] })) return false;
+  try {
+    await navigator.share({ files: [file], title: 'OPUS backup' });
+    return true;
+  } catch {
+    // Includes the user simply dismissing the sheet, which is not an error.
+    return false;
+  }
 }
 
 /**

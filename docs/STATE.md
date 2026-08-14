@@ -1,7 +1,23 @@
 # OPUS — Project State
 
-Last updated: 2026-08-06
-Current sprint: **Roadmap v6 (the app talks back) — all nine PRs shipped.** Roadmap v5 shipped. Aurora redesign complete. App at v3.0.0.
+Last updated: 2026-08-14
+Current sprint: **v7 — durability.** Roadmap v6 complete. App at v3.0.0.
+
+---
+
+**A USER LOST EVERYTHING (2026-08-14), AND IT WAS PREVENTABLE.** Read this before adding another feature.
+
+Chrome's *Delete browsing data → "Cookies, cache and other site data"* erases IndexedDB. That is where 100% of OPUS lives. One tap, no confirmation, no undo, and no server copy to fetch back. The user did the most ordinary thing a phone owner does and lost a month of training.
+
+**What the wreckage looked like, and why nobody noticed for a week.** The wipe took IndexedDB but left localStorage standing, so `onboarded` survived. The app skipped onboarding, `userStore.init()` auto-created a blank profile, the exercise catalogue re-seeded, and Home opened on a tidy set of zeroes. It looked like a new install, not a disaster. The export they sent was the proof: every user table `[]`, and `userProfile` a single row with `name: ""` and `joinDate` set to *that morning*.
+
+**Two things I got wrong, on the record.** I spent an entire session shipping nine features into an app whose single largest risk was that all data sat in one evictable browser store with no automatic copy — and never touched it. And the one defence that existed was a "keep a recent backup" line buried in Settings, which is advice, not a mechanism. They were saved only by a manual export they had happened to take nine days earlier.
+
+1. **Backup or lose it** — the fix. Weekly automatic backup to Downloads, because a file in Downloads is the *only* thing that survives a browser wipe: not IndexedDB, not localStorage, not OPFS, not the cache. Design calls that matter: it writes **only when the data has actually changed**, so a quiet week adds nothing to the Downloads folder (the app cannot delete files it wrote — no web API allows it — so the only honest lever is writing fewer); the payload is minified and drops the 82-row stock catalogue, roughly halving each file; and it stays **plain JSON rather than compressed**, because being able to open the file and read your own sets is what let a real backup be verified when it was needed. `navigator.share` puts a copy off-device entirely for anyone who wants one.
+   - **`WipeAlert`** is the part that would have saved a week. Onboarded + a history that used to exist + zero workouts is the signature of a wipe, and the app now says so on the spot — naming the number of sessions lost and pointing at the Downloads folder — instead of showing zeros. `hadData`/`lastKnownWorkouts` live in **localStorage on purpose**: they have to survive the thing they detect.
+   - **Bug the E2E caught, and it would have defeated the whole feature.** The change-detection fingerprint hashed the entire payload — including `exportedAt`, which is different on every build. Every weekly check would have looked like new data and written a file forever, which is precisely what the user asked not to happen. `backupSignature` now hashes `payload.data` only.
+   - **Honest limitation, stated in the code:** a browser can refuse a download nobody asked for, and there is no way to detect that it did. So the backup never quietly congratulates itself — a quiet line on Home always names the age of the last copy and where it is, and the wipe alert is the backstop for when it turns out there wasn't one.
+
 
 ---
 

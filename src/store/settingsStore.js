@@ -20,6 +20,11 @@ const DEFAULTS = {
   // The lapse a streak-rescue offer was turned down for, so declining once does
   // not re-prompt on every app open until you train again.
   rescueDeclinedFor: null,
+  // Backups. `lastBackupSig` fingerprints what was last written, so a week with
+  // no new training produces no new file. `hadData` + `lastKnownWorkouts` live
+  // here rather than in the database on purpose: they have to survive the thing
+  // they are detecting, and an IndexedDB wipe leaves localStorage standing.
+  autoBackup: true, lastBackupAt: 0, lastBackupSig: '', hadData: false, lastKnownWorkouts: 0,
   // Iron economy: spent Iron + owned/equipped cosmetics (balance is derived).
   ironSpent: 0, ownedCosmetics: [], equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
   // Daily dungeon: claimed bonus Iron + the date key of the last claim.
@@ -44,8 +49,8 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
+    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
   },
   claimDungeon(amount, dateKey) {
     set((s) => (s.lastDungeonClaim === dateKey ? s : { dungeonIron: (s.dungeonIron || 0) + amount, lastDungeonClaim: dateKey }));
@@ -55,6 +60,41 @@ const useSettingsStore = create((set, get) => ({
   // XP shield has always cost exactly one.
   spendShield(lapseDate, count = 1) {
     set((s) => ({ tokensSpent: (s.tokensSpent || 0) + Math.max(1, count), shieldedLapseDate: lapseDate ?? null }));
+    get().persist();
+  },
+  setAutoBackup(on) {
+    set({ autoBackup: !!on });
+    get().persist();
+  },
+  /**
+   * `lastBackupAt` means "the data on disk was confirmed to match, at this
+   * time" — not "a file was written". A weekly check that finds nothing new
+   * stamps it forward, because the honest answer to "is my history safe?" is
+   * yes, and writing an identical file to say so would be the opposite of what
+   * the caller asked for.
+   */
+  recordBackup(at, signature) {
+    set({ lastBackupAt: at || Date.now(), lastBackupSig: signature || '' });
+    get().persist();
+  },
+  /**
+   * Remember that there was once something here.
+   *
+   * One-way on purpose: `hadData` never goes back to false, because the whole
+   * point is to notice when a history that existed stops existing.
+   */
+  noteData(workouts) {
+    const n = Math.max(0, workouts || 0);
+    set((s) => ({ hadData: s.hadData || n > 0, lastKnownWorkouts: n > 0 ? n : s.lastKnownWorkouts }));
+    get().persist();
+  },
+  /**
+   * "Start fresh" after a wipe. Clears the memory of what was lost so the
+   * alert stops, and `noteData` will set it again the moment a new history
+   * begins — the detector re-arms itself for the next time.
+   */
+  acceptWipe() {
+    set({ hadData: false, lastKnownWorkouts: 0 });
     get().persist();
   },
   declineRescue(lapseDate) {

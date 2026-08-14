@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, ShieldCheck, CalendarPlus } from 'lucide-react';
+import { ArrowLeft, Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, ShieldCheck, CalendarPlus, ShieldAlert, Check, Share2 } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import EquipmentModal from '../components/settings/EquipmentModal.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
@@ -12,6 +12,8 @@ import useUIStore from '../store/uiStore.js';
 import { NOTIF_TYPES, requestPermission, showNotification } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
 import { exportData, importData, exportSetsCsv, exportPdf, exportPlanIcs } from '../utils/dataActions.js';
+import { backupLabel } from '../utils/backup.js';
+import { useBackupStatus, useRunBackup, useShareBackup } from '../hooks/useBackup.js';
 import { logBodyStat } from '../utils/healthActions.js';
 import { toDisplay, toKg, unitLabel } from '../utils/units.js';
 import { describePersistence, persistenceState, PERSIST_UNSUPPORTED } from '../utils/storage.js';
@@ -66,6 +68,11 @@ export default function SettingsPage() {
   const [equip, setEquip] = useState(false);
   const [persist, setPersist] = useState(PERSIST_UNSUPPORTED);
   const [icsHour, setIcsHour] = useState(18);
+  const backup = useBackupStatus();
+  const runBackup = useRunBackup();
+  const sendBackup = useShareBackup();
+  const autoBackup = useSettingsStore((s) => s.autoBackup);
+  const setAutoBackup = useSettingsStore((s) => s.setAutoBackup);
 
   useEffect(() => {
     let alive = true;
@@ -426,6 +433,55 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
+        {/* Backups first in the Data section, and stated in terms of what is at
+            stake rather than what the button does. A browser wipe takes
+            IndexedDB with it; a file in Downloads is the only thing left. */}
+        <div className="mb-4 rounded-2xl p-3" style={{ background: 'var(--color-ivory)' }}>
+          <div className="mb-2 flex items-center gap-2">
+            <ShieldAlert size={14} style={{ color: 'var(--color-gold)' }} />
+            <span className="font-sans text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {backupLabel(backup)}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAutoBackup(!autoBackup)}
+            className="flex w-full items-center gap-2.5"
+          >
+            <span
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
+              style={{ background: autoBackup ? 'var(--color-gold)' : 'var(--color-chalk)', border: autoBackup ? 'none' : '1px solid var(--color-ash)' }}
+            >
+              {autoBackup && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />}
+            </span>
+            <span className="text-left font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>
+              Weekly backup to Downloads
+            </span>
+          </button>
+          <p className="mt-1.5 pl-7 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Only writes a file when something has actually changed, so a quiet week adds nothing
+            to your Downloads folder.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={async () => { await runBackup(); useUIStore.getState().showToast('Backup saved to Downloads', { type: 'success' }); }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
+              style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
+            >
+              <Download size={15} /> Back up now
+            </button>
+            <button
+              type="button"
+              onClick={async () => { const how = await sendBackup(); useUIStore.getState().showToast(how === 'shared' ? 'Backup sent' : 'Backup saved to Downloads', { type: 'success' }); }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
+              style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
+            >
+              <Share2 size={15} /> Send a copy
+            </button>
+          </div>
+        </div>
+
         <div className="flex gap-2">
           <button
             onClick={exportData}
