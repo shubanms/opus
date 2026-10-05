@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { makeRng } from './routineGenerator.js';
 import {
-  SPLITS, SPLIT_LIST, planWeek, weekdayLayout, restFor, sessionCount, resolveDays,
+  SPLITS, SPLIT_LIST, planWeek, weekdayLayout, restFor, sessionCount, resolveDays, PLAN_KEY_PREFIX,
 } from './weekPlanner.js';
+import { deriveRoutineName } from './routineName.js';
+import seed from './seedExercises.js';
 
 const MUSCLES = [
   'chest', 'triceps', 'biceps', 'front-deltoids', 'back-deltoids',
@@ -99,5 +101,67 @@ describe('planWeek', () => {
 
   it('returns [] for an unknown split', () => {
     expect(planWeek({ split: 'nope', days: 3, exercises: catalog, rng: makeRng(1) })).toEqual([]);
+  });
+});
+
+// The real catalogue, ids as the app assigns them.
+const SEED = seed.map((e, i) => ({ ...e, id: i + 1 }));
+const SEED_BY_ID = new Map(SEED.map((e) => [e.id, e]));
+const LEG_GROUPS = ['quadriceps', 'hamstring', 'gluteal', 'calves'];
+const MINUTES = [30, 45, 60, 75, 90];
+
+describe('planWeek muscle coverage (real catalogue)', () => {
+  const groupsOf = (day) => day.exercises.map((x) => SEED_BY_ID.get(x.exerciseId).muscleGroup);
+
+  it('every Full Body day trains legs — at every time budget, level and day count', () => {
+    for (const days of [3, 4, 5]) {
+      for (const level of LEVELS) {
+        for (const sessionMinutes of MINUTES) {
+          for (const seedN of [1, 7, 42]) {
+            const week = planWeek({ split: 'fullBody', days, level, sessionMinutes, exercises: SEED, rng: makeRng(seedN) });
+            for (const day of week) {
+              const legs = groupsOf(day).filter((g) => LEG_GROUPS.includes(g)).length;
+              expect(legs, `${days}d ${level} ${sessionMinutes}m ${day.name}`).toBeGreaterThanOrEqual(2);
+              expect(groupsOf(day)).toContain('chest');
+              expect(groupsOf(day)).toContain('upper-back');
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('every Upper day gets biceps and every Pull day gets biceps', () => {
+    for (const sessionMinutes of MINUTES) {
+      for (const level of LEVELS) {
+        const ul = planWeek({ split: 'upperLower', days: 4, level, sessionMinutes, exercises: SEED, rng: makeRng(3) });
+        for (const day of ul.filter((d) => d.name.startsWith('Upper'))) expect(groupsOf(day), `${sessionMinutes}m ${level}`).toContain('biceps');
+        const ppl = planWeek({ split: 'ppl', days: 3, level, sessionMinutes, exercises: SEED, rng: makeRng(3) });
+        for (const day of ppl.filter((d) => d.name.startsWith('Pull'))) expect(groupsOf(day), `${sessionMinutes}m ${level}`).toContain('biceps');
+      }
+    }
+  });
+
+  it('Lower days stay legs-first: core only after the four leg groups', () => {
+    const week = planWeek({ split: 'upperLower', days: 4, level: 'beginner', sessionMinutes: 30, exercises: SEED, rng: makeRng(5) });
+    for (const day of week.filter((d) => d.name.startsWith('Lower'))) {
+      expect(groupsOf(day).every((g) => LEG_GROUPS.includes(g))).toBe(true);
+    }
+  });
+});
+
+describe('planWeek autoKey', () => {
+  it('is namespaced so "Save as routine" can never mistake a planned day for its own', () => {
+    // Every key deriveRoutineName can produce, from any single muscle or split.
+    const derived = new Set(['push', 'pull', 'legs', 'core', 'upper', 'full-body', ...MUSCLES]);
+    for (const s of MUSCLES) derived.add(deriveRoutineName({ [s]: 6 }).autoKey);
+    for (const split of Object.keys(SPLITS)) {
+      for (const days of SPLITS[split].days) {
+        for (const day of planWeek({ split, days, exercises: catalog, rng: makeRng(1) })) {
+          expect(day.autoKey.startsWith(PLAN_KEY_PREFIX)).toBe(true);
+          expect(derived.has(day.autoKey)).toBe(false);
+        }
+      }
+    }
   });
 });
