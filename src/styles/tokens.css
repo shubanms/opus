@@ -52,6 +52,11 @@
   --grad-accent: linear-gradient(135deg, #8b7dff, #4fd8c4);
   --grad-accent-soft: linear-gradient(135deg, rgba(139, 125, 255, 0.18), rgba(79, 216, 196, 0.12));
   --accent-wash: rgba(139, 125, 255, 0.14); /* selected-state fill behind an active item */
+  /* The outline that goes with it — the active exercise card, a crit set. It
+     was referenced by both and defined nowhere, so a `border: 1px solid
+     var(--accent-line)` was invalid and neither outline ever drew. The accent
+     is constant across themes, so one value serves both. */
+  --accent-line: rgba(139, 125, 255, 0.45);
   --glass-line: rgba(20, 26, 46, 0.09);
   --glass-blur: 18px;
   /* Chrome the page scrolls beneath. Near-opaque on purpose: at anything

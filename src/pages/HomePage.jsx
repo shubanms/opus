@@ -19,6 +19,7 @@ import XPBar from '../components/rpg/XPBar.jsx';
 import RecoveryMap from '../components/progress/RecoveryMap.jsx';
 import SessionVerdict from '../components/progress/SessionVerdict.jsx';
 import BackupCard from '../components/backup/BackupCard.jsx';
+import InstallCard from '../components/backup/InstallCard.jsx';
 import ActivityRings from '../components/progress/ActivityRings.jsx';
 import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import QuestBoard from '../components/rpg/QuestBoard.jsx';
@@ -276,6 +277,7 @@ export default function HomePage() {
       </div>
 
       <BackupCard />
+      <InstallCard />
 
       <SessionVerdict workout={recent[0]} />
 

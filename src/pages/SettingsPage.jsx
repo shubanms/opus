@@ -10,6 +10,7 @@ import { useCurrentBodyweight } from '../hooks/useProgress.js';
 import useUserStore from '../store/userStore.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
+import { useInstallPrompt } from '../hooks/useInstallPrompt.js';
 import { NOTIF_TYPES, requestPermission, showNotification } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
 import { exportData, importData, exportSetsCsv, exportPdf, exportPlanIcs } from '../utils/dataActions.js';
@@ -127,6 +128,14 @@ export default function SettingsPage() {
   }, [hash]);
 
   const storageInfo = describePersistence(persist);
+  const { canInstall, install } = useInstallPrompt();
+  async function handleInstall() {
+    const outcome = await install();
+    if (outcome !== 'accepted') return;
+    useUIStore.getState().showToast('Installed — OPUS now lives on your home screen', { type: 'success' });
+    // Installing is when browsers tend to grant persistence; show the new state.
+    setTimeout(() => persistenceState().then(setPersist), 1500);
+  }
   const { settings, perm, update, toggleType, setMaster } = useNotifications();
   const { profile } = useRPG();
 
@@ -594,13 +603,26 @@ export default function SettingsPage() {
             className="mt-0.5 shrink-0"
             style={{ color: persistTone[storageInfo.tone] }}
           />
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="font-sans text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
               Storage: {storageInfo.label}
             </p>
             <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               {storageInfo.detail}
             </p>
+            {/* The advice above used to have no button: installing was only
+                possible from the browser menu. An installed app is what
+                browsers grant persistent storage to. */}
+            {canInstall && (
+              <button
+                type="button"
+                onClick={handleInstall}
+                className="mt-2 flex min-h-10 items-center gap-2 rounded-xl px-3 font-sans text-xs font-semibold"
+                style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+              >
+                <Download size={14} /> Install OPUS
+              </button>
+            )}
           </div>
         </div>
         {/* Backups first in the Data section, and stated in terms of what is at
