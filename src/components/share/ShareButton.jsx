@@ -15,7 +15,10 @@ export default function ShareButton({ data, kind = 'workout', filename = 'opus-c
         disabled={!data}
         className={className}
         style={style}
-        aria-label="Share"
+        // The visible label when there is one: two buttons both announced as
+        // "Share" (Profile's "Share profile" and "Challenge a friend") could not
+        // be told apart by a screen reader.
+        aria-label={label || 'Share'}
       >
         <Share2 size={14} /> {label && label}
       </button>
