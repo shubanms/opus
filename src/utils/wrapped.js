@@ -1,7 +1,15 @@
 import { monthKeyOf } from './snapshots.js';
+import { parseKey } from './dateKey.js';
+import { mondayKey } from './weeks.js';
 
 // Spotify-style "Wrapped" aggregation over a date range (a month or a year).
 // Pure + unit-tested; the hook feeds in DB rows and an exerciseId→name map.
+//
+// Workout dates are local `YYYY-MM-DD` keys and are only ever turned into
+// dates with `parseKey` (local midnight). `new Date(key)` is UTC midnight, the
+// previous evening west of Greenwich: a 1 January session counted toward last
+// year, every busiest-day was shifted back one weekday, and the period list
+// grew an empty month in front of your first session.
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -29,7 +37,7 @@ export function availablePeriods(workouts, now = new Date()) {
     const key = monthKeyOf(now);
     return { months: [{ kind: 'month', key, label: monthRange(key).label, current: true }], years: [{ kind: 'year', key: String(nowY), label: String(nowY), current: true }] };
   }
-  const first = new Date(dates[0]);
+  const first = parseKey(dates[0]) ?? now;
   const firstY = first.getFullYear();
   const firstM = first.getMonth();
 
@@ -52,7 +60,7 @@ export function availablePeriods(workouts, now = new Date()) {
 
 export function buildWrapped(workouts, sets, prs, range, exName = {}) {
   const inRange = (ms) => ms >= range.startMs && ms < range.endMs;
-  const ws = workouts.filter((w) => w.status === 'completed' && inRange(new Date(w.date).getTime()));
+  const ws = workouts.filter((w) => w.status === 'completed' && parseKey(w.date) && inRange(parseKey(w.date).getTime()));
   const wIds = new Set(ws.map((w) => w.id));
   const ss = sets.filter((s) => wIds.has(s.workoutId) && !s.isWarmup);
   const ps = prs.filter((p) => inRange(p.achievedAt ?? 0));
@@ -64,21 +72,19 @@ export function buildWrapped(workouts, sets, prs, range, exName = {}) {
   for (const [id, v] of Object.entries(volByEx)) if (v > topVol) { topVol = v; topExId = Number(id); }
 
   const byDay = [0, 0, 0, 0, 0, 0, 0];
-  for (const w of ws) byDay[new Date(w.date).getDay()] += 1;
+  for (const w of ws) byDay[parseKey(w.date).getDay()] += 1;
   let busiestDay = null;
   let maxDay = 0;
   byDay.forEach((c, i) => { if (c > maxDay) { maxDay = c; busiestDay = WEEKDAYS[i]; } });
 
-  // Volume per ISO (Monday-aligned) week, oldest→newest — sparkline source.
+  // Volume per Monday-aligned week, oldest→newest — sparkline source. Week keys
+  // are date keys, so lexical order is calendar order.
   const byWeek = {};
   for (const w of ws) {
-    const d = new Date(w.date);
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-    const k = d.getTime();
+    const k = mondayKey(w.date);
     byWeek[k] = (byWeek[k] ?? 0) + (w.totalVolume || 0);
   }
-  const series = Object.keys(byWeek).map(Number).sort((a, b) => a - b).map((k) => Math.round(byWeek[k]));
+  const series = Object.keys(byWeek).sort().map((k) => Math.round(byWeek[k]));
 
   return {
     label: range.label,

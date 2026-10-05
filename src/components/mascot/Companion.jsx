@@ -7,12 +7,26 @@ import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
 import { useStreak } from '../../hooks/useStreak.js';
 import { CLIP, MASCOT_NAME, ambientClip, clipForKind, pickLine } from '../../utils/mascot.js';
+import MascotBoundary from './MascotBoundary.jsx';
+import { hasWebGL } from './webgl.js';
 
 const MET_KEY = 'opus_mascot_met';
 const wasMet = () => { try { return localStorage.getItem(MET_KEY) === '1'; } catch { return true; } };
 const markMet = () => { try { localStorage.setItem(MET_KEY, '1'); } catch { /* ignore */ } };
 
-export default function Companion({ autoGreet = true, size = 164, bubbleWidth = 260 }) {
+// Magnus, if this device can draw him. Without WebGL — or if anything inside
+// the 3D scene throws — he is simply absent; `className` styles his own root,
+// so a tile built around him goes with him rather than staying as an empty box.
+export default function Companion(props) {
+  if (!hasWebGL()) return null;
+  return (
+    <MascotBoundary>
+      <CompanionScene {...props} />
+    </MascotBoundary>
+  );
+}
+
+function CompanionScene({ autoGreet = true, size = 164, bubbleWidth = 260, className = '' }) {
   const { profile } = useRPG();
   const effects = useSettingsStore((s) => s.effects);
   const haptic = useHaptics();
@@ -44,11 +58,11 @@ export default function Companion({ autoGreet = true, size = 164, bubbleWidth = 
   }, [streak, play]);
 
   // Greeting on mount (Home only). Intro the very first time ever.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: greets once per mount, not on every streak change
   useEffect(() => {
     if (!autoGreet) return;
     const t = setTimeout(() => { say(wasMet() ? 'greet' : 'firstMeet'); markMet(); }, 650);
     return () => { clearTimeout(t); clearTimeout(hideRef.current); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Idle-break: every 9–15s Magnus does a little gesture on his own.
@@ -73,9 +87,10 @@ export default function Companion({ autoGreet = true, size = 164, bubbleWidth = 
     // absolutely positioned above him, which reserved a tall empty band on Home
     // whether or not he was speaking — and inside a narrow tile it wrapped into
     // a column that covered him completely.
-    <div className="flex items-center gap-2">
+    <div className={`flex items-center gap-2 ${className}`}>
       {/* 3D companion */}
       <button
+        type="button"
         onClick={onTap}
         aria-label={`Talk to ${MASCOT_NAME}`}
         className="shrink-0 cursor-pointer"

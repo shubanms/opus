@@ -1,16 +1,14 @@
 import { lazy, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords, Activity, Droplet, Target } from 'lucide-react';
+import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords, Activity, Droplet, Target, Lock } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
 import { sceneParams } from '../utils/ambient.js';
 import { STREAK, rescueOffer, streakLabel } from '../utils/streak.js';
-import { useStreak } from '../hooks/useStreak.js';
+import { usePlanDays, useStreak } from '../hooks/useStreak.js';
 import { useRestTokens } from '../hooks/useRestTokens.js';
 import { useEffectiveXp } from '../hooks/useEffectiveXp.js';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../db/db.js';
 import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { useWeeklyRecap } from '../hooks/useWeeklyRecap.js';
@@ -25,6 +23,8 @@ import ActivityRings from '../components/progress/ActivityRings.jsx';
 import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import QuestBoard from '../components/rpg/QuestBoard.jsx';
 import DailyDungeonCard from '../components/rpg/DailyDungeonCard.jsx';
+import MascotBoundary from '../components/mascot/MascotBoundary.jsx';
+import { hasWebGL } from '../components/mascot/webgl.js';
 import useWorkoutStore from '../store/workoutStore.js';
 
 const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
@@ -32,6 +32,7 @@ const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
 function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="flex w-full items-center justify-between rounded-2xl px-5 py-4"
       style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-stone)' }}
@@ -71,6 +72,7 @@ function SecondaryDeck({ hasWorkouts }) {
           const active = tab === t.key;
           return (
             <button
+              type="button"
               key={t.key}
               onClick={() => { setTab(t.key); playChime('tap'); }}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 font-sans text-xs font-semibold transition-colors"
@@ -111,19 +113,36 @@ export default function HomePage() {
   const shieldTokens = useRestTokens();
   // Effective XP, level and title — shared with Profile and Progression so the
   // shield and the boss-gate cap read the same everywhere (hooks/useEffectiveXp).
-  const { effectiveXp, rawDecay, shieldActive, streakPenalty, decaying, lost, rawLevel, prestige, level, boss, title } =
+  const { effectiveXp, rawDecay, shieldActive, streakPenalty, decaying, lost, rawLevel, prestige, level, boss, title, sealed } =
     useEffectiveXp(profile);
   const streak = useStreak();
+  // useStreak answers with the plain day-streak until the plan and workout
+  // dates have loaded, then switches to the schedule-aware one. With a plan,
+  // that first answer can be "broken" for a streak that is merely between
+  // sessions, so nothing streak-shaped is offered until the real one is in.
+  const plan = usePlanDays();
+  const streakLoading = plan == null || (plan.size > 0 && !streak.scheduled);
   // The offer itself lives in StreakRescueHost, app-wide. This is only the way
   // back to it after "let it go" — a lapse you dismissed once should still be
   // recoverable while it is still recoverable, and Home is where you look.
-  const offer = rescueOffer(profile, shieldTokens);
+  // It is given the same live streak the host uses: without it this banner
+  // said "3-day streak ended" while the flame said 4 and at risk, and tapping
+  // it did nothing because the host (rightly) had no offer to show.
+  const offer = !profile || streakLoading ? null : rescueOffer(profile, shieldTokens, undefined, streak);
+  const banked = sealed ? rawLevel - level : 0;
   const canShield = rawDecay.decaying && streakPenalty > 0 && !shieldActive && shieldTokens > 0;
 
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
     : false;
   const scene = sceneParams({ streak: streak.count, level, prestige, reducedMotion: reducedMotion || !effects });
+
+  // The week tiles open the Progress overview, scrolled to what they summarise.
+  const openProgress = (focus) => {
+    playChime('tap');
+    navigate('/progress', { state: { tab: 'Overview', focus } });
+  };
+  const webgl = hasWebGL();
 
   function startTemplate() {
     playChime('start');
@@ -187,9 +206,21 @@ export default function HomePage() {
             <div className="mt-4">
               <div className="mb-2 flex items-center gap-2.5">
                 <LevelBadge level={level} size="sm" prestige={prestige} />
-                <span className="truncate font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                <span className="min-w-0 truncate font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                   {title}
                 </span>
+                {/* XP past a boss gate isn't lost, it's held. Capping the badge
+                    without saying so read as levelling having stopped. */}
+                {banked > 0 && (
+                  <span
+                    className="ml-auto flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold"
+                    style={{ background: 'var(--accent-wash)', color: 'var(--color-gold)' }}
+                    title={`XP for level ${rawLevel} earned — clear the boss gate to claim it`}
+                  >
+                    <Lock size={11} />
+                    Lv {level} · {banked} {banked === 1 ? 'level' : 'levels'} banked
+                  </span>
+                )}
               </div>
               <XPBar totalXp={effectiveXp} showLabel={false} />
               {decaying && (
@@ -200,6 +231,7 @@ export default function HomePage() {
                   </p>
                   {canShield && (
                     <button
+                      type="button"
                       onClick={() => { spendShield(profile?.lastWorkoutDate); playChime('goal'); }}
                       className="flex items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold"
                       style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
@@ -226,7 +258,8 @@ export default function HomePage() {
                   style={{ background: 'var(--accent-wash)', color: 'var(--color-ember)' }}
                 >
                   <Flame size={12} />
-                  {offer.lost}-day streak ended
+                  {/* On a plan the streak is counted in sessions, as in the offer itself. */}
+                  {offer.lost}-{offer.scheduled ? 'session' : 'day'} streak ended
                   <span className="ml-auto font-medium" style={{ color: 'var(--color-text-secondary)' }}>
                     {offer.affordable ? `Rescue · ${offer.cost} token${offer.cost === 1 ? '' : 's'}` : 'See what it costs'}
                   </span>
@@ -252,21 +285,33 @@ export default function HomePage() {
           Giving him a tile turns that reserved space into deliberate padding,
           and the stats beside him fill the row. */}
       <div className="mb-4 flex flex-col gap-3">
-        <div className="glass rounded-2xl px-3 py-2">
-          <Suspense fallback={<div style={{ height: 116 }} />}>
-            <Companion size={116} bubbleWidth={220} />
-          </Suspense>
-        </div>
+        {/* Only where WebGL works, and fenced: a device that can't create a
+            context used to take the whole app to the error screen here. The
+            tile is Magnus's own root, so if he can't show it goes with him. */}
+        {webgl && (
+          <MascotBoundary>
+            <Suspense fallback={<div className="glass rounded-2xl" style={{ height: 132 }} />}>
+              <Companion className="glass rounded-2xl px-3 py-2" size={116} bubbleWidth={220} />
+            </Suspense>
+          </MascotBoundary>
+        )}
 
         <div className="grid grid-cols-3 gap-3">
           {[
-            { k: 'This week', v: String(week.sessions), u: week.sessions === 1 ? 'session' : 'sessions' },
-            { k: 'Volume', v: Math.round(toDisplay(week.volumeKg, unit)).toLocaleString(), u: `${unitLabel(unit)} lifted` },
-            { k: 'Records', v: String(week.prCount), u: week.prCount === 1 ? 'PR' : 'PRs' },
+            { k: 'This week', v: String(week.sessions), u: week.sessions === 1 ? 'session' : 'sessions', focus: null },
+            { k: 'Volume', v: Math.round(toDisplay(week.volumeKg, unit)).toLocaleString(), u: `${unitLabel(unit)} lifted`, focus: 'volume' },
+            { k: 'Records', v: String(week.prCount), u: week.prCount === 1 ? 'PR' : 'PRs', focus: 'prs' },
           ].map((t) => (
-            <div key={t.k} className="glass rounded-2xl px-3 py-3">
-              <p className="font-sans text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+            <button
+              type="button"
+              key={t.k}
+              onClick={() => openProgress(t.focus)}
+              aria-label={`${t.k}: ${t.v} ${t.u}. Open progress`}
+              className="glass rounded-2xl px-3 py-3 text-left transition-transform active:scale-95"
+            >
+              <p className="flex items-center justify-between font-sans text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
                 {t.k}
+                <ChevronRight size={11} style={{ color: 'var(--color-ash)' }} />
               </p>
               <p className="mt-1.5 truncate font-mono text-xl leading-none" style={{ color: 'var(--color-text-primary)' }}>
                 {t.v}
@@ -274,7 +319,7 @@ export default function HomePage() {
               <p className="mt-1 truncate font-sans text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
                 {t.u}
               </p>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -322,7 +367,7 @@ export default function HomePage() {
               <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Rest day</p>
               <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{today.reason}</p>
             </div>
-            <button onClick={() => navigate('/workout')} className="font-sans text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
+            <button type="button" onClick={() => navigate('/workout')} className="-mr-2 h-10 shrink-0 rounded-lg px-2 font-sans text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
               Train anyway
             </button>
           </div>
@@ -350,8 +395,9 @@ export default function HomePage() {
               Recent
             </h2>
             <button
+              type="button"
               onClick={() => navigate('/history')}
-              className="flex items-center gap-1 font-sans text-xs"
+              className="-mr-2 flex h-10 items-center gap-1 rounded-lg px-2 font-sans text-xs"
               style={{ color: 'var(--color-text-secondary)' }}
             >
               See all <ChevronRight size={12} />

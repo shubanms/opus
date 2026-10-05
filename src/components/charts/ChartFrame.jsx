@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { scaleBand, scaleLinear, scalePoint } from '@visx/scale';
 import { useMeasure } from './useMeasure.js';
 import { useScrub } from './useScrub.js';
-import { compactNumber, niceTicks, padDomain, tickIndices } from '../../utils/chartMath.js';
+import { compactNumber, niceTicks, padDomain, preciseNumber, tickIndices } from '../../utils/chartMath.js';
 
 // The shared chrome behind every cartesian chart: measuring, scales, grid,
 // axes, the scrub overlay and the readout. The chart itself is a render prop,
@@ -39,8 +39,16 @@ export default function ChartFrame({
   getValue,
   /** Pull the x-axis caption out of a datum. */
   labelOf = (d) => d.label,
-  /** Format a value for the readout (the axis always uses compactNumber). */
-  format = (v) => compactNumber(v),
+  /**
+   * Format a value for the readout. Precise by default: the axis uses
+   * compactNumber because it has to be short, and the readout used to borrow
+   * it — so dragging onto 100.4 kg said "100 kg" and 12,345 steps said "12k".
+   */
+  format = (v) => preciseNumber(v),
+  /** A second value per datum (e.g. a rolling average) that the domain must fit. */
+  getExtra,
+  /** An optional second readout line for the scrubbed datum. */
+  detail,
   /** Bars need a zero baseline or they misreport ratios; lines want headroom. */
   zeroBased = false,
   /** 'band' gives each datum a slot with a width; 'point' spans edge to edge. */
@@ -58,7 +66,8 @@ export default function ChartFrame({
     if (!rows.length || width <= 0) return null;
 
     const values = rows.map(getValue);
-    const [lo, hi] = padDomain(values, { zeroBased });
+    const extra = getExtra ? rows.map(getExtra).filter((v) => Number.isFinite(v)) : [];
+    const [lo, hi] = padDomain([...values, ...extra], { zeroBased });
     const ticks = niceTicks(lo, hi);
     const left = gutterFor(ticks.length ? ticks : [hi]);
 
@@ -81,10 +90,11 @@ export default function ChartFrame({
     }
 
     return { left, innerWidth, innerHeight, yScale, xs, bandWidth, ticks, values };
-  }, [rows, width, height, getValue, zeroBased, xKind]);
+  }, [rows, width, height, getValue, getExtra, zeroBased, xKind]);
 
   const { index, handlers } = useScrub(layout?.xs ?? []);
   const active = index != null && index < rows.length ? rows[index] : null;
+  const activeDetail = active && detail ? detail(active) : null;
 
   if (!rows.length) {
     return (
@@ -205,6 +215,11 @@ export default function ChartFrame({
           >
             {format(getValue(active))}
           </span>
+          {activeDetail && (
+            <span className="mt-1 font-mono text-[10px] leading-none" style={{ color: 'var(--color-text-secondary)' }}>
+              {activeDetail}
+            </span>
+          )}
         </div>
       )}
     </div>
