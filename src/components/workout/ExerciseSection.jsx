@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { X, StickyNote, Link2, ChevronUp, ChevronDown, Repeat, Info } from 'lucide-react';
+import { StickyNote, Repeat, MoreHorizontal, Link2 } from 'lucide-react';
 import SetLogger from './SetLogger.jsx';
 import CardioLogger from './CardioLogger.jsx';
-import OverloadNudge from './OverloadNudge.jsx';
 import ExerciseInfoModal from './ExerciseInfoModal.jsx';
+import ExerciseMenu from './ExerciseMenu.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useExerciseNote } from '../../hooks/useExercises.js';
 import { toDisplay, unitLabel, fmtVolume } from '../../utils/units.js';
@@ -16,11 +16,38 @@ const MUSCLE_HUE = {
   abs: '#8B7DFF', obliques: '#8B7DFF',
 };
 
-export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, isCardio, onSetLogged, onEffortRated, onRemove, onSwap, canLink, linked, onToggleSuperset, onMoveUp, onMoveDown, canMoveUp, canMoveDown, active = false, done = false }) {
+const shortWeight = (kg, unit) => {
+  const v = Math.round(toDisplay(kg, unit) * 10) / 10;
+  return Number.isInteger(v) ? String(v) : v.toFixed(1);
+};
+
+export default function ExerciseSection({
+  exercise,
+  muscleGroup,
+  equipment = null,
+  isBodyweight,
+  isCardio,
+  rateUid = null,
+  onSetLogged,
+  onEffortRated,
+  onSetRemoved,
+  onRemove,
+  onSwap,
+  canLink,
+  linked,
+  onToggleSuperset,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
+  active = false,
+  done = false,
+}) {
   const hue = MUSCLE_HUE[muscleGroup] ?? '#7B83A6';
   const unit = useSettingsStore((s) => s.unit);
   const note = useExerciseNote(exercise.exerciseId);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Live per-exercise tally for this session.
   const working = exercise.sets.filter((s) => !s.isWarmup);
@@ -29,6 +56,7 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
   const volKg = working.reduce((a, s) => a + (s.weight || 0) * (s.reps || 0), 0);
   const targetSets = exercise.targetSets || null;
   const progress = targetSets ? Math.min(setCount / targetSets, 1) : null;
+  const hasTarget = !isCardio && (exercise.targetSets || exercise.targetReps || exercise.targetWeight);
 
   // Cardio session totals for the header/tally.
   const cardioKcal = exercise.sets.reduce((a, s) => a + (s.calories || 0), 0);
@@ -38,92 +66,75 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
     // Three states, so a glance answers "where am I?" without reading every
     // card: the one you're on is lit, finished ones recede, the rest are plain.
     <div
-      className="glass mb-4 rounded-2xl px-4 pb-4 pt-3"
+      className="glass mb-4 rounded-2xl px-4 pb-4 pt-2"
       style={{
         background: 'var(--color-chalk)',
         border: `1px solid ${active ? 'var(--accent-line)' : 'var(--color-ivory)'}`,
         boxShadow: active ? 'var(--glow-accent)' : undefined,
         opacity: done ? 0.72 : 1,
+        transition: 'opacity var(--dur-standard) var(--opus-ease-out)',
       }}
     >
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+      {/* Header: one line at any width. The name opens the exercise's info;
+          swap stays out because it is the mid-set emergency; everything else
+          is in the menu, each as a full-size row. */}
+      <div className="-mr-2 flex items-center gap-1">
+        <h3 className="min-w-0 flex-1 font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+          <button
+            type="button"
+            onClick={() => setInfoOpen(true)}
+            aria-haspopup="dialog"
+            title="Exercise info"
+            className="block min-h-10 w-full truncate py-2 text-left"
+          >
             {exercise.name}
-          </h3>
+          </button>
+        </h3>
+        {onSwap && (
+          <button
+            type="button"
+            onClick={onSwap}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+            aria-label={`Swap ${exercise.name}`}
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
+              <Repeat size={14} style={{ color: 'var(--color-ash)' }} />
+            </span>
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+          aria-haspopup="dialog"
+          aria-label={`More actions for ${exercise.name}`}
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
+            <MoreHorizontal size={16} style={{ color: 'var(--color-ash)' }} />
+          </span>
+        </button>
+      </div>
+
+      <div className="-mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+        {muscleGroup && (
           <span
-            className="mt-0.5 inline-block rounded-full px-2 py-0.5 font-sans text-xs capitalize"
+            className="rounded-full px-2 py-0.5 font-sans text-xs capitalize"
             style={{ background: `${hue}22`, color: hue }}
           >
-            {(muscleGroup ?? '').replace(/-/g, ' ')}
+            {muscleGroup.replace(/-/g, ' ')}
           </span>
-          {!isCardio && (exercise.targetSets || exercise.targetReps || exercise.targetWeight) && (
-            <p className="mt-1 font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-              Target: {exercise.targetSets ?? '—'}×{exercise.targetReps ?? '—'}
-              {exercise.targetWeight ? ` @ ${toDisplay(exercise.targetWeight, unit)}${unitLabel(unit)}` : ''}
-            </p>
-          )}
-        </div>
-        <div className="ml-2 flex shrink-0 items-center gap-2">
-          <div className="flex flex-col">
-            <button
-              onClick={onMoveUp}
-              disabled={!canMoveUp}
-              aria-label="Move exercise up"
-              style={{ opacity: canMoveUp ? 1 : 0.25 }}
-            >
-              <ChevronUp size={16} style={{ color: 'var(--color-ash)' }} />
-            </button>
-            <button
-              onClick={onMoveDown}
-              disabled={!canMoveDown}
-              aria-label="Move exercise down"
-              style={{ opacity: canMoveDown ? 1 : 0.25 }}
-            >
-              <ChevronDown size={16} style={{ color: 'var(--color-ash)' }} />
-            </button>
-          </div>
-          <button
-            onClick={() => setInfoOpen(true)}
-            className="flex h-7 w-7 items-center justify-center rounded-full"
-            style={{ background: 'var(--color-ivory)' }}
-            aria-label="Exercise info"
-          >
-            <Info size={13} style={{ color: 'var(--color-ash)' }} />
-          </button>
-          {canLink && !isCardio && (
-            <button
-              onClick={onToggleSuperset}
-              className="flex items-center gap-1 rounded-full px-2 py-1 font-sans text-[11px] font-medium"
-              style={{
-                background: linked ? 'var(--color-gold)' : 'var(--color-ivory)',
-                color: linked ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
-              }}
-              aria-label={linked ? 'Remove from superset' : 'Superset with exercise above'}
-            >
-              <Link2 size={12} /> {linked ? 'Superset' : 'Link'}
-            </button>
-          )}
-          {onSwap && (
-            <button
-              onClick={onSwap}
-              className="flex h-7 w-7 items-center justify-center rounded-full"
-              style={{ background: 'var(--color-ivory)' }}
-              aria-label="Swap exercise"
-            >
-              <Repeat size={13} style={{ color: 'var(--color-ash)' }} />
-            </button>
-          )}
-          <button
-            onClick={onRemove}
-            className="flex h-7 w-7 items-center justify-center rounded-full"
-            style={{ background: 'var(--color-ivory)' }}
-            aria-label="Remove exercise"
-          >
-            <X size={13} style={{ color: 'var(--color-ash)' }} />
-          </button>
-        </div>
+        )}
+        {linked && (
+          <span className="flex items-center gap-1 font-sans text-[11px] font-semibold" style={{ color: 'var(--color-gold)' }}>
+            <Link2 size={11} aria-hidden /> superset
+          </span>
+        )}
+        {hasTarget && (
+          <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+            Target {exercise.targetSets ?? '—'}×{exercise.targetReps ?? '—'}
+            {exercise.targetWeight ? ` @ ${shortWeight(exercise.targetWeight, unit)} ${unitLabel(unit)}` : ''}
+          </span>
+        )}
       </div>
 
       {note && (
@@ -140,7 +151,11 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
               {cardioMin} min · <span style={{ color: 'var(--color-gold)' }}>{cardioKcal} kcal</span>
             </p>
           )}
-          <CardioLogger exerciseId={exercise.exerciseId} onLogged={() => onSetLogged?.(exercise.exerciseId)} />
+          <CardioLogger
+            exerciseId={exercise.exerciseId}
+            onLogged={(set) => onSetLogged?.(exercise.exerciseId, set)}
+            onRemove={(setNumber) => onSetRemoved?.(exercise.exerciseId, setNumber)}
+          />
         </>
       ) : (
         <>
@@ -154,23 +169,46 @@ export default function ExerciseSection({ exercise, muscleGroup, isBodyweight, i
               {progress != null && (
                 <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--color-ivory)' }}>
                   <div
-                    className="h-full rounded-full"
-                    style={{ width: `${progress * 100}%`, background: progress >= 1 ? 'var(--color-sage)' : 'var(--color-gold)', transition: 'width .4s var(--opus-ease-out)' }}
+                    className="h-full w-full origin-left rounded-full"
+                    style={{
+                      transform: `scaleX(${progress})`,
+                      background: progress >= 1 ? 'var(--color-sage)' : 'var(--color-gold)',
+                      transition: 'transform .4s var(--opus-ease-out), background-color .3s',
+                    }}
                   />
                 </div>
               )}
             </div>
           )}
 
-          <div className="mt-3">
-            <OverloadNudge exerciseId={exercise.exerciseId} />
-          </div>
-
           <SetLogger
-        onEffortRated={onEffortRated} exerciseId={exercise.exerciseId} onSetLogged={() => onSetLogged?.(exercise.exerciseId)} isBodyweight={isBodyweight} />
+            exerciseId={exercise.exerciseId}
+            equipment={equipment}
+            isBodyweight={isBodyweight}
+            rateUid={rateUid}
+            onSetLogged={onSetLogged}
+            onEffortRated={onEffortRated}
+            onSetRemoved={onSetRemoved}
+          />
         </>
       )}
 
+      <ExerciseMenu
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        name={exercise.name}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
+        canLink={canLink && !isCardio}
+        linked={linked}
+        setCount={exercise.sets.length}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onToggleSuperset={onToggleSuperset}
+        onInfo={() => setInfoOpen(true)}
+        onSwap={onSwap}
+        onRemove={onRemove}
+      />
       <ExerciseInfoModal exerciseId={exercise.exerciseId} isOpen={infoOpen} onClose={() => setInfoOpen(false)} />
     </div>
   );

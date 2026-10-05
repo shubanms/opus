@@ -22,12 +22,23 @@ function pct(a, b) {
   return Math.round(((a - b) / b) * 100);
 }
 
+/** A set that moved a load: a real working set with reps, not a cardio bout. */
+function isLoadedSet(s) {
+  return Boolean(s) && !s.isWarmup && !s.isCardio && Number(s.reps) >= 1;
+}
+
 /**
  * Everything the verdict needs, derived from rows the caller already has.
  *
  * `session` is a merged view of the finished workout: the stored row plus the
  * `prCount` that only the completion result knows. `recentVolumes` is previous
  * sessions only — the session being judged must not be in its own baseline.
+ *
+ * Volume is only compared when there is something comparable on both sides.
+ * A treadmill-and-bike day has no loaded volume, and measuring it against
+ * three lifting sessions told its owner that "volume was 100% below your
+ * recent average" — true, and meaningless. Sessions with no volume are
+ * likewise kept out of the baseline.
  */
 export function sessionSignals({ session, sets, recentVolumes } = {}) {
   const volume = Math.max(0, Math.round(session?.totalVolume ?? 0));
@@ -35,12 +46,16 @@ export function sessionSignals({ session, sets, recentVolumes } = {}) {
   // and a live query that has not resolved yet hands back `null`.
   const history = (recentVolumes ?? []).filter((v) => Number.isFinite(v) && v > 0).slice(0, 8);
   const avg = history.length ? history.reduce((a, b) => a + b, 0) / history.length : null;
+  // `sets` absent means an older caller that only knew the totals: trust the
+  // stored volume. Present, it has to contain at least one loaded set.
+  const loaded = volume > 0 && (sets == null || sets.some(isLoadedSet));
 
   return {
     volume,
     avgVolume: avg,
-    hasBaseline: history.length >= MIN_HISTORY,
-    volumeDelta: avg ? pct(volume, avg) : 0,
+    hasLoadedVolume: loaded,
+    hasBaseline: loaded && history.length >= MIN_HISTORY,
+    volumeDelta: loaded && avg ? pct(volume, avg) : 0,
     prCount: Math.max(0, session?.prCount ?? 0),
     sets: Math.max(0, session?.totalSets ?? 0),
     effort: sessionEffort(sets),
@@ -115,7 +130,9 @@ export function pickConcern(s) {
 function readMetric(metric, s) {
   switch (metric) {
     case 'volume':
-      return s.volume;
+      // A session with no loaded volume says nothing about whether volume
+      // came back — a cardio day is not the follow-through.
+      return s.hasLoadedVolume === false ? null : s.volume;
     case 'coverage':
       return s.effort.coverage;
     case 'avgRpe':
@@ -125,9 +142,17 @@ function readMetric(metric, s) {
   }
 }
 
+// The prose is stored on the workout row and re-read in History for good, so
+// it carries no weights: "6,000 against the 5,500…" was kg baked into a
+// sentence that a pound user read as pounds, and that no later unit switch can
+// convert. Percentages and relative wording survive both.
 const RESOLVED = {
-  volumeDown: (a, actual) =>
-    `You brought the volume back — ${actual.toLocaleString()} against the ${a.target.toLocaleString()} you were averaging.`,
+  volumeDown: (a, actual) => {
+    const up = a.target > 0 ? pct(actual, a.target) : 0;
+    return up >= 1
+      ? `You brought the volume back — ${up}% above the average you had slipped from.`
+      : 'You brought the volume back up to your recent average.';
+  },
   unrated: () => 'You rated this one, so there is finally something to judge it on.',
   easy: () => 'That was harder than last time — exactly the adjustment.',
 };

@@ -1,119 +1,189 @@
-import { useState, useEffect, useRef } from 'react';
-import { X, Minus, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Minus, Plus, Check, Timer } from 'lucide-react';
+import useWorkoutStore from '../../store/workoutStore.js';
+import useSettingsStore from '../../store/settingsStore.js';
+import useUIStore from '../../store/uiStore.js';
+import { useRestClock } from '../../hooks/useRestClock.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
-import { playChime } from '../../utils/sound.js';
+import { AnimatePresence, m, SPRING, TWEEN, useReducedMotion } from '../../motion/index.jsx';
+import { REST_PRESETS, formatRest, presetLabel } from '../../utils/restClock.js';
 
-const R = 18;
-const C = 2 * Math.PI * R; // ≈ 113
-const PRESETS = [60, 90, 120, 180];
-
-export default function RestTimer({ duration = 90, suggested = null, onComplete, onSkip, onSetDefault }) {
-  const [total, setTotal] = useState(duration);
-  const [remaining, setRemaining] = useState(duration);
-  const ref = useRef();
+/**
+ * The rest between sets, pinned just above the bottom nav.
+ *
+ * It used to be a card inserted at the top of the workout page — off screen
+ * by the time you were logging your fourth exercise — counting interval ticks
+ * in page state, so a locked phone stretched it and leaving the tab lost it.
+ * It now reads the session's stored deadline (see utils/restClock.js), stays
+ * where your thumb is, and the nav's session pill carries the countdown on
+ * every other tab.
+ *
+ * Calm on purpose: a fill that drains, a gentle pulse in the last ten seconds,
+ * one chime at zero (fired once, app-wide, by `useRestAlarm`), and a brief
+ * "go" before it slides away.
+ */
+export default function RestTimer({ nextName = null }) {
+  const { rest, remaining, progress, done } = useRestClock(250);
+  const adjust = useWorkoutStore((s) => s.adjustRest);
+  const startRest = useWorkoutStore((s) => s.startRest);
+  const clearRest = useWorkoutStore((s) => s.clearRest);
+  const setDefault = useSettingsStore((s) => s.setRestDuration);
+  const effects = useSettingsStore((s) => s.effects);
+  const reduced = useReducedMotion();
   const haptic = useHaptics();
+  const [presetsOpen, setPresetsOpen] = useState(false);
+  // Toasts land in the same strip of screen. While one is up (an Undo, say)
+  // the bar steps aside rather than sitting half under it — the countdown is
+  // still in the nav pill — and slides back when the toast goes.
+  const toastUp = useUIStore((s) => s.toasts.length > 0);
 
-  useEffect(() => {
-    ref.current = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(ref.current);
-          haptic('pr');
-          playChime('rest');
-          onComplete?.();
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => clearInterval(ref.current);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const urgent = !done && remaining <= 10;
+  const pulse = urgent && effects && !reduced;
+  const tone = done ? 'var(--color-sage)' : urgent ? 'var(--color-ember)' : 'var(--color-gold)';
 
-  // The effort rating arrives *after* the timer has started — you log the set,
-  // the clock runs, then you tap how it felt. Retarget in place rather than
-  // restarting, or the seconds already rested would be thrown away.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: retarget on the suggestion only
-  useEffect(() => {
-    if (!suggested || suggested === total) return;
-    const elapsed = total - remaining;
-    setTotal(suggested);
-    setRemaining(Math.max(0, suggested - elapsed));
-  }, [suggested]);
-
-  function setDuration(secs) {
-    const v = Math.max(5, secs);
-    setTotal(v);
-    setRemaining(v);
-    onSetDefault?.(v);
-  }
-  function adjust(delta) {
-    setTotal((t) => Math.max(5, t + delta));
-    setRemaining((r) => Math.max(0, r + delta));
+  function choosePreset(secs) {
+    // A preset restarts the rest at that length and becomes your default —
+    // the old card did the same, it was just three scrolls away.
+    startRest(secs);
+    setDefault(secs);
+    setPresetsOpen(false);
+    haptic('tap');
   }
 
-  const progress = total > 0 ? remaining / total : 0;
-  const dashoffset = C * (1 - progress);
-  const urgent = remaining <= 10 && remaining > 0;
-  const ringColor = urgent ? 'var(--color-ember)' : 'var(--color-gold)';
-
-  const mins = Math.floor(remaining / 60);
-  const secs = remaining % 60;
-  const label = mins > 0 ? `${mins}:${String(secs).padStart(2, '0')}` : `${secs}s`;
-
-  return (
-    <div className="rounded-2xl px-4 py-3" style={{ background: 'var(--color-stone)' }}>
-      <div className="flex items-center gap-3">
-        <svg
-          width={44} height={44} viewBox="0 0 44 44"
-          style={{ flexShrink: 0, animation: urgent ? 'timerPulse 1s var(--opus-ease-out) infinite' : 'none' }}
+  return createPortal(
+    <AnimatePresence>
+      {rest && !toastUp && (
+        <m.div
+          key="rest"
+          role="timer"
+          aria-live="off"
+          aria-label={done ? 'Rest over' : `Rest, ${formatRest(remaining)} left`}
+          className="fixed inset-x-0 z-40 mx-auto w-full max-w-md px-4"
+          style={{ bottom: 'calc(96px + env(safe-area-inset-bottom))' }}
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 24, transition: TWEEN.standard }}
+          transition={SPRING.sheet}
         >
-          <circle cx={22} cy={22} r={R} fill="none" stroke="var(--track, rgba(255,255,255,0.12))" strokeWidth={3.5} />
-          <circle
-            cx={22} cy={22} r={R}
-            fill="none"
-            stroke={ringColor}
-            strokeWidth={3.5}
-            strokeLinecap="round"
-            strokeDasharray={C}
-            strokeDashoffset={dashoffset}
-            transform="rotate(-90 22 22)"
-            style={{ transition: 'stroke-dashoffset 1s linear, stroke 300ms' }}
-          />
-        </svg>
+          <AnimatePresence initial={false}>
+            {presetsOpen && !done && (
+              <m.div
+                key="presets"
+                className="glass glass-strong mb-2 flex gap-2 rounded-2xl p-2"
+                style={{ boxShadow: 'var(--elev-2)' }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={TWEEN.standard}
+              >
+                {REST_PRESETS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => choosePreset(p)}
+                    aria-label={`Rest ${presetLabel(p)} and make it the default`}
+                    className="h-10 flex-1 rounded-xl font-mono text-sm font-semibold"
+                    style={{
+                      background: rest.duration === p ? 'var(--color-gold)' : 'var(--color-ivory)',
+                      color: rest.duration === p ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                    }}
+                  >
+                    {presetLabel(p)}
+                  </button>
+                ))}
+              </m.div>
+            )}
+          </AnimatePresence>
 
-        <div className="flex-1">
-          <p className="font-mono text-lg font-medium" style={{ color: 'var(--color-text-inverse)' }}>{label}</p>
-          <p className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>Rest</p>
-        </div>
-
-        {/* Fine adjust */}
-        <button onClick={() => adjust(-15)} className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} aria-label="Minus 15 seconds">
-          <Minus size={14} style={{ color: 'var(--color-ash)' }} />
-        </button>
-        <button onClick={() => adjust(15)} className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} aria-label="Plus 15 seconds">
-          <Plus size={14} style={{ color: 'var(--color-ash)' }} />
-        </button>
-        <button onClick={onSkip} className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} aria-label="Skip rest">
-          <X size={15} style={{ color: 'var(--color-ash)' }} />
-        </button>
-      </div>
-
-      {/* Presets — also save as your default */}
-      <div className="mt-3 flex gap-2">
-        {PRESETS.map((p) => (
-          <button
-            key={p}
-            onClick={() => setDuration(p)}
-            className="flex-1 rounded-lg py-1.5 font-mono text-xs font-medium"
+          <div
+            className="glass glass-strong relative flex h-14 items-center gap-1 overflow-hidden rounded-2xl pl-1 pr-1.5"
             style={{
-              background: total === p ? 'var(--color-gold)' : 'rgba(255,255,255,0.08)',
-              color: total === p ? 'var(--color-obsidian)' : 'var(--color-ash)',
+              boxShadow: 'var(--elev-3)',
+              border: `1px solid ${done ? 'var(--color-sage)' : 'var(--glass-line)'}`,
             }}
           >
-            {p % 60 === 0 ? `${p / 60}:00` : `${Math.floor(p / 60)}:${p % 60}`}
-          </button>
-        ))}
-      </div>
-    </div>
+            {/* The fill drains toward zero. A transform, not a width, so it
+                stays on the compositor. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 left-0 w-full origin-left"
+              style={{
+                transform: `scaleX(${done ? 1 : progress})`,
+                background: done ? 'var(--color-sage)' : 'var(--accent-wash)',
+                opacity: done ? 0.22 : 1,
+                transition: effects ? 'transform 260ms linear, background-color 300ms, opacity 300ms' : 'none',
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={() => setPresetsOpen((v) => !v)}
+              aria-expanded={presetsOpen}
+              aria-label={presetsOpen ? 'Hide rest presets' : 'Rest presets'}
+              className="relative flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-xl pl-2.5 text-left"
+            >
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  background: done ? 'var(--color-sage)' : 'var(--color-ivory)',
+                  animation: pulse ? 'timerPulse 1s var(--opus-ease-out) infinite' : 'none',
+                }}
+              >
+                {done ? (
+                  <Check size={16} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />
+                ) : (
+                  <Timer size={15} style={{ color: tone }} />
+                )}
+              </span>
+              <span className="min-w-0">
+                <span
+                  className="block font-mono text-xl font-semibold leading-none tabular-nums"
+                  style={{ color: done ? 'var(--color-sage)' : urgent ? 'var(--color-ember)' : 'var(--color-text-primary)' }}
+                >
+                  {done ? 'Go' : formatRest(remaining)}
+                </span>
+                <span className="mt-0.5 block truncate font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+                  {done ? 'Rest over — next set' : nextName ? `Rest · next: ${nextName}` : 'Rest'}
+                </span>
+              </span>
+            </button>
+
+            {!done && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => { adjust(-15); haptic('tap'); }}
+                  className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-mono text-[11px] font-semibold"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                  aria-label="Minus 15 seconds"
+                >
+                  <Minus size={12} />15
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { adjust(15); haptic('tap'); }}
+                  className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-mono text-[11px] font-semibold"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                  aria-label="Plus 15 seconds"
+                >
+                  <Plus size={12} />15
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={() => clearRest()}
+              className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: 'var(--color-ivory)' }}
+              aria-label={done ? 'Dismiss' : 'Skip rest'}
+            >
+              <X size={16} style={{ color: 'var(--color-ash)' }} />
+            </button>
+          </div>
+        </m.div>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }

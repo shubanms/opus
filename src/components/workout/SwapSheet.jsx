@@ -12,7 +12,7 @@ import { m, itemVariants, listVariants } from '../../motion/index.jsx';
 // and you want to keep moving. Browsing everything is still one tap away, but
 // it is the escape hatch rather than the front door.
 
-export default function SwapSheet({ isOpen, currentId, exclude = [], onSelect, onBrowseAll, onClose }) {
+export default function SwapSheet({ isOpen, currentId, loggedSets = 0, exclude = [], onSelect, onBrowseAll, onClose }) {
   const catalogue = useExercises();
   const current = currentId != null ? (catalogue ?? []).find((e) => e.id === currentId) : null;
   const alternatives = rankAlternatives(current, catalogue ?? [], { exclude });
@@ -24,6 +24,17 @@ export default function SwapSheet({ isOpen, currentId, exclude = [], onSelect, o
           ? `Other ways to train ${MUSCLE_LABEL[current.muscleGroup] ?? current.muscleGroup}, different equipment first.`
           : 'Pick a replacement.'}
       </p>
+      {/* Sets already logged belong to the lift that was done — say so before
+          the tap, not after. */}
+      {loggedSets > 0 && (
+        <p
+          className="mb-3 rounded-xl px-3 py-2 font-sans text-xs"
+          style={{ background: 'var(--accent-wash)', color: 'var(--color-text-primary)' }}
+        >
+          Your {loggedSets} logged set{loggedSets === 1 ? '' : 's'} stay with {current?.name ?? 'this exercise'}; the
+          new one is added right after it.
+        </p>
+      )}
 
       {alternatives.length === 0 ? (
         <p className="py-6 text-center font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>

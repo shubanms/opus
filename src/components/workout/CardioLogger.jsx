@@ -7,6 +7,7 @@ import { useCurrentBodyweight } from '../../hooks/useProgress.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
 import { treadmillKcal, metKcal, distanceKm } from '../../utils/calories.js';
+import { cleanWeightInput } from '../../utils/loadStep.js';
 
 const KMH_PER_MPH = 1.60934;
 const MI_PER_KM = 0.621371;
@@ -14,8 +15,12 @@ const MI_PER_KM = 0.621371;
 // Logger for cardio exercises: log a bout by time (+ speed & incline for
 // treadmill-style) and it computes distance + calories. Speed/distance follow
 // the user's unit setting (kg → km/h·km, lbs → mph·mi).
-export default function CardioLogger({ exerciseId, onLogged }) {
-  const { activeWorkout, logSet, removeSet } = useWorkoutStore();
+// Minutes, speed, incline: unsigned decimals (a decimal comma reads as the point).
+const cleanDecimal = (text) => cleanWeightInput(text);
+
+export default function CardioLogger({ exerciseId, onLogged, onRemove }) {
+  const activeWorkout = useWorkoutStore((s) => s.activeWorkout);
+  const logSet = useWorkoutStore((s) => s.logSet);
   const unit = useSettingsStore((s) => s.unit);
   const exercise = activeWorkout?.exercises.find((e) => e.exerciseId === exerciseId);
   const meta = useExercise(exerciseId);
@@ -50,7 +55,7 @@ export default function CardioLogger({ exerciseId, onLogged }) {
 
   function handleLog() {
     if (!canLog) return;
-    logSet(exerciseId, {
+    const logged = logSet(exerciseId, {
       isWarmup: false,
       isCardio: true,
       durationSec: Math.round(minutes * 60),
@@ -62,8 +67,9 @@ export default function CardioLogger({ exerciseId, onLogged }) {
       reps: 0,
       bonusXp: Math.round(minutes), // cardio earns XP by the minute
     });
+    if (!logged) return;
     haptic('tap'); playChime('tick');
-    onLogged?.();
+    onLogged?.(logged);
     setMins(''); setSpeed(''); setIncline('');
   }
 
@@ -71,7 +77,7 @@ export default function CardioLogger({ exerciseId, onLogged }) {
     <div className="mt-3">
       {/* Logged bouts */}
       {exercise.sets.map((s) => (
-        <div key={s.setNumber} className="mb-1 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-ivory)' }}>
+        <div key={s.uid ?? `n${s.setNumber}`} className="mb-1 flex items-center gap-2 rounded-xl py-1 pl-3 pr-1" style={{ background: 'var(--color-ivory)' }}>
           <Flame size={13} style={{ color: 'var(--color-ember)', flexShrink: 0 }} />
           <span className="flex-1 font-mono text-sm" style={{ color: 'var(--color-text-primary)' }}>
             {Math.round((s.durationSec || 0) / 60)} min
@@ -80,8 +86,8 @@ export default function CardioLogger({ exerciseId, onLogged }) {
             {s.distanceKm ? ` · ${showDist(s.distanceKm)}` : ''}
           </span>
           <span className="font-mono text-xs font-semibold" style={{ color: 'var(--color-gold)' }}>{s.calories} kcal</span>
-          <button onClick={() => removeSet(exerciseId, s.setNumber)} aria-label="Remove bout">
-            <Trash2 size={13} style={{ color: 'var(--color-ash)' }} />
+          <button type="button" onClick={() => onRemove?.(s.setNumber)} aria-label={`Remove bout ${s.setNumber}`} className="flex h-10 w-10 shrink-0 items-center justify-center">
+            <Trash2 size={15} style={{ color: 'var(--color-ash)' }} />
           </button>
         </div>
       ))}
@@ -90,25 +96,25 @@ export default function CardioLogger({ exerciseId, onLogged }) {
       <div className="mt-2 flex items-end gap-1.5">
         <label className="min-w-0 flex-1">
           <span className="mb-1 block font-sans text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>Minutes</span>
-          <input value={mins} onChange={(e) => setMins(e.target.value)} placeholder="min" type="number" inputMode="decimal"
-            className="w-full rounded-xl px-3 py-2.5 font-mono text-sm outline-none" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }} />
+          <input value={mins} onChange={(e) => setMins(cleanDecimal(e.target.value))} placeholder="min" type="text" inputMode="decimal" autoComplete="off"
+            className="h-11 w-full rounded-xl px-3 font-mono text-sm outline-none" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }} />
         </label>
         {isTreadmill && (
           <>
             <label className="min-w-0 flex-1">
               <span className="mb-1 block font-sans text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>Speed ({speedUnit})</span>
-              <input value={speed} onChange={(e) => setSpeed(e.target.value)} placeholder={speedUnit} type="number" inputMode="decimal"
-                className="w-full rounded-xl px-3 py-2.5 font-mono text-sm outline-none" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }} />
+              <input value={speed} onChange={(e) => setSpeed(cleanDecimal(e.target.value))} placeholder={speedUnit} type="text" inputMode="decimal" autoComplete="off"
+                className="h-11 w-full rounded-xl px-3 font-mono text-sm outline-none" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }} />
             </label>
             <label className="min-w-0 flex-1">
               <span className="mb-1 block font-sans text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>Incline %</span>
-              <input value={incline} onChange={(e) => setIncline(e.target.value)} placeholder="0" type="number" inputMode="decimal"
-                className="w-full rounded-xl px-3 py-2.5 font-mono text-sm outline-none" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }} />
+              <input value={incline} onChange={(e) => setIncline(cleanDecimal(e.target.value))} placeholder="0" type="text" inputMode="decimal" autoComplete="off"
+                className="h-11 w-full rounded-xl px-3 font-mono text-sm outline-none" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }} />
             </label>
           </>
         )}
-        <button onClick={handleLog} disabled={!canLog} aria-label="Log cardio bout"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+        <button type="button" onClick={handleLog} disabled={!canLog} aria-label="Log cardio bout"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: canLog ? 1 : 0.35 }}>
           <Plus size={18} strokeWidth={2.5} />
         </button>
