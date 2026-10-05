@@ -2,7 +2,7 @@ import { Swords, Check, Target } from 'lucide-react';
 import { todaysDungeon, affixEffects, dungeonObjective } from '../../utils/dungeon.js';
 import { generateRoutine, makeRng } from '../../utils/routineGenerator.js';
 import { hashSeed } from '../../utils/crit.js';
-import { todayKey } from '../../utils/dateKey.js';
+import { useTodayKey } from '../../hooks/useTodayKey.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import { useExercises } from '../../hooks/useExercises.js';
 import useWorkoutStore from '../../store/workoutStore.js';
@@ -28,7 +28,9 @@ export default function DailyDungeonCard() {
   const startDungeon = useWorkoutStore((s) => s.startDungeon);
   const lastDungeonClaim = useSettingsStore((s) => s.lastDungeonClaim);
 
-  const today = todayKey();
+  // Re-renders at midnight: a card left open overnight kept offering
+  // yesterday's dungeon, already marked cleared.
+  const today = useTodayKey();
   const dungeon = todaysDungeon(today);
   const fx = affixEffects(dungeon.affixes);
   const objective = dungeonObjective(dungeon);
@@ -87,6 +89,7 @@ export default function DailyDungeonCard() {
       </div>
 
       <button
+        type="button"
         onClick={enter}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 font-sans text-sm font-semibold"
         style={{ background: cleared ? 'var(--color-ivory)' : 'var(--color-gold)', color: cleared ? 'var(--color-text-primary)' : 'var(--color-obsidian)' }}

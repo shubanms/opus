@@ -1,87 +1,62 @@
-import { useState, useEffect } from 'react';
 import { Footprints, Droplet } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
-import { logActivity } from '../../utils/healthActions.js';
+import { ACTIVITY_FIELDS } from '../../utils/health.js';
+import { useDayEntry } from '../../hooks/useDayEntry.js';
+import { useTodayKey } from '../../hooks/useTodayKey.js';
+import { useHaptics } from '../../hooks/useHaptics.js';
+import { playChime } from '../../utils/sound.js';
+import { DateRow, NumberRow, SaveButton } from './FormRows.jsx';
 
-// Add or edit a single day's steps + water. Editing keeps the date fixed
-// (the daily log is keyed by date); adding defaults to today but any past
-// date can be backfilled.
-export default function ActivityForm({ isOpen, entry, onClose }) {
-  const today = new Date().toISOString().slice(0, 10);
-  const [date, setDate] = useState(today);
-  const [steps, setSteps] = useState('');
-  const [water, setWater] = useState('');
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setDate(entry?.date ?? today);
-    setSteps(entry?.steps != null ? String(entry.steps) : '');
-    setWater(entry?.water != null ? String(entry.water) : '');
-  }, [isOpen, entry]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const editing = !!entry;
+// Add or correct a single day's steps + water. Opens on `date` (today by
+// default) prefilled with that day's row; a blank field is left as it was
+// rather than saved as zero. Steps take "8,000" or "8k" from a number pad.
+export default function ActivityForm({ isOpen, onClose, date: initialDate }) {
+  const today = useTodayKey();
+  const haptic = useHaptics();
+  const entry = useDayEntry({ kind: 'activity', isOpen, initialDate, fields: ACTIVITY_FIELDS });
 
   async function save() {
-    await logActivity({
-      date,
-      steps: steps === '' ? 0 : Math.max(0, Number.parseInt(steps) || 0),
-      water: water === '' ? 0 : Math.max(0, Number.parseInt(water) || 0),
-    });
+    if (!(await entry.save())) {
+      haptic('tap');
+      return;
+    }
+    haptic('success');
+    playChime('success');
     onClose();
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Edit activity' : 'Log activity'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={entry.original ? 'Edit activity' : 'Log activity'}>
+      <DateRow value={entry.date} max={today} onChange={entry.setDate} existing={!!entry.original} />
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
-          <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Date</span>
-          <input
-            type="date"
-            value={date}
-            max={today}
-            disabled={editing}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg px-2 py-1.5 font-mono text-sm outline-none"
-            style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)', opacity: editing ? 0.6 : 1 }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
-          <span className="flex items-center gap-2 font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>
-            <Footprints size={15} style={{ color: 'var(--color-gold)' }} /> Steps
-          </span>
-          <input
-            type="number" inputMode="numeric"
-            value={steps}
-            onChange={(e) => setSteps(e.target.value)}
-            placeholder="0"
-            className="w-24 rounded-lg px-2 py-1.5 text-right font-mono text-sm outline-none"
-            style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
-          <span className="flex items-center gap-2 font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>
-            <Droplet size={15} style={{ color: 'var(--color-sage)' }} /> Water (glasses)
-          </span>
-          <input
-            type="number" inputMode="numeric"
-            value={water}
-            onChange={(e) => setWater(e.target.value)}
-            placeholder="0"
-            className="w-24 rounded-lg px-2 py-1.5 text-right font-mono text-sm outline-none"
-            style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
-          />
-        </div>
+        <NumberRow
+          label="Steps"
+          icon={Footprints}
+          iconColor="var(--color-gold)"
+          inputMode="numeric"
+          placeholder="0"
+          value={entry.form.steps}
+          onChange={(v) => entry.setField('steps', v)}
+          onBlur={() => entry.touch('steps')}
+          error={entry.errors.steps}
+        />
+        <NumberRow
+          label="Water (glasses)"
+          icon={Droplet}
+          iconColor="var(--color-sage)"
+          inputMode="numeric"
+          placeholder="0"
+          value={entry.form.water}
+          onChange={(v) => entry.setField('water', v)}
+          onBlur={() => entry.touch('water')}
+          error={entry.errors.water}
+        />
       </div>
-
-      <button
+      <SaveButton
         onClick={save}
-        className="mt-4 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
-      >
-        {editing ? 'Save changes' : 'Save'}
-      </button>
+        enabled={entry.changed || entry.hasErrors}
+        label={entry.original ? 'Save changes' : 'Save'}
+      />
     </Modal>
   );
 }

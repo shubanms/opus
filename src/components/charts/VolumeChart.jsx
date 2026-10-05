@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import ChartFrame from './ChartFrame.jsx';
 import { m, useMotionEnabled, useReducedMotion } from '../../motion/index.jsx';
-import { roundedTopRect } from '../../utils/chartMath.js';
+import { preciseNumber, roundedTopRect } from '../../utils/chartMath.js';
 
 // Tonnage per week or per session, and calories on the same footing.
 //
@@ -19,7 +19,7 @@ export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exerc
   const reduced = useReducedMotion();
   const animate = effects && !reduced;
 
-  const format = (v) => `${v.toLocaleString()} ${unit}`;
+  const format = (v) => `${preciseNumber(v)} ${unit}`;
 
   return (
     <ChartFrame

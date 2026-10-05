@@ -67,3 +67,34 @@ describe('buildWrapped', () => {
     expect(w.topLift).toBeNull();
   });
 });
+
+describe('calendar days, in any timezone', () => {
+  // Run under UTC, Asia/Kolkata and America/Los_Angeles. `new Date('2027-01-01')`
+  // is New Year's Eve evening in Los Angeles, which is where these broke.
+  const ny = { id: 1, date: '2027-01-01', status: 'completed', totalVolume: 1000, duration: 3600 }; // a Friday
+
+  it('counts a 1 January session in its own year and month', () => {
+    expect(buildWrapped([ny], [], [], yearRange('2027')).sessions).toBe(1);
+    expect(buildWrapped([ny], [], [], yearRange('2026')).sessions).toBe(0);
+    expect(buildWrapped([ny], [], [], monthRange('2027-01')).sessions).toBe(1);
+  });
+
+  it('names the weekday the session was actually on', () => {
+    const fridays = [ny, { ...ny, id: 2, date: '2027-01-08' }, { ...ny, id: 3, date: '2027-01-04' }]; // Fri, Fri, Mon
+    expect(buildWrapped(fridays, [], [], monthRange('2027-01')).busiestDay).toBe('Fri');
+  });
+
+  it('starts the period list at the month of the first session', () => {
+    const p = availablePeriods([{ date: '2026-03-01' }], new Date(2026, 4, 15, 12));
+    expect(p.months.map((m) => m.key)).toEqual(['2026-05', '2026-04', '2026-03']);
+  });
+
+  it('buckets the sparkline by local Monday', () => {
+    const ws = [
+      { id: 1, date: '2026-05-04', status: 'completed', totalVolume: 100 }, // Mon
+      { id: 2, date: '2026-05-10', status: 'completed', totalVolume: 50 },  // Sun, same week
+      { id: 3, date: '2026-05-11', status: 'completed', totalVolume: 70 },  // next Mon
+    ];
+    expect(buildWrapped(ws, [], [], monthRange('2026-05')).series).toEqual([150, 70]);
+  });
+});

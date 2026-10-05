@@ -1,64 +1,73 @@
-import { useState } from 'react';
 import { Star } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
-import { logSleep } from '../../utils/healthActions.js';
+import { SLEEP_FIELDS } from '../../utils/health.js';
+import { useDayEntry } from '../../hooks/useDayEntry.js';
+import { useTodayKey } from '../../hooks/useTodayKey.js';
+import { useHaptics } from '../../hooks/useHaptics.js';
+import { playChime } from '../../utils/sound.js';
+import { DateRow, NumberRow, SaveButton } from './FormRows.jsx';
 
-export default function SleepForm({ isOpen, onClose }) {
-  const [hours, setHours] = useState('');
-  const [quality, setQuality] = useState(0);
+// Log or correct one night's sleep. Prefilled with the chosen day's entry, so
+// coming back to add a star rating no longer wipes the hours.
+export default function SleepForm({ isOpen, onClose, date: initialDate }) {
+  const today = useTodayKey();
+  const haptic = useHaptics();
+  const entry = useDayEntry({ kind: 'sleep', isOpen, initialDate, fields: SLEEP_FIELDS });
+  const quality = Number(entry.form.quality) || 0;
+
+  function rate(n) {
+    haptic('tap');
+    // Tapping the current rating again clears it.
+    entry.setField('quality', n === quality ? '' : String(n));
+  }
 
   async function save() {
-    await logSleep({
-      date: new Date().toISOString().slice(0, 10),
-      hours: hours === '' ? null : Number(hours),
-      quality,
-    });
-    setHours('');
-    setQuality(0);
+    if (!(await entry.save())) {
+      haptic('tap');
+      return;
+    }
+    haptic('success');
+    playChime('success');
     onClose();
   }
 
-  const canSave = hours !== '' || quality > 0;
-
   return (
-    <Modal isOpen={isOpen} onClose={() => { setHours(''); setQuality(0); onClose(); }} title="Log sleep">
-      <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Hours slept</span>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            inputMode="decimal"
-            value={hours}
-            onChange={(e) => setHours(e.target.value)}
-            placeholder="—"
-            className="w-20 rounded-lg px-2 py-1.5 text-right font-mono text-sm outline-none"
-            style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
-          />
-          <span className="w-6 font-sans text-xs" style={{ color: 'var(--color-ash)' }}>h</span>
-        </div>
-      </div>
+    <Modal isOpen={isOpen} onClose={onClose} title={entry.original ? 'Edit sleep' : 'Log sleep'}>
+      <DateRow value={entry.date} max={today} onChange={entry.setDate} existing={!!entry.original} />
+      <NumberRow
+        label="Hours slept"
+        unit="h"
+        value={entry.form.hours}
+        onChange={(v) => entry.setField('hours', v)}
+        onBlur={() => entry.touch('hours')}
+        error={entry.errors.hours}
+      />
 
-      <p className="mb-2 mt-4 font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Quality</p>
-      <div className="flex gap-2">
+      <p className="mb-1 mt-4 font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Quality</p>
+      <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
-          <button key={n} onClick={() => setQuality(n)} aria-label={`${n} stars`}>
+          <button
+            type="button"
+            key={n}
+            onClick={() => rate(n)}
+            aria-label={`${n} star${n === 1 ? '' : 's'}`}
+            aria-pressed={n <= quality}
+            className="flex h-11 w-11 items-center justify-center rounded-xl"
+          >
             <Star
               size={28}
               fill={n <= quality ? 'var(--color-gold)' : 'none'}
-              style={{ color: n <= quality ? 'var(--color-gold)' : 'var(--color-ash)' }}
+              style={{ color: n <= quality ? 'var(--color-gold)' : 'var(--color-ash)', transition: 'color 160ms, fill 160ms' }}
             />
           </button>
         ))}
       </div>
 
-      <button
+      <SaveButton
         onClick={save}
-        disabled={!canSave}
-        className="mt-5 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: canSave ? 1 : 0.35 }}
-      >
-        Save
-      </button>
+        enabled={entry.changed || entry.hasErrors}
+        label={entry.original ? 'Save changes' : 'Save'}
+      />
     </Modal>
   );
 }
