@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote, Pencil, SearchX } from 'lucide-react';
 import { useExercise, useExerciseNote } from '../hooks/useExercises.js';
-import { usePRs, useExerciseVolume, useExerciseOneRepMax } from '../hooks/useProgress.js';
+import { usePRs, useExerciseVolume, useExerciseOneRepMax, useExerciseBestOneRepMax } from '../hooks/useProgress.js';
+import { E1RM_MAX_REPS } from '../utils/oneRepMax.js';
+import { friendlyDate } from '../utils/dateKey.js';
 import { deleteCustomExercise, restoreCustomExercise, toggleFavorite, setExerciseColor } from '../utils/exerciseActions.js';
 import { deleteWithUndo } from '../utils/undoable.js';
 import { setExerciseNote } from '../utils/noteActions.js';
@@ -79,7 +81,10 @@ export default function ExerciseDetailPage() {
   const unit = useSettingsStore((s) => s.unit);
   const volume = volumeRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
   const e1rm = e1rmRaw.map((d) => ({ label: d.label, value: Math.round(toDisplay(d.value, unit)) }));
-  const bestE1rm = e1rmRaw.length ? Math.max(...e1rmRaw.map((d) => d.value)) : 0;
+  // All-time, not "the best of the last ten sessions" the chart happens to show
+  // — an old peak should not quietly disappear once it scrolls off the chart.
+  const bestE1rmRow = useExerciseBestOneRepMax(exerciseId);
+  const bestE1rm = bestE1rmRow?.value ?? (e1rmRaw.length ? Math.max(...e1rmRaw.map((d) => d.value)) : 0);
   const [demoUrl, setDemoUrl] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -280,11 +285,13 @@ export default function ExerciseDetailPage() {
           </div>
           <p className="mb-2 font-mono text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
             {Math.round(toDisplay(bestE1rm, unit))} {unitLabel(unit)}
-            <span className="ml-2 font-sans text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>best</span>
+            <span className="ml-2 font-sans text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>
+              best{bestE1rmRow?.date ? ` · ${toDisplay(bestE1rmRow.weight, unit)}×${bestE1rmRow.reps} on ${friendlyDate(bestE1rmRow.date)}` : ''}
+            </span>
           </p>
           <TrendChart data={e1rm} unit={unitLabel(unit)} empty="Log weighted sets to estimate." />
           <p className="mt-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            Epley estimate from your heaviest set each session.
+            Epley estimate from your best set of 1–{E1RM_MAX_REPS} reps each session — higher-rep sets overstate it.
           </p>
         </div>
       )}
