@@ -6,6 +6,7 @@ import { db } from './db/db.js';
 import useSettingsStore, { applyEffects } from './store/settingsStore.js';
 import { applyTheme } from './utils/theme.js';
 import { requestPersistence } from './utils/storage.js';
+import { initInstallPrompt } from './utils/installPrompt.js';
 import { updateStreakSync } from './utils/periodicSync.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import MotionProvider from './motion/index.jsx';
@@ -26,6 +27,10 @@ window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change',
 // would destroy the user's entire history. Fire-and-forget: it never prompts
 // and never throws, and onboarding asks again once the user has engaged.
 requestPersistence();
+
+// Chrome fires `beforeinstallprompt` once, early — catch it before React mounts
+// so Settings and Home can offer a real "Install" button (utils/installPrompt).
+initInstallPrompt();
 
 // Re-assert the streak nudge on every boot. It is registered per install and
 // the browser can drop it; re-registering is a no-op when it is already there.
