@@ -1,4 +1,4 @@
-import { daysBetween, shiftKey, todayKey } from './dateKey.js';
+import { daysBetween, parseKey, shiftKey, todayKey } from './dateKey.js';
 
 // Whether the training streak is actually still standing, right now.
 //
@@ -180,4 +180,58 @@ export function rescueOffer(profile, tokens = 0, today = todayKey(), state = nul
 export function graceFromOffer(offer) {
   if (!offer?.through || !offer.for) return null;
   return { through: offer.through, for: offer.for };
+}
+
+// ---------------------------------------------------------------------------
+// Personal best
+// ---------------------------------------------------------------------------
+
+/**
+ * The days a rescue bridged, from the profile's grace record.
+ *
+ * A day-streak rescue never invents a session — it moves the streak's anchor
+ * forward. So the bridged days are the ones strictly after the workout it was
+ * bought against, up to and including the day the grace runs through.
+ */
+export function graceDays(profile) {
+  const grace = profile?.streakGrace;
+  if (!grace?.for || !grace?.through || grace.through <= grace.for) return [];
+  const out = [];
+  for (let k = shiftKey(grace.for, 1); k && k <= grace.through && out.length <= MAX_RESCUE_DAYS; k = shiftKey(k, 1)) {
+    out.push(k);
+  }
+  return out;
+}
+
+/**
+ * The longest run of consecutive training days ever held.
+ *
+ * `bridged` are days bought back with rest tokens. They connect the sessions
+ * either side of them without counting as sessions themselves — exactly what
+ * the live day-streak does after a rescue, which lands you back on the brink
+ * with the same count rather than a bigger one. Without them a rescued streak
+ * would be remembered as two short ones the moment it ended.
+ *
+ * Walked by calendar key, so a 23-hour spring-forward day is still one day.
+ */
+export function bestDayRun(dates = [], bridged = []) {
+  const trained = [...new Set(dates ?? [])].filter((k) => parseKey(k)).sort();
+  if (!trained.length) return 0;
+  const bridge = new Set(bridged ?? []);
+
+  let best = 1;
+  let run = 1;
+  for (let i = 1; i < trained.length; i += 1) {
+    const gap = daysBetween(trained[i - 1], trained[i]);
+    let joined = gap === 1;
+    if (!joined && gap > 1 && gap - 1 <= bridge.size) {
+      joined = true;
+      for (let k = shiftKey(trained[i - 1], 1); k && k < trained[i]; k = shiftKey(k, 1)) {
+        if (!bridge.has(k)) { joined = false; break; }
+      }
+    }
+    run = joined ? run + 1 : 1;
+    if (run > best) best = run;
+  }
+  return best;
 }

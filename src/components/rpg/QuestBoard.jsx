@@ -6,6 +6,7 @@ import useSettingsStore from '../../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../../utils/units.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { playChime } from '../../utils/sound.js';
+import { useReducedMotion } from '../../motion/index.jsx';
 import Particles from '../fx/Particles.jsx';
 
 const ICONS = {
@@ -16,8 +17,13 @@ const ICONS = {
 export default function QuestBoard() {
   const { weekKey, quests } = useQuests();
   const unit = useSettingsStore((s) => s.unit);
+  const effects = useSettingsStore((s) => s.effects);
+  const reduced = useReducedMotion();
   const haptic = useHaptics();
   const [burst, setBurst] = useState(false);
+  // The claim button breathes to say "this is yours to take" — motion, so it is
+  // gated like every other animation. The gold fill already says it when still.
+  const pulse = effects && !reduced;
 
   if (!quests.length) return null;
 
@@ -69,9 +75,15 @@ export default function QuestBoard() {
                   </div>
                   {claimable ? (
                     <button
+                      type="button"
                       onClick={() => handleClaim(q)}
-                      className="shrink-0 rounded-lg px-3 py-1.5 font-sans text-xs font-semibold"
-                      style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', animation: 'goldPulse 2.6s var(--opus-ease-out) infinite' }}
+                      aria-label={`Claim ${q.title} for ${q.xp} XP`}
+                      className="min-h-9 shrink-0 rounded-lg px-3 py-1.5 font-sans text-xs font-semibold"
+                      style={{
+                        background: 'var(--color-gold)',
+                        color: 'var(--color-obsidian)',
+                        animation: pulse ? 'goldPulse 2.6s var(--opus-ease-out) infinite' : undefined,
+                      }}
                     >
                       +{q.xp} XP
                     </button>

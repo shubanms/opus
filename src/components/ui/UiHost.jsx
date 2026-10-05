@@ -24,10 +24,11 @@ function Toasts() {
             boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
           }}
         >
+          {/* The whole toast height dismisses it, not just the line of text. */}
           <button
             type="button"
             onClick={() => dismiss(t.id)}
-            className="flex-1 text-left font-sans text-sm"
+            className="-my-3 flex-1 py-3 text-left font-sans text-sm"
             style={{ color: 'inherit' }}
           >
             {t.message}
@@ -62,6 +63,7 @@ function ConfirmDialog() {
       )}
       <div className="flex gap-3">
         <button
+          type="button"
           onClick={() => resolve(false)}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
@@ -69,6 +71,7 @@ function ConfirmDialog() {
           {cancelLabel}
         </button>
         <button
+          type="button"
           onClick={() => resolve(true)}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
           style={{ background: danger ? 'var(--color-ember)' : 'var(--color-gold)', color: danger ? 'var(--color-text-inverse)' : 'var(--color-obsidian)' }}
@@ -106,6 +109,7 @@ function PromptDialog() {
       />
       <div className="mt-4 flex gap-3">
         <button
+          type="button"
           onClick={() => resolve(null)}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
@@ -113,6 +117,7 @@ function PromptDialog() {
           Cancel
         </button>
         <button
+          type="button"
           onClick={() => resolve(value.trim())}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}

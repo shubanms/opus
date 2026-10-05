@@ -3,7 +3,9 @@ import OpusMark from '../logo/OpusMark.jsx';
 import useUserStore from '../../store/userStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { logBodyStat } from '../../utils/healthActions.js';
-import { toKg, unitLabel } from '../../utils/units.js';
+import { unitLabel } from '../../utils/units.js';
+import { todayKey } from '../../utils/dateKey.js';
+import { defaultBar, parseAge, parseBar, parseBodyweight, parseHeight } from '../../utils/profileFields.js';
 import { useExercises } from '../../hooks/useExercises.js';
 import { createTemplate } from '../../utils/templateActions.js';
 import { makeRng } from '../../utils/routineGenerator.js';
@@ -36,7 +38,7 @@ export default function Onboarding() {
   const [height, setHeight] = useState('');
   const [sex, setSex] = useState(null);
   const [age, setAge] = useState('');
-  const [bar, setBar] = useState('20');
+  const [bar, setBar] = useState(String(defaultBar('kg')));
 
   // Week-plan step
   const [splitKey, setSplitKey] = useState('ppl');
@@ -47,14 +49,35 @@ export default function Onboarding() {
 
   const lbl = unitLabel(unit);
 
+  // The bar field is in the chosen unit. Switching to lbs left it at "20" —
+  // saved as a 20 lb (9 kg) bar, so every plate calculation was wrong — unless
+  // you noticed and retyped it. An untouched default follows the unit; a value
+  // you typed yourself is left alone.
+  function pickUnit(u) {
+    if (u === unit) return;
+    if (bar.trim() === '' || Number(bar) === defaultBar(unit)) setBar(String(defaultBar(u)));
+    setUnitLocal(u);
+  }
+
   async function saveProfile() {
     setUnit(unit);
-    const birthYear = age ? new Date().getFullYear() - Number(age) : null;
-    await updateProfile({ name: name.trim(), height: height ? Number(height) : null, sex, birthYear });
-    if (bodyweight) {
-      await logBodyStat({ date: new Date().toISOString().slice(0, 10), weight: toKg(bodyweight, unit) });
+    const ageField = parseAge(age);
+    const heightField = parseHeight(height);
+    await updateProfile({
+      name: name.trim(),
+      height: heightField.ok ? heightField.value : null,
+      sex,
+      birthYear: ageField.ok ? ageField.value : null,
+    });
+    const weight = parseBodyweight(bodyweight, unit);
+    if (weight.ok) {
+      // Today on the local calendar — the UTC date was "yesterday" for an
+      // early-morning sign-up east of Greenwich.
+      await logBodyStat({ date: todayKey(), weight: weight.value });
     }
-    setBarWeight(toKg(bar || 20, unit));
+    // A cleared or nonsense bar field means "the usual bar", never 0 kg.
+    const barField = parseBar(bar, unit);
+    setBarWeight(barField.ok ? barField.value : parseBar('', unit).value);
   }
 
   async function begin() {
@@ -98,7 +121,7 @@ export default function Onboarding() {
             {SPLIT_LIST.map((s) => {
               const on = s.key === splitKey;
               return (
-                <button key={s.key} onClick={() => pickSplit(s.key)} className="rounded-xl border px-4 py-3 text-left"
+                <button key={s.key} type="button" onClick={() => pickSplit(s.key)} aria-pressed={on} className="rounded-xl border px-4 py-3 text-left"
                   style={{ borderColor: on ? 'var(--color-gold)' : 'transparent', background: 'var(--color-stone)' }}>
                   <div className="flex items-center justify-between">
                     <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-inverse)' }}>{s.label}</span>
@@ -113,7 +136,7 @@ export default function Onboarding() {
           <span className={lblCls} style={{ color: 'var(--color-ash)', display: 'block' }}>Days per week</span>
           <div className="mt-2 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-stone)' }}>
             {split.days.map((d) => (
-              <button key={d} onClick={() => setDays(d)} className="flex-1 rounded-lg py-2 font-sans text-xs font-medium"
+              <button key={d} type="button" onClick={() => setDays(d)} aria-pressed={days === d} className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs font-medium"
                 style={{ background: days === d ? 'var(--color-gold)' : 'transparent', color: days === d ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
                 {d} days
               </button>
@@ -123,18 +146,18 @@ export default function Onboarding() {
           <span className={lblCls} style={{ color: 'var(--color-ash)', display: 'block' }}>Experience</span>
           <div className="mt-2 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-stone)' }}>
             {LEVELS.map((l) => (
-              <button key={l} onClick={() => setLevel(l)} className="flex-1 rounded-lg py-2 font-sans text-xs font-medium capitalize"
+              <button key={l} type="button" onClick={() => setLevel(l)} aria-pressed={level === l} className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs font-medium capitalize"
                 style={{ background: level === l ? 'var(--color-gold)' : 'transparent', color: level === l ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
                 {l}
               </button>
             ))}
           </div>
 
-          <button onClick={createWeek} disabled={busy} className="mt-8 w-full rounded-xl py-4 font-sans text-base font-semibold"
+          <button type="button" onClick={createWeek} disabled={busy} className="mt-8 w-full rounded-xl py-4 font-sans text-base font-semibold"
             style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: busy ? 0.5 : 1 }}>
             Create my week
           </button>
-          <button onClick={completeOnboarding} className="mt-2 mb-4 w-full py-2 font-sans text-sm font-medium" style={{ color: 'var(--color-ash)' }}>
+          <button type="button" onClick={completeOnboarding} className="mt-2 mb-4 min-h-11 w-full py-2 font-sans text-sm font-medium" style={{ color: 'var(--color-ash)' }}>
             Skip for now
           </button>
         </div>
@@ -153,41 +176,44 @@ export default function Onboarding() {
         <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-ash)' }}>Units</span>
         <div className="mt-2 flex overflow-hidden rounded-xl" style={{ background: 'var(--color-stone)' }}>
           {['kg', 'lbs'].map((u) => (
-            <button key={u} onClick={() => setUnitLocal(u)} className="flex-1 py-2.5 font-sans text-sm font-medium"
+            <button key={u} type="button" onClick={() => pickUnit(u)} aria-pressed={unit === u} className="min-h-11 flex-1 py-2.5 font-sans text-sm font-medium"
               style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
               {u}
             </button>
           ))}
         </div>
 
-        <label className={lblCls} style={{ color: 'var(--color-ash)' }}>Your name</label>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Athlete"
+        <label htmlFor="onb-name" className={lblCls} style={{ color: 'var(--color-ash)' }}>Your name</label>
+        <input id="onb-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Athlete"
           className="mt-2 w-full rounded-xl px-4 py-3 font-sans text-sm outline-none" style={field} />
 
         <div className="flex gap-3">
           <div className="flex-1">
-            <label className={lblCls} style={{ color: 'var(--color-ash)' }}>Bodyweight ({lbl})</label>
-            <input value={bodyweight} onChange={(e) => setBodyweight(e.target.value)} type="number" inputMode="decimal"
+            <label htmlFor="onb-weight" className={lblCls} style={{ color: 'var(--color-ash)' }}>Bodyweight ({lbl})</label>
+            <input id="onb-weight" value={bodyweight} onChange={(e) => setBodyweight(e.target.value)} type="number" inputMode="decimal" min="0"
               className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
           </div>
           <div className="flex-1">
-            <label className={lblCls} style={{ color: 'var(--color-ash)' }}>Height (cm)</label>
-            <input value={height} onChange={(e) => setHeight(e.target.value)} type="number" inputMode="decimal"
+            <label htmlFor="onb-height" className={lblCls} style={{ color: 'var(--color-ash)' }}>Height (cm)</label>
+            <input id="onb-height" value={height} onChange={(e) => setHeight(e.target.value)} type="number" inputMode="decimal" min="100" max="250"
               className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
           </div>
         </div>
 
         <div className="flex gap-3">
           <div className="flex-1">
-            <label className={lblCls} style={{ color: 'var(--color-ash)' }}>Age</label>
-            <input value={age} onChange={(e) => setAge(e.target.value)} type="number" inputMode="numeric"
+            <label htmlFor="onb-age" className={lblCls} style={{ color: 'var(--color-ash)' }}>Age</label>
+            <input id="onb-age" value={age} onChange={(e) => setAge(e.target.value)} type="number" inputMode="numeric" min="13" max="100"
               className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
           </div>
           <div className="flex-1">
-            <label className={lblCls} style={{ color: 'var(--color-ash)' }}>Sex</label>
+            <span className={lblCls} style={{ color: 'var(--color-ash)' }}>Sex</span>
+            {/* A second tap clears it: once picked, "prefer not to say" used to
+                be impossible to get back to. */}
             <div className="mt-2 flex gap-1">
               {SEXES.map((s) => (
-                <button key={s} onClick={() => setSex(s)} className="flex-1 rounded-lg py-2 font-sans text-xs"
+                <button key={s} type="button" onClick={() => setSex(sex === s ? null : s)} aria-pressed={sex === s} aria-label={s}
+                  className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs"
                   style={{ background: sex === s ? 'var(--color-gold)' : 'var(--color-stone)', color: sex === s ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
                   {s[0]}
                 </button>
@@ -196,11 +222,11 @@ export default function Onboarding() {
           </div>
         </div>
 
-        <label className={lblCls} style={{ color: 'var(--color-ash)' }}>Empty barbell weight ({lbl}) — for plate math</label>
-        <input value={bar} onChange={(e) => setBar(e.target.value)} type="number" inputMode="decimal"
+        <label htmlFor="onb-bar" className={lblCls} style={{ color: 'var(--color-ash)' }}>Empty barbell weight ({lbl}) — for plate math</label>
+        <input id="onb-bar" value={bar} onChange={(e) => setBar(e.target.value)} type="number" inputMode="decimal" min="0" placeholder={String(defaultBar(unit))}
           className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
 
-        <button onClick={begin} className="mt-8 mb-4 w-full rounded-xl py-4 font-sans text-base font-semibold"
+        <button type="button" onClick={begin} className="mt-8 mb-4 w-full rounded-xl py-4 font-sans text-base font-semibold"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}>
           Begin
         </button>

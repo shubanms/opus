@@ -76,3 +76,16 @@ describe('dungeonReward', () => {
     expect(dungeonReward({ ironReward: 150, affixes: [{ id: 'berserk' }] }, { prCount: 2 })).toBe(150 + 60);
   });
 });
+
+describe('dungeon names', () => {
+  it('never reuse a rank or a boss gate', async () => {
+    const { TITLES } = await import('./rpg.js');
+    const { BOSSES } = await import('./bosses.js');
+    const taken = new Set([...Object.values(TITLES), ...BOSSES.map((b) => b.title)]);
+    for (const t of DUNGEON_THEMES) {
+      expect(taken.has(t.name)).toBe(false);
+      expect(taken.has(t.boss)).toBe(false);
+    }
+    for (const a of AFFIXES) expect(taken.has(a.name)).toBe(false);
+  });
+});

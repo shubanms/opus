@@ -49,5 +49,10 @@ export function useEffectiveXp(profile) {
     lost,
     shieldActive,
     streakPenalty,
+    /**
+     * False while the boss stats load. Until then `level` is the uncapped one,
+     * so a screen about the cap itself should wait rather than flash it.
+     */
+    ready: bossStats !== null,
   };
 }

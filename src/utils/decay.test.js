@@ -9,6 +9,21 @@ describe('daysSince', () => {
     expect(daysSince('2026-05-20', NOW)).toBe(4);
     expect(daysSince('2026-06-01', NOW)).toBe(0); // future → 0
     expect(daysSince(null, NOW)).toBe(0);
+    expect(daysSince('garbage', NOW)).toBe(0);
+  });
+
+  it('counts the day after a spring-forward change as a day', () => {
+    // US clocks went forward on 2026-03-08 and the EU's on 2026-03-29: local
+    // midnight to local midnight is 23 hours, which used to floor to zero.
+    // Early morning is the worst case — the fewest hours past midnight.
+    expect(daysSince('2026-03-08', new Date(2026, 2, 9, 0, 30))).toBe(1);
+    expect(daysSince('2026-03-29', new Date(2026, 2, 30, 0, 30))).toBe(1);
+    expect(daysSince('2026-03-07', new Date(2026, 2, 9, 0, 30))).toBe(2);
+  });
+
+  it('does not count the long autumn day twice', () => {
+    expect(daysSince('2026-11-01', new Date(2026, 10, 2, 23, 30))).toBe(1);
+    expect(daysSince('2026-10-25', new Date(2026, 9, 26, 23, 30))).toBe(1);
   });
 });
 

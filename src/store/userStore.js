@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { db } from '../db/db.js';
 import { getLevelFromTotalXP, getTitle } from '../utils/rpg.js';
+import { todayKey } from '../utils/dateKey.js';
 
 // Shared in-flight init, so concurrent mounts can't each create a profile.
 let initPromise = null;
@@ -16,7 +17,6 @@ const DEFAULT_PROFILE = {
   title: 'First Rep',
   streak: 0,
   lastWorkoutDate: null,
-  joinDate: new Date().toISOString().slice(0, 10),
 };
 
 const useUserStore = create((set, get) => ({
@@ -35,7 +35,11 @@ const useUserStore = create((set, get) => ({
       try {
         let profile = await db.userProfile.get(1);
         if (!profile) {
-          await db.userProfile.put({ ...DEFAULT_PROFILE, id: 1 });
+          // Stamped when the profile is created, on the LOCAL calendar. It was a
+          // UTC date taken when this module loaded, so an evening sign-up in the
+          // Americas joined "tomorrow" and an early-morning one in India
+          // "yesterday".
+          await db.userProfile.put({ ...DEFAULT_PROFILE, joinDate: todayKey(), id: 1 });
           profile = await db.userProfile.get(1);
         }
         set({ profile, loaded: true });
