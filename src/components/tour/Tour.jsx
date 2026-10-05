@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, TrendingUp, Award, BookOpen, CalendarCheck, Activity, Share2, Palette } from 'lucide-react';
 import useSettingsStore from '../../store/settingsStore.js';
+import { useReducedMotion } from '../../motion/index.jsx';
 
 const STEPS = [
   { icon: Dumbbell, title: 'Log your workouts', body: 'Tap the center ➕ to start. Add exercises — reorder them or chain supersets — and log sets with the plate calculator, RPE and rest timer. Get interrupted? Your session is saved.' },
@@ -17,6 +18,8 @@ const STEPS = [
 
 export default function Tour() {
   const setTourSeen = useSettingsStore((s) => s.setTourSeen);
+  const effects = useSettingsStore((s) => s.effects);
+  const reduced = useReducedMotion();
   const navigate = useNavigate();
   const [i, setI] = useState(0);
 
@@ -36,8 +39,9 @@ export default function Tour() {
       style={{ background: 'var(--color-obsidian)' }}
     >
       <button
+        type="button"
         onClick={() => finish(false)}
-        className="absolute right-5 top-6 font-sans text-sm"
+        className="absolute right-2 top-3 flex min-h-11 min-w-11 items-center justify-center px-3 font-sans text-sm"
         style={{ color: 'var(--color-ash)' }}
       >
         Skip
@@ -50,7 +54,7 @@ export default function Tour() {
       >
         <div
           className="flex h-20 w-20 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.4s var(--opus-ease-out) infinite' }}
+          style={{ background: 'var(--color-gold)', animation: effects && !reduced ? 'goldPulse 2.4s var(--opus-ease-out) infinite' : undefined }}
         >
           <Icon size={34} style={{ color: 'var(--color-obsidian)' }} />
         </div>
@@ -81,6 +85,7 @@ export default function Tour() {
       <div className="mt-8 flex w-full max-w-xs gap-3">
         {last ? (
           <button
+            type="button"
             onClick={() => finish(false)}
             className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
             style={{ background: 'var(--color-stone)', color: 'var(--color-text-inverse)' }}
@@ -90,6 +95,7 @@ export default function Tour() {
         ) : (
           i > 0 && (
             <button
+              type="button"
               onClick={() => setI(i - 1)}
               className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
               style={{ background: 'var(--color-stone)', color: 'var(--color-text-inverse)' }}
@@ -99,6 +105,7 @@ export default function Tour() {
           )
         )}
         <button
+          type="button"
           onClick={() => (last ? finish(true) : setI(i + 1))}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
           style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
