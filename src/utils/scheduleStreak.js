@@ -103,8 +103,17 @@ export function scheduleStreak({ plan, dates, today = todayKey() } = {}) {
   }
   if (run > 0) {
     // The current window is still open, so nothing is lost yet — but the
-    // deadline is real and it is the end of this window.
-    return { count: run, state: STREAK.AT_RISK, lost: 0, nextDue: open?.slot ?? null };
+    // deadline is real and it is the end of this window. `deadline` is the
+    // last day that still counts, so a reminder can tell "your session is
+    // due" (the scheduled day) from "last chance" (the day before the next).
+    const following = open ? nextScheduled(open.slot, days) : null;
+    return {
+      count: run,
+      state: STREAK.AT_RISK,
+      lost: 0,
+      nextDue: open?.slot ?? null,
+      deadline: following ? shiftKey(following, -1) : null,
+    };
   }
 
   // The most recent closed window was missed. Collect every consecutive missed
@@ -122,4 +131,60 @@ export function scheduleStreak({ plan, dates, today = todayKey() } = {}) {
     missedSlots,
     nextDue: open?.slot ?? nextScheduled(today, days),
   };
+}
+
+/**
+ * The longest run of consecutive scheduled windows ever hit — the schedule
+ * streak's personal best.
+ *
+ * Same window rules as `scheduleStreak` (each scheduled day owns the days up to
+ * the next one; late counts, early belongs to the earlier window; two sessions
+ * in one window are one hit). Days bought back with rest tokens count as
+ * trained — pass them in with `dates`, exactly as the live streak does.
+ *
+ * The window that contains today is still open, so an unfilled one is not a
+ * miss: it neither extends nor ends the run before it. That is what keeps the
+ * best at or above the live count on every day of the week.
+ *
+ * Without this, "best streak" counted consecutive calendar days while the live
+ * streak counted sessions — so a Mon/Wed/Fri lifter on a seven-session streak
+ * had a best of 1, could never earn Week Warrior, and was sealed at level 20 by
+ * a boss gate their own plan made impossible to clear.
+ *
+ * Returns 0 when there is no plan (nothing to be schedule-aware about).
+ */
+export function bestScheduleRun({ plan, dates, today = todayKey() } = {}) {
+  const days = plan instanceof Set ? plan : new Set(plan ?? []);
+  if (!days.size) return 0;
+
+  const trained = [...new Set(dates ?? [])].filter((k) => parseKey(k)).sort();
+  if (!trained.length) return 0;
+
+  // Walk forward window by window from the one holding the first session, with
+  // a single pointer through the (sorted) dates — linear in history, however
+  // long it is. Stop after the window holding today, or the last session if the
+  // device clock is behind it.
+  const end = trained[trained.length - 1] > today ? trained[trained.length - 1] : today;
+  let cursor = scheduledOnOrBefore(trained[0], days);
+  let i = 0;
+  let run = 0;
+  let best = 0;
+  while (cursor && cursor <= end) {
+    const next = nextScheduled(cursor, days);
+    while (i < trained.length && trained[i] < cursor) i += 1;
+    let hit = false;
+    while (i < trained.length && (next === null || trained[i] < next)) {
+      hit = true;
+      i += 1;
+    }
+    const open = next === null || next > today;
+    if (hit) {
+      run += 1;
+      if (run > best) best = run;
+    } else if (!open) {
+      run = 0;
+    }
+    cursor = next;
+  }
+  return best;
 }

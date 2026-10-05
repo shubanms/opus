@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  STREAK, streakState, currentStreak, streakLabel,
-  effectiveLastDate, rescueOffer, graceFromOffer, MAX_RESCUE_DAYS,
-} from './streak.js';
+import { STREAK, streakState, currentStreak, streakLabel, effectiveLastDate, rescueOffer, graceFromOffer, MAX_RESCUE_DAYS, bestDayRun, graceDays } from './streak.js';
 
 const profile = (streak, lastWorkoutDate) => ({ streak, lastWorkoutDate });
 
@@ -244,5 +241,55 @@ describe('rescueOffer on a schedule', () => {
     const o = rescueOffer(profile(6, '2026-08-01'), 5, '2026-08-08', scheduled());
     expect(graceFromOffer(o)).toBe(null);
     expect(o.credited.length).toBe(1);
+  });
+});
+
+describe('graceDays', () => {
+  it('lists the days a rescue bridged, not the session it was bought against', () => {
+    expect(graceDays({ streakGrace: { for: '2026-08-03', through: '2026-08-05' } })).toEqual(['2026-08-04', '2026-08-05']);
+  });
+
+  it('is empty without a usable grace', () => {
+    expect(graceDays(null)).toEqual([]);
+    expect(graceDays({})).toEqual([]);
+    expect(graceDays({ streakGrace: { for: '2026-08-05', through: '2026-08-05' } })).toEqual([]);
+    expect(graceDays({ streakGrace: { for: '2026-08-05', through: '2026-08-01' } })).toEqual([]);
+    expect(graceDays({ streakGrace: { through: '2026-08-05' } })).toEqual([]);
+  });
+
+  it('never walks further than a rescue can reach', () => {
+    const far = graceDays({ streakGrace: { for: '2026-01-01', through: '2026-12-31' } });
+    expect(far.length).toBeLessThanOrEqual(MAX_RESCUE_DAYS + 1);
+  });
+});
+
+describe('bestDayRun', () => {
+  it('counts the longest run of consecutive days', () => {
+    expect(bestDayRun(['2026-08-01', '2026-08-02', '2026-08-03', '2026-08-05', '2026-08-06'])).toBe(3);
+  });
+
+  it('ignores order, duplicates and junk', () => {
+    expect(bestDayRun(['2026-08-03', '2026-08-01', '2026-08-02', '2026-08-02', null, 'nope'])).toBe(3);
+    expect(bestDayRun([])).toBe(0);
+    expect(bestDayRun(null)).toBe(0);
+  });
+
+  it('runs across a month end and a leap day', () => {
+    expect(bestDayRun(['2026-07-30', '2026-07-31', '2026-08-01'])).toBe(3);
+    expect(bestDayRun(['2028-02-28', '2028-02-29', '2028-03-01'])).toBe(3);
+  });
+
+  it('treats a spring-forward day as a day', () => {
+    // 23 hours between local midnights; flooring it once read as no gap at all.
+    expect(bestDayRun(['2026-03-07', '2026-03-08', '2026-03-09'])).toBe(3);
+    expect(bestDayRun(['2026-03-28', '2026-03-29', '2026-03-30'])).toBe(3);
+  });
+
+  it('joins a gap the rescue paid for, without counting the bridge itself', () => {
+    const dates = ['2026-08-01', '2026-08-02', '2026-08-05', '2026-08-06'];
+    expect(bestDayRun(dates)).toBe(2);
+    expect(bestDayRun(dates, ['2026-08-03', '2026-08-04'])).toBe(4);
+    // Half a bridge is no bridge.
+    expect(bestDayRun(dates, ['2026-08-03'])).toBe(2);
   });
 });

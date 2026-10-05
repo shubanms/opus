@@ -3,17 +3,20 @@
 // every device shows the same dungeon and it can't be re-rolled.
 import { hashSeed } from './crit.js';
 
+// Names here must not reuse a rank or a boss gate: "The Crucible" was both
+// today's dungeon and the level-30 gate, and "Iron Will" both an affix and the
+// level 21–25 rank. Ids are what the logic keys on; names are free to change.
 export const DUNGEON_THEMES = [
   { id: 'legs', name: 'Leg Day Labyrinth', group: 'Legs', boss: 'The Quad Colossus' },
   { id: 'push', name: 'Hall of Presses', group: 'Chest', boss: 'The Iron Warden' },
   { id: 'pull', name: 'Vault of Chains', group: 'Back', boss: 'The Lat Leviathan' },
   { id: 'arms', name: 'Gauntlet of Steel', group: 'Arms', boss: 'The Curl Fiend' },
   { id: 'shoulders', name: 'Atlas Ascent', group: 'Shoulders', boss: 'The Deltoid Titan' },
-  { id: 'full', name: 'The Crucible', group: 'Full Body', boss: 'The Ironmonger' },
+  { id: 'full', name: 'The Foundry', group: 'Full Body', boss: 'The Ironmonger' },
 ];
 
 export const AFFIXES = [
-  { id: 'ironwill', name: 'Iron Will', desc: '+20% XP for clearing the dungeon' },
+  { id: 'ironwill', name: 'Zeal', desc: '+20% XP for clearing the dungeon' },
   { id: 'volatile', name: 'Volatile', desc: 'Crit chance runs hot — more crit sets today' },
   { id: 'glass', name: 'Glass Cannon', desc: 'Double the Iron reward' },
   { id: 'endurance', name: 'Endurance Trial', desc: 'One extra set on every lift — and a longer clear' },
