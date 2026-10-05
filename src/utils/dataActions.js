@@ -1,8 +1,21 @@
 import { db } from '../db/db.js';
-import { setsToCsv } from './csv.js';
+import useSettingsStore from '../store/settingsStore.js';
+import { CSV_BOM, buildSetRows, setsToCsv } from './csv.js';
 import { toDisplay, unitLabel } from './units.js';
 import { buildIcs } from './ics.js';
-import { backupFilename, slimExercises } from './backup.js';
+import { todayKey } from './dateKey.js';
+import { healCatalogue } from './wger.js';
+import {
+  backupFilename,
+  inspectBackupText,
+  parseBackupText,
+  pickBackupPrefs,
+  prefsFromBackup,
+  rawDumpToBackup,
+  slimExercises,
+  snapshotsFromBackup,
+  validateBackup,
+} from './backup.js';
 
 function download(content, filename, type) {
   const blob = new Blob([content], { type });
@@ -18,8 +31,54 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
 
-// Wipes every local table and cached state. Caller should reload afterwards.
+const SNAPSHOTS_KEY = 'opus_snapshots';
+
+/**
+ * What a fresh install looks like to the settings store. Everything that marks
+ * "this device has been used" or holds spendable state goes back to zero;
+ * display preferences are left alone, since they are about to be cleared from
+ * storage anyway and only matter if something writes them back.
+ */
+const FIRST_RUN = {
+  onboarded: false,
+  tourSeen: false,
+  hadData: false,
+  lastKnownWorkouts: 0,
+  lastBackupAt: 0,
+  lastBackupSig: '',
+  coachMarksSeen: {},
+  recapDismissedWeek: '',
+  rescueDeclinedFor: null,
+  tokensSpent: 0,
+  tokensPurchased: 0,
+  shieldedLapseDate: null,
+  ironSpent: 0,
+  ownedCosmetics: [],
+  equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
+  dungeonIron: 0,
+  lastDungeonClaim: '',
+};
+
+/**
+ * Wipes every local table and cached state. Caller should reload afterwards.
+ *
+ * The in-memory stores are put back to first-run values FIRST. Clearing the
+ * tables wakes every live query; the wipe detector, seeing zero workouts,
+ * calls `noteData`, which persists the store — and a store still holding
+ * `onboarded: true, hadData: true` wrote them straight back over the cleared
+ * storage. The "reset" device then came back onboarded, with the "your history
+ * is missing" alarm.
+ */
 export async function wipeAllData() {
+  useSettingsStore.setState(FIRST_RUN);
+  try {
+    const { default: useWorkoutStore } = await import('../store/workoutStore.js');
+    // A session in progress would otherwise be written back by its own
+    // persistence the next time anything touched it.
+    useWorkoutStore.getState().discardWorkout();
+  } catch {
+    /* no live session store to clear */
+  }
   await Promise.all(db.tables.map((t) => t.clear()));
   try {
     localStorage.clear();
@@ -28,9 +87,12 @@ export async function wipeAllData() {
   }
 }
 
-// Downloads a JSON backup of every table.
-// Progress photos are large local-only blobs — never part of the portable backup.
-const EXPORT_SKIP = new Set(['photos']);
+// Tables that never travel in a backup. Progress photos are large local-only
+// blobs. `notifications` is this device's mirror of its notification settings
+// for the service worker, which also stamps `lastNudge` into it — so carrying
+// it changed the "has anything changed?" signature without any training, and
+// wrote a new weekly file for nothing.
+const EXPORT_SKIP = new Set(['photos', 'notifications']);
 
 /**
  * Everything worth keeping, as one object.
@@ -39,9 +101,10 @@ const EXPORT_SKIP = new Set(['photos']);
  * and decide there is nothing new to write — without that, a week where you
  * did not train still drops a file in Downloads.
  *
- * The stock exercise catalogue is dropped: it is re-seeded on first boot and
- * identical in every backup, so carrying it is 16 KB of the same 82 rows every
- * time. Custom exercises are the only ones that are actually yours to lose.
+ * Pristine stock exercises are dropped (the app puts them back at the same
+ * ids); every other exercise row is kept — see `backup.slimExercises`.
+ * `prefs` carries the settings and economy that live in localStorage, outside
+ * `data`, so it never moves the change signature.
  */
 export async function buildBackup() {
   const data = {};
@@ -50,7 +113,14 @@ export async function buildBackup() {
     data[t.name] = await t.toArray();
   }
   data.exercises = slimExercises(data.exercises);
-  return { app: 'OPUS', version: 1, exportedAt: new Date().toISOString(), data };
+  const prefs = pickBackupPrefs(useSettingsStore.getState());
+  try {
+    const snapshots = JSON.parse(localStorage.getItem(SNAPSHOTS_KEY) || 'null');
+    if (snapshots && typeof snapshots === 'object' && !Array.isArray(snapshots)) prefs.snapshots = snapshots;
+  } catch {
+    /* unreadable or unavailable — the backup is still the backup */
+  }
+  return { app: 'OPUS', version: 1, exportedAt: new Date().toISOString(), data, prefs };
 }
 
 /**
@@ -81,20 +151,26 @@ export async function exportData() {
  * Hand the backup to the OS share sheet — Drive, Keep, email, anywhere.
  *
  * Downloads survive "Delete browsing data" but not a lost phone. This is the
- * one path that puts a copy somewhere the device does not own. Returns false
- * where the API is missing (most desktops) so the caller can offer the
- * download instead of a dead button.
+ * one path that puts a copy somewhere the device does not own.
+ *
+ * Shared as `opus-backup-….txt`, `text/plain`: Chromium's Web Share takes an
+ * allowlist of file types and JSON is not on it, so the `.json` share was
+ * refused on every Android phone and silently became a download. Same JSON
+ * inside, and the importer reads both.
+ *
+ * Returns `{ outcome, payload }`: 'shared', 'cancelled' (the sheet was
+ * dismissed — do nothing), 'unsupported' (no Web Share here) or 'failed'.
  */
 export async function shareBackup() {
   const payload = await buildBackup();
-  const file = new File([serializeBackup(payload)], backupFilename(), { type: 'application/json' });
-  if (!navigator.canShare?.({ files: [file] })) return false;
+  const file = new File([serializeBackup(payload)], backupFilename(new Date(), { ext: 'txt' }), { type: 'text/plain' });
+  if (!navigator.canShare?.({ files: [file] })) return { outcome: 'unsupported', payload };
   try {
     await navigator.share({ files: [file], title: 'OPUS backup' });
-    return true;
-  } catch {
-    // Includes the user simply dismissing the sheet, which is not an error.
-    return false;
+    return { outcome: 'shared', payload };
+  } catch (err) {
+    // Dismissing the sheet is a choice, not an error to fall back from.
+    return { outcome: err?.name === 'AbortError' ? 'cancelled' : 'failed', payload };
   }
 }
 
@@ -113,24 +189,17 @@ export async function exportPlanIcs(hour = 18) {
   return true;
 }
 
-// Downloads a CSV of every logged set (joined with workout + exercise names).
+/**
+ * Downloads a CSV of every logged set, in the order it happened (see
+ * `csv.buildSetRows`), with cardio duration/distance/calories, and a BOM so
+ * Excel reads it as UTF-8.
+ */
 export async function exportSetsCsv(unit = 'kg') {
   const [sets, workouts, exercises] = await Promise.all([
     db.sets.toArray(), db.workouts.toArray(), db.exercises.toArray(),
   ]);
-  const wById = Object.fromEntries(workouts.map((w) => [w.id, w]));
-  const exById = Object.fromEntries(exercises.map((e) => [e.id, e.name]));
-  const rows = sets
-    .map((s) => {
-      const w = wById[s.workoutId] ?? {};
-      return {
-        date: w.date ?? '', workout: w.name ?? '', exercise: exById[s.exerciseId] ?? '',
-        setNumber: s.setNumber, weightKg: s.weight, reps: s.reps, rpe: s.rpe ?? '',
-        isWarmup: s.isWarmup, note: s.note ?? '',
-      };
-    })
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.setNumber ?? 0) - (b.setNumber ?? 0)));
-  download(setsToCsv(rows, unit), `opus-sets-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8');
+  const csv = setsToCsv(buildSetRows({ sets, workouts, exercises }), unit);
+  download(CSV_BOM + csv, `opus-sets-${todayKey()}.csv`, 'text/csv;charset=utf-8');
 }
 
 // Opens a clean, printable training report in a new window (Save as PDF from
@@ -180,17 +249,116 @@ export async function exportPdf(unit = 'kg') {
   setTimeout(() => win.print(), 350);
 }
 
-// Replaces all data from a backup. Caller should reload afterwards.
-export async function importData(jsonText) {
-  const parsed = typeof jsonText === 'string' ? JSON.parse(jsonText) : jsonText;
-  const data = parsed?.data ?? parsed;
-  if (!data || typeof data !== 'object') throw new Error('Invalid backup file');
-  // Keep local-only photos across an import (they're never in the backup).
-  await Promise.all(db.tables.filter((t) => !EXPORT_SKIP.has(t.name)).map((t) => t.clear()));
-  for (const t of db.tables) {
-    if (EXPORT_SKIP.has(t.name)) continue;
-    if (Array.isArray(data[t.name]) && data[t.name].length) {
-      await t.bulkAdd(data[t.name]);
-    }
+/**
+ * Look inside a backup file without restoring it, for a "restore this?"
+ * preview: `{ ok, error?, exportedAt, counts: { workouts, sets,
+ * customExercises, routines, … }, firstWorkout, lastWorkout, hasPrefs }`.
+ * Never throws, never touches the database.
+ */
+export function inspectBackup(text) {
+  return inspectBackupText(text);
+}
+
+/**
+ * Put a backup's settings back: into the in-memory store (and from there to
+ * localStorage), not straight into localStorage. The store persists itself on
+ * every change, so writing storage behind its back lasted only until the next
+ * `persist()` — which the wipe detector fires the moment the imported workouts
+ * appear. The caller reloads afterwards either way.
+ */
+function restorePrefs(prefs, { hadData }) {
+  try {
+    useSettingsStore.setState(prefsFromBackup(prefs, { hadData }));
+    useSettingsStore.getState().persist();
+    const snapshots = snapshotsFromBackup(prefs);
+    if (snapshots) localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(snapshots));
+  } catch (err) {
+    // The tables are already restored; settings are the lesser loss.
+    console.error('Restoring settings from the backup failed:', err);
   }
+}
+
+/**
+ * Replaces all data from a backup. Caller should reload afterwards.
+ *
+ * Throws, before touching anything, when the input is not an OPUS backup — it
+ * used to accept any JSON, and importing another app's file cleared every
+ * table and restored nothing. The replace itself is one transaction: if any of
+ * it fails, none of it happened.
+ *
+ * Ends by healing the exercise catalogue (stock rows back at their fixed ids,
+ * cardio machines rebuilt at the ids old slim backups' bouts point to), since
+ * a backup only carries the rows that are the user's.
+ */
+export async function importData(input) {
+  const parsed = parseBackupText(input);
+  if (!parsed.ok) throw new Error(parsed.error);
+  const backup = validateBackup(parsed.value);
+  if (!backup.ok) throw new Error(backup.error);
+  const { data, prefs } = backup;
+
+  const tables = db.tables.filter((t) => !EXPORT_SKIP.has(t.name));
+  await db.transaction('rw', tables, async () => {
+    // Local-only tables (photos, this device's notification mirror) are kept.
+    for (const t of tables) await t.clear();
+    for (const t of tables) {
+      const rows = data[t.name];
+      if (Array.isArray(rows) && rows.length) await t.bulkAdd(rows);
+    }
+    await healCatalogue();
+  });
+  restorePrefs(prefs, { hadData: data.workouts.length > 0 });
+}
+
+/**
+ * Read the database with the raw IndexedDB API — no Dexie, no version, so no
+ * upgrade can be triggered — for the recovery screen to save before it
+ * rebuilds. Resolves `{ version, stores: { name: rows[] } }`.
+ */
+export function readRawDatabase(name = 'OpusDB') {
+  return new Promise((resolve, reject) => {
+    let req;
+    try {
+      req = indexedDB.open(name);
+    } catch (err) {
+      reject(err);
+      return;
+    }
+    // Only fires when the database does not exist (it would be created
+    // empty): abort, so a rescue never leaves a blank database behind.
+    req.onupgradeneeded = () => {
+      req.transaction?.abort();
+    };
+    req.onerror = () => reject(req.error ?? new Error('Could not open the database'));
+    req.onsuccess = () => {
+      const idb = req.result;
+      const names = [...idb.objectStoreNames];
+      if (!names.length) {
+        idb.close();
+        resolve({ version: idb.version, stores: {} });
+        return;
+      }
+      const stores = {};
+      const tx = idb.transaction(names, 'readonly');
+      for (const store of names) {
+        const all = tx.objectStore(store).getAll();
+        all.onsuccess = () => { stores[store] = all.result; };
+      }
+      tx.oncomplete = () => { idb.close(); resolve({ version: idb.version, stores }); };
+      tx.onerror = () => { idb.close(); reject(tx.error); };
+      tx.onabort = () => { idb.close(); reject(tx.error ?? new Error('Read aborted')); };
+    };
+  });
+}
+
+/**
+ * Save whatever the database holds as a restorable file. The last thing to
+ * offer before "Rebuild database" deletes it all.
+ */
+export async function downloadRawDump() {
+  const dump = await readRawDatabase();
+  const backup = rawDumpToBackup(dump);
+  const rows = Object.values(backup.data).reduce((a, r) => a + r.length, 0);
+  download(JSON.stringify(backup), `opus-rescue-${todayKey()}.json`, 'application/json');
+  return { rows, workouts: backup.data.workouts.length };
 }

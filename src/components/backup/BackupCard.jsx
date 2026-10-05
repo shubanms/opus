@@ -33,6 +33,8 @@ export default function BackupCard() {
 
   async function send() {
     const how = await shareBackup();
+    // Closing the share sheet is a choice — no file, no toast.
+    if (how === 'cancelled') return;
     useUIStore.getState().showToast(
       how === 'shared' ? 'Backup sent' : 'Backup saved to Downloads',
       { type: 'success' }

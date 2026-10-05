@@ -11,7 +11,18 @@ import {
   looksWiped,
   shouldBackup,
   slimExercises,
+  parseBackupText,
+  validateBackup,
+  summarizeBackup,
+  inspectBackupText,
+  describeBackup,
+  pickBackupPrefs,
+  prefsFromBackup,
+  snapshotsFromBackup,
+  rawDumpToBackup,
+  BACKUP_PREF_KEYS,
 } from './backup.js';
+import { STOCK_BY_ID, CARDIO_EXERCISES, cardioRow } from './catalogue.js';
 
 const NOW = new Date(2026, 7, 14, 12, 0, 0).getTime();
 const daysAgo = (n) => NOW - n * 86400000;
@@ -124,11 +135,25 @@ describe('backupSignature', () => {
 });
 
 describe('slimExercises', () => {
-  it('keeps only the exercises the user made', () => {
-    // The stock 82 are re-seeded on first boot; carrying them is 16 KB of the
-    // same rows every single week.
-    const rows = [{ name: 'Bench Press', isCustom: false }, { name: 'Pec fly', isCustom: true }];
-    expect(slimExercises(rows)).toEqual([{ name: 'Pec fly', isCustom: true }]);
+  it('drops untouched stock rows and keeps the ones the user made', () => {
+    // The stock 74 come back at the same ids on their own; carrying them is
+    // the same rows every single week.
+    const rows = [{ ...STOCK_BY_ID.get(3) }, { id: 83, name: 'Pec fly', isCustom: true }];
+    expect(slimExercises(rows)).toEqual([{ id: 83, name: 'Pec fly', isCustom: true }]);
+  });
+
+  it('keeps the cardio machines — they have no fixed ids to come back to', () => {
+    // Dropping these is what orphaned every bout after a restore.
+    const cardio = CARDIO_EXERCISES.map((c, i) => cardioRow(c, 75 + i));
+    expect(slimExercises(cardio)).toHaveLength(8);
+  });
+
+  it('keeps a stock row the user starred, coloured or that is not the seed\'s', () => {
+    const starred = { ...STOCK_BY_ID.get(3), favorite: true };
+    const coloured = { ...STOCK_BY_ID.get(4), color: '#4FD8C4' };
+    const unstarred = { ...STOCK_BY_ID.get(5), favorite: false, color: null };
+    const strange = { id: 6, name: 'Something else', isCustom: false };
+    expect(slimExercises([starred, coloured, unstarred, strange])).toEqual([starred, coloured, strange]);
   });
 
   it('survives junk', () => {
@@ -183,5 +208,135 @@ describe('looksWiped', () => {
   it('says nothing before onboarding, where empty is the normal state', () => {
     expect(looksWiped({ onboarded: false, hadData: true, workouts: 0 })).toBe(false);
     expect(looksWiped({})).toBe(false);
+  });
+});
+
+describe('backupFilename for sharing', () => {
+  it('shares as .txt — Chromium refuses to share a .json file', () => {
+    expect(backupFilename(new Date(2026, 7, 14), { ext: 'txt' })).toBe('opus-backup-2026-08-14.txt');
+  });
+});
+
+const goodBackup = () => ({
+  app: 'OPUS',
+  version: 1,
+  exportedAt: '2026-09-30T10:00:00.000Z',
+  data: {
+    workouts: [{ id: 1, date: '2026-09-01' }, { id: 2, date: '2026-09-28' }],
+    sets: [{ id: 1 }, { id: 2 }, { id: 3 }],
+    exercises: [{ id: 83, isCustom: true }, { id: 75, isCustom: false }],
+    templates: [{ id: 1 }],
+  },
+  prefs: { unit: 'lbs' },
+});
+
+describe('parseBackupText', () => {
+  it('parses text, passes an object through, and survives a byte-order mark', () => {
+    expect(parseBackupText('{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
+    expect(parseBackupText({ a: 1 })).toEqual({ ok: true, value: { a: 1 } });
+    expect(parseBackupText(`${String.fromCharCode(0xfeff)}{"a":1}`).ok).toBe(true);
+  });
+
+  it('explains empty and unreadable files', () => {
+    expect(parseBackupText('').error).toMatch(/empty/);
+    expect(parseBackupText('not json').error).toMatch(/can't be read/);
+    expect(parseBackupText(null).ok).toBe(false);
+  });
+});
+
+describe('validateBackup', () => {
+  it('accepts an OPUS backup, prefs and all', () => {
+    const v = validateBackup(goodBackup());
+    expect(v.ok).toBe(true);
+    expect(v.prefs).toEqual({ unit: 'lbs' });
+  });
+
+  it('accepts an envelope without `app` if it plainly has a workout list', () => {
+    expect(validateBackup({ data: { workouts: [] } }).ok).toBe(true);
+  });
+
+  it('refuses another app\'s file before anything is touched', () => {
+    const v = validateBackup({ name: 'other-app', settings: { theme: 'dark' } });
+    expect(v.ok).toBe(false);
+    expect(v.error).toMatch(/isn't an OPUS backup/);
+    expect(v.error).toMatch(/Nothing was changed/);
+    expect(validateBackup([1, 2]).ok).toBe(false);
+    expect(validateBackup(null).ok).toBe(false);
+  });
+
+  it('refuses a damaged one', () => {
+    expect(validateBackup({ app: 'OPUS' }).error).toMatch(/no workout list/);
+    expect(validateBackup({ app: 'OPUS', data: { workouts: [], sets: 'x' } }).error).toMatch(/"sets"/);
+    expect(validateBackup({ app: 'OPUS', data: { workouts: [null] } }).ok).toBe(false);
+  });
+});
+
+describe('summarizeBackup / inspectBackupText / describeBackup', () => {
+  it('counts what a backup holds', () => {
+    const s = summarizeBackup(goodBackup());
+    expect(s.counts).toMatchObject({ workouts: 2, sets: 3, customExercises: 1, routines: 1, records: 0 });
+    expect(s).toMatchObject({ exportedAt: '2026-09-30T10:00:00.000Z', firstWorkout: '2026-09-01', lastWorkout: '2026-09-28', hasPrefs: true });
+  });
+
+  it('inspects text without throwing, either way', () => {
+    expect(inspectBackupText(JSON.stringify(goodBackup()))).toMatchObject({ ok: true, counts: { workouts: 2 } });
+    expect(inspectBackupText('{"x":1}')).toMatchObject({ ok: false, exportedAt: null, counts: null });
+    expect(inspectBackupText('{')).toMatchObject({ ok: false });
+  });
+
+  it('says it the way the restore prompt does', () => {
+    const now = new Date(2026, 9, 5);
+    const d = describeBackup(summarizeBackup(goodBackup()), now);
+    expect(d.title).toBe('Backup from 30 Sep');
+    expect(d.detail).toBe('2 workouts · 3 sets · 1 custom exercise · 1 routine');
+    expect(describeBackup({ counts: { workouts: 1, sets: 1 } }).title).toBe('Backup (date unknown)');
+    expect(describeBackup({ counts: { workouts: 1420, sets: 23180 } }).detail).toBe('1,420 workouts · 23,180 sets');
+  });
+});
+
+describe('backup prefs', () => {
+  it('carries only the allowlisted, well-formed settings', () => {
+    const state = {
+      unit: 'lbs', theme: 'dark', effects: false, ironSpent: 120, ownedCosmetics: ['a'], dungeonIron: 30,
+      lastBackupAt: 123, hadData: true, onboarded: true, coachMarksSeen: { home: true }, persist() {},
+    };
+    expect(pickBackupPrefs(state)).toEqual({ unit: 'lbs', theme: 'dark', effects: false, ironSpent: 120, ownedCosmetics: ['a'], dungeonIron: 30 });
+  });
+
+  it('skips values that would put the store in a state no screen expects', () => {
+    expect(pickBackupPrefs({ unit: 'stone', ironSpent: -5, restDuration: 0, ownedCosmetics: [1], equipped: [] })).toEqual({});
+  });
+
+  it('covers the economy and preferences that live only in localStorage', () => {
+    for (const key of ['unit', 'inventory', 'tokensSpent', 'tokensPurchased', 'shieldedLapseDate', 'ironSpent', 'ownedCosmetics', 'equipped', 'dungeonIron', 'lastDungeonClaim', 'autoBackup']) {
+      expect(BACKUP_PREF_KEYS).toContain(key);
+    }
+    expect(BACKUP_PREF_KEYS).not.toContain('lastBackupAt');
+    expect(BACKUP_PREF_KEYS).not.toContain('lastBackupSig');
+  });
+
+  it('a restored device is onboarded, and armed only if the backup had sessions', () => {
+    expect(prefsFromBackup({ unit: 'lbs' })).toEqual({ unit: 'lbs', onboarded: true, tourSeen: true, hadData: true });
+    expect(prefsFromBackup(null, { hadData: false })).toEqual({ onboarded: true, tourSeen: true });
+  });
+
+  it('snapshots ride along when present', () => {
+    expect(snapshotsFromBackup({ snapshots: { '2026-09': {} } })).toEqual({ '2026-09': {} });
+    expect(snapshotsFromBackup({})).toBeNull();
+    expect(snapshotsFromBackup(null)).toBeNull();
+  });
+});
+
+describe('rawDumpToBackup', () => {
+  it('wraps a raw database read in an envelope the importer accepts, minus photo blobs', () => {
+    const now = new Date('2026-10-05T10:00:00Z');
+    const out = rawDumpToBackup({ version: 90, stores: { workouts: [{ id: 1 }], photos: [{ id: 1 }], sets: [] } }, now);
+    expect(out).toMatchObject({ app: 'OPUS', version: 1, exportedAt: '2026-10-05T10:00:00.000Z', source: 'rescue', idbVersion: 90 });
+    expect(out.data).toEqual({ workouts: [{ id: 1 }], sets: [] });
+    expect(validateBackup(out).ok).toBe(true);
+  });
+
+  it('is still importable when the database was empty', () => {
+    expect(validateBackup(rawDumpToBackup({ stores: {} })).ok).toBe(true);
   });
 });
