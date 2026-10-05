@@ -156,10 +156,18 @@ svg * {
   transition: none;
 }
 
+/* Reduced motion stops things *moving*; it must not change where they *are*.
+   This used to be `* { transform: none !important }`, which also erased every
+   static transform in the app — the radar chart was drawn around its corner,
+   every chart lost its y-axis, progress rings started at 3 o'clock and the
+   Iron diamond became a square. Only the press-scale is motion. */
 @media (prefers-reduced-motion: reduce) {
   *,
-  button:active {
+  *::before,
+  *::after {
     transition: none !important;
+  }
+  button:active {
     transform: none !important;
   }
 }

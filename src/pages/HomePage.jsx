@@ -4,15 +4,11 @@ import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords, A
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
-import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../utils/rpg.js';
 import { sceneParams } from '../utils/ambient.js';
-import { decayInfo, streakBreakPenalty } from '../utils/decay.js';
 import { STREAK, rescueOffer, streakLabel } from '../utils/streak.js';
 import { useStreak } from '../hooks/useStreak.js';
-import { isShieldActive, shieldedDecay } from '../utils/streakShield.js';
 import { useRestTokens } from '../hooks/useRestTokens.js';
-import { cappedLevel, activeBoss } from '../utils/bosses.js';
-import { useBossStats } from '../hooks/useBosses.js';
+import { useEffectiveXp } from '../hooks/useEffectiveXp.js';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
 import { playChime } from '../utils/sound.js';
@@ -106,33 +102,23 @@ export default function HomePage() {
   const effects = useSettingsStore((s) => s.effects);
   const unit = useSettingsStore((s) => s.unit);
   const week = useWeeklyRecap();
-  const bossStats = useBossStats();
 
   // Streak shield / rest token. Tokens are derived from history (workouts +
   // claimed quests), so they're already earned; spending one waives the
   // streak-break penalty on the current lapse.
-  const shieldedLapseDate = useSettingsStore((s) => s.shieldedLapseDate);
   const spendShield = useSettingsStore((s) => s.spendShield);
   const declineRescue = useSettingsStore((s) => s.declineRescue);
   const shieldTokens = useRestTokens();
-  const rawDecay = decayInfo(profile ?? {});
-  const shieldActive = isShieldActive(shieldedLapseDate, profile?.lastWorkoutDate);
-  // Deliberately the STORED streak, not the live one: this is the penalty for
-  // the streak you *lost*, and the live count is 0 once it has broken — passing
-  // that here would silently zero the penalty and kill the rest-token mechanic.
-  const streakPenalty = streakBreakPenalty(rawDecay.days, profile?.streak ?? 0);
+  // Effective XP, level and title — shared with Profile and Progression so the
+  // shield and the boss-gate cap read the same everywhere (hooks/useEffectiveXp).
+  const { effectiveXp, rawDecay, shieldActive, streakPenalty, decaying, lost, rawLevel, prestige, level, boss, title } =
+    useEffectiveXp(profile);
   const streak = useStreak();
   // The offer itself lives in StreakRescueHost, app-wide. This is only the way
   // back to it after "let it go" — a lapse you dismissed once should still be
   // recoverable while it is still recoverable, and Home is where you look.
   const offer = rescueOffer(profile, shieldTokens);
-  const { effectiveXp, decaying, lost } = shieldedDecay(rawDecay, { active: shieldActive, streakPenalty, earnedXp: profile?.totalXp ?? 0 });
   const canShield = rawDecay.decaying && streakPenalty > 0 && !shieldActive && shieldTokens > 0;
-  const { level: rawLevel } = getXPProgress(effectiveXp);
-  const prestige = getPrestige(effectiveXp);
-  const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
-  const boss = bossStats ? activeBoss(rawLevel, bossStats) : null;
-  const title = prestige > 0 ? getRankLabel(effectiveXp) : getTitle(level);
 
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)').matches

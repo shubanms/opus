@@ -5,6 +5,7 @@ import { Clock, Zap, Layers, ChevronDown, RotateCcw, Flame, Trash2 } from 'lucid
 import { useWorkoutDetail, useShareData } from '../../hooks/useWorkout.js';
 import { deleteWorkout, restoreWorkout } from '../../utils/workoutActions.js';
 import { deleteWithUndo } from '../../utils/undoable.js';
+import { confirmReplaceSession } from '../../utils/sessionGuard.js';
 import { fmtVolume, toDisplay } from '../../utils/units.js';
 import { avgRest, avgRestAcross, formatRest } from '../../utils/restStats.js';
 import { setWorkoutNote, setWorkoutColor, setWorkoutName, setWorkoutTags } from '../../utils/noteActions.js';
@@ -35,6 +36,8 @@ export default function WorkoutCard({ workout }) {
 
   async function handleRepeat(e) {
     e.stopPropagation();
+    // Repeating used to overwrite a session in progress without asking.
+    if (!(await confirmReplaceSession(`“${workout.name || 'Workout'}” again`))) return;
     await repeatWorkout(workout.id);
     navigate('/workout');
   }

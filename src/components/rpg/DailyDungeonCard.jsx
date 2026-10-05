@@ -9,6 +9,7 @@ import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useNavigate } from 'react-router-dom';
 import { playChime } from '../../utils/sound.js';
+import { confirmReplaceSession } from '../../utils/sessionGuard.js';
 
 // Map a numeric level to the generator's difficulty band.
 function levelBand(level = 1) {
@@ -33,7 +34,10 @@ export default function DailyDungeonCard() {
   const objective = dungeonObjective(dungeon);
   const cleared = lastDungeonClaim === today;
 
-  function enter() {
+  async function enter() {
+    // The card stays on Home while a session is open, and entering used to
+    // overwrite that session — sets and all — without a word.
+    if (!(await confirmReplaceSession('the dungeon'))) return;
     const level = levelBand(profile?.level ?? 1);
     const rng = makeRng(Math.floor(hashSeed(dungeon.dateKey, 'gen') * 1e9));
     const slots = generateRoutine({ exercises: allExercises, groups: dungeon.muscles, level, rng });
