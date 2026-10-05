@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { assignTemplateToDay, clearDay } from '../../utils/templateActions.js';
+import { planByDay, WEEK_ORDER, DAY_SHORT } from '../../utils/routineDays.js';
+import { parseKey } from '../../utils/dateKey.js';
+import { useTodayKey } from '../../hooks/useTodayKey.js';
 
-const DAYS = [
-  { v: 1, l: 'Mon' }, { v: 2, l: 'Tue' }, { v: 3, l: 'Wed' }, { v: 4, l: 'Thu' },
-  { v: 5, l: 'Fri' }, { v: 6, l: 'Sat' }, { v: 0, l: 'Sun' },
-];
+const DAYS = WEEK_ORDER.map((v) => ({ v, l: DAY_SHORT[v] }));
 
 export default function WeeklyPlanner({ templates }) {
   const [selected, setSelected] = useState(null);
 
-  const byDay = {};
-  for (const t of templates) if (t.dayOfWeek != null) byDay[t.dayOfWeek] = t;
-
-  const todayDow = new Date().getDay();
+  // One routine per day, resolved the same way Home and the calendar export do.
+  const byDay = planByDay(templates);
+  const todayDow = parseKey(useTodayKey())?.getDay();
 
   async function assign(templateId) {
     await assignTemplateToDay(templateId, selected);
@@ -37,9 +36,12 @@ export default function WeeklyPlanner({ templates }) {
           const isToday = d.v === todayDow;
           return (
             <button
+              type="button"
               key={d.v}
               onClick={() => setSelected(active ? null : d.v)}
               className="rounded-xl px-0.5 py-2 text-center"
+              aria-label={`${d.l}: ${t ? t.name : 'rest'}`}
+              aria-pressed={active}
               style={{
                 background: active ? 'var(--color-gold)' : 'var(--color-chalk)',
                 border: isToday ? '1px solid var(--color-gold)' : '1px solid var(--color-ivory)',
@@ -67,15 +69,21 @@ export default function WeeklyPlanner({ templates }) {
           <div className="flex flex-col gap-1.5">
             {templates.map((t) => (
               <button
+                type="button"
                 key={t.id}
                 onClick={() => assign(t.id)}
                 className="rounded-lg px-3 py-2 text-left font-sans text-sm font-medium"
-                style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
+                style={{
+                  background: 'var(--color-chalk)',
+                  color: 'var(--color-text-primary)',
+                  outline: byDay[selected]?.id === t.id ? '1px solid var(--color-gold)' : 'none',
+                }}
               >
                 {t.name}
               </button>
             ))}
             <button
+              type="button"
               onClick={rest}
               className="rounded-lg px-3 py-2 text-left font-sans text-sm"
               style={{ color: 'var(--color-text-secondary)' }}

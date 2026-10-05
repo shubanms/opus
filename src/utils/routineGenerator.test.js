@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { makeRng, generateRoutine, pickForGroup, defaultCount, LEVEL_DEFAULTS, reshuffleRoutine } from './routineGenerator.js';
+import { makeRng, generateRoutine, pickForGroup, defaultCount, LEVEL_DEFAULTS, reshuffleRoutine, orderGroups, MUSCLE_PRIORITY } from './routineGenerator.js';
 
 // Small fixture pool. ids unique; muscleGroup + difficulty drive selection.
 const POOL = [
@@ -84,17 +84,56 @@ describe('reshuffleRoutine', () => {
     expect(out.find((s) => s.exerciseId === 1)).toBeTruthy();
     expect(changed(slots, out)).toBe(2);
   });
-  it('preserves targets', () => {
-    const out = reshuffleRoutine({ slots, intensity: 'full', pool: POOL, rng: makeRng(3) });
+  it('keeps sets/reps/rest but drops the old lift’s weight and misses on a swapped slot', () => {
+    const withState = slots.map((s) => ({ ...s, targetRest: 90, misses: 1, weightStep: 5 }));
+    const out = reshuffleRoutine({ slots: withState, intensity: 'full', pool: POOL, rng: makeRng(3) });
     out.forEach((s, i) => {
       expect(s.targetSets).toBe(slots[i].targetSets);
       expect(s.targetReps).toBe(slots[i].targetReps);
-      expect(s.targetWeight).toBe(slots[i].targetWeight);
+      expect(s.targetRest).toBe(90);
+      if (s.exerciseId !== slots[i].exerciseId) {
+        expect(s.targetWeight).toBeNull();
+        expect(s.misses).toBe(0);
+        expect(s.weightStep).toBeNull();
+      }
     });
+  });
+  it('leaves an unswapped (pinned) slot exactly as it was', () => {
+    const withState = slots.map((s) => ({ ...s, misses: 1 }));
+    const out = reshuffleRoutine({ slots: withState, intensity: 'full', pinnedIds: [1], pool: POOL, rng: makeRng(3) });
+    expect(out[0]).toEqual(withState[0]);
+    expect(out[0].targetWeight).toBe(40);
   });
   it('produces no duplicate exercises', () => {
     const out = reshuffleRoutine({ slots, intensity: 'full', pool: POOL, rng: makeRng(9) });
     const ids = out.map((s) => s.exerciseId);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe('orderGroups', () => {
+  it('fills big movers first, alternating lower / push / pull', () => {
+    expect(orderGroups(['chest', 'front-deltoids', 'triceps', 'upper-back', 'biceps', 'quadriceps', 'hamstring']))
+      .toEqual(['quadriceps', 'chest', 'upper-back', 'hamstring', 'front-deltoids', 'biceps', 'triceps']);
+  });
+  it('keeps unknown groups, last, in their given order, and drops duplicates', () => {
+    expect(orderGroups(['cardio', 'chest', 'mobility', 'chest'])).toEqual(['chest', 'cardio', 'mobility']);
+  });
+  it('ranks every muscle group exactly once', () => {
+    expect(new Set(MUSCLE_PRIORITY).size).toBe(15);
+  });
+});
+
+describe('generateRoutine across a whole body', () => {
+  const MUSCLES = MUSCLE_PRIORITY;
+  const pool = MUSCLES.flatMap((m, i) => [0, 1].map((k) => ({ id: i * 10 + k, muscleGroup: m, difficulty: 'beginner' })));
+  const groupOf = (id) => pool.find((e) => e.id === id).muscleGroup;
+  it('reaches the legs at every count from 4 to 8', () => {
+    const full = ['chest', 'front-deltoids', 'triceps', 'upper-back', 'lower-back', 'trapezius', 'back-deltoids', 'biceps', 'forearm', 'quadriceps', 'hamstring', 'gluteal', 'calves'];
+    for (let count = 4; count <= 8; count++) {
+      const r = generateRoutine({ exercises: pool, groups: full, level: 'beginner', count, rng: makeRng(count) });
+      const legs = r.filter((x) => ['quadriceps', 'hamstring', 'gluteal', 'calves'].includes(groupOf(x.exerciseId)));
+      expect(legs.length, `count ${count}`).toBeGreaterThanOrEqual(2);
+    }
   });
 });

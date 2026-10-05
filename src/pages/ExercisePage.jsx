@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Star } from 'lucide-react';
-import { useExercises } from '../hooks/useExercises.js';
+import { useExerciseList } from '../hooks/useExercises.js';
+import { queryWords } from '../utils/exerciseSearch.js';
+import { MUSCLE_LABEL } from '../utils/muscleTargets.js';
 import BodyPicker from '../components/exercise/BodyPicker.jsx';
 import ExerciseSearch from '../components/exercise/ExerciseSearch.jsx';
 import ExerciseList from '../components/exercise/ExerciseList.jsx';
@@ -14,18 +16,22 @@ export default function ExercisePage() {
   const [selectedMuscle, setSelectedMuscle] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  // A query of only spaces is no query (an Android keyboard leaves one behind).
+  const searching = queryWords(search).length > 0;
 
-  // When searching: ignore muscle filter so results span all groups
-  const all = useExercises({
-    muscleGroup: search ? null : selectedMuscle,
+  // When searching: ignore muscle filter so results span all groups.
+  // `undefined` while loading → the list shows a skeleton, not "No exercises".
+  const all = useExerciseList({
+    muscleGroup: searching ? null : selectedMuscle,
     search,
   });
-  const exercises = favoritesOnly ? all.filter((e) => e.favorite) : all;
+  const exercises = all && favoritesOnly ? all.filter((e) => e.favorite) : all;
+  const count = exercises ? exercises.length : '…';
 
   const subtitle =
-    selectedMuscle && !search
-      ? `${exercises.length} exercises · ${selectedMuscle.replace(/-/g, ' ')}`
-      : `${Array.isArray(exercises) ? exercises.length : '…'} exercises`;
+    selectedMuscle && !searching
+      ? `${count} exercises · ${MUSCLE_LABEL[selectedMuscle] ?? selectedMuscle.replace(/-/g, ' ')}`
+      : `${count} exercises`;
 
   return (
     <div className="px-5 pb-6 pt-6">
@@ -40,6 +46,7 @@ export default function ExercisePage() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => setShowForm(true)}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
           style={{ background: 'var(--color-obsidian)' }}
@@ -55,17 +62,19 @@ export default function ExercisePage() {
           <ExerciseSearch value={search} onChange={setSearch} />
         </div>
         <button
+          type="button"
           onClick={() => setFavoritesOnly((v) => !v)}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
           style={{ background: favoritesOnly ? 'var(--color-gold)' : 'var(--color-ivory)' }}
           aria-label="Show favorites only"
+          aria-pressed={favoritesOnly}
         >
           <Star size={18} fill={favoritesOnly ? 'var(--color-obsidian)' : 'none'} style={{ color: favoritesOnly ? 'var(--color-obsidian)' : 'var(--color-ash)' }} />
         </button>
       </div>
 
       {/* Muscle filter — compact, hidden while searching */}
-      {!search && (
+      {!searching && (
         <div className="mt-3">
           <div className="flex items-center justify-between">
             <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -73,6 +82,7 @@ export default function ExercisePage() {
             </span>
             {selectedMuscle && (
               <button
+                type="button"
                 onClick={() => setSelectedMuscle(null)}
                 className="font-sans text-xs font-medium"
                 style={{ color: 'var(--color-gold)' }}
@@ -95,7 +105,7 @@ export default function ExercisePage() {
           showArrow
           // Only the full catalogue gets letter headings; a search result is
           // short enough that they would be noise.
-          grouped={!search}
+          grouped={!searching}
         />
       </div>
 

@@ -26,11 +26,14 @@ export default function ExerciseSearch({ value, onChange, placeholder = 'Search 
         value={local}
         onChange={(e) => setLocal(e.target.value)}
         placeholder={placeholder}
+        aria-label={placeholder.replace(/…$/, '')}
+        enterKeyHint="search"
         className="w-full rounded-xl py-3 pl-9 pr-9 font-sans text-sm outline-none"
         style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
       />
       {local && (
         <button
+          type="button"
           onClick={clear}
           className="absolute right-3 top-1/2 -translate-y-1/2"
           aria-label="Clear search"

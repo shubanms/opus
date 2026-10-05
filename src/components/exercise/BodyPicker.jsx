@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Model from 'react-body-highlighter';
 import { Eye } from 'lucide-react';
+import { groupForRegion, regionsForGroup } from '../../utils/bodyMap.js';
 
 const ANTERIOR = [
   'chest', 'abs', 'obliques', 'biceps', 'forearm',
@@ -24,11 +25,15 @@ export default function BodyPicker({ selected, onSelect }) {
 
   const muscles = view === 'anterior' ? ANTERIOR : POSTERIOR;
   const modelData = selected
-    ? [{ name: selected, muscles: [selected], frequency: 3 }]
+    ? [{ name: selected, muscles: regionsForGroup(selected), frequency: 3 }]
     : [];
 
+  // The model has regions the catalogue doesn't (head, knees, soleus…):
+  // map them to the group that trains them, or ignore the tap.
   function handleModelClick({ muscle }) {
-    onSelect(selected === muscle ? null : muscle);
+    const group = groupForRegion(muscle);
+    if (!group) return;
+    onSelect(selected === group ? null : group);
   }
 
   return (
@@ -38,7 +43,9 @@ export default function BodyPicker({ selected, onSelect }) {
         <div className="flex flex-1 gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {Object.entries(LABEL).map(([key, label]) => (
             <button
+              type="button"
               key={key}
+              aria-pressed={selected === key}
               onClick={() => onSelect(selected === key ? null : key)}
               className="shrink-0 rounded-full px-3 py-1.5 font-sans text-xs font-medium"
               style={{
@@ -54,6 +61,7 @@ export default function BodyPicker({ selected, onSelect }) {
 
         {/* Toggle body model */}
         <button
+          type="button"
           onClick={() => setShowModel((v) => !v)}
           className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full"
           style={{ background: showModel ? 'var(--color-obsidian)' : 'var(--color-ivory)' }}
@@ -73,6 +81,7 @@ export default function BodyPicker({ selected, onSelect }) {
           >
             {['anterior', 'posterior'].map((v) => (
               <button
+                type="button"
                 key={v}
                 onClick={() => setView(v)}
                 className="flex-1 py-2 font-sans text-xs font-medium"
@@ -100,6 +109,7 @@ export default function BodyPicker({ selected, onSelect }) {
           <div className="mt-3 flex flex-wrap gap-2">
             {muscles.map((m) => (
               <button
+                type="button"
                 key={m}
                 onClick={() => onSelect(selected === m ? null : m)}
                 className="rounded-full px-3 py-1 font-sans text-xs font-medium"

@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote } from 'lucide-react';
+import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote, Pencil, SearchX } from 'lucide-react';
 import { useExercise, useExerciseNote } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume, useExerciseOneRepMax } from '../hooks/useProgress.js';
 import { deleteCustomExercise, restoreCustomExercise, toggleFavorite, setExerciseColor } from '../utils/exerciseActions.js';
 import { deleteWithUndo } from '../utils/undoable.js';
 import { setExerciseNote } from '../utils/noteActions.js';
+import { findDemoImage } from '../utils/exerciseDemo.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import VolumeChart from '../components/charts/VolumeChart.jsx';
 import TrendChart from '../components/charts/TrendChart.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
 import ColorPicker from '../components/ui/ColorPicker.jsx';
+import Modal from '../components/ui/Modal.jsx';
+import ExerciseForm from '../components/exercise/ExerciseForm.jsx';
+import ExerciseHistory from '../components/exercise/ExerciseHistory.jsx';
 
 const DIFFICULTY_COLOR = {
   beginner:     '#4FD8C4',
@@ -52,65 +56,77 @@ function PRCard({ prs, unit }) {
   );
 }
 
+function BackButton({ onClick }) {
+  return (
+    <button type="button" onClick={onClick} className="mb-5 flex min-h-10 items-center gap-2 pr-3">
+      <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
+      <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
+    </button>
+  );
+}
+
 export default function ExerciseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const exercise = useExercise(Number(id));
-  const prs = usePRs(Number(id));
-  const volumeRaw = useExerciseVolume(Number(id));
-  const e1rmRaw = useExerciseOneRepMax(Number(id));
-  const note = useExerciseNote(Number(id));
+  const exerciseId = Number(id);
+  // undefined while loading; null when there's no such exercise (deleted, or
+  // a stale link — Android's back button after deleting lands here).
+  const exercise = useExercise(exerciseId);
+  const prs = usePRs(exerciseId);
+  const volumeRaw = useExerciseVolume(exerciseId);
+  const e1rmRaw = useExerciseOneRepMax(exerciseId);
+  const note = useExerciseNote(exerciseId);
   const unit = useSettingsStore((s) => s.unit);
   const volume = volumeRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
   const e1rm = e1rmRaw.map((d) => ({ label: d.label, value: Math.round(toDisplay(d.value, unit)) }));
   const bestE1rm = e1rmRaw.length ? Math.max(...e1rmRaw.map((d) => d.value)) : 0;
   const [demoUrl, setDemoUrl] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
 
+  // "How to do it" picture from wger — best effort, silent when it can't.
   useEffect(() => {
+    setDemoUrl(null);
     if (!exercise?.name) return;
     const ctrl = new AbortController();
-    const abs = (u) => (u?.startsWith('/') ? `https://wger.de${u}` : u);
-
-    async function loadDemo() {
-      try {
-        const term = exercise.name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
-        const res = await fetch(
-          `https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(term)}&language=english&format=json`,
-          { signal: ctrl.signal }
-        );
-        const data = await res.json();
-        const top = data.suggestions?.[0]?.data;
-        if (!top) return;
-
-        // Search result image is a relative media path — make it absolute.
-        if (top.image) {
-          setDemoUrl(abs(top.image));
-          return;
-        }
-        // Fallback: look up the exercise's images by base id.
-        if (top.base_id) {
-          const r2 = await fetch(
-            `https://wger.de/api/v2/exerciseimage/?exercise_base=${top.base_id}&format=json`,
-            { signal: ctrl.signal }
-          );
-          const d2 = await r2.json();
-          const main = d2.results?.find((x) => x.is_main) ?? d2.results?.[0];
-          if (main?.image) setDemoUrl(abs(main.image));
-        }
-      } catch {
-        /* offline or not found — fall back to hiding the demo */
-      }
-    }
-
-    setDemoUrl(null);
-    loadDemo();
+    findDemoImage(exercise.name, { signal: ctrl.signal }).then((url) => {
+      if (!ctrl.signal.aborted && url) setDemoUrl(url);
+    });
     return () => ctrl.abort();
   }, [exercise?.name]);
 
-  if (!exercise) {
+  // Leave via the list, not history: going "back" from a dead link usually
+  // means going back to the page that deleted it.
+  const toList = () => navigate('/exercises', { replace: true });
+
+  if (exercise === undefined) {
     return (
       <div className="flex h-48 items-center justify-center">
         <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Loading…</p>
+      </div>
+    );
+  }
+
+  if (exercise === null) {
+    return (
+      <div className="px-5 pb-8 pt-6">
+        <BackButton onClick={toList} />
+        <div className="glass mt-10 flex flex-col items-center rounded-2xl px-6 py-10 text-center" style={{ background: 'var(--color-ivory)' }}>
+          <SearchX size={28} style={{ color: 'var(--color-ash)' }} />
+          <h1 className="mt-3 font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+            Exercise not found
+          </h1>
+          <p className="mt-2 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            It may have been deleted. Your other exercises are all still there.
+          </p>
+          <button
+            type="button"
+            onClick={toList}
+            className="mt-5 rounded-xl px-5 py-3 font-sans text-sm font-semibold"
+            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          >
+            Back to exercises
+          </button>
+        </div>
       </div>
     );
   }
@@ -127,33 +143,45 @@ export default function ExerciseDetailPage() {
       // a list wondering whether it worked.
       onUndo: () => navigate(`/exercises/${exercise.id}`),
     });
-    if (snapshot) navigate('/exercises');
+    if (snapshot) navigate('/exercises', { replace: true });
   }
 
   return (
     <div className="px-5 pb-8 pt-6">
-      <button onClick={() => navigate(-1)} className="mb-5 flex items-center gap-2">
-        <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
-      </button>
+      <BackButton onClick={() => navigate(-1)} />
 
       {/* Title + badges */}
       <div className="flex items-start justify-between gap-3">
         <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
           {exercise.name}
         </h1>
-        <button
-          onClick={() => toggleFavorite(exercise.id)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-ivory)' }}
-          aria-label="Toggle favorite"
-        >
-          <Star size={18} fill={exercise.favorite ? 'var(--color-gold)' : 'none'} style={{ color: exercise.favorite ? 'var(--color-gold)' : 'var(--color-ash)' }} />
-        </button>
+        <div className="flex shrink-0 gap-2">
+          {exercise.isCustom && (
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-full"
+              style={{ background: 'var(--color-ivory)' }}
+              aria-label={`Edit ${exercise.name}`}
+            >
+              <Pencil size={16} style={{ color: 'var(--color-ash)' }} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => toggleFavorite(exercise.id)}
+            className="flex h-9 w-9 items-center justify-center rounded-full"
+            style={{ background: 'var(--color-ivory)' }}
+            aria-label="Toggle favorite"
+            aria-pressed={Boolean(exercise.favorite)}
+          >
+            <Star size={18} fill={exercise.favorite ? 'var(--color-gold)' : 'none'} style={{ color: exercise.favorite ? 'var(--color-gold)' : 'var(--color-ash)' }} />
+          </button>
+        </div>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <p className="font-sans text-sm capitalize" style={{ color: 'var(--color-text-secondary)' }}>
-          {exercise.muscleGroup.replace(/-/g, ' ')} · {exercise.equipment}
+          {(exercise.muscleGroup ?? '').replace(/-/g, ' ')} · {exercise.equipment}
         </p>
         {exercise.difficulty && (
           <span
@@ -170,8 +198,13 @@ export default function ExerciseDetailPage() {
         )}
       </div>
 
+      {/* Session-by-session history — the first thing you came here for. */}
+      <div className="mt-5">
+        <ExerciseHistory exerciseId={exercise.id} unit={unit} />
+      </div>
+
       {/* Marking + coaching note */}
-      <div className="glass mt-5 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
+      <div className="glass mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
         <div className="mb-2 flex items-center gap-2">
           <StickyNote size={14} style={{ color: 'var(--color-ash)' }} />
           <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
@@ -183,6 +216,7 @@ export default function ExerciseDetailPage() {
           defaultValue={note}
           onBlur={(e) => setExerciseNote(exercise.id, e.target.value)}
           placeholder="Cues you want every session — e.g. elbows tucked, brace, full ROM."
+          aria-label="Coaching note"
           rows={2}
           className="w-full resize-none rounded-xl px-3 py-2 font-sans text-sm outline-none"
           style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
@@ -206,13 +240,17 @@ export default function ExerciseDetailPage() {
         </div>
 
         {demoUrl && (
-          <img
-            src={demoUrl}
-            alt={`${exercise.name} demo`}
-            onError={() => setDemoUrl(null)}
-            className="mt-3 w-full object-contain"
-            style={{ maxHeight: 220, background: 'var(--color-chalk)' }}
-          />
+          // wger's drawings are dark line art on transparent or white — they
+          // need a light card under them to read in the dark theme too.
+          <div className="anim-fade-in mx-4 mt-3 overflow-hidden rounded-xl" style={{ background: '#fff' }}>
+            <img
+              src={demoUrl}
+              alt={`${exercise.name} demo`}
+              onError={() => setDemoUrl(null)}
+              className="w-full object-contain"
+              style={{ maxHeight: 220 }}
+            />
+          </div>
         )}
 
         <a
@@ -264,12 +302,19 @@ export default function ExerciseDetailPage() {
 
       {exercise.isCustom && (
         <button
+          type="button"
           onClick={handleDelete}
           className="glass mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-medium"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}
         >
           <Trash2 size={15} /> Delete exercise
         </button>
+      )}
+
+      {exercise.isCustom && (
+        <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Exercise">
+          <ExerciseForm exercise={exercise} onSave={() => setEditOpen(false)} onCancel={() => setEditOpen(false)} />
+        </Modal>
       )}
     </div>
   );
