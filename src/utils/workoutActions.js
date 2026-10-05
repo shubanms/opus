@@ -1,4 +1,5 @@
 import { db } from '../db/db.js';
+import { currentDayRun, graceDays } from './streak.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { getLevelFromTotalXP, getTitle } from './rpg.js';
 import { ACHIEVEMENTS, reconcileAchievements } from './achievements.js';
@@ -76,17 +77,16 @@ export async function recomputeProfile() {
   const title = getTitle(level);
 
   const dates = [...new Set(workouts.map((w) => w.date))].sort();
-  let streak = 0;
-  let lastWorkoutDate = null;
-  if (dates.length) {
-    lastWorkoutDate = dates[dates.length - 1];
-    streak = 1;
-    for (let i = dates.length - 1; i > 0; i--) {
-      const diff = (new Date(dates[i]) - new Date(dates[i - 1])) / 86400000;
-      if (diff === 1) streak++;
-      else break;
-    }
-  }
+  const lastWorkoutDate = dates.length ? dates[dates.length - 1] : null;
+  // Days bought back with rest tokens still join the run: a delete must not
+  // undo a rescue someone paid for (see streak.currentDayRun).
+  const profileRow = await db.userProfile.get(1);
+  const bridged = [
+    ...(profileRow?.bridgedDays ?? []),
+    ...(profileRow?.creditedDays ?? []),
+    ...graceDays(profileRow),
+  ];
+  const streak = currentDayRun(dates, bridged);
 
   const { default: useUserStore } = await import('../store/userStore.js');
   const store = useUserStore.getState();

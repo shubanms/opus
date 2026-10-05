@@ -279,8 +279,13 @@ describe('wipeAllData', () => {
     await wipeAllData();
     expect(storage.length).toBe(0);
     expect(await db.workouts.count()).toBe(0);
-    // The wipe detector's noteData(0) firing after the clear:
+    // The wipe detector's noteData(0) firing after the clear. It has nothing
+    // new to record, so it may write nothing at all (settingsStore skips an
+    // unchanged persist) — the invariant is that the old prefs never come back.
     useSettingsStore.getState().noteData(0);
-    expect(JSON.parse(storage.getItem('opus_prefs'))).toMatchObject({ onboarded: false, tourSeen: false, hadData: false, ironSpent: 0 });
+    const firstRun = { onboarded: false, tourSeen: false, hadData: false, ironSpent: 0 };
+    expect(useSettingsStore.getState()).toMatchObject(firstRun);
+    const written = JSON.parse(storage.getItem('opus_prefs') ?? 'null');
+    if (written) expect(written).toMatchObject(firstRun);
   });
 });

@@ -10,11 +10,12 @@ import { useCurrentBodyweight } from '../hooks/useProgress.js';
 import useUserStore from '../store/userStore.js';
 import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
+import { db } from '../db/db.js';
 import { useInstallPrompt } from '../hooks/useInstallPrompt.js';
 import { NOTIF_TYPES, requestPermission, showNotification } from '../utils/notifications.js';
 import { playChime } from '../utils/sound.js';
-import { exportData, importData, exportSetsCsv, exportPdf, exportPlanIcs } from '../utils/dataActions.js';
-import { backupLabel } from '../utils/backup.js';
+import { importData, inspectBackup, exportSetsCsv, exportPdf, exportPlanIcs } from '../utils/dataActions.js';
+import { backupLabel, describeBackup } from '../utils/backup.js';
 import { useBackupStatus, useRunBackup, useShareBackup } from '../hooks/useBackup.js';
 import { logBodyStat } from '../utils/healthActions.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
@@ -176,15 +177,42 @@ export default function SettingsPage() {
   const systemOn = settings.enabled && perm === 'granted';
   const restIsCustom = !REST_CHOICES.some((c) => c.s === restDuration);
 
+  // Restoring replaces everything on this device, so it says what it is about
+  // to restore — and what it is about to replace — before touching anything.
+  // A foreign or broken file is refused with the reason instead of wiping the
+  // database and then failing (utils/dataActions inspectBackup/importData).
   async function handleImport(e) {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
+    // Let the same file be picked again after a cancel.
+    input.value = '';
     if (!file) return;
+    const ui = useUIStore.getState();
     try {
       const text = await file.text();
+      const info = inspectBackup(text);
+      if (!info.ok) {
+        ui.showToast(info.error, { type: 'error' });
+        return;
+      }
+      const { title, detail } = describeBackup(info);
+      const here = await db.workouts.count();
+      const ok = await ui.confirm({
+        title: 'Restore this backup?',
+        message: `${title} · ${detail}. ${
+          here > 0
+            ? `It replaces the ${here} workout${here === 1 ? '' : 's'} on this device.`
+            : 'Nothing on this device is lost.'
+        } Progress photos stay.`,
+        confirmLabel: 'Restore',
+        cancelLabel: 'Cancel',
+        danger: here > 0,
+      });
+      if (!ok) return;
       await importData(text);
       window.location.assign(import.meta.env.BASE_URL);
-    } catch {
-      useUIStore.getState().showToast('Could not import this file.', { type: 'error' });
+    } catch (err) {
+      ui.showToast(err?.message || 'Could not import this file.', { type: 'error' });
     }
   }
 
@@ -666,7 +694,13 @@ export default function SettingsPage() {
             </button>
             <button
               type="button"
-              onClick={async () => { const how = await sendBackup(); useUIStore.getState().showToast(how === 'shared' ? 'Backup sent' : 'Backup saved to Downloads', { type: 'success' }); }}
+              onClick={async () => {
+                const how = await sendBackup();
+                // Dismissing the share sheet is a choice, not a failure — and
+                // nothing was saved, so saying "saved to Downloads" would be a lie.
+                if (how === 'cancelled') return;
+                useUIStore.getState().showToast(how === 'shared' ? 'Backup sent' : 'Backup saved to Downloads', { type: 'success' });
+              }}
               className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
               style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
             >
@@ -678,7 +712,10 @@ export default function SettingsPage() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={exportData}
+            // Same file as "Back up now", so it counts as one: a plain export
+            // left Home saying "Never backed up" and the weekly backup wrote
+            // a duplicate a few days later.
+            onClick={async () => { await runBackup(); useUIStore.getState().showToast('Backup saved to Downloads', { type: 'success' }); }}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
             style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
           >
@@ -692,7 +729,7 @@ export default function SettingsPage() {
           >
             <Upload size={15} /> Import
           </button>
-          <input ref={fileRef} type="file" accept="application/json" onChange={handleImport} className="hidden" />
+          <input ref={fileRef} type="file" accept=".json,.txt,application/json,text/plain" onChange={handleImport} className="hidden" />
         </div>
 
         {/* Calendar export. The v5 research settled that this is the only

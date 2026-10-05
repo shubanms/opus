@@ -493,9 +493,12 @@ test.describe('OPUS end-to-end', () => {
     const parsed = JSON.parse(body);
     expect(parsed.data.workouts.length).toBe(6);
     expect(parsed.data.sets.length).toBeGreaterThan(0);
-    // The stock catalogue is re-seeded on boot; carrying it every week would be
-    // 16 KB of the same 82 rows.
-    expect(parsed.data.exercises.length).toBe(0);
+    // The pristine stock lifts (ids 1–74) are re-seeded by id on boot and on
+    // restore, so carrying them every week would be the same rows each time.
+    // The 8 cardio machines are NOT stock: they have auto-increment ids, and
+    // leaving them out is what orphaned every cardio set after a restore.
+    expect(parsed.data.exercises.filter((e) => e.id <= 74)).toHaveLength(0);
+    expect(parsed.data.exercises.filter((e) => e.cardioMode)).toHaveLength(8);
 
     // The loud card stands down once a backup is fresh — a permanent banner is
     // furniture — but it does not go silent. The automatic write cannot be

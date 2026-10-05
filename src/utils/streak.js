@@ -214,6 +214,35 @@ export function graceDays(profile) {
  *
  * Walked by calendar key, so a 23-hour spring-forward day is still one day.
  */
+/**
+ * The run of consecutive training days that ends at the most recent session —
+ * the stored `profile.streak`, rebuilt from history.
+ *
+ * Same joining rule as `bestDayRun`: days bought back with rest tokens connect
+ * the sessions either side of them without counting as sessions. Rebuilding
+ * from plain consecutive dates (as `recomputeProfile` did) meant that deleting
+ * any workout after a paid rescue quietly reset the streak the tokens bought.
+ */
+export function currentDayRun(dates = [], bridged = []) {
+  const trained = [...new Set(dates ?? [])].filter((k) => parseKey(k)).sort();
+  if (!trained.length) return 0;
+  const bridge = new Set(bridged ?? []);
+  let run = 1;
+  for (let i = trained.length - 1; i > 0; i -= 1) {
+    const gap = daysBetween(trained[i - 1], trained[i]);
+    let joined = gap === 1;
+    if (!joined && gap > 1) {
+      joined = true;
+      for (let k = shiftKey(trained[i - 1], 1); k && k < trained[i]; k = shiftKey(k, 1)) {
+        if (!bridge.has(k)) { joined = false; break; }
+      }
+    }
+    if (!joined) break;
+    run += 1;
+  }
+  return run;
+}
+
 export function bestDayRun(dates = [], bridged = []) {
   const trained = [...new Set(dates ?? [])].filter((k) => parseKey(k)).sort();
   if (!trained.length) return 0;

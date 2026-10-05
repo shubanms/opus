@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { STREAK, streakState, currentStreak, streakLabel, effectiveLastDate, rescueOffer, graceFromOffer, MAX_RESCUE_DAYS, bestDayRun, graceDays } from './streak.js';
+import { STREAK, streakState, currentStreak, streakLabel, effectiveLastDate, rescueOffer, graceFromOffer, MAX_RESCUE_DAYS, bestDayRun, graceDays, currentDayRun } from './streak.js';
 
 const profile = (streak, lastWorkoutDate) => ({ streak, lastWorkoutDate });
 
@@ -291,5 +291,32 @@ describe('bestDayRun', () => {
     expect(bestDayRun(dates, ['2026-08-03', '2026-08-04'])).toBe(4);
     // Half a bridge is no bridge.
     expect(bestDayRun(dates, ['2026-08-03'])).toBe(2);
+  });
+});
+
+describe('currentDayRun', () => {
+  it('counts the consecutive days ending at the latest session', () => {
+    expect(currentDayRun(['2026-10-01', '2026-10-02', '2026-10-03'])).toBe(3);
+    expect(currentDayRun(['2026-09-20', '2026-10-02', '2026-10-03'])).toBe(2);
+    expect(currentDayRun([])).toBe(0);
+  });
+
+  it('a rescued gap joins the run without counting as a session', () => {
+    // 10-day streak to 2 Oct, 3–4 Oct bought back, trained 5 Oct.
+    const tenDays = [
+      '2026-09-23', '2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27',
+      '2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02',
+    ];
+    const withToday = [...tenDays, '2026-10-05'];
+    expect(currentDayRun(withToday)).toBe(1);
+    expect(currentDayRun(withToday, ['2026-10-03', '2026-10-04'])).toBe(11);
+  });
+
+  it('a partly bridged gap still breaks the run', () => {
+    expect(currentDayRun(['2026-10-01', '2026-10-05'], ['2026-10-02'])).toBe(1);
+  });
+
+  it('ignores junk keys and duplicates', () => {
+    expect(currentDayRun(['2026-10-02', '2026-10-02', '', null, '2026-10-03'])).toBe(2);
   });
 });
