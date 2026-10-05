@@ -8,9 +8,13 @@ import {
   sheetVariants,
   useMotionEnabled,
 } from '../../motion/index.jsx';
+import { useBackToClose } from '../../hooks/useBackToClose.js';
 
 export default function Modal({ isOpen, onClose, title, children }) {
   const motionOn = useMotionEnabled();
+  // Android's Back closes the sheet rather than the page under it — which used
+  // to unmount, taking anything unsaved in the sheet with it.
+  useBackToClose(isOpen, onClose);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -73,14 +77,17 @@ export default function Modal({ isOpen, onClose, title, children }) {
               <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
                 {title}
               </h2>
+              {/* A 44 px target around the 32 px disc; the negative margin keeps
+                  the header the height it was. */}
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="flex h-8 w-8 items-center justify-center rounded-full"
-                style={{ background: 'var(--color-ivory)' }}
+                className="-my-1.5 -mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
               >
-                <X size={16} style={{ color: 'var(--color-ash)' }} />
+                <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
+                  <X size={16} style={{ color: 'var(--color-ash)' }} />
+                </span>
               </button>
             </div>
 
