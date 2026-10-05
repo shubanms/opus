@@ -84,3 +84,22 @@ export function todaysDungeon(dateKey = '') {
   const ironReward = IRON_BASE + Math.round(hashSeed(dateKey, 'iron') * 80);
   return { dateKey, id: theme.id, name: theme.name, group: theme.group, boss: theme.boss, muscles: DUNGEON_MUSCLES[theme.id] ?? [], affixes, ironReward };
 }
+
+/**
+ * Has `dateKey`'s dungeon already been cleared, judged from that day's workout
+ * rows?
+ *
+ * The clear used to live only in settings (`lastDungeonClaim`), so deleting the
+ * dungeon workout took its Iron away (Iron is summed from rows) but left the
+ * card saying "Cleared today ✓" and refused a re-run's reward — a delete that
+ * reverted half of what it should. A cleared session now carries
+ * `dungeonDate`, and the row is the record. `lastClaim` still counts for a day
+ * whose sessions were all saved before rows carried that (no `ironEarned` on
+ * any of them), so nobody can clear the same dungeon twice across the upgrade.
+ */
+export function dungeonClearedOn(dayRows = [], dateKey = '', lastClaim = '') {
+  const rows = dayRows ?? [];
+  if (rows.some((w) => w?.dungeonDate === dateKey)) return true;
+  if (!dateKey || lastClaim !== dateKey) return false;
+  return rows.length > 0 && rows.every((w) => w?.ironEarned === undefined);
+}

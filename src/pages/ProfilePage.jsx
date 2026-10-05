@@ -56,7 +56,7 @@ export default function ProfilePage() {
   const life = useLifetimeStats();
   const unit = useSettingsStore((s) => s.unit);
   const equipped = useSettingsStore((s) => s.equipped);
-  const { balance: ironBal } = useIronBalance();
+  const { balance: ironBal, loaded: ironLoaded } = useIronBalance();
   // The first session on record. A restore lands in a fresh profile whose
   // join date is the day of the restore, which would make a three-year
   // history read "Member since today".
@@ -241,7 +241,8 @@ export default function ProfilePage() {
         </span>
         <span className="flex items-center gap-1.5 font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}>
           <span style={{ display: 'inline-block', width: 11, height: 11, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
-          {ironBal.toLocaleString()}
+          {/* Nothing until it's read — a flashed "0" reads as a lost balance. */}
+          {ironLoaded ? ironBal.toLocaleString() : ''}
         </span>
       </button>
 

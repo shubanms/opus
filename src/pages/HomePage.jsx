@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, ChevronRight, Play, Moon, CalendarCheck, TrendingDown, Swords, Activity, Droplet, Target, Lock } from 'lucide-react';
+import { Flame, ChevronRight, Play, Moon, TrendingDown, Swords, Activity, Droplet, Target, Lock } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
@@ -352,7 +352,6 @@ export default function HomePage() {
           />
         ) : today.type === 'template' ? (
           <TodayCard
-            icon={CalendarCheck}
             title={today.template.name}
             subtitle={`${today.reason} · ${today.template.exercises.length} exercises`}
             onClick={startTemplate}

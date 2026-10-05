@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { todaysDungeon, DUNGEON_THEMES, AFFIXES, DUNGEON_MUSCLES, affixEffects, dungeonObjective, isDungeonCleared, dungeonReward } from './dungeon.js';
+import { todaysDungeon, DUNGEON_THEMES, AFFIXES, DUNGEON_MUSCLES, affixEffects, dungeonObjective, isDungeonCleared, dungeonReward, dungeonClearedOn } from './dungeon.js';
 
 describe('todaysDungeon', () => {
   it('is deterministic for a date key', () => {
@@ -87,5 +87,22 @@ describe('dungeon names', () => {
       expect(taken.has(t.boss)).toBe(false);
     }
     for (const a of AFFIXES) expect(taken.has(a.name)).toBe(false);
+  });
+});
+
+describe('dungeonClearedOn', () => {
+  const day = '2026-10-05';
+  it('a session that cleared it carries the date', () => {
+    expect(dungeonClearedOn([{ dungeonDate: day, ironEarned: 25 }], day, day)).toBe(true);
+  });
+  it('deleting that session re-opens the dungeon, whatever settings remember', () => {
+    expect(dungeonClearedOn([], day, day)).toBe(false);
+    expect(dungeonClearedOn([{ dungeonDate: null, ironEarned: 25 }], day, day)).toBe(false);
+  });
+  it('a claim from before rows carried the date still counts that day', () => {
+    expect(dungeonClearedOn([{ totalSets: 8 }], day, day)).toBe(true);
+  });
+  it('a claim on another day says nothing about this one', () => {
+    expect(dungeonClearedOn([{ totalSets: 8 }], day, '2026-10-04')).toBe(false);
   });
 });

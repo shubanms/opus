@@ -3,7 +3,7 @@ import { db } from '../db/db.js';
 import useUserStore from './userStore.js';
 import useSettingsStore from './settingsStore.js';
 import { PR_BONUS, calcWorkoutXP } from '../utils/rpg.js';
-import { todaysDungeon, isDungeonCleared, dungeonReward, affixEffects } from '../utils/dungeon.js';
+import { todaysDungeon, isDungeonCleared, dungeonReward, affixEffects, dungeonClearedOn } from '../utils/dungeon.js';
 import { strengthKcal } from '../utils/calories.js';
 import { computeVolume } from '../utils/volume.js';
 import { getCurrentBodyweight } from '../utils/healthActions.js';
@@ -190,7 +190,10 @@ async function finishSession(w, xpEarned, { endAt } = {}) {
   const settings = useSettingsStore.getState();
   const dungeon = w.dungeon && w.dungeon === startDay ? todaysDungeon(startDay) : null;
   const cleared = Boolean(dungeon) && isDungeonCleared(dungeon, { isDungeonSession: true, workingSets: totalSets });
-  const claimable = cleared && settings.lastDungeonClaim !== startDay;
+  // Cleared already? Judged from that day's rows (utils/dungeon), so a deleted
+  // dungeon session re-opens the dungeon instead of leaving it marked done.
+  const dayRows = dungeon ? await db.workouts.where('date').equals(startDay).toArray() : [];
+  const claimable = cleared && !dungeonClearedOn(dayRows, startDay, settings.lastDungeonClaim);
 
   let workoutId = null;
   let duplicateOf = null;
@@ -470,12 +473,21 @@ const useWorkoutStore = create((set, get) => {
       const sets = await db.sets.where('workoutId').equals(workoutId).toArray();
       const orderedIds = [];
       for (const s of sets) if (!orderedIds.includes(s.exerciseId)) orderedIds.push(s.exerciseId);
+      // A routine session repeats with the routine's *current* targets. Its
+      // templateId is kept, so progression scores the repeat against those
+      // targets — without them on the session the prefill fell back to old
+      // numbers and an honest repeat could count as a miss. A routine that has
+      // since been deleted takes its id with it.
+      const tpl = w.templateId != null ? await db.templates.get(w.templateId) : null;
+      const links = tpl ? await db.templateExercises.where('templateId').equals(tpl.id).toArray() : [];
+      const byExercise = new Map(links.map((l) => [l.exerciseId, l]));
       const exercises = [];
       for (const id of orderedIds) {
         const ex = await db.exercises.get(id);
-        exercises.push({ exerciseId: id, name: ex?.name ?? 'Exercise', sets: [] });
+        const link = byExercise.get(id);
+        exercises.push({ exerciseId: id, name: ex?.name ?? 'Exercise', ...(link ? plan(link) : {}), sets: [] });
       }
-      begin({ name: w.name, templateId: w.templateId ?? null, exercises });
+      begin({ name: w.name, templateId: tpl ? tpl.id : null, exercises });
     },
 
     addExercise(exercise) {

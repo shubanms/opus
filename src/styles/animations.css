@@ -151,3 +151,17 @@
     animation: none;
   }
 }
+
+/* The gold pulse is applied inline (style={{ animation: 'goldPulse …' }}) on
+   Home's start button, the PR badge and quest claims, so per-class gates above
+   cannot reach it. Gate it here, once, for both switches: the OS-level reduced
+   motion preference and the in-app Effects toggle (html[data-fx]). A looping
+   pulse is exactly what both settings exist to stop. */
+@media (prefers-reduced-motion: reduce) {
+  [style*='goldPulse'] {
+    animation: none !important;
+  }
+}
+html[data-fx='off'] [style*='goldPulse'] {
+  animation: none !important;
+}

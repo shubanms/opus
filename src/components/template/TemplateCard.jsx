@@ -45,7 +45,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
           <div className="flex items-center gap-2">
             {template.color && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: template.color }} />}
             {onRename ? (
-              <button type="button" onClick={() => onRename(template)} className="line-clamp-2 min-h-8 min-w-0 break-words text-left font-sans text-base font-semibold leading-snug" style={{ color: 'var(--color-text-primary)' }} aria-label={`Rename ${name}`}>
+              <button type="button" onClick={() => onRename(template)} className="line-clamp-2 -my-1 min-h-10 min-w-10 break-words py-1 text-left font-sans text-base font-semibold leading-snug" style={{ color: 'var(--color-text-primary)' }} aria-label={`Rename ${name}`}>
                 {name}
               </button>
             ) : (

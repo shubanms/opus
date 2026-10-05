@@ -1,4 +1,6 @@
-import { ShieldAlert, ShieldCheck, Download, Share2 } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Download, Share2, Info } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../../db/db.js';
 import { m, TWEEN } from '../../motion/index.jsx';
 import useUIStore from '../../store/uiStore.js';
 import { BACKUP, backupLabel } from '../../utils/backup.js';
@@ -22,6 +24,7 @@ export default function BackupCard() {
   const status = useBackupStatus();
   const runBackup = useRunBackup();
   const shareBackup = useShareBackup();
+  const workouts = useLiveQuery(() => db.workouts.count(), []);
 
   const urgent = status.state === BACKUP.STALE || status.state === BACKUP.NEVER;
   const accent = urgent ? 'var(--color-ember)' : 'var(--color-gold)';
@@ -38,6 +41,21 @@ export default function BackupCard() {
     useUIStore.getState().showToast(
       how === 'shared' ? 'Backup sent' : 'Backup saved to Downloads',
       { type: 'success' }
+    );
+  }
+
+  // A brand-new account has nothing to lose yet, and a red "NEVER BACKED UP"
+  // card on the first screen anyone sees reads as an alarm about nothing. Say
+  // how it will work instead. (A history that vanished is WipeAlert's job —
+  // it fires on its own signal, not on this one.)
+  if (workouts === 0 && status.state === BACKUP.NEVER) {
+    return (
+      <p className="mb-3 flex items-center gap-1.5 px-1">
+        <Info size={12} style={{ color: 'var(--color-ash)' }} />
+        <span className="font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
+          Weekly backups to Downloads start with your first workout
+        </span>
+      </p>
     );
   }
 

@@ -1,5 +1,7 @@
 import { Swords, Check, Target } from 'lucide-react';
-import { todaysDungeon, affixEffects, dungeonObjective } from '../../utils/dungeon.js';
+import { todaysDungeon, affixEffects, dungeonObjective, dungeonClearedOn } from '../../utils/dungeon.js';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../../db/db.js';
 import { generateRoutine, makeRng } from '../../utils/routineGenerator.js';
 import { hashSeed } from '../../utils/crit.js';
 import { useTodayKey } from '../../hooks/useTodayKey.js';
@@ -34,7 +36,10 @@ export default function DailyDungeonCard() {
   const dungeon = todaysDungeon(today);
   const fx = affixEffects(dungeon.affixes);
   const objective = dungeonObjective(dungeon);
-  const cleared = lastDungeonClaim === today;
+  // From the day's workout rows, not just settings: deleting the session that
+  // cleared it re-opens the dungeon (and its Iron leaves with it).
+  const todayRows = useLiveQuery(() => db.workouts.where('date').equals(today).toArray(), [today]);
+  const cleared = dungeonClearedOn(todayRows ?? [], today, lastDungeonClaim);
 
   async function enter() {
     // The card stays on Home while a session is open, and entering used to
