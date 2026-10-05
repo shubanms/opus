@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, BarChart3, Plus, Dumbbell, User, CalendarCheck, Zap, ListChecks, Timer } from 'lucide-react';
 import { AnimatePresence, m, SPRING, TWEEN, useMotionEnabled } from '../../motion/index.jsx';
@@ -7,7 +7,9 @@ import { playChime } from '../../utils/sound.js';
 import { useToday } from '../../hooks/useTemplates.js';
 import useWorkoutStore from '../../store/workoutStore.js';
 import { useElapsed } from '../../hooks/useElapsed.js';
+import { useRestAlarm } from '../../hooks/useRestClock.js';
 import { formatClock } from '../../utils/duration.js';
+import { formatRest } from '../../utils/restClock.js';
 
 const tabs = [
   { to: '/home', label: 'Home', Icon: Home },
@@ -65,7 +67,19 @@ export default function BottomNav() {
   const activeWorkout = useWorkoutStore((s) => s.activeWorkout);
   const live = Boolean(activeWorkout?.startedAt);
   const elapsed = useElapsed(activeWorkout?.startedAt);
-  let pressTimer;
+  // The rest belongs to the session, not the workout page: its countdown
+  // rides in the pill on every tab, and its end-of-rest cue fires from here
+  // because this is the one component that is always on screen.
+  const { rest, remaining, done: restDone } = useRestAlarm();
+  const resting = live && Boolean(rest);
+  // A ref, not a `let`: the clock re-renders this component every second, and
+  // a fresh `let` each render meant pointer-up cleared a timer that no longer
+  // existed — about one tap in eight mid-session opened the quick menu.
+  const pressTimer = useRef(null);
+  // A long press opens the menu; the click that follows its release must not
+  // immediately close it again (or, worse, navigate).
+  const longPressed = useRef(false);
+  useEffect(() => () => clearTimeout(pressTimer.current), []);
 
   // Long-press the centre action for the ways a session actually starts,
   // instead of always landing on the workout tab and choosing from there.
@@ -73,7 +87,9 @@ export default function BottomNav() {
   const quick = live
     ? [{ label: 'Back to your session', Icon: Timer, run: () => navigate('/workout') }]
     : [
-    { label: 'Empty session', Icon: Zap, run: () => navigate('/workout') },
+    // Actually starts one — the workout page handles the intent (and refuses
+    // to stomp a session already in progress).
+    { label: 'Empty session', Icon: Zap, run: () => navigate('/workout?start=empty') },
     today.type === 'template' && {
       label: today.template.name,
       Icon: CalendarCheck,
@@ -155,7 +171,9 @@ export default function BottomNav() {
                   type="button"
                   aria-label={
                     live
-                      ? `Session in progress, ${formatClock(elapsed)} — tap to return`
+                      ? resting
+                        ? `Session in progress, ${restDone ? 'rest over' : `resting ${formatRest(remaining)}`} — tap to return`
+                        : `Session in progress, ${formatClock(elapsed)} — tap to return`
                       : 'Workout — tap to start, press and hold for quick actions'
                   }
                   className="-mt-7 flex h-14 w-14 items-center justify-center"
@@ -168,11 +186,20 @@ export default function BottomNav() {
                   whileTap={{ scale: 0.92 }}
                   animate={{ rotate: quickOpen ? 45 : 0 }}
                   transition={SPRING.pop}
-                  onClick={() => (quickOpen ? setQuickOpen(false) : navigate(to))}
-                  onContextMenu={(e) => { e.preventDefault(); openQuick(); }}
-                  onPointerDown={() => { pressTimer = setTimeout(openQuick, 420); }}
-                  onPointerUp={() => clearTimeout(pressTimer)}
-                  onPointerLeave={() => clearTimeout(pressTimer)}
+                  onClick={() => {
+                    if (longPressed.current) { longPressed.current = false; return; }
+                    if (quickOpen) setQuickOpen(false);
+                    else navigate(to);
+                  }}
+                  onContextMenu={(e) => { e.preventDefault(); if (!quickOpen) { clearTimeout(pressTimer.current); longPressed.current = true; openQuick(); } }}
+                  onPointerDown={() => {
+                    longPressed.current = false;
+                    clearTimeout(pressTimer.current);
+                    pressTimer.current = setTimeout(() => { longPressed.current = true; openQuick(); }, 420);
+                  }}
+                  onPointerUp={() => clearTimeout(pressTimer.current)}
+                  onPointerLeave={() => clearTimeout(pressTimer.current)}
+                  onPointerCancel={() => clearTimeout(pressTimer.current)}
                 >
                   <Icon size={26} strokeWidth={2.5} />
                 </m.button>
@@ -193,16 +220,20 @@ export default function BottomNav() {
                       animate={motionOn ? { opacity: [0.9, 0, 0.9], scale: [1, 1.35, 1] } : { opacity: 0.9 }}
                       transition={motionOn ? { duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeOut' } : undefined}
                     />
+                    {/* Elapsed time normally; the rest countdown while resting,
+                        in the accent colour so the two never read as one. */}
                     <span
                       data-testid="session-clock"
-                      className="pointer-events-none absolute -top-8 whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold"
+                      className="pointer-events-none absolute -top-8 flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums"
                       style={{
-                        background: 'var(--color-sage)',
+                        background: resting && !restDone ? 'var(--color-gold)' : 'var(--color-sage)',
                         color: 'var(--color-obsidian)',
                         boxShadow: 'var(--elev-2)',
+                        transition: 'background-color var(--dur-standard) var(--opus-ease-out)',
                       }}
                     >
-                      {formatClock(elapsed)}
+                      {resting && !restDone && <Timer size={10} strokeWidth={2.75} aria-hidden />}
+                      {resting ? (restDone ? 'GO' : formatRest(remaining)) : formatClock(elapsed)}
                     </span>
                   </>
                 )}

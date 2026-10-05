@@ -4,6 +4,8 @@
 // unit-tested. The drawing primitives live in `canvasKit.js` and the card
 // compositions in `shareCards.js`.
 
+import { parseKey } from './dateKey.js';
+
 export const CARD = {
   size: 1080,
   pad: 88,
@@ -38,11 +40,20 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 /**
  * Date for a share card. Deliberately locale-free: a poster should look the
  * same whoever exports it, and `toLocaleDateString` varies per device.
+ *
+ * A `YYYY-MM-DD` key — what every saved workout carries — is a calendar day,
+ * so it is read as local midnight. `new Date('2026-03-09')` is UTC midnight,
+ * which west of Greenwich is still the 8th: an evening workout in New York
+ * printed yesterday's date on its own poster.
  */
 export function formatShareDate(iso) {
   if (!iso) return '';
-  const d = iso instanceof Date ? iso : new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
+  const d = iso instanceof Date
+    ? iso
+    : typeof iso === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(iso)
+      ? parseKey(iso)
+      : new Date(iso);
+  if (!d || Number.isNaN(d.getTime())) return '';
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 

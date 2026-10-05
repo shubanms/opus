@@ -201,6 +201,72 @@ describe('checkAdvice', () => {
   });
 });
 
+describe('sessions with nothing to compare', () => {
+  const cardio = (min) => ({ isCardio: true, durationSec: min * 60, weight: 0, reps: 0 });
+
+  it('never judges a cardio-only session on volume', () => {
+    // Verified: 30 min treadmill + 20 min bike after three lifting sessions read
+    // "Volume was 100% below your recent average."
+    const v = buildVerdict({
+      session: { totalVolume: 0, totalSets: 2, prCount: 0 },
+      sets: [cardio(30), cardio(20)],
+      recentVolumes: [5200, 6100, 5800],
+    });
+    expect(v.concernKey).not.toBe('volumeDown');
+    expect(v.text).not.toContain('Volume');
+    expect(v.signals.hasLoadedVolume).toBe(false);
+    expect(v.signals.hasBaseline).toBe(false);
+    expect(v.advice?.metric).not.toBe('volume');
+  });
+
+  it('does not count a cardio day as bringing the volume back', () => {
+    const v = buildVerdict({
+      session: { totalVolume: 0, totalSets: 1 },
+      sets: [cardio(40)],
+      recentVolumes: typical,
+      openAdvice: { key: 'volumeDown', metric: 'volume', target: 1 },
+    });
+    expect(v.closedKey).toBe(null);
+  });
+
+  it('keeps sessions without volume out of the baseline', () => {
+    const s = sessionSignals(input({ recentVolumes: [0, 0, 8000, 8200] }));
+    expect(s.hasBaseline).toBe(false);
+  });
+
+  it('still compares a lifting session that included some cardio', () => {
+    const s = sessionSignals(input({ session: { totalVolume: 11000, totalSets: 10 }, sets: [...Array.from({ length: 9 }, () => set()), cardio(10)] }));
+    expect(s.hasBaseline).toBe(true);
+    expect(pickPraise(s).key).toBe('volumeUp');
+  });
+});
+
+describe('stored prose carries no weights', () => {
+  it('words the loop-closer relatively, so pounds users are not told kilograms', () => {
+    // Was "You brought the volume back — 6,000 against the 5,500 you were
+    // averaging": kg in a sentence stored forever and read in lb.
+    const v = buildVerdict({
+      session: { totalVolume: 6000, totalSets: 12, prCount: 0 },
+      sets: Array.from({ length: 12 }, () => set()),
+      recentVolumes: [5000, 5000, 5000],
+      openAdvice: { key: 'volumeDown', metric: 'volume', target: 5500 },
+    });
+    expect(v.text).toContain('brought the volume back');
+    expect(v.text).toContain('9%');
+    expect(v.text).not.toMatch(/\d,\d{3}|\b5500\b|\b6000\b/);
+  });
+
+  it('has a wording for landing exactly on the average', () => {
+    const v = buildVerdict({
+      session: { totalVolume: 5500, totalSets: 12 },
+      sets: Array.from({ length: 12 }, () => set()),
+      recentVolumes: [5000, 5000, 5000],
+      openAdvice: { key: 'volumeDown', metric: 'volume', target: 5500 },
+    });
+    expect(v.text.startsWith('You brought the volume back up to your recent average.')).toBe(true);
+  });
+});
+
 describe('buildVerdict with an open piece of advice', () => {
   it('leads with the acknowledgement', () => {
     const v = buildVerdict({
