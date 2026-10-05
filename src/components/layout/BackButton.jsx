@@ -19,10 +19,13 @@ export function canGoBack() {
  * app's history. Then it goes *up* to `fallback` instead, replacing the entry,
  * so the next Back leaves the app rather than bouncing between the two.
  */
-export default function BackButton({ fallback = '/home', label = 'Back', className = 'mb-1' }) {
+export default function BackButton({ fallback = '/home', label = 'Back', className = 'mb-1', onClick }) {
   const navigate = useNavigate();
 
   function back() {
+    // A page with a better idea of "back" than history (a dead link that should
+    // leave via its list) can say so.
+    if (onClick) return onClick();
     if (canGoBack()) navigate(-1);
     else navigate(fallback, { replace: true });
   }

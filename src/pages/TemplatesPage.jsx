@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Sparkles, CalendarRange, BookOpen } from 'lucide-react';
+import { Plus, Sparkles, CalendarRange, BookOpen } from 'lucide-react';
 import { useTemplatesWithExercises } from '../hooks/useTemplates.js';
 import { useExercises } from '../hooks/useExercises.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
@@ -19,6 +19,7 @@ import WeeklyPlanner from '../components/template/WeeklyPlanner.jsx';
 import ProgramsModal from '../components/template/ProgramsModal.jsx';
 import useUIStore from '../store/uiStore.js';
 import useWorkoutStore from '../store/workoutStore.js';
+import BackButton from '../components/layout/BackButton.jsx';
 
 // A routine row as updateTemplate takes it — every field, so a shuffle can't
 // quietly drop rest times, miss counts or per-lift steps.
@@ -120,10 +121,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="px-5 pb-24 pt-8">
-      <button type="button" onClick={() => navigate(-1)} className="mb-5 flex min-h-10 items-center gap-2 pr-3">
-        <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
-      </button>
+      <BackButton fallback="/workout" className="mb-5" />
 
       <div className="mb-4 flex items-end justify-between gap-3">
         <div className="min-w-0">

@@ -222,7 +222,7 @@ export default function HomePage() {
                   </span>
                 )}
               </div>
-              <XPBar totalXp={effectiveXp} showLabel={false} />
+              <XPBar totalXp={effectiveXp} level={level} showLabel={false} />
               {decaying && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
                   <p className="flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>

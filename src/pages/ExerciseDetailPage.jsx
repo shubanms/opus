@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote, Pencil, SearchX } from 'lucide-react';
+import { Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote, Pencil, SearchX } from 'lucide-react';
 import { useExercise, useExerciseNote } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume, useExerciseOneRepMax, useExerciseBestOneRepMax } from '../hooks/useProgress.js';
 import { E1RM_MAX_REPS } from '../utils/oneRepMax.js';
@@ -18,6 +18,7 @@ import ColorPicker from '../components/ui/ColorPicker.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import ExerciseForm from '../components/exercise/ExerciseForm.jsx';
 import ExerciseHistory from '../components/exercise/ExerciseHistory.jsx';
+import BackButton from '../components/layout/BackButton.jsx';
 
 const DIFFICULTY_COLOR = {
   beginner:     '#4FD8C4',
@@ -55,15 +56,6 @@ function PRCard({ prs, unit }) {
         {volume && <PRBadge label="Best volume" value={toDisplay(volume.value, unit)} unit={u} />}
       </div>
     </div>
-  );
-}
-
-function BackButton({ onClick }) {
-  return (
-    <button type="button" onClick={onClick} className="mb-5 flex min-h-10 items-center gap-2 pr-3">
-      <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
-      <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
-    </button>
   );
 }
 
@@ -114,7 +106,7 @@ export default function ExerciseDetailPage() {
   if (exercise === null) {
     return (
       <div className="px-5 pb-8 pt-6">
-        <BackButton onClick={toList} />
+        <BackButton onClick={toList} className="mb-5" />
         <div className="glass mt-10 flex flex-col items-center rounded-2xl px-6 py-10 text-center" style={{ background: 'var(--color-ivory)' }}>
           <SearchX size={28} style={{ color: 'var(--color-ash)' }} />
           <h1 className="mt-3 font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
@@ -153,7 +145,7 @@ export default function ExerciseDetailPage() {
 
   return (
     <div className="px-5 pb-8 pt-6">
-      <BackButton onClick={() => navigate(-1)} />
+      <BackButton fallback="/exercises" className="mb-5" />
 
       {/* Title + badges */}
       <div className="flex items-start justify-between gap-3">

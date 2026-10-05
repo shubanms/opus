@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Trophy } from 'lucide-react';
+import { ChevronRight, Trophy } from 'lucide-react';
 import { useAllPRs } from '../hooks/useProgress.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { fmtVolume, fmtWeight } from '../utils/units.js';
 import { friendlyDate, todayKey } from '../utils/dateKey.js';
 import { m, itemVariants, listVariants } from '../motion/index.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
+import BackButton from '../components/layout/BackButton.jsx';
 
 // Every record, newest first.
 //
@@ -48,10 +49,7 @@ export default function HallOfRecordsPage() {
 
   return (
     <div className="px-5 pb-8 pt-8">
-      <button type="button" onClick={() => navigate(-1)} className="-ml-2 mb-3 flex h-10 items-center gap-2 rounded-lg px-2">
-        <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
-      </button>
+      <BackButton fallback="/profile" className="mb-3" />
 
       <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
         Hall of Records

@@ -23,6 +23,9 @@ import TrophyCase from '../components/rpg/TrophyCase.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
 import CountUp from '../components/fx/CountUp.jsx';
 
+import MascotBoundary from '../components/mascot/MascotBoundary.jsx';
+import { hasWebGL } from '../components/mascot/webgl.js';
+
 const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
 
 function StatTile({ icon: Icon, value, label, accent, countTo }) {
@@ -159,9 +162,16 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <Suspense fallback={<div style={{ height: 150 }} />}>
-        <Companion autoGreet={false} />
-      </Suspense>
+      {/* Decoration must never cost the page: a WebGL context that can't be
+          created, a model that fails to load, or the lazy chunk itself failing
+          leaves Profile intact with no Magnus (components/mascot). */}
+      {hasWebGL() && (
+        <MascotBoundary>
+          <Suspense fallback={<div style={{ height: 150 }} />}>
+            <Companion autoGreet={false} />
+          </Suspense>
+        </MascotBoundary>
+      )}
 
       <CharacterCard profile={profile} />
 

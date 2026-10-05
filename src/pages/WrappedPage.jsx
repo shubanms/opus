@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Dumbbell, Layers, Trophy, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Dumbbell, Layers, Trophy, Clock } from 'lucide-react';
 import { useWrapped } from '../hooks/useWrapped.js';
 import { useRPG } from '../hooks/useRPG.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import CountUp from '../components/fx/CountUp.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
+import BackButton from '../components/layout/BackButton.jsx';
 
 function Stat({ icon: Icon, value, label }) {
   return (
@@ -19,7 +19,6 @@ function Stat({ icon: Icon, value, label }) {
 }
 
 export default function WrappedPage() {
-  const navigate = useNavigate();
   const [mode, setMode] = useState('month');
   const [period, setPeriod] = useState(null);
   const { periods, data, period: active } = useWrapped(period);
@@ -63,10 +62,7 @@ export default function WrappedPage() {
 
   return (
     <div className="px-5 pb-8 pt-8">
-      <button type="button" onClick={() => navigate(-1)} className="-ml-2 mb-3 flex h-10 items-center gap-2 rounded-lg px-2">
-        <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
-      </button>
+      <BackButton fallback="/profile" className="mb-3" />
 
       <h1 className="flex items-center gap-2 font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
         <Sparkles size={26} style={{ color: 'var(--color-gold)' }} /> Wrapped
