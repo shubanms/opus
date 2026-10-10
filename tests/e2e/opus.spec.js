@@ -1,4 +1,5 @@
-import { test as base, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { test as base, expect, devices } from '@playwright/test';
 
 // Collect console errors + uncaught page errors for every test, so a flow that
 // "looks" fine but logs a React error still fails the audit.
@@ -1015,5 +1016,306 @@ test.describe('OPUS end-to-end', () => {
     expect(box.y).toBeLessThan(height);
 
     expect(realErrors(errors)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Regressions from the 2026-10 QA sweep. Each test pins one bug that shipped:
+// it fails on the code before the fix and passes after. Reads go straight to
+// IndexedDB, because "the screen looks right" is how most of these hid.
+// ---------------------------------------------------------------------------
+
+/** Every row of one IndexedDB store. */
+async function readAll(page, store) {
+  return page.evaluate(
+    (name) =>
+      new Promise((resolve, reject) => {
+        const req = indexedDB.open('OpusDB');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const db = req.result;
+          const all = db.transaction(name, 'readonly').objectStore(name).getAll();
+          all.onsuccess = () => {
+            db.close();
+            resolve(all.result);
+          };
+          all.onerror = () => reject(all.error);
+        };
+      }),
+    store
+  );
+}
+
+/** Put rows into stores in one transaction: `{ store: [rows] }`. */
+async function putRows(page, rowsByStore) {
+  await page.evaluate(
+    (byStore) =>
+      new Promise((resolve, reject) => {
+        const req = indexedDB.open('OpusDB');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction(Object.keys(byStore), 'readwrite');
+          for (const [name, rows] of Object.entries(byStore)) for (const r of rows) tx.objectStore(name).put(r);
+          tx.oncomplete = () => {
+            db.close();
+            resolve();
+          };
+          tx.onerror = () => reject(tx.error);
+        };
+      }),
+    rowsByStore
+  );
+}
+
+/** Today's LOCAL calendar key, as the app writes it. */
+function localKey(page, daysAgo = 0) {
+  return page.evaluate((n) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, daysAgo);
+}
+
+async function startQuickCurl(page) {
+  await gotoTab(page, 'Workout');
+  await dismissCoach(page);
+  await page.getByRole('button', { name: 'Quick start (empty)' }).click();
+  await page.getByRole('button', { name: 'Add exercise' }).click();
+  await page.getByPlaceholder('Search exercises…').fill('Concentration Curl');
+  await page.getByRole('button', { name: /Concentration Curl/ }).click();
+  await expect(page.getByRole('heading', { name: 'Concentration Curl' })).toBeVisible();
+  await page.getByPlaceholder('kg').fill('20');
+  await page.getByPlaceholder('reps').fill('10');
+}
+
+const sessionSets = (page) =>
+  page.evaluate(() => JSON.parse(localStorage.getItem('opus_active_workout') ?? 'null')?.exercises?.[0]?.sets ?? []);
+
+test.describe('QA sweep regressions', () => {
+  test('a restored backup keeps every exercise it refers to — stock, cardio and custom', async ({ page, browser, errors }, testInfo) => {
+    test.setTimeout(120_000);
+    await onboard(page);
+    await dismissCoach(page);
+    // The catalogue (74 stock + 8 cardio) is seeded on boot; wait for it.
+    await expect.poll(async () => (await readAll(page, 'exercises')).length).toBeGreaterThanOrEqual(82);
+    const treadmill = (await readAll(page, 'exercises')).find((e) => e.name === 'Treadmill');
+    const now = Date.now();
+    await putRows(page, {
+      exercises: [{ id: 500, name: 'E2E Custom Lift', muscleGroup: 'chest', equipment: 'barbell', isCustom: true }],
+      workouts: [{ id: 900, date: await localKey(page, 1), name: 'Mixed', status: 'completed', duration: 1800, createdAt: now - 86400000, totalSets: 3, totalVolume: 1000, xpEarned: 100 }],
+      sets: [
+        { workoutId: 900, exerciseId: 1, setNumber: 1, reps: 8, weight: 60, completedAt: now - 86400000 },
+        { workoutId: 900, exerciseId: 500, setNumber: 1, reps: 8, weight: 40, completedAt: now - 86400000 },
+        { workoutId: 900, exerciseId: treadmill.id, setNumber: 1, reps: 0, weight: 0, isCardio: true, durationSec: 600, speedKmh: 8, completedAt: now - 86400000 },
+      ],
+    });
+
+    await goto(page, 'settings');
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export' }).click()]);
+    const file = testInfo.outputPath('backup.json');
+    await download.saveAs(file);
+
+    // A fresh browser profile: what "Delete browsing data" leaves behind.
+    // No service worker: it would only add a background reload to the profile.
+    const context = await browser.newContext({
+      ...devices['Pixel 7'],
+      baseURL: testInfo.project.use.baseURL,
+      serviceWorkers: 'block',
+    });
+    const fresh = await context.newPage();
+    await fresh.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+    await fresh.route(/wger\.de/, (r) => r.abort());
+    await onboard(fresh, 'Restored');
+    await dismissCoach(fresh);
+    await goto(fresh, 'settings');
+    await expect(fresh.getByRole('button', { name: 'Import' })).toBeVisible();
+    // Contents, not a path: path uploads silently attach nothing on some
+    // Chromium builds this suite runs against.
+    await fresh.locator('input[type="file"][accept*=".json"]').setInputFiles({
+      name: 'backup.json', mimeType: 'application/json', buffer: readFileSync(file),
+    });
+    await fresh.getByRole('button', { name: 'Restore', exact: true }).click();
+    await fresh.waitForURL(/\/opus\/?$|\/opus\/home/);
+
+    const exercises = await readAll(fresh, 'exercises');
+    const byId = new Map(exercises.map((e) => [e.id, e]));
+    const sets = await readAll(fresh, 'sets');
+    const orphans = [...new Set(sets.map((s) => s.exerciseId))].filter((id) => !byId.has(id));
+    expect(orphans).toEqual([]);
+    expect(byId.get(1)?.isCustom).toBeFalsy();
+    expect(exercises.some((e) => e.name === 'E2E Custom Lift')).toBe(true);
+    expect(byId.get(treadmill.id)?.name).toBe('Treadmill');
+    await context.close();
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('deleting a set mid-session renumbers the rest instead of duplicating a number', async ({ page, errors }) => {
+    await onboard(page);
+    await dismissCoach(page);
+    await startQuickCurl(page);
+    const log = page.getByRole('button', { name: 'Log set' });
+    await log.click();
+    await log.click();
+    await log.click();
+    await page.getByRole('button', { name: 'Remove set 2' }).click();
+    await log.click();
+    expect((await sessionSets(page)).map((s) => s.setNumber)).toEqual([1, 2, 3]);
+    // One tap removes exactly one set — it used to take out every "set 3".
+    await page.getByRole('button', { name: 'Remove set 3' }).click();
+    expect(await sessionSets(page)).toHaveLength(2);
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('tapping "Save & finish" twice saves one workout', async ({ page, errors }) => {
+    await onboard(page);
+    await dismissCoach(page);
+    await startQuickCurl(page);
+    await page.getByRole('button', { name: 'Log set' }).click();
+    await page.getByRole('button', { name: 'Finish' }).click();
+    await page.getByRole('button', { name: 'Save & finish' }).dblclick();
+    await expect.poll(async () => (await readAll(page, 'workouts')).length).toBe(1);
+    await page.waitForTimeout(1500);
+    expect(await readAll(page, 'workouts')).toHaveLength(1);
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('repeating a past workout asks before replacing the one in progress', async ({ page, errors }) => {
+    await onboard(page);
+    await dismissCoach(page);
+    await seedHistory(page);
+    await startQuickCurl(page);
+    await page.getByRole('button', { name: 'Log set' }).click();
+    await gotoTab(page, 'Home');
+    await goto(page, 'history');
+    await page.locator('button[aria-expanded]').first().click();
+    await page.getByRole('button', { name: 'Repeat', exact: true }).click();
+    await expect(page.getByText('Replace your workout?')).toBeVisible();
+    await page.getByRole('button', { name: 'Keep it' }).click();
+    expect(await sessionSets(page)).toHaveLength(1);
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('records keep their dates when an unrelated session is deleted and undone', async ({ page, errors }) => {
+    await onboard(page);
+    await dismissCoach(page);
+    const old = Date.now() - 20 * 86400000;
+    const recent = Date.now() - 2 * 86400000;
+    await putRows(page, {
+      workouts: [
+        { id: 701, date: await localKey(page, 20), name: 'Heavy day', status: 'completed', duration: 3000, createdAt: old, totalSets: 1, totalVolume: 500, xpEarned: 100 },
+        { id: 702, date: await localKey(page, 2), name: 'Light day', status: 'completed', duration: 3000, createdAt: recent, totalSets: 1, totalVolume: 450, xpEarned: 100 },
+      ],
+      sets: [
+        { workoutId: 701, exerciseId: 1, setNumber: 1, reps: 5, weight: 100, completedAt: old },
+        { workoutId: 702, exerciseId: 1, setNumber: 1, reps: 5, weight: 90, completedAt: recent },
+      ],
+      prs: [
+        { exerciseId: 1, type: 'weight', value: 100, achievedAt: old, workoutId: 701 },
+        { exerciseId: 1, type: 'reps', value: 5, achievedAt: old, workoutId: 701 },
+        { exerciseId: 1, type: 'volume', value: 500, achievedAt: old, workoutId: 701 },
+      ],
+    });
+    await goto(page, 'history');
+    await dismissCoach(page);
+    // Newest first: the light day is the first card.
+    await page.locator('button[aria-expanded]').first().click();
+    await page.getByRole('button', { name: 'Delete workout' }).click();
+    await expect.poll(async () => (await readAll(page, 'workouts')).length).toBe(1);
+    const afterDelete = await readAll(page, 'prs');
+    expect(afterDelete.every((p) => p.achievedAt === old && p.workoutId === 701)).toBe(true);
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect.poll(async () => (await readAll(page, 'workouts')).length).toBe(2);
+    const afterUndo = await readAll(page, 'prs');
+    expect(afterUndo.every((p) => p.achievedAt === old && p.workoutId === 701)).toBe(true);
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('a Mon/Wed/Fri plan counts toward the best streak and opens the level-20 gate', async ({ page, errors }) => {
+    await onboard(page);
+    await dismissCoach(page);
+    // Five weeks of a perfect Mon/Wed/Fri plan, ending today or before.
+    const plan = await page.evaluate(() => {
+      const keys = [];
+      const d = new Date();
+      for (let i = 0; i < 40; i += 1) {
+        const day = d.getDay();
+        if (day === 1 || day === 3 || day === 5) {
+          keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+        }
+        d.setDate(d.getDate() - 1);
+      }
+      return keys;
+    });
+    const workouts = plan.map((date, i) => ({
+      id: 800 + i, date, name: 'Plan day', status: 'completed', duration: 3000,
+      createdAt: Date.parse(`${date}T18:00:00`), totalSets: 3, totalVolume: 1200, xpEarned: 150,
+    }));
+    await putRows(page, {
+      templates: [
+        { id: 61, name: 'Push', dayOfWeek: 1, createdAt: 1 },
+        { id: 62, name: 'Pull', dayOfWeek: 3, createdAt: 2 },
+        { id: 63, name: 'Legs', dayOfWeek: 5, createdAt: 3 },
+      ],
+      workouts,
+    });
+    await goto(page, 'progression');
+    const gauntlet = page.locator('p', { hasText: /^The Gauntlet$/ }).locator('xpath=ancestor::div[contains(@class,"rounded-xl")][1]');
+    await expect(gauntlet).toContainText('Cleared');
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test('unknown links land on Home instead of a bare 404', async ({ page }) => {
+    await onboard(page);
+    await goto(page, 'no-such-page');
+    await expect(page).toHaveURL(/\/opus\/home$/);
+  });
+
+  test('Back closes an open sheet instead of leaving the page', async ({ page, errors }) => {
+    await onboard(page);
+    await dismissCoach(page);
+    await goto(page, 'profile');
+    await dismissCoach(page);
+    await page.getByText(/The Vault/).first().click();
+    await expect(page.getByRole('heading', { name: 'The Vault' })).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'The Vault' })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/opus\/profile$/);
+    expect(realErrors(errors)).toEqual([]);
+  });
+
+  test.describe('with reduced motion', () => {
+    test.use({ reducedMotion: 'reduce' });
+    test('charts keep their layout', async ({ page, errors }) => {
+      await onboard(page);
+      await dismissCoach(page);
+      await seedHistory(page);
+      await goto(page, 'profile');
+      await dismissCoach(page);
+      const group = page.locator('svg[aria-label^="Character stats"] > g').first();
+      await expect(group).toHaveCount(1);
+      // A global `transform: none` reset once drew this chart around its corner.
+      expect(await group.evaluate((el) => getComputedStyle(el).transform)).not.toBe('none');
+      expect(realErrors(errors)).toEqual([]);
+    });
+  });
+
+  test.describe('in India (UTC+5:30)', () => {
+    test.use({ timezoneId: 'Asia/Kolkata' });
+    test('the training heatmap lights the day you trained', async ({ page, errors }) => {
+      await onboard(page);
+      await dismissCoach(page);
+      const today = await localKey(page, 0);
+      const yesterday = await localKey(page, 1);
+      await putRows(page, {
+        workouts: [{ id: 950, date: today, name: 'Today', status: 'completed', duration: 1800, createdAt: Date.now(), totalSets: 1, totalVolume: 400, xpEarned: 50 }],
+        sets: [{ workoutId: 950, exerciseId: 1, setNumber: 1, reps: 5, weight: 80, completedAt: Date.now() }],
+      });
+      await goto(page, 'progress');
+      await dismissCoach(page);
+      await expect(page.locator(`[data-date="${today}"]`)).toHaveAttribute('data-trained', 'true');
+      await expect(page.locator(`[data-date="${yesterday}"]`)).not.toHaveAttribute('data-trained', 'true');
+      expect(realErrors(errors)).toEqual([]);
+    });
   });
 });
