@@ -4,7 +4,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './router.jsx';
 import { db } from './db/db.js';
 import useSettingsStore, { applyEffects } from './store/settingsStore.js';
-import { applyTheme } from './utils/theme.js';
+import { applySky, applyTheme } from './utils/theme.js';
 import { requestPersistence } from './utils/storage.js';
 import { initInstallPrompt } from './utils/installPrompt.js';
 import { updateStreakSync } from './utils/periodicSync.js';
@@ -15,13 +15,11 @@ import './styles/tokens.css';
 import './styles/animations.css';
 import './index.css';
 
-// Apply the saved theme and effects flag before first paint, so the first frame
-// already has the right palette and the right material.
-applyTheme(useSettingsStore.getState().theme);
+// Apply the Ink palette, saved sky and effects flag before first paint, so the
+// first frame already has the right palette and the right material.
+applyTheme();
+applySky(useSettingsStore.getState().sky);
 applyEffects(useSettingsStore.getState().effects);
-window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
-  if (useSettingsStore.getState().theme === 'system') applyTheme('system');
-});
 
 // Ask the browser not to evict our IndexedDB. There is no backend, so eviction
 // would destroy the user's entire history. Fire-and-forget: it never prompts

@@ -14,7 +14,7 @@ const useUIStore = create((set, get) => ({
     const id = ++idSeq;
     const action = opts.action ?? null;
     set((s) => ({ toasts: [...s.toasts, { id, message, type: opts.type ?? 'info', action }] }));
-    setTimeout(() => get().dismissToast(id), opts.duration ?? (action ? 7000 : 3000));
+    setTimeout(() => get().dismissToast(id), opts.duration ?? (action ? 7000 : 2600));
     return id;
   },
   dismissToast(id) {

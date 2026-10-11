@@ -847,7 +847,7 @@ export default function SettingsPage() {
 
       {/* Danger zone — last, where the jump-nav says it is, and the furthest a
           careless scroll can take you from it. */}
-      <section id="settings-danger" className="scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #FF8FA355' }}>
+      <section id="settings-danger" className="scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #E0553B55' }}>
         <div className="mb-1 flex items-center gap-2">
           <Trash2 size={14} style={{ color: 'var(--color-ember)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-ember)' }}>

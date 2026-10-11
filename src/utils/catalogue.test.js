@@ -34,7 +34,7 @@ describe('isPristineStock', () => {
 
   it('keeps anything carrying user state, or not exactly the seed', () => {
     expect(isPristineStock({ ...STOCK_BY_ID.get(3), favorite: true })).toBe(false);
-    expect(isPristineStock({ ...STOCK_BY_ID.get(3), color: '#8B7DFF' })).toBe(false);
+    expect(isPristineStock({ ...STOCK_BY_ID.get(3), color: '#123456' })).toBe(false);
     expect(isPristineStock({ ...STOCK_BY_ID.get(3), name: 'Flat Bench' })).toBe(false);
     expect(isPristineStock({ ...STOCK_BY_ID.get(3), isCustom: true })).toBe(false);
     // A field from a later version is kept by default, not lost by default.
