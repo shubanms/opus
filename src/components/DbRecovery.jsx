@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Dexie from 'dexie';
 import { downloadRawDump } from '../utils/dataActions.js';
+import '../styles/ink-components.css';
+import '../styles/ink-system.css';
 
 // Shown when the local database fails to open (e.g. a blocked or corrupted
 // upgrade). Lets the user retry, save what is there, or rebuild.
@@ -14,8 +16,6 @@ import { downloadRawDump } from '../utils/dataActions.js';
 //
 // Rendered outside the app shell (no router, no toast host, no motion
 // provider), so everything here is plain state and plain elements.
-
-const btn = 'mt-3 w-full max-w-xs rounded-xl py-3 font-sans text-sm';
 
 export default function DbRecovery() {
   const [busy, setBusy] = useState(false);
@@ -46,102 +46,58 @@ export default function DbRecovery() {
   }
 
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center px-8 text-center"
-      style={{ background: 'var(--color-chalk)' }}
-    >
-      <p className="font-display text-4xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+    <div className="sy-recover">
+      <p className="font-display text-4xl font-bold" style={{ color: 'var(--washi-2)' }}>
         Couldn't open your data
       </p>
-      <p className="mt-2 max-w-sm font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <p className="mt-2 max-w-sm font-sans text-sm" style={{ color: 'var(--mute-2)' }}>
         This usually happens when the app updated while another tab was open. Close other OPUS tabs
         and reload first.
       </p>
 
-      <button
-        type="button"
-        onClick={() => window.location.reload()}
-        disabled={busy}
-        className={`${btn} mt-6 font-semibold`}
-        style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-      >
+      <button type="button" className="ink-btn ink-btn--primary mt-6" onClick={() => window.location.reload()} disabled={busy}>
         Reload
       </button>
-      <button
-        type="button"
-        onClick={saveCopy}
-        disabled={busy}
-        className={`${btn} font-medium`}
-        style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-      >
+      <button type="button" onClick={saveCopy} disabled={busy} className="sy-ghost">
         {saved ? 'Save another copy' : 'Save a copy of my data'}
       </button>
 
       {saved && (
-        <output className="mt-3 block max-w-xs font-sans text-xs" style={{ color: 'var(--color-sage)' }}>
+        <output className="mt-3 block max-w-xs font-sans text-xs" style={{ color: 'var(--moss)' }}>
           Copy saved to Downloads ({saved.workouts} {saved.workouts === 1 ? 'workout' : 'workouts'}). Restore it
           from Settings → Import once the app opens.
         </output>
       )}
       {error && (
-        <p role="alert" className="mt-3 max-w-xs font-sans text-xs" style={{ color: 'var(--color-ember)' }}>
+        <p role="alert" className="mt-3 max-w-xs font-sans text-xs" style={{ color: 'var(--ver-light)' }}>
           {error}
         </p>
       )}
 
       {!confirming ? (
-        <button
-          type="button"
-          onClick={() => setConfirming(true)}
-          disabled={busy}
-          className={`${btn} font-medium`}
-          style={{ background: 'transparent', color: 'var(--color-ember)' }}
-        >
+        <button type="button" onClick={() => setConfirming(true)} disabled={busy} className="sy-ghost sy-ghost--danger">
           Rebuild database…
         </button>
       ) : (
-        <div
-          role="alertdialog"
-          aria-labelledby="rebuild-title"
-          className="mt-5 w-full max-w-xs rounded-2xl p-4 text-left"
-          style={{ background: 'var(--color-ivory)', border: '1px solid var(--color-ember)' }}
-        >
-          <p id="rebuild-title" className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+        <div role="alertdialog" aria-labelledby="rebuild-title" className="sy-recover__dialog">
+          <p id="rebuild-title" className="font-sans text-sm font-semibold" style={{ color: 'var(--washi-2)' }}>
             Delete everything on this device?
           </p>
-          <p className="mt-1 font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mt-1 font-sans text-xs leading-relaxed" style={{ color: 'var(--mute-2)' }}>
             Rebuilding starts the app from empty. {saved
               ? 'Your copy is saved — keep it until you have restored it.'
               : 'Save a copy first: it is the only way to get this history back.'}
           </p>
           {!saved && (
-            <button
-              type="button"
-              onClick={saveCopy}
-              disabled={busy}
-              className="mt-3 w-full rounded-xl py-2.5 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-            >
+            <button type="button" className="ink-btn ink-btn--primary ink-btn--block mt-3" onClick={saveCopy} disabled={busy}>
               Save a copy first
             </button>
           )}
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              disabled={busy}
-              className="flex-1 rounded-xl py-2.5 font-sans text-sm font-medium"
-              style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
-            >
+          <div className="sy-btnrow mt-2">
+            <button type="button" onClick={() => setConfirming(false)} disabled={busy} className="sy-ghost" style={{ marginTop: 0 }}>
               Cancel
             </button>
-            <button
-              type="button"
-              onClick={rebuild}
-              disabled={busy}
-              className="flex-1 rounded-xl py-2.5 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-ember)', color: 'var(--color-on-accent)' }}
-            >
+            <button type="button" onClick={rebuild} disabled={busy} className="sy-ghost sy-ghost--danger" style={{ marginTop: 0 }}>
               {busy ? 'Working…' : 'Delete & rebuild'}
             </button>
           </div>

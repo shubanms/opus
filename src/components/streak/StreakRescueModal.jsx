@@ -1,6 +1,7 @@
-import { Flame, Shield } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
-import { m } from '../../motion/index.jsx';
+import { InkButton } from '../ink/index.js';
+import useInkMotion from '../ink/useInkMotion.js';
+import '../../styles/ink-system.css';
 import { playChime } from '../../utils/sound.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 
@@ -20,6 +21,7 @@ import { useHaptics } from '../../hooks/useHaptics.js';
 // now. `onDecline` is only the "Let it go" button: not this lapse, ever.
 export default function StreakRescueModal({ offer, tokens, onRescue, onLater, onDecline }) {
   const haptic = useHaptics();
+  const motionOn = useInkMotion();
   if (!offer) return null;
 
   const { cost, lost, missed, affordable, scheduled } = offer;
@@ -35,72 +37,50 @@ export default function StreakRescueModal({ offer, tokens, onRescue, onLater, on
 
   return (
     <Modal isOpen onClose={onLater ?? onDecline} title="Your streak ended">
-      <div className="mb-5 flex flex-col items-center text-center">
-        <m.div
-          className="mb-3 flex h-16 w-16 items-center justify-center rounded-full"
-          style={{ background: 'var(--accent-wash)' }}
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-        >
-          <Flame size={30} style={{ color: 'var(--color-ember)' }} />
-        </m.div>
-        <p className="font-display text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+      <div className="mb-5">
+        {/* Kintsugi: the streak line is broken; a gold-leaf seam mends the crack. */}
+        <svg className={`sy-kin${motionOn ? '' : ' sy-kin--still'}`} viewBox="0 0 280 76" aria-hidden="true">
+          <g filter="url(#ink-brush-fine)" fill="var(--washi-2)">
+            <polygon points="8,30 124,30 118,38 128,44 120,52 8,52" />
+            <polygon points="156,30 272,30 272,52 150,52 158,45 148,37" />
+          </g>
+          <g fill="none" stroke="var(--gold-leaf)" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M 141 22 L 133 33 L 143 41 L 135 49 L 141 60" pathLength="100" strokeWidth="3" className="sy-kin__seam" />
+            <path d="M 124 30 L 118 38 L 128 44 L 120 52" strokeWidth="1" opacity="0.7" />
+            <path d="M 156 30 L 148 37 L 158 45 L 150 52" strokeWidth="1" opacity="0.7" />
+          </g>
+        </svg>
+        <p className="sy-lost">
           {lost} {noun}s
         </p>
-        <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+        <p className="mt-1 text-center font-sans text-sm" style={{ color: 'var(--mute-2)' }}>
           {missed === 1 ? `You missed a ${noun}.` : `You missed ${missed} ${noun}s.`} That run is over
           unless you spend {cost === 1 ? 'a rest token' : `${cost} rest tokens`}.
         </p>
       </div>
 
       {/* What a token is, said once, at the moment it matters. */}
-      <div
-        className="mb-5 flex items-start gap-2.5 rounded-2xl px-3.5 py-3"
-        style={{ background: 'var(--color-ivory)' }}
-      >
-        <Shield size={15} className="mt-0.5 shrink-0" style={{ color: 'var(--color-gold)' }} />
-        <p className="font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+      <div className="sy-note mb-5">
+        <p>
           Rest tokens come from training — one for every 10 sessions and every 3 quests you
-          finish. You have <strong style={{ color: 'var(--color-text-primary)' }}>{tokens}</strong>.
+          finish. You have <strong>{tokens}</strong>.
           {scheduled
             ? ' Spending them here buys back the sessions you missed — the next one on your plan is still yours to hit.'
             : ' Spending them here keeps the streak alive, but only up to today: you still have to train today.'}
         </p>
       </div>
 
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={onDecline}
-          className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-        >
-          Let it go
-        </button>
-        <button
-          type="button"
-          onClick={rescue}
-          disabled={!affordable}
-          className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-          style={{
-            background: 'var(--color-gold)',
-            color: 'var(--color-on-accent)',
-            opacity: affordable ? 1 : 0.35,
-          }}
-        >
+      <div className="sy-btnrow">
+        <InkButton variant="secondary" onClick={onDecline}>Let it go</InkButton>
+        <InkButton onClick={rescue} disabled={!affordable}>
           {affordable ? `Spend ${cost}` : `Need ${cost - tokens} more`}
-        </button>
+        </InkButton>
       </div>
       {!affordable && (
-        <p className="mt-2 text-center font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          Not enough tokens this time — but now you know what they are for.
-        </p>
+        <p className="sy-hint">Not enough tokens this time — but now you know what they are for.</p>
       )}
       {affordable && onLater && (
-        <p className="mt-2 text-center font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          Not sure yet? Close this and it will ask again next time you open OPUS.
-        </p>
+        <p className="sy-hint">Not sure yet? Close this and it will ask again next time you open OPUS.</p>
       )}
     </Modal>
   );

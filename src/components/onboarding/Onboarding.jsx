@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import OpusMark from '../logo/OpusMark.jsx';
+import { InkButton, PaperCard, Seal } from '../ink/index.js';
+import SkyBackdrop from './SkyBackdrop.jsx';
+import '../../styles/ink-system.css';
 import useUserStore from '../../store/userStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { logBodyStat } from '../../utils/healthActions.js';
@@ -109,131 +112,103 @@ export default function Onboarding() {
     }
   }
 
-  const field = { background: 'var(--color-stone)', color: 'var(--color-text-inverse)' };
-  const lblCls = 'mt-4 block font-sans text-xs font-semibold uppercase tracking-widest';
-
   if (step === 1) {
     return (
-      <div data-testid="first-run-overlay" className="fixed inset-0 z-[55] flex flex-col items-center overflow-y-auto px-8 py-10" style={{ background: 'var(--color-obsidian)' }}>
-        <OpusMark size={72} animate />
-        <h1 className="mt-6 font-display text-3xl font-bold" style={{ color: 'var(--color-text-inverse)' }}>Plan your week</h1>
-        <p className="mt-1 mb-6 max-w-xs text-center font-sans text-sm" style={{ color: 'var(--color-ash)' }}>
-          Pick a split and we'll build a full week of routines — fully editable after.
-        </p>
-        <div className="w-full max-w-xs">
-          <div className="flex flex-col gap-2">
-            {SPLIT_LIST.map((s) => {
-              const on = s.key === splitKey;
-              return (
-                <button key={s.key} type="button" onClick={() => pickSplit(s.key)} aria-pressed={on} className="rounded-xl border px-4 py-3 text-left"
-                  style={{ borderColor: on ? 'var(--color-gold)' : 'transparent', background: 'var(--color-stone)' }}>
-                  <div className="flex items-center justify-between">
-                    <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-inverse)' }}>{s.label}</span>
-                    <span className="font-mono text-xs" style={{ color: 'var(--color-ash)' }}>{s.days.join('/')}d</span>
-                  </div>
-                  <p className="mt-0.5 font-sans text-xs" style={{ color: 'var(--color-ash)' }}>{s.blurb}</p>
+      <div data-testid="first-run-overlay" className="sy-stage z-[55]">
+        <SkyBackdrop />
+        <div className="sy-scroll">
+          <PaperCard className="sy-card sy-card--enter" seal={<Seal kanji="練" size={36} rotate={4} />}>
+            <h1 className="sy-title">Plan your week</h1>
+            <p className="sy-sub">Pick a split and we'll build a full week of routines — fully editable after.</p>
+            <div className="mt-4 flex flex-col gap-2">
+              {SPLIT_LIST.map((s) => (
+                <button key={s.key} type="button" onClick={() => pickSplit(s.key)} aria-pressed={s.key === splitKey} className="sy-option">
+                  <span className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">{s.label}</span>
+                    <span className="font-mono text-xs">{s.days.join('/')}d</span>
+                  </span>
+                  <small>{s.blurb}</small>
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
 
-          <span className={lblCls} style={{ color: 'var(--color-ash)', display: 'block' }}>Days per week</span>
-          <div className="mt-2 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-stone)' }}>
-            {split.days.map((d) => (
-              <button key={d} type="button" onClick={() => setDays(d)} aria-pressed={days === d} className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs font-medium"
-                style={{ background: days === d ? 'var(--color-gold)' : 'transparent', color: days === d ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
-                {d} days
-              </button>
-            ))}
-          </div>
+            <span className="sy-label">Days per week</span>
+            <div className="sy-seg">
+              {split.days.map((d) => (
+                <button key={d} type="button" onClick={() => setDays(d)} aria-pressed={days === d}>{d} days</button>
+              ))}
+            </div>
 
-          <span className={lblCls} style={{ color: 'var(--color-ash)', display: 'block' }}>Experience</span>
-          <div className="mt-2 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-stone)' }}>
-            {LEVELS.map((l) => (
-              <button key={l} type="button" onClick={() => setLevel(l)} aria-pressed={level === l} className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs font-medium capitalize"
-                style={{ background: level === l ? 'var(--color-gold)' : 'transparent', color: level === l ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
-                {l}
-              </button>
-            ))}
-          </div>
+            <span className="sy-label">Experience</span>
+            <div className="sy-seg">
+              {LEVELS.map((l) => (
+                <button key={l} type="button" onClick={() => setLevel(l)} aria-pressed={level === l}>{l}</button>
+              ))}
+            </div>
 
-          <button type="button" onClick={createWeek} disabled={busy} className="mt-8 w-full rounded-xl py-4 font-sans text-base font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.5 : 1 }}>
-            Create my week
-          </button>
-          <button type="button" onClick={completeOnboarding} className="mt-2 mb-4 min-h-11 w-full py-2 font-sans text-sm font-medium" style={{ color: 'var(--color-ash)' }}>
-            Skip for now
-          </button>
+            <InkButton block className="mt-6" onClick={createWeek} disabled={busy}>Create my week</InkButton>
+            <button type="button" onClick={completeOnboarding} className="sy-quiet mt-1">Skip for now</button>
+          </PaperCard>
         </div>
       </div>
     );
   }
 
   return (
-    <div data-testid="first-run-overlay" className="fixed inset-0 z-[55] flex flex-col items-center overflow-y-auto px-8 py-10" style={{ background: 'var(--color-obsidian)' }}>
-      <OpusMark size={84} animate />
-      <h1 className="mt-6 font-display text-4xl font-bold" style={{ color: 'var(--color-text-inverse)' }}>Welcome to OPUS</h1>
-      <p className="mt-1 mb-6 font-sans text-sm" style={{ color: 'var(--color-ash)' }}>Set up your character.</p>
-
-      <div className="w-full max-w-xs">
-        {/* Units */}
-        <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-ash)' }}>Units</span>
-        <div className="mt-2 flex overflow-hidden rounded-xl" style={{ background: 'var(--color-stone)' }}>
-          {['kg', 'lbs'].map((u) => (
-            <button key={u} type="button" onClick={() => pickUnit(u)} aria-pressed={unit === u} className="min-h-11 flex-1 py-2.5 font-sans text-sm font-medium"
-              style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
-              {u}
-            </button>
-          ))}
+    <div data-testid="first-run-overlay" className="sy-stage z-[55]">
+      <SkyBackdrop />
+      <div className="sy-scroll">
+        <div className="sy-brand">
+          <OpusMark size={64} animate />
         </div>
+        <PaperCard className="sy-card sy-card--enter" seal={<Seal kanji="初" size={36} rotate={4} />}>
+          <h1 className="sy-title">Welcome to OPUS</h1>
+          <p className="sy-sub">Set up your character.</p>
 
-        <label htmlFor="onb-name" className={lblCls} style={{ color: 'var(--color-ash)' }}>Your name</label>
-        <input id="onb-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Athlete"
-          className="mt-2 w-full rounded-xl px-4 py-3 font-sans text-sm outline-none" style={field} />
+          {/* Units */}
+          <span className="sy-label">Units</span>
+          <div className="sy-seg">
+            {['kg', 'lbs'].map((u) => (
+              <button key={u} type="button" onClick={() => pickUnit(u)} aria-pressed={unit === u}>{u}</button>
+            ))}
+          </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label htmlFor="onb-weight" className={lblCls} style={{ color: 'var(--color-ash)' }}>Bodyweight ({lbl})</label>
-            <input id="onb-weight" value={bodyweight} onChange={(e) => setBodyweight(e.target.value)} type="number" inputMode="decimal" min="0"
-              className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
-          </div>
-          <div className="flex-1">
-            <label htmlFor="onb-height" className={lblCls} style={{ color: 'var(--color-ash)' }}>Height (cm)</label>
-            <input id="onb-height" value={height} onChange={(e) => setHeight(e.target.value)} type="number" inputMode="decimal" min="100" max="250"
-              className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
-          </div>
-        </div>
+          <label htmlFor="onb-name" className="sy-label">Your name</label>
+          <input id="onb-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Athlete" className="sy-field" />
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label htmlFor="onb-age" className={lblCls} style={{ color: 'var(--color-ash)' }}>Age</label>
-            <input id="onb-age" value={age} onChange={(e) => setAge(e.target.value)} type="number" inputMode="numeric" min="13" max="100"
-              className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
-          </div>
-          <div className="flex-1">
-            <span className={lblCls} style={{ color: 'var(--color-ash)' }}>Sex</span>
-            {/* A second tap clears it: once picked, "prefer not to say" used to
-                be impossible to get back to. */}
-            <div className="mt-2 flex gap-1">
-              {SEXES.map((s) => (
-                <button key={s} type="button" onClick={() => setSex(sex === s ? null : s)} aria-pressed={sex === s} aria-label={s}
-                  className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs"
-                  style={{ background: sex === s ? 'var(--color-gold)' : 'var(--color-stone)', color: sex === s ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
-                  {s[0]}
-                </button>
-              ))}
+          <div className="sy-row">
+            <div>
+              <label htmlFor="onb-weight" className="sy-label">Bodyweight ({lbl})</label>
+              <input id="onb-weight" value={bodyweight} onChange={(e) => setBodyweight(e.target.value)} type="number" inputMode="decimal" min="0" className="sy-field font-mono" />
+            </div>
+            <div>
+              <label htmlFor="onb-height" className="sy-label">Height (cm)</label>
+              <input id="onb-height" value={height} onChange={(e) => setHeight(e.target.value)} type="number" inputMode="decimal" min="100" max="250" className="sy-field font-mono" />
             </div>
           </div>
-        </div>
 
-        <label htmlFor="onb-bar" className={lblCls} style={{ color: 'var(--color-ash)' }}>Empty barbell weight ({lbl}) — for plate math</label>
-        <input id="onb-bar" value={bar} onChange={(e) => setBar(e.target.value)} type="number" inputMode="decimal" min="0" placeholder={String(defaultBar(unit))}
-          className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
+          <div className="sy-row">
+            <div>
+              <label htmlFor="onb-age" className="sy-label">Age</label>
+              <input id="onb-age" value={age} onChange={(e) => setAge(e.target.value)} type="number" inputMode="numeric" min="13" max="100" className="sy-field font-mono" />
+            </div>
+            <div>
+              <span className="sy-label">Sex</span>
+              {/* A second tap clears it: once picked, "prefer not to say" used to
+                  be impossible to get back to. */}
+              <div className="sy-seg">
+                {SEXES.map((s) => (
+                  <button key={s} type="button" onClick={() => setSex(sex === s ? null : s)} aria-pressed={sex === s} aria-label={s}>{s[0]}</button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-        <button type="button" onClick={begin} className="mt-8 mb-4 w-full rounded-xl py-4 font-sans text-base font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
-          Begin
-        </button>
+          <label htmlFor="onb-bar" className="sy-label">Empty barbell weight ({lbl}) — for plate math</label>
+          <input id="onb-bar" value={bar} onChange={(e) => setBar(e.target.value)} type="number" inputMode="decimal" min="0" placeholder={String(defaultBar(unit))} className="sy-field font-mono" />
+
+          <InkButton block className="mt-6" onClick={begin}>Begin</InkButton>
+        </PaperCard>
       </div>
     </div>
   );

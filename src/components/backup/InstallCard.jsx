@@ -1,3 +1,4 @@
+import '../../styles/ink-system.css';
 import { useState } from 'react';
 import { Download, X } from 'lucide-react';
 import { useInstallPrompt } from '../../hooks/useInstallPrompt.js';
@@ -47,8 +48,8 @@ export default function InstallCard() {
 
   return (
     <div
-      className="glass mb-4 flex items-center gap-3 rounded-2xl p-3"
-      style={{ background: 'var(--color-chalk)', border: '1px solid var(--accent-line)' }}
+      className="set-group flex items-center gap-3 !p-3"
+      style={{ borderColor: 'var(--accent-line)' }}
     >
       <div className="min-w-0 flex-1">
         <p className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
@@ -61,7 +62,7 @@ export default function InstallCard() {
       <button
         type="button"
         onClick={handleInstall}
-        className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 font-sans text-sm font-semibold"
+        className="flex min-h-10 shrink-0 items-center gap-1.5 rounded px-3 font-sans text-sm font-semibold"
         style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
       >
         <Download size={14} /> Install
@@ -70,7 +71,7 @@ export default function InstallCard() {
         type="button"
         onClick={dismiss}
         aria-label="Not now"
-        className="-mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+        className="-mr-1 flex h-10 w-10 shrink-0 items-center justify-center rounded"
       >
         <X size={16} style={{ color: 'var(--color-ash)' }} />
       </button>

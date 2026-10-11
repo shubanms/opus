@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, FileCheck2, Upload } from 'lucide-react';
+import { ArrowLeft, FileCheck2, Upload } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { m, TWEEN } from '../../motion/index.jsx';
+import { InkButton } from '../ink/index.js';
+import '../../styles/ink-system.css';
 import useSettingsStore from '../../store/settingsStore.js';
 import useUIStore from '../../store/uiStore.js';
 import { importData, inspectBackup } from '../../utils/dataActions.js';
@@ -78,92 +80,62 @@ export default function WipeAlert() {
     <Modal isOpen onClose={acceptWipe} title={preview ? 'Restore this backup?' : 'Your history is missing'}>
       {preview ? (
         <m.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={TWEEN.standard}>
-          <div className="mb-4 flex items-start gap-3 rounded-2xl px-4 py-3.5" style={{ background: 'var(--color-ivory)' }}>
-            <FileCheck2 size={20} className="mt-0.5 shrink-0" style={{ color: 'var(--color-sage)' }} />
+          <div className="sy-note mb-4">
+            <FileCheck2 size={20} className="mt-0.5 shrink-0" style={{ color: 'var(--moss)' }} />
             <div className="min-w-0">
-              <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              <p className="text-base font-semibold" style={{ color: 'var(--washi-2)' }}>
                 {summary.title}
               </p>
-              <p className="mt-0.5 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                {summary.detail}
-              </p>
+              <p className="mt-0.5 text-sm">{summary.detail}</p>
               {preview.info.lastWorkout && (
-                <p className="mt-1 font-sans text-xs" style={{ color: 'var(--color-ash)' }}>
-                  Last session in it: {friendlyDate(preview.info.lastWorkout)}
-                </p>
+                <p className="mt-1">Last session in it: {friendlyDate(preview.info.lastWorkout)}</p>
               )}
-              <p className="mt-1 truncate font-mono text-[11px]" style={{ color: 'var(--color-ash)' }}>
-                {preview.name}
-              </p>
+              <p className="sy-mono mt-1 truncate text-[11px]">{preview.name}</p>
             </div>
           </div>
-          <p className="mb-5 font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="mb-5 font-sans text-xs leading-relaxed" style={{ color: 'var(--mute-2)' }}>
             Restoring replaces what is on this device with the backup, then reopens the app.
           </p>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setPreview(null)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium"
-              style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-            >
+          <div className="sy-btnrow">
+            <InkButton variant="secondary" disabled={busy} onClick={() => setPreview(null)}>
               <ArrowLeft size={15} /> Another file
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={restore}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.5 : 1 }}
-            >
+            </InkButton>
+            <InkButton disabled={busy} onClick={restore}>
               <Upload size={15} /> {busy ? 'Restoring…' : 'Restore'}
-            </button>
+            </InkButton>
           </div>
         </m.div>
       ) : (
         <>
-          <div className="mb-4 flex items-start gap-2.5">
-            <AlertTriangle size={18} className="mt-0.5 shrink-0" style={{ color: 'var(--color-ember)' }} />
+          <div className="sy-alert">
+            <span className="sy-alert__rule" aria-hidden="true" />
             <div>
-              <p className="font-sans text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
+              <p>
                 {wipe.lost > 0
                   ? `This device had ${wipe.lost} logged ${wipe.lost === 1 ? 'session' : 'sessions'}. They are gone.`
                   : 'Your logged sessions are gone from this device.'}
               </p>
-              <p className="mt-2 font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
+              <p>
                 OPUS stores everything in your browser, and clearing browsing data — "cookies, cache
                 and other site data" — erases it. There is no copy on a server to fetch back.
               </p>
             </div>
           </div>
 
-          <div className="mb-5 rounded-2xl px-3.5 py-3" style={{ background: 'var(--color-ivory)' }}>
-            <p className="font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-              Look in your <strong style={{ color: 'var(--color-text-primary)' }}>Downloads</strong> folder
-              for a file named <span className="font-mono">opus-backup-….json</span> (or a{' '}
-              <span className="font-mono">.txt</span> you sent yourself). Every one of them restores the
+          <div className="sy-note mb-5">
+            <p>
+              Look in your <strong>Downloads</strong> folder
+              for a file named <span className="sy-mono">opus-backup-….json</span> (or a{' '}
+              <span className="sy-mono">.txt</span> you sent yourself). Every one of them restores the
               day it was taken.
             </p>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={acceptWipe}
-              className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-              style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-            >
-              Start fresh
-            </button>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-            >
+          <div className="sy-btnrow">
+            <InkButton variant="secondary" onClick={acceptWipe}>Start fresh</InkButton>
+            <InkButton onClick={() => fileRef.current?.click()}>
               <Upload size={15} /> Restore a backup
-            </button>
+            </InkButton>
           </div>
         </>
       )}
