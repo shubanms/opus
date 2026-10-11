@@ -1,7 +1,7 @@
 /* Seal Book (Achievements). Tokens only; shapes lifted from the InkSeals artboard. */
 .seals-page { padding: 28px 20px 40px; }
 .seals-head { display: flex; align-items: center; gap: 4px; }
-.seals-title { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1; color: var(--washi-2); flex: 1; }
+.seals-title { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1; color: var(--washi-2); flex: 1; }
 .seals-count { font-family: var(--font-sans); font-size: 13px; color: var(--mute-2); }
 
 .seals-frame {
@@ -37,8 +37,9 @@
 
 .seals-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); row-gap: 10px; margin-top: 10px; text-align: center; }
 .seals-cell { background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; border-radius: 4px; }
-.seals-cell[aria-pressed='true'] .seals-box,
-.seals-cell[aria-pressed='true'] .ink-seal { outline: 2px solid var(--washi-2); outline-offset: 2px; }
+.seals-cell[aria-pressed='true'] { background: rgba(236, 228, 210, 0.08); outline: 1.5px solid var(--washi-2); outline-offset: 0; }
+.seals-lit { display: inline-flex; filter: url(#ink-stamp); }
+.seals-lit .ink-seal { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
 .seals-box {
   margin: 0 auto; width: 44px; height: 44px; box-sizing: border-box; border-radius: 3px;
   display: flex; align-items: center; justify-content: center; font-family: var(--font-brush); line-height: 1;
@@ -54,3 +55,4 @@
 .seals-cap--dim { color: var(--mute-3); }
 @keyframes seals-ghost { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 .seals-ghost--pulse { animation: seals-ghost 3s ease-in-out infinite; }
+.seals-stamp--two .ink-seal { font-size: 24px !important; }

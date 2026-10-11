@@ -28,7 +28,6 @@ function readSeen() {
 }
 
 const tilt = (i) => [0, 3, -2, 0, 4, -3, 2, -4][i % 8];
-const stampGlyph = (k) => (k.length > 1 ? [...k].pop() : '印');
 
 export default function AchievementsPage() {
   const { items, count, total } = useAchievements();
@@ -55,6 +54,7 @@ export default function AchievementsPage() {
   );
   const reach = items.filter((i) => !i.unlocked && !i.hidden && i.progress && i.progress.ratio >= 0.5).length;
   const hiddenLeft = items.filter(secret).length;
+  const remaining = items.length - earned.length;
 
   const sel = items.find((i) => i.key === selected) ?? null;
   const left = sel?.unlocked ? sel : latest;
@@ -77,7 +77,7 @@ export default function AchievementsPage() {
   return (
     <div className="seals-page">
       <div className="seals-head">
-        <BackButton fallback="/profile" className="" />
+        <BackButton fallback="/profile" label="" className="" />
         <h1 className="seals-title">Seal Book</h1>
         <span className="seals-count">
           {count} of {total} seals
@@ -92,10 +92,10 @@ export default function AchievementsPage() {
               <div className={`seals-big ${kanjiOf(left).length > 1 ? 'seals-big--two' : ''}`} lang="ja">
                 {kanjiOf(left)}
               </div>
-              <div className="seals-stamp">
+              <div className={`seals-stamp ${kanjiOf(left).length > 1 ? 'seals-stamp--two' : ''}`}>
                 <Seal
                   key={left.key}
-                  kanji={stampGlyph(kanjiOf(left))}
+                  kanji={kanjiOf(left)}
                   size={58}
                   rotate={-6}
                   stamp={isNew(left) || Boolean(sel)}
@@ -105,6 +105,7 @@ export default function AchievementsPage() {
               <div className="seals-foot">
                 <div className="seals-name">{left.title}</div>
                 <div className="seals-meta">{achievementDesc(left, unit)} · earned</div>
+                {left.xp > 0 ? <div className="seals-note">+{left.xp} XP</div> : null}
               </div>
             </>
           ) : (
@@ -171,6 +172,10 @@ export default function AchievementsPage() {
                         ? ` · ${shown(right, right.progress.target - right.progress.current)} to go`
                         : ''}
                     </div>
+                    {right.xp > 0 ? <div className="seals-note">+{right.xp} XP reward</div> : null}
+                    <div className="seals-note">
+                      {remaining} seals remain{hiddenLeft > 0 ? ` · ${hiddenLeft} hidden` : ''}
+                    </div>
                   </>
                 ) : null}
               </div>
@@ -213,7 +218,11 @@ export default function AchievementsPage() {
               );
               capCls = 'seals-cap--gold';
             } else if (it.unlocked) {
-              box = <Seal kanji={k} size={44} rotate={tilt(i)} stamp={isNew(it) && it.key !== latest?.key} />;
+              box = (
+                <span className="seals-lit">
+                  <Seal kanji={k} size={44} rotate={tilt(i)} stamp={isNew(it) && it.key !== latest?.key} />
+                </span>
+              );
             } else if (hid) {
               box = <span className="seals-box seals-box--hidden">?</span>;
               capCls = 'seals-cap--dim';
