@@ -106,3 +106,14 @@
 .forms-set--record { border-color: var(--ver); color: var(--ver-light); }
 .forms-set--warm { opacity: 0.5; }
 .forms-more { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 44px; margin-top: 8px; background: none; border: 1px solid var(--ink-line); border-radius: 4px; color: var(--washi-2); font-family: var(--font-sans); font-size: 13px; cursor: pointer; }
+
+/* QA pass: lighter cards, cream mastery dots, clearer meta */
+.forms-card { min-height: 0; height: 185px; }
+.forms-card .forms-still { width: auto; height: 92px; margin: 0 auto; }
+.forms-card .forms-still__prop { opacity: 0.6; }
+.forms-card .forms-still__fill { fill: var(--paper-ink-2); fill-opacity: 0.8; }
+.forms-card .forms-still__stroke { stroke: var(--paper-ink-2); stroke-width: 0.8; }
+.forms-row .ink-dots i { border: 1px solid var(--mute-2); background: transparent; }
+.forms-row .ink-dots i.on { background: var(--washi-2); border-color: var(--washi-2); }
+.forms-row .ink-row__title { font-size: 17px; }
+.forms-row .ink-row__meta { color: var(--mute-1); }

@@ -58,7 +58,8 @@ export default function ExercisePage() {
       .filter(Boolean)
       .slice(0, 6);
   }, [stats, catalogue]);
-  const todayTitle = stats?.todayIds.length ? `Today's forms${stats.todayName ? ` · ${stats.todayName}` : ''}` : 'Recent forms';
+  const dayName = stats?.todayName ? (/day$/i.test(stats.todayName.trim()) ? stats.todayName.trim() : `${stats.todayName.trim()} day`) : null;
+  const todayTitle = stats?.todayIds.length ? `Today's forms${dayName ? ` · ${dayName}` : ''}` : 'Recent forms';
   const showToday = !searching && !filtered && todayForms.length > 0;
 
   function pickFamily(f) {
