@@ -102,7 +102,7 @@ export default function BackupCard() {
           type="button"
           onClick={save}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-semibold"
-          style={{ background: accent, color: 'var(--color-obsidian)' }}
+          style={{ background: accent, color: 'var(--color-on-accent)' }}
         >
           <Download size={15} /> Back up now
         </button>

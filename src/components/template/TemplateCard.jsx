@@ -84,7 +84,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
           )}
           {onStart && (
             <button type="button" onClick={() => onStart(template)} className={iconBtn} style={{ background: 'var(--color-gold)' }} aria-label={`Start ${name}`}>
-              <Play size={13} fill="var(--color-obsidian)" style={{ color: 'var(--color-obsidian)' }} />
+              <Play size={13} fill="var(--color-on-accent)" style={{ color: 'var(--color-on-accent)' }} />
             </button>
           )}
         </div>
@@ -130,7 +130,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
           onClick={() => onShuffle(template)}
           disabled={busy}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 font-sans text-xs font-medium"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
         >
           <Shuffle size={13} /> You've run this a while — shuffle it up?
         </button>

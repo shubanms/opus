@@ -1,0 +1,64 @@
+/* Self-hosted, subset fonts (HANDOFF 8.3). The files in public/fonts are built
+   by `npm run fonts:subset`; they carry Latin plus the glyphs in
+   scripts/glyphs.txt. Imported first in index.css. */
+
+@font-face {
+  font-family: 'Shippori Mincho B1';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/ShipporiMinchoB1-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Shippori Mincho B1';
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/ShipporiMinchoB1-ExtraBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Zen Kaku Gothic New';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/ZenKakuGothicNew-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Zen Kaku Gothic New';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/ZenKakuGothicNew-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Zen Kaku Gothic New';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/ZenKakuGothicNew-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Yuji Syuku';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('/fonts/YujiSyuku-Regular.woff2') format('woff2');
+}
+
+/* Metric-matched fallbacks so the swap does not shift layout. */
+@font-face {
+  font-family: 'Shippori Fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 94%;
+  ascent-override: 98%;
+  descent-override: 28%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Zen Kaku Fallback';
+  src: local('Arial'), local('Helvetica');
+  size-adjust: 103%;
+  ascent-override: 92%;
+  descent-override: 26%;
+  line-gap-override: 0%;
+}

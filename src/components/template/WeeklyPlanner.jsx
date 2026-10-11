@@ -47,12 +47,12 @@ export default function WeeklyPlanner({ templates }) {
                 border: isToday ? '1px solid var(--color-gold)' : '1px solid var(--color-ivory)',
               }}
             >
-              <p className="font-sans text-xs font-semibold" style={{ color: active ? 'var(--color-obsidian)' : 'var(--color-text-primary)' }}>
+              <p className="font-sans text-xs font-semibold" style={{ color: active ? 'var(--color-on-accent)' : 'var(--color-text-primary)' }}>
                 {d.l}
               </p>
               <p
                 className="mt-1 truncate font-sans"
-                style={{ fontSize: 9, color: active ? 'var(--color-obsidian)' : t ? 'var(--color-gold)' : 'var(--color-text-secondary)' }}
+                style={{ fontSize: 9, color: active ? 'var(--color-on-accent)' : t ? 'var(--color-gold)' : 'var(--color-text-secondary)' }}
               >
                 {t ? t.name : '—'}
               </p>

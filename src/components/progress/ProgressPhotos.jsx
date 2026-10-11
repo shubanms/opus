@@ -84,7 +84,7 @@ export default function ProgressPhotos() {
               onClick={() => setCategory(c)}
               aria-pressed={category === c}
               className="h-8 rounded-md px-2.5 font-sans text-xs font-medium capitalize"
-              style={{ background: category === c ? 'var(--color-gold)' : 'transparent', color: category === c ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+              style={{ background: category === c ? 'var(--color-gold)' : 'transparent', color: category === c ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
             >
               {c}
             </button>
@@ -95,7 +95,7 @@ export default function ProgressPhotos() {
           onClick={() => fileRef.current?.click()}
           disabled={busy}
           className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: busy ? 0.6 : 1 }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.6 : 1 }}
         >
           <Camera size={15} /> {busy ? 'Adding…' : 'Add photo'}
         </button>

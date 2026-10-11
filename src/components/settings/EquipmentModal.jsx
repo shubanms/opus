@@ -77,7 +77,7 @@ export default function EquipmentModal({ isOpen, onClose }) {
               key={size}
               onClick={() => toggle(size)}
               className="rounded-full px-3 py-1.5 font-mono text-xs font-medium"
-              style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+              style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
             >
               {size}
             </button>
@@ -95,7 +95,7 @@ export default function EquipmentModal({ isOpen, onClose }) {
           className="flex-1 rounded-lg px-3 py-2 font-mono text-sm outline-none"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
         />
-        <button onClick={addCustom} className="flex items-center gap-1 rounded-lg px-3 font-sans text-sm font-medium" style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}>
+        <button onClick={addCustom} className="flex items-center gap-1 rounded-lg px-3 font-sans text-sm font-medium" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
           <Plus size={15} /> Add
         </button>
       </div>

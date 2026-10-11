@@ -9,20 +9,19 @@
 // the thin browser-API layer.
 
 export const FONT = {
-  display: "'Cormorant Garamond', Georgia, serif",
-  sans: "'DM Sans', system-ui, sans-serif",
-  mono: "'DM Mono', ui-monospace, monospace",
+  display: "'Shippori Mincho B1', 'Hiragino Mincho ProN', 'Yu Mincho', serif",
+  sans: "'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif",
+  mono: "'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif",
+  brush: "'Yuji Syuku', 'Shippori Mincho B1', serif",
 };
 
 // The exact faces the cards draw with. `document.fonts.load` resolves per
 // family+weight+style, so one representative size per face is enough.
 const FONT_SPECS = [
-  `700 100px ${FONT.display}`,
-  `600 40px ${FONT.display}`,
-  `italic 600 36px ${FONT.display}`,
-  `500 60px ${FONT.mono}`,
-  `400 28px ${FONT.mono}`,
-  `600 30px ${FONT.sans}`,
+  `800 100px ${FONT.display}`,
+  `700 40px ${FONT.display}`,
+  `400 28px ${FONT.brush}`,
+  `700 26px ${FONT.sans}`,
   `500 26px ${FONT.sans}`,
   `400 26px ${FONT.sans}`,
 ];

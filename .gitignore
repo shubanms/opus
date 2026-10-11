@@ -148,3 +148,6 @@ vite.config.ts.timestamp-*
 /playwright/.cache/
 /audit-shots/
 
+
+# Full source TTFs for the font subsetter (HANDOFF 5.5); only woff2 is committed
+scripts/fonts-src/

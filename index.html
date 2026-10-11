@@ -3,27 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0b1020" />
+    <meta name="theme-color" content="#100E0C" />
     <meta name="description" content="OPUS — Build your masterpiece. A free, offline-first gym tracker." />
 
     <!--
-      Theme before first paint. main.jsx applies the saved theme too, but only
-      once the bundle has downloaded and run — until then a light-theme user
-      saw the dark status bar hard-coded above, and a dark-theme user a light
-      page. Mirrors utils/theme.js (resolveTheme + the theme-color values) and
-      settingsStore's `effects` flag; any failure leaves the defaults.
+      Ink is dark-only. Stamp theme, sky and the effects flag before first
+      paint, since main.jsx only applies them once the bundle has run. Mirrors
+      utils/theme.js (resolveSky) and settingsStore's `effects` flag; any
+      failure leaves the defaults.
     -->
     <script>
       (function () {
         try {
           var prefs = JSON.parse(localStorage.getItem('opus_prefs') || '{}') || {};
-          var theme = prefs.theme === 'light' || prefs.theme === 'dark' ? prefs.theme : 'system';
-          var dark = theme === 'dark' || (theme === 'system' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
           var root = document.documentElement;
-          root.setAttribute('data-theme', dark ? 'dark' : 'light');
+          var sky = prefs.sky;
+          if (sky !== 'dawn' && sky !== 'dusk' && sky !== 'night') {
+            var h = new Date().getHours();
+            sky = h >= 5 && h < 11 ? 'dawn' : h >= 11 && h < 19 ? 'dusk' : 'night';
+          }
+          root.setAttribute('data-theme', 'dark');
+          root.setAttribute('data-sky', sky);
           root.setAttribute('data-fx', prefs.effects === false ? 'off' : 'on');
-          var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', dark ? '#0b1020' : '#f4f6fd');
         } catch (e) {
           /* storage blocked or corrupt: the app applies its defaults on boot */
         }
@@ -36,14 +37,6 @@
     <meta name="apple-mobile-web-app-title" content="OPUS" />
     <link rel="apple-touch-icon" href="%BASE_URL%icon-512.png" />
     <link rel="icon" type="image/png" href="%BASE_URL%icon-192.png" />
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
 
     <title>OPUS</title>
   </head>

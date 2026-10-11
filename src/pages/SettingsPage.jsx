@@ -152,8 +152,8 @@ export default function SettingsPage() {
   const setSound = useSettingsStore((s) => s.setSound);
   const themeOnOpen = useSettingsStore((s) => s.themeOnOpen);
   const setThemeOnOpen = useSettingsStore((s) => s.setThemeOnOpen);
-  const theme = useSettingsStore((s) => s.theme);
-  const setTheme = useSettingsStore((s) => s.setTheme);
+  const sky = useSettingsStore((s) => s.sky);
+  const setSky = useSettingsStore((s) => s.setSky);
   const setTourSeen = useSettingsStore((s) => s.setTourSeen);
   const resetCoachMarks = useSettingsStore((s) => s.resetCoachMarks);
   const stepGoal = useSettingsStore((s) => s.stepGoal);
@@ -309,7 +309,7 @@ export default function SettingsPage() {
           <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
             {['kg', 'lbs'].map((u) => (
               <button key={u} type="button" onClick={() => setUnit(u)} aria-pressed={unit === u} className="min-h-11 px-4 font-sans text-sm font-medium"
-                style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+                style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
                 {u}
               </button>
             ))}
@@ -375,7 +375,7 @@ export default function SettingsPage() {
                 {SEXES.map((s) => (
                   <button key={s} type="button" onClick={() => updateProfile({ sex: profile.sex === s ? null : s })} aria-pressed={profile.sex === s} aria-label={s}
                     className="h-11 w-11 rounded-lg font-sans text-xs"
-                    style={{ background: profile.sex === s ? 'var(--color-gold)' : 'var(--color-ivory)', color: profile.sex === s ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+                    style={{ background: profile.sex === s ? 'var(--color-gold)' : 'var(--color-ivory)', color: profile.sex === s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
                     {s[0]}
                   </button>
                 ))}
@@ -420,7 +420,7 @@ export default function SettingsPage() {
                 onClick={() => { setRestDuration(c.s); playChime('tick'); }}
                 aria-pressed={restDuration === c.s}
                 className="min-h-11 flex-1 rounded-lg font-mono text-xs font-medium"
-                style={{ background: restDuration === c.s ? 'var(--color-gold)' : 'var(--color-ivory)', color: restDuration === c.s ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+                style={{ background: restDuration === c.s ? 'var(--color-gold)' : 'var(--color-ivory)', color: restDuration === c.s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
               >
                 {c.label}
               </button>
@@ -428,7 +428,7 @@ export default function SettingsPage() {
             {restIsCustom && (
               <span
                 className="flex min-h-11 flex-1 items-center justify-center rounded-lg font-mono text-xs font-medium"
-                style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+                style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
                 title="Set during a workout"
               >
                 {restDuration}s
@@ -572,11 +572,11 @@ export default function SettingsPage() {
             Experience
           </span>
         </div>
-        <Row label="Theme">
+        <Row label="Sky">
           <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
-            {['light', 'dark', 'system'].map((t) => (
-              <button key={t} type="button" onClick={() => setTheme(t)} aria-pressed={theme === t} className="min-h-11 px-3 font-sans text-xs font-medium capitalize"
-                style={{ background: theme === t ? 'var(--color-gold)' : 'transparent', color: theme === t ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+            {['auto', 'dawn', 'dusk', 'night'].map((t) => (
+              <button key={t} type="button" onClick={() => setSky(t)} aria-pressed={sky === t} className="min-h-11 px-3 font-sans text-xs font-medium capitalize"
+                style={{ background: sky === t ? 'var(--color-gold)' : 'transparent', color: sky === t ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
                 {t}
               </button>
             ))}
@@ -647,7 +647,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleInstall}
                 className="mt-2 flex min-h-10 items-center gap-2 rounded-xl px-3 font-sans text-xs font-semibold"
-                style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+                style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
               >
                 <Download size={14} /> Install OPUS
               </button>
@@ -674,7 +674,7 @@ export default function SettingsPage() {
               className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
               style={{ background: autoBackup ? 'var(--color-gold)' : 'var(--color-chalk)', border: autoBackup ? 'none' : '1px solid var(--color-ash)' }}
             >
-              {autoBackup && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />}
+              {autoBackup && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-on-accent)' }} />}
             </span>
             <span className="text-left font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>
               Weekly backup to Downloads
@@ -838,7 +838,7 @@ export default function SettingsPage() {
               }
             }}
             className="min-h-11 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
           >
             {demoBusy ? 'Loading…' : 'Load demo data'}
           </button>

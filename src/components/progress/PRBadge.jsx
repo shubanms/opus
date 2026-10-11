@@ -6,7 +6,7 @@ export default function PRBadge({ label, value, unit = 'kg' }) {
     <div
       className="flex items-center gap-2 rounded-xl px-3 py-2"
       style={{
-        background: 'var(--color-gold)',
+        background: 'var(--gold-leaf)',
         color: 'var(--color-obsidian)',
         animation: 'goldPulse 1.6s var(--opus-ease-out) 1',
       }}

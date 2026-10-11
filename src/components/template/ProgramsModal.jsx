@@ -81,7 +81,7 @@ export default function ProgramsModal({ isOpen, onClose, templates = [] }) {
               onClick={() => install(p)}
               disabled={installing != null}
               className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl py-2 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: installing === p.id ? 0.6 : 1 }}
+              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: installing === p.id ? 0.6 : 1 }}
             >
               <Dumbbell size={14} /> {installing === p.id ? 'Adding…' : `Add ${p.daysPerWeek}-day program`}
             </button>

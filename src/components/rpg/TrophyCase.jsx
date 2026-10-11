@@ -20,7 +20,7 @@ export default function TrophyCase() {
         <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
           Achievements
         </span>
-        <span className="flex items-center gap-1 font-mono text-xs" style={{ color: 'var(--color-gold)' }}>
+        <span className="flex items-center gap-1 font-mono text-xs" style={{ color: 'var(--gold-leaf)' }}>
           {count}/{total} <ChevronRight size={13} style={{ color: 'var(--color-ash)' }} />
         </span>
       </div>

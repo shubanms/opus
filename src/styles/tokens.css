@@ -1,74 +1,84 @@
-/* OPUS design tokens — AURORA.
+/* OPUS design tokens — INK.
  *
  * Every component styles through these, so this file is the whole visual
- * identity in one place. The names are kept from the previous palette on
+ * identity in one place. The --color-* names are kept from earlier palettes on
  * purpose: ~1000 call sites already reference them, and renaming would turn a
- * design change into a mechanical refactor with no design value.
+ * design change into a mechanical refactor with no design value. Their VALUES
+ * are Ink's (HANDOFF 8.1).
  *
  * Read the names semantically, not literally:
- *   chalk    → app canvas           ivory    → card / panel surface
- *   stone    → solid field          obsidian → ink that sits on the accent
- *   gold     → accent               ash      → tertiary ink
+ *   chalk    → app ground (sumi)        ivory    → card / panel surface
+ *   stone    → solid field              obsidian → darkest ground (letterbox)
+ *   gold     → the accent, now vermilion (real gold is --gold-leaf)
+ *   on-accent→ text that sits on the accent
+ *   ash      → tertiary ink
+ *
+ * Ink is dark-first: the same values apply under :root and
+ * :root[data-theme='dark']. The Sky setting changes scenery, not these tokens.
  *
  * Token families that belong to Tailwind (--radius-*, --ease-*) are prefixed
  * --opus-* — tokens.css is unlayered and would otherwise silently override
  * Tailwind's own theme values. See docs/ARCHITECTURE.md.
  */
 
-:root {
-  /* ── Ground ──────────────────────────────────────────────────────────── */
-  --color-chalk: #f4f6fd;      /* app canvas */
-  --color-ivory: #ffffffb8;    /* card / panel — translucent so the aurora reads through */
-  /* Deliberately dark in BOTH themes. `stone` is the deep-panel device — a
-     dark block on the light canvas (rest timer, plate calculator, character
-     card) and the field colour on full-screen dark overlays (onboarding, tour).
-     Every one of those pairs it with `text-inverse`, so flipping it to a light
-     value would put light text on a light ground. */
-  --color-stone: #161b2e;
-  --color-obsidian: #0a0e1c;   /* ink on accent, and the darkest ground */
+:root,
+:root[data-theme='dark'] {
+  /* ── Ink palette (new, use these in new code) ───────────────────────── */
+  --ink-0: #070605;       /* letterbox, scrims */
+  --ink-1: #100e0c;       /* app ground (sumi); theme-color */
+  --ink-2: #16130f;       /* nav, list rows, sheets */
+  --ink-3: #1e1a16;       /* dark cards, tiles */
+  --ink-line: rgba(236, 228, 210, 0.14);
+  --washi-1: #ece4d2;     /* paper cards */
+  --washi-2: #eee6d6;     /* primary text on dark */
+  --washi-3: #f7f1e6;     /* brightest highlight, text on vermilion */
+  --paper-ink-1: #15110e;
+  --paper-ink-2: #4a4038;
+  --paper-ink-3: #786c60;
+  --mute-1: #cfc6b5;
+  --mute-2: #a59d90;
+  --mute-3: #8f877b;
+  --ver: #c8361f;         /* the accent: seals, primary buttons */
+  --ver-dark: #a82b17;
+  --ver-deep: #8e2416;
+  --ver-light: #e0553b;
+  --ver-glow: #ff6b4a;
+  --ver-soft: #da7667;
+  --gold-leaf: #d2ae5a;   /* Iron, rewards, legendary */
+  --moss: #9da67a;
+  --indigo: #2c3654;
 
-  /* ── Ink ─────────────────────────────────────────────────────────────── */
-  --color-text-primary: #141a2e;
-  --color-text-secondary: #5c6484;
-  --color-text-inverse: #eef1fa;
+  /* ── Existing tokens, remapped ──────────────────────────────────────── */
+  --color-chalk: #100e0c;      /* app ground */
+  --color-ivory: #17140f;      /* card / panel — solid, no glass */
+  --color-stone: #1e1a16;      /* deep panel / full-screen overlay field */
+  --color-obsidian: #070605;   /* darkest ground. NOT text-on-accent: use on-accent */
+  --color-on-accent: #f7f1e6;  /* text and icons on vermilion */
 
-  /* ── Accent + semantics ──────────────────────────────────────────────── */
-  /* The accent and its ink stay constant across themes so that every
-     `background: gold / color: obsidian` pairing keeps its contrast. */
-  --color-gold: #8b7dff;       /* accent — violet */
-  --color-ember: #ff8fa3;      /* warning / destructive — blush */
-  --color-sage: #4fd8c4;       /* success — teal */
-  --color-ash: #7b83a6;        /* tertiary ink, icons */
+  --color-text-primary: #eee6d6;
+  --color-text-secondary: #a59d90;
+  --color-text-inverse: #f7f1e6;
+
+  --color-gold: #c8361f;       /* the accent (was gold; now vermilion) */
+  --color-ember: #e0553b;      /* warning / destructive */
+  --color-sage: #9da67a;       /* success */
+  --color-ash: #8f877b;        /* tertiary ink, icons */
 
   /* ── Material ────────────────────────────────────────────────────────── */
-  /* The aurora is three soft lights behind everything; glass panels float on
-     top. Kept as a token so a later phase can swap the backdrop for a live
-     shader without touching a single component. */
-  --aurora:
-    radial-gradient(72% 46% at 82% -4%, rgba(139, 125, 255, 0.26), transparent 62%),
-    radial-gradient(62% 44% at 8% 14%, rgba(79, 216, 196, 0.18), transparent 60%),
-    radial-gradient(56% 40% at 46% 104%, rgba(255, 143, 163, 0.14), transparent 62%);
+  --aurora: radial-gradient(120% 70% at 50% -12%, rgba(200, 54, 31, 0.1), transparent 62%);
 
-  --grad-accent: linear-gradient(135deg, #8b7dff, #4fd8c4);
-  --grad-accent-soft: linear-gradient(135deg, rgba(139, 125, 255, 0.18), rgba(79, 216, 196, 0.12));
-  --accent-wash: rgba(139, 125, 255, 0.14); /* selected-state fill behind an active item */
-  /* The outline that goes with it — the active exercise card, a crit set. It
-     was referenced by both and defined nowhere, so a `border: 1px solid
-     var(--accent-line)` was invalid and neither outline ever drew. The accent
-     is constant across themes, so one value serves both. */
-  --accent-line: rgba(139, 125, 255, 0.45);
-  --glass-line: rgba(20, 26, 46, 0.09);
-  --glass-blur: 18px;
-  /* Chrome the page scrolls beneath. Near-opaque on purpose: at anything
-     lighter the content underneath stays legible through it, which reads as a
-     rendering fault rather than as glass. Stated explicitly rather than
-     computed, so what ships is exactly what's written here. */
-  --glass-chrome: rgba(244, 246, 253, 0.94);
-  --glow-accent: 0 10px 30px rgba(139, 125, 255, 0.3);
+  --grad-accent: linear-gradient(135deg, #c8361f, #a82b17);
+  --grad-accent-soft: linear-gradient(135deg, rgba(200, 54, 31, 0.16), rgba(168, 43, 23, 0.1));
+  --accent-wash: rgba(200, 54, 31, 0.12); /* selected-state fill behind an active item */
+  --accent-line: rgba(200, 54, 31, 0.55); /* the outline that goes with it */
+  --glass-line: rgba(236, 228, 210, 0.12);
+  --glass-blur: 0px;
+  --glass-chrome: rgba(16, 14, 12, 0.97);
+  --glow-accent: 0 10px 30px rgba(200, 54, 31, 0.35);
 
-  --elev-1: 0 1px 2px rgba(11, 16, 32, 0.05);
-  --elev-2: 0 6px 18px rgba(11, 16, 32, 0.08);
-  --elev-3: 0 18px 44px rgba(11, 16, 32, 0.12);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --elev-3: 0 24px 60px rgba(0, 0, 0, 0.6);
 
   /* ── Spacing ─────────────────────────────────────────────────────────── */
   --space-1: 4px;
@@ -80,42 +90,25 @@
   --space-8: 32px;
 
   /* ── Radius ──────────────────────────────────────────────────────────── */
-  /* Aurora is generous — every step moved up from the previous scale. */
-  --opus-radius-sm: 12px;
-  --opus-radius-md: 14px;
-  --opus-radius-lg: 18px;
-  --opus-radius-xl: 22px;
-  --opus-radius-2xl: 26px;
+  /* Ink is sharper than Aurora: paper and seals, not pills. */
+  --opus-radius-sm: 4px;
+  --opus-radius-md: 8px;
+  --opus-radius-lg: 12px;
+  --opus-radius-xl: 16px;
+  --opus-radius-2xl: 20px;
   --opus-radius-full: 9999px;
 
   /* ── Motion ──────────────────────────────────────────────────────────── */
   /* One spec, so components stop inventing their own curves. */
   --opus-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --opus-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot */
+  --ink-ease: cubic-bezier(0.16, 0.84, 0.3, 1);          /* brush settle */
+  --ink-snap: cubic-bezier(0.7, 0, 0.2, 1);              /* strikes */
   --dur-micro: 140ms;
   --dur-standard: 240ms;
   --dur-enter: 340ms;
   --dur-loading: 600ms;
-}
-
-/* Dark is this direction's home ground: deep slate, brighter aurora, glass
-   built from white alpha instead of white. Only ground and ink flip — the
-   accent and its ink stay put so contrast pairings hold in both themes. */
-:root[data-theme='dark'] {
-  --color-chalk: #0b1020;
-  --color-ivory: #ffffff0f;
-  --color-text-primary: #eef1fa;
-  --color-text-secondary: #9ba3c4;
-  --color-ash: #8b93b5;
-
-  --aurora:
-    radial-gradient(72% 46% at 82% -4%, rgba(139, 125, 255, 0.3), transparent 62%),
-    radial-gradient(62% 44% at 8% 14%, rgba(79, 216, 196, 0.18), transparent 60%),
-    radial-gradient(56% 40% at 46% 104%, rgba(255, 143, 163, 0.13), transparent 62%);
-
-  --glass-line: rgba(255, 255, 255, 0.1);
-  --glass-chrome: rgba(11, 16, 32, 0.94);
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --elev-2: 0 8px 24px rgba(0, 0, 0, 0.36);
-  --elev-3: 0 24px 60px rgba(0, 0, 0, 0.5);
+  --dur-stamp: 550ms;
+  --dur-write: 1200ms;
+  --dur-cine: 800ms;
 }

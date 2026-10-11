@@ -85,7 +85,7 @@ export default function MonthCalendar({ days, selected, onSelect }) {
                     className="flex aspect-square items-center justify-center rounded-lg font-mono text-xs transition-transform active:scale-90"
                     style={{
                       background: cell.trained ? 'var(--color-gold)' : 'var(--color-chalk)',
-                      color: cell.trained ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                      color: cell.trained ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
                       boxShadow: isSel ? '0 0 0 2px var(--color-gold)' : cell.isToday ? '0 0 0 2px var(--color-ash)' : 'none',
                       fontWeight: cell.trained ? 700 : 400,
                     }}

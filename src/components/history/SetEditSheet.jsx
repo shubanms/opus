@@ -262,7 +262,7 @@ export default function SetEditSheet({ target: next, onClose }) {
             onClick={save}
             disabled={!canSave}
             className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl font-sans text-sm font-semibold"
-            style={{ background: 'var(--grad-accent)', color: 'var(--color-obsidian)', opacity: canSave ? 1 : 0.4 }}
+            style={{ background: 'var(--grad-accent)', color: 'var(--color-on-accent)', opacity: canSave ? 1 : 0.4 }}
           >
             <Check size={16} /> {isEdit ? 'Save' : 'Add set'}
           </button>

@@ -29,7 +29,7 @@ export default function XPBar({ totalXp = 0, showLabel = true, level: shownLevel
       {showLabel && (
         <div className="mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-            {sealed ? <Lock size={12} style={{ color: 'var(--color-gold)' }} /> : <Zap size={12} style={{ color: 'var(--color-gold)' }} />}
+            {sealed ? <Lock size={12} style={{ color: 'var(--gold-leaf)' }} /> : <Zap size={12} style={{ color: 'var(--gold-leaf)' }} />}
             Level {level}{sealed ? ' · sealed' : ''}
           </span>
           <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
@@ -44,7 +44,7 @@ export default function XPBar({ totalXp = 0, showLabel = true, level: shownLevel
           className="h-full rounded-full"
           style={{
             width: `${Math.round(width)}%`,
-            background: 'var(--color-gold)',
+            background: 'var(--gold-leaf)',
             transition: 'width 1.1s var(--opus-ease-out)',
           }}
         />

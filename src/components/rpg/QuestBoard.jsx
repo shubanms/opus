@@ -67,7 +67,7 @@ export default function QuestBoard() {
                   >
                     {q.claimed
                       ? <Check size={15} style={{ color: 'var(--color-text-inverse)' }} />
-                      : <Icon size={15} style={{ color: 'var(--color-gold)' }} />}
+                      : <Icon size={15} style={{ color: 'var(--gold-leaf)' }} />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{q.title}</p>
@@ -80,7 +80,7 @@ export default function QuestBoard() {
                       aria-label={`Claim ${q.title} for ${q.xp} XP`}
                       className="min-h-9 shrink-0 rounded-lg px-3 py-1.5 font-sans text-xs font-semibold"
                       style={{
-                        background: 'var(--color-gold)',
+                        background: 'var(--gold-leaf)',
                         color: 'var(--color-obsidian)',
                         animation: pulse ? 'goldPulse 2.6s var(--opus-ease-out) infinite' : undefined,
                       }}
@@ -100,7 +100,7 @@ export default function QuestBoard() {
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full" style={{ background: 'var(--color-chalk)' }}>
                     <div
                       className="h-full rounded-full"
-                      style={{ width: `${Math.round(q.pct * 100)}%`, background: q.done ? 'var(--color-gold)' : 'var(--color-sage)', transition: 'width 0.8s var(--opus-ease-out)' }}
+                      style={{ width: `${Math.round(q.pct * 100)}%`, background: q.done ? 'var(--gold-leaf)' : 'var(--color-sage)', transition: 'width 0.8s var(--opus-ease-out)' }}
                     />
                   </div>
                 )}

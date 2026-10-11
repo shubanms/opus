@@ -141,7 +141,7 @@ export default function Onboarding() {
           <div className="mt-2 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-stone)' }}>
             {split.days.map((d) => (
               <button key={d} type="button" onClick={() => setDays(d)} aria-pressed={days === d} className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs font-medium"
-                style={{ background: days === d ? 'var(--color-gold)' : 'transparent', color: days === d ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
+                style={{ background: days === d ? 'var(--color-gold)' : 'transparent', color: days === d ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
                 {d} days
               </button>
             ))}
@@ -151,14 +151,14 @@ export default function Onboarding() {
           <div className="mt-2 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-stone)' }}>
             {LEVELS.map((l) => (
               <button key={l} type="button" onClick={() => setLevel(l)} aria-pressed={level === l} className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs font-medium capitalize"
-                style={{ background: level === l ? 'var(--color-gold)' : 'transparent', color: level === l ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
+                style={{ background: level === l ? 'var(--color-gold)' : 'transparent', color: level === l ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
                 {l}
               </button>
             ))}
           </div>
 
           <button type="button" onClick={createWeek} disabled={busy} className="mt-8 w-full rounded-xl py-4 font-sans text-base font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: busy ? 0.5 : 1 }}>
+            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.5 : 1 }}>
             Create my week
           </button>
           <button type="button" onClick={completeOnboarding} className="mt-2 mb-4 min-h-11 w-full py-2 font-sans text-sm font-medium" style={{ color: 'var(--color-ash)' }}>
@@ -181,7 +181,7 @@ export default function Onboarding() {
         <div className="mt-2 flex overflow-hidden rounded-xl" style={{ background: 'var(--color-stone)' }}>
           {['kg', 'lbs'].map((u) => (
             <button key={u} type="button" onClick={() => pickUnit(u)} aria-pressed={unit === u} className="min-h-11 flex-1 py-2.5 font-sans text-sm font-medium"
-              style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
+              style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
               {u}
             </button>
           ))}
@@ -218,7 +218,7 @@ export default function Onboarding() {
               {SEXES.map((s) => (
                 <button key={s} type="button" onClick={() => setSex(sex === s ? null : s)} aria-pressed={sex === s} aria-label={s}
                   className="min-h-11 flex-1 rounded-lg py-2 font-sans text-xs"
-                  style={{ background: sex === s ? 'var(--color-gold)' : 'var(--color-stone)', color: sex === s ? 'var(--color-obsidian)' : 'var(--color-ash)' }}>
+                  style={{ background: sex === s ? 'var(--color-gold)' : 'var(--color-stone)', color: sex === s ? 'var(--color-on-accent)' : 'var(--color-ash)' }}>
                   {s[0]}
                 </button>
               ))}
@@ -231,7 +231,7 @@ export default function Onboarding() {
           className="mt-2 w-full rounded-xl px-4 py-3 font-mono text-sm outline-none" style={field} />
 
         <button type="button" onClick={begin} className="mt-8 mb-4 w-full rounded-xl py-4 font-sans text-base font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}>
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
           Begin
         </button>
       </div>

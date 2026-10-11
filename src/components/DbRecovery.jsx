@@ -63,7 +63,7 @@ export default function DbRecovery() {
         onClick={() => window.location.reload()}
         disabled={busy}
         className={`${btn} mt-6 font-semibold`}
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+        style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
       >
         Reload
       </button>
@@ -120,7 +120,7 @@ export default function DbRecovery() {
               onClick={saveCopy}
               disabled={busy}
               className="mt-3 w-full rounded-xl py-2.5 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
             >
               Save a copy first
             </button>
@@ -140,7 +140,7 @@ export default function DbRecovery() {
               onClick={rebuild}
               disabled={busy}
               className="flex-1 rounded-xl py-2.5 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-ember)', color: 'var(--color-obsidian)' }}
+              style={{ background: 'var(--color-ember)', color: 'var(--color-on-accent)' }}
             >
               {busy ? 'Working…' : 'Delete & rebuild'}
             </button>

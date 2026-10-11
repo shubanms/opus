@@ -17,13 +17,13 @@ const RARITY_COLOR = {
   common: 'var(--color-ash)',
   rare: '#6ea3c9',
   epic: '#b877dd',
-  legendary: 'var(--color-gold)',
+  legendary: 'var(--gold-leaf)',
 };
 const TYPE_LABEL = { titleFlair: 'Title flair' };
 const TYPES = ['titleFlair'];
 
 function Coin({ size = 12 }) {
-  return <span style={{ display: 'inline-block', width: size, height: size, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />;
+  return <span style={{ display: 'inline-block', width: size, height: size, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), #a8791f)', borderRadius: 2 }} />;
 }
 
 export default function VaultModal({ isOpen, onClose }) {
@@ -75,7 +75,7 @@ export default function VaultModal({ isOpen, onClose }) {
 
       <div className="mb-4 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--color-obsidian)' }}>
         <span className="font-sans text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>Balance</span>
-        <span className="flex items-center gap-2 font-mono text-lg font-bold" style={{ color: 'var(--color-gold)' }}>
+        <span className="flex items-center gap-2 font-mono text-lg font-bold" style={{ color: 'var(--gold-leaf)' }}>
           <Coin size={14} /><CountUp value={balance} format={(n) => Math.round(n).toLocaleString()} /> Iron
         </span>
       </div>
@@ -86,7 +86,7 @@ export default function VaultModal({ isOpen, onClose }) {
         onClick={chest}
         disabled={!chestOpen}
         className="mb-4 flex w-full items-center justify-between rounded-2xl px-4 py-3"
-        style={{ background: 'var(--color-ivory)', opacity: chestOpen ? 1 : 0.5, border: '1px solid var(--color-gold)' }}
+        style={{ background: 'var(--color-ivory)', opacity: chestOpen ? 1 : 0.5, border: '1px solid var(--gold-leaf)' }}
       >
         <span className="flex items-center gap-2">
           <span style={{ fontSize: 20 }}>🎁</span>
@@ -97,18 +97,18 @@ export default function VaultModal({ isOpen, onClose }) {
             </span>
           </span>
         </span>
-        <span className="flex items-center gap-1 font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}><Coin />{CHEST_PRICE}</span>
+        <span className="flex items-center gap-1 font-mono text-sm font-bold" style={{ color: 'var(--gold-leaf)' }}><Coin />{CHEST_PRICE}</span>
       </button>
       {chestResult && (
-        <p key={chestResult.key} className="mb-4 text-center font-sans text-sm" style={{ color: 'var(--color-gold)' }}>
+        <p key={chestResult.key} className="mb-4 text-center font-sans text-sm" style={{ color: 'var(--gold-leaf)' }}>
           ✦ {chestResult.name} ({chestResult.rarity}) added to your collection!
         </p>
       )}
 
       {/* Rest-token exchange — spend Iron on a streak shield. */}
-      <div className="mb-4 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--color-ivory)', border: '1px solid var(--color-gold)' }}>
+      <div className="mb-4 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--color-ivory)', border: '1px solid var(--gold-leaf)' }}>
         <span className="flex items-center gap-2">
-          <Shield size={18} style={{ color: 'var(--color-gold)' }} />
+          <Shield size={18} style={{ color: 'var(--gold-leaf)' }} />
           <span className="text-left">
             <span className="block font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Buy a Rest Token</span>
             <span className="block font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Protects your streak on a missed day · you have {tokens}</span>
@@ -120,7 +120,7 @@ export default function VaultModal({ isOpen, onClose }) {
           disabled={!tokenOpen}
           aria-label={`Buy a rest token for ${TOKEN_IRON_PRICE} Iron`}
           className="flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 font-mono text-sm font-bold"
-          style={{ background: tokenOpen ? 'var(--color-gold)' : 'var(--color-chalk)', color: tokenOpen ? 'var(--color-obsidian)' : 'var(--color-ash)' }}
+          style={{ background: tokenOpen ? 'var(--color-gold)' : 'var(--color-chalk)', color: tokenOpen ? 'var(--color-on-accent)' : 'var(--color-ash)' }}
         >
           <Coin size={10} />{TOKEN_IRON_PRICE}
         </button>
@@ -136,7 +136,7 @@ export default function VaultModal({ isOpen, onClose }) {
               const isEquipped = equipped?.[type] === c.id;
               const affordable = loaded && canAfford(balance, c.price);
               return (
-                <div key={c.id} className="rounded-xl p-3" style={{ background: 'var(--color-ivory)', border: `1px solid ${isEquipped ? 'var(--color-gold)' : 'transparent'}` }}>
+                <div key={c.id} className="rounded-xl p-3" style={{ background: 'var(--color-ivory)', border: `1px solid ${isEquipped ? 'var(--gold-leaf)' : 'transparent'}` }}>
                   <div className="flex items-center justify-between">
                     <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
                       {c.type === 'titleFlair' ? `${c.value} ` : ''}{c.name}
@@ -148,7 +148,7 @@ export default function VaultModal({ isOpen, onClose }) {
                       type="button"
                       onClick={() => equip(c)}
                       className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 font-sans text-xs font-semibold"
-                      style={{ background: isEquipped ? 'var(--color-gold)' : 'var(--color-chalk)', color: isEquipped ? 'var(--color-obsidian)' : 'var(--color-text-primary)' }}
+                      style={{ background: isEquipped ? 'var(--color-gold)' : 'var(--color-chalk)', color: isEquipped ? 'var(--color-on-accent)' : 'var(--color-text-primary)' }}
                     >
                       {isEquipped && <Check size={12} strokeWidth={3} />}{isEquipped ? 'Equipped' : 'Equip'}
                     </button>
@@ -159,7 +159,7 @@ export default function VaultModal({ isOpen, onClose }) {
                       disabled={!affordable}
                       aria-label={`Buy ${c.name} for ${c.price} Iron`}
                       className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 font-mono text-xs font-bold"
-                      style={{ background: affordable ? 'var(--color-gold)' : 'var(--color-chalk)', color: affordable ? 'var(--color-obsidian)' : 'var(--color-ash)' }}
+                      style={{ background: affordable ? 'var(--color-gold)' : 'var(--color-chalk)', color: affordable ? 'var(--color-on-accent)' : 'var(--color-ash)' }}
                     >
                       <Coin size={10} />{c.price}
                     </button>
