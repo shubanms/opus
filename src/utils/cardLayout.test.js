@@ -52,19 +52,19 @@ describe('resolveTheme', () => {
 
 describe('formatShareDate', () => {
   it('formats a date locale-independently', () => {
-    expect(formatShareDate('2026-03-09T10:00:00.000Z')).toMatch(/^Mar \d+, 2026$/);
+    expect(formatShareDate('2026-03-09T10:00:00.000Z')).toMatch(/^\d+ Mar 2026$/);
   });
 
   it('accepts a Date instance', () => {
-    expect(formatShareDate(new Date(2026, 0, 5))).toBe('Jan 5, 2026');
+    expect(formatShareDate(new Date(2026, 0, 5))).toBe('5 Jan 2026');
   });
 
   it('reads a date key as the local calendar day, in every timezone', () => {
     // `new Date('2026-03-09')` is UTC midnight — the 8th anywhere west of
     // Greenwich. Run under TZ=America/New_York to see it.
-    expect(formatShareDate('2026-03-09')).toBe('Mar 9, 2026');
-    expect(formatShareDate('2026-01-01')).toBe('Jan 1, 2026');
-    expect(formatShareDate('2026-12-31')).toBe('Dec 31, 2026');
+    expect(formatShareDate('2026-03-09')).toBe('9 Mar 2026');
+    expect(formatShareDate('2026-01-01')).toBe('1 Jan 2026');
+    expect(formatShareDate('2026-12-31')).toBe('31 Dec 2026');
   });
 
   it('returns empty for missing or invalid input', () => {

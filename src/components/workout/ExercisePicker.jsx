@@ -6,6 +6,7 @@ import ExerciseList from '../exercise/ExerciseList.jsx';
 import { useExercises } from '../../hooks/useExercises.js';
 import { db } from '../../db/db.js';
 import { pickerSections, rankForPicker, recentExerciseIds } from '../../utils/pickerOrder.js';
+import { matchesExercise, queryWords } from '../../utils/exerciseSearch.js';
 
 // Friendly muscle groupings → the granular stored muscleGroups they cover.
 const GROUPS = [
@@ -55,18 +56,20 @@ export default function ExercisePicker({ isOpen, onClose, onSelect, alreadyAdded
     []
   ) ?? [];
 
-  const q = search.trim().toLowerCase();
-  const filtering = Boolean(q || group || level);
+  // Same matching as the Exercises page: every word, any order, muscle and
+  // equipment included — "squat " with a keyboard's trailing space still finds.
+  const words = useMemo(() => queryWords(search), [search]);
+  const filtering = Boolean(words.length || group || level);
 
   const filtered = useMemo(() => {
     const muscles = group ? GROUPS.find((g) => g.label === group)?.muscles ?? null : null;
     return all.filter((e) => {
-      if (q && !e.name.toLowerCase().includes(q)) return false;
+      if (!matchesExercise(e, words)) return false;
       if (muscles && !muscles.includes(e.muscleGroup)) return false;
       if (level && e.difficulty !== level) return false;
       return true;
     });
-  }, [all, q, group, level]);
+  }, [all, words, group, level]);
 
   // Favourites, then recent, then A–Z: as headed groups when you are
   // browsing, as one ranked list once you search or filter.

@@ -54,7 +54,7 @@ export function formatShareDate(iso) {
       ? parseKey(iso)
       : new Date(iso);
   if (!d || Number.isNaN(d.getTime())) return '';
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 /** Seconds → "1h 5m" / "45m". */

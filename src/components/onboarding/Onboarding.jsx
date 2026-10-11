@@ -7,7 +7,8 @@ import { unitLabel } from '../../utils/units.js';
 import { todayKey } from '../../utils/dateKey.js';
 import { defaultBar, parseAge, parseBar, parseBodyweight, parseHeight } from '../../utils/profileFields.js';
 import { useExercises } from '../../hooks/useExercises.js';
-import { createTemplate } from '../../utils/templateActions.js';
+import { createWeek as saveWeek, ROUTINE_SOURCE } from '../../utils/templateActions.js';
+import useUIStore from '../../store/uiStore.js';
 import { makeRng } from '../../utils/routineGenerator.js';
 import { planWeek, SPLIT_LIST } from '../../utils/weekPlanner.js';
 import { requestPersistence } from '../../utils/storage.js';
@@ -96,10 +97,13 @@ export default function Onboarding() {
     setBusy(true);
     try {
       const week = planWeek({ split: splitKey, days, level, sessionMinutes: 60, rest: 'standard', exercises: allExercises, rng: makeRng(Date.now()) });
-      for (const day of week) {
-        await createTemplate({ name: day.name, dayOfWeek: toAppDow(day.dayOfWeek), autoKey: day.autoKey, exercises: day.exercises });
-      }
+      // One transaction, tagged like Plan week's output: a failure part-way
+      // can't leave half a week behind.
+      await saveWeek(week.map((d) => ({ ...d, dayOfWeek: toAppDow(d.dayOfWeek) })), { source: ROUTINE_SOURCE.plan });
       completeOnboarding();
+    } catch (e) {
+      console.error('Plan week failed:', e);
+      useUIStore.getState().showToast('Could not build the week — try again, or skip for now.', { type: 'error' });
     } finally {
       setBusy(false);
     }
