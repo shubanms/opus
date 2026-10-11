@@ -151,11 +151,11 @@ export default function RadarChart({ data, height = 268 }) {
                 // clear the rim upward, one below needs to hang under it.
                 dy={`${0.32 + Math.sin(p.angle) * 0.45}em`}
                 fontSize={11}
-                fontFamily="DM Sans, sans-serif"
+                fontFamily="Zen Kaku Gothic New, sans-serif"
                 fill="var(--color-ash)"
               >
                 {d.axis}
-                <tspan fontFamily="DM Mono, monospace" fill="var(--color-text-inverse)" dx={5}>
+                <tspan fontFamily="Zen Kaku Gothic New, sans-serif" fill="var(--color-text-inverse)" dx={5}>
                   {Math.round(d.value)}
                 </tspan>
               </text>

@@ -259,7 +259,7 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, onSave, onClose
 
       {/* Iron reward — legible so you know what the session pays into the Vault. */}
       <div className="mb-3 flex items-center justify-center gap-2 rounded-xl py-2.5" style={{ background: 'var(--color-obsidian)' }}>
-        <span style={{ display: 'inline-block', width: 12, height: 12, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), #a8791f)', borderRadius: 2 }} />
+        <span style={{ display: 'inline-block', width: 12, height: 12, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), color-mix(in srgb, var(--gold-leaf) 62%, #000))', borderRadius: 2 }} />
         <span className="font-mono text-sm font-bold" style={{ color: 'var(--gold-leaf)' }}>+{IRON_PER_SESSION} Iron</span>
         <span className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>this session · +{IRON_PER_PR} per PR</span>
       </div>

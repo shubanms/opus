@@ -70,7 +70,7 @@ export default function DailyDungeonCard() {
           <Swords size={13} /> Daily Dungeon
         </span>
         <span className="flex items-center gap-1 font-mono text-xs font-bold" style={{ color: 'var(--gold-leaf)' }}>
-          <span style={{ display: 'inline-block', width: 10, height: 10, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), #a8791f)', borderRadius: 2 }} />
+          <span style={{ display: 'inline-block', width: 10, height: 10, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), color-mix(in srgb, var(--gold-leaf) 62%, #000))', borderRadius: 2 }} />
           {dungeon.ironReward}{fx.ironMult > 1 ? ` ×${fx.ironMult}` : ''}
         </span>
       </div>
