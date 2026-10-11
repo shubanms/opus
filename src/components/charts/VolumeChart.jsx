@@ -1,20 +1,18 @@
-import { useId } from 'react';
 import ChartFrame from './ChartFrame.jsx';
 import { m, useMotionEnabled, useReducedMotion } from '../../motion/index.jsx';
 import { preciseNumber, roundedTopRect } from '../../utils/chartMath.js';
 
 // Tonnage per week or per session, and calories on the same footing.
 //
-// The gradient is laid across the plot in user space rather than per bar, so
-// the columns sample one continuous violet→teal sweep — the chart reads as a
-// single object instead of a row of identically-painted sticks.
+// Brush bars (HANDOFF 8.5): rounded tops under the ink-brush-fine filter. Past
+// weeks sit in #B5AC9C, the newest bar is vermilion.
+const PAST = '#B5AC9C';
 
 const getValue = (d) => d.volume;
 const MAX_STAGGER = 0.28;
 const MAX_BAR = 30;
 
 export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exercise to see volume trends.' }) {
-  const gradientId = useId();
   const effects = useMotionEnabled();
   const reduced = useReducedMotion();
   const animate = effects && !reduced;
@@ -45,6 +43,7 @@ export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exerc
           return {
             key: `${d.label}#${i}`,
             d: roundedTopRect(xs[i] - width / 2, Math.min(top, baseline), width, Math.abs(baseline - top)),
+            current: i === data.length - 1,
             dimmed: activeIndex != null && activeIndex !== i,
             delay: animate ? i * step : 0,
           };
@@ -52,25 +51,12 @@ export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exerc
 
         return (
           <>
-            <defs>
-              <linearGradient
-                id={gradientId}
-                gradientUnits="userSpaceOnUse"
-                x1={0}
-                y1={0}
-                x2={innerWidth}
-                y2={0}
-              >
-                <stop offset="0%" stopColor="var(--color-gold)" />
-                <stop offset="100%" stopColor="var(--color-sage)" />
-              </linearGradient>
-            </defs>
-
             {bars.map((bar) => (
               <m.path
                 key={bar.key}
                 d={bar.d}
-                fill={`url(#${gradientId})`}
+                fill={bar.current ? 'var(--ver)' : PAST}
+                filter="url(#ink-brush-fine)"
                 // Grown from the baseline rather than scaled about its middle:
                 // fill-box puts the origin on the bar's own bounding box.
                 style={{ transformBox: 'fill-box', transformOrigin: '50% 100%' }}
@@ -92,7 +78,7 @@ export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exerc
                 x2={xs[activeIndex]}
                 y1={yScale(getValue(data[activeIndex]))}
                 y2={baseline}
-                stroke="var(--color-gold)"
+                stroke="var(--ver)"
                 strokeWidth={1.5}
                 strokeOpacity={0.7}
               />

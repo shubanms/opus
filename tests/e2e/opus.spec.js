@@ -168,7 +168,7 @@ async function seedHistory(page) {
 /** In-page tabs worth opening during the route sweep. */
 const PAGE_TABS = {
   home: ['Recovery', 'Quests', 'Activity'],
-  progress: ['By Exercise', 'Body', 'Overview'],
+  progress: ['By exercise', 'Body', 'Overview'],
 };
 
 test.describe('OPUS end-to-end', () => {
@@ -297,7 +297,7 @@ test.describe('OPUS end-to-end', () => {
       // hence seedHistory) and under Progress's By Exercise tab. A sweep that
       // never clicks anything sees neither.
       for (const label of PAGE_TABS[path] ?? []) {
-        const tab = page.getByRole('button', { name: label, exact: true });
+        const tab = page.getByRole('button', { name: label, exact: true }).or(page.getByRole('tab', { name: label, exact: true }));
         if (await tab.count()) {
           await tab.first().click();
           await page.waitForTimeout(700);
