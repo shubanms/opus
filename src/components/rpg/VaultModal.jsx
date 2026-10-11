@@ -3,27 +3,31 @@ import { Check, Shield } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import Particles from '../fx/Particles.jsx';
 import CountUp from '../fx/CountUp.jsx';
+import Seal from '../ink/Seal.jsx';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { useIronBalance } from '../../hooks/useIronBalance.js';
 import { useRestTokens } from '../../hooks/useRestTokens.js';
 import { playChime } from '../../utils/sound.js';
+import { flairSeal } from '../../utils/flairSeal.js';
+import { UI_KANJI } from '../../utils/kanji.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import {
   COSMETICS, canAfford, rollChest, CHEST_PRICE,
   TOKEN_IRON_PRICE, IRON_PER_SESSION, IRON_PER_PR, IRON_PER_QUEST,
 } from '../../utils/economy.js';
+import '../../styles/ink-you.css';
 
 const RARITY_COLOR = {
-  common: 'var(--color-ash)',
-  rare: '#6E7FA8',
-  epic: '#DA7667',
+  common: 'var(--mute-2)',
+  rare: 'var(--moss)',
+  epic: 'var(--ver-soft)',
   legendary: 'var(--gold-leaf)',
 };
-const TYPE_LABEL = { titleFlair: 'Title flair' };
+const TYPE_LABEL = { titleFlair: 'Title seal' };
 const TYPES = ['titleFlair'];
 
 function Coin({ size = 12 }) {
-  return <span style={{ display: 'inline-block', width: size, height: size, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), color-mix(in srgb, var(--gold-leaf) 62%, #000))', borderRadius: 2 }} />;
+  return <span className="yv-coin" style={{ width: size, height: size }} />;
 }
 
 export default function VaultModal({ isOpen, onClose }) {
@@ -73,45 +77,39 @@ export default function VaultModal({ isOpen, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose} title="The Vault">
       {burst && <Particles key={burst} count={24} />}
 
-      <div className="mb-4 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--color-obsidian)' }}>
-        <span className="font-sans text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>Balance</span>
-        <span className="flex items-center gap-2 font-mono text-lg font-bold" style={{ color: 'var(--gold-leaf)' }}>
+      <div className="yv-balance">
+        <span className="yv-balance__k">Balance</span>
+        <span className="yv-balance__v">
           <Coin size={14} /><CountUp value={balance} format={(n) => Math.round(n).toLocaleString()} /> Iron
         </span>
       </div>
 
       {/* Chest */}
-      <button
-        type="button"
-        onClick={chest}
-        disabled={!chestOpen}
-        className="mb-4 flex w-full items-center justify-between rounded-2xl px-4 py-3"
-        style={{ background: 'var(--color-ivory)', opacity: chestOpen ? 1 : 0.5, border: '1px solid var(--gold-leaf)' }}
-      >
-        <span className="flex items-center gap-2">
-          <span style={{ fontSize: 20 }}>🎁</span>
-          <span className="text-left">
-            <span className="block font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Open a Loot Chest</span>
-            <span className="block font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+      <button type="button" onClick={chest} disabled={!chestOpen} className="yv-offer">
+        <span className="yv-offer__l">
+          <Seal kanji={UI_KANJI.vault} size={34} rotate={-3} className="you-seal--gold" />
+          <span>
+            <span className="yv-offer__t">Open a Loot Chest</span>
+            <span className="yv-offer__s">
               {ownsEverything ? 'You own every cosmetic — nothing left to drop' : 'A random cosmetic — rarer is luckier'}
             </span>
           </span>
         </span>
-        <span className="flex items-center gap-1 font-mono text-sm font-bold" style={{ color: 'var(--gold-leaf)' }}><Coin />{CHEST_PRICE}</span>
+        <span className="yv-price"><Coin />{CHEST_PRICE}</span>
       </button>
       {chestResult && (
-        <p key={chestResult.key} className="mb-4 text-center font-sans text-sm" style={{ color: 'var(--gold-leaf)' }}>
-          ✦ {chestResult.name} ({chestResult.rarity}) added to your collection!
+        <p key={chestResult.key} className="yv-won">
+          {chestResult.name} ({chestResult.rarity}) added to your collection!
         </p>
       )}
 
-      {/* Rest-token exchange — spend Iron on a streak shield. */}
-      <div className="mb-4 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: 'var(--color-ivory)', border: '1px solid var(--gold-leaf)' }}>
-        <span className="flex items-center gap-2">
-          <Shield size={18} style={{ color: 'var(--gold-leaf)' }} />
-          <span className="text-left">
-            <span className="block font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Buy a Rest Token</span>
-            <span className="block font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Protects your streak on a missed day · you have {tokens}</span>
+      {/* Rest-token exchange: spend Iron on a streak shield. */}
+      <div className="yv-offer">
+        <span className="yv-offer__l">
+          <Shield size={22} strokeWidth={1.6} aria-hidden style={{ color: 'var(--gold-leaf)', flex: 'none' }} />
+          <span>
+            <span className="yv-offer__t">Buy a Rest Token</span>
+            <span className="yv-offer__s">Protects your streak on a missed day · you have {tokens}</span>
           </span>
         </span>
         <button
@@ -119,8 +117,7 @@ export default function VaultModal({ isOpen, onClose }) {
           onClick={purchaseToken}
           disabled={!tokenOpen}
           aria-label={`Buy a rest token for ${TOKEN_IRON_PRICE} Iron`}
-          className="flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 font-mono text-sm font-bold"
-          style={{ background: tokenOpen ? 'var(--color-gold)' : 'var(--color-chalk)', color: tokenOpen ? 'var(--color-on-accent)' : 'var(--color-ash)' }}
+          className="yv-buy yv-price"
         >
           <Coin size={10} />{TOKEN_IRON_PRICE}
         </button>
@@ -128,29 +125,25 @@ export default function VaultModal({ isOpen, onClose }) {
 
       {/* Cosmetics by type */}
       {TYPES.map((type) => (
-        <div key={type} className="mb-4">
-          <p className="mb-2 font-sans text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-ash)' }}>{TYPE_LABEL[type]}</p>
-          <div className="grid grid-cols-2 gap-2">
+        <div key={type}>
+          <p className="yv-h">{TYPE_LABEL[type]}</p>
+          <div className="yv-grid">
             {COSMETICS.filter((c) => c.type === type).map((c) => {
               const isOwned = owned.includes(c.id);
               const isEquipped = equipped?.[type] === c.id;
               const affordable = loaded && canAfford(balance, c.price);
               return (
-                <div key={c.id} className="rounded-xl p-3" style={{ background: 'var(--color-ivory)', border: `1px solid ${isEquipped ? 'var(--gold-leaf)' : 'transparent'}` }}>
-                  <div className="flex items-center justify-between">
-                    <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                      {c.type === 'titleFlair' ? `${c.value} ` : ''}{c.name}
+                <div key={c.id} className={`yv-card ${isEquipped ? 'yv-card--on' : ''}`}>
+                  <div className="yv-card__top">
+                    <Seal kanji={flairSeal(c.id)} size={34} rotate={c.price % 2 ? -4 : 4} />
+                    <span>
+                      <span className="yv-card__name">{c.name}</span>
+                      <span className="yv-card__rar" style={{ color: RARITY_COLOR[c.rarity] }}>{c.rarity}</span>
                     </span>
-                    <span className="font-mono text-[10px] uppercase" style={{ color: RARITY_COLOR[c.rarity] }}>{c.rarity}</span>
                   </div>
                   {isOwned ? (
-                    <button
-                      type="button"
-                      onClick={() => equip(c)}
-                      className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 font-sans text-xs font-semibold"
-                      style={{ background: isEquipped ? 'var(--color-gold)' : 'var(--color-chalk)', color: isEquipped ? 'var(--color-on-accent)' : 'var(--color-text-primary)' }}
-                    >
-                      {isEquipped && <Check size={12} strokeWidth={3} />}{isEquipped ? 'Equipped' : 'Equip'}
+                    <button type="button" onClick={() => equip(c)} className={`yv-act ${isEquipped ? 'yv-act--on' : ''}`}>
+                      {isEquipped && <Check size={13} strokeWidth={3} />}{isEquipped ? 'Equipped' : 'Equip'}
                     </button>
                   ) : (
                     <button
@@ -158,8 +151,7 @@ export default function VaultModal({ isOpen, onClose }) {
                       onClick={() => buy(c)}
                       disabled={!affordable}
                       aria-label={`Buy ${c.name} for ${c.price} Iron`}
-                      className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 font-mono text-xs font-bold"
-                      style={{ background: affordable ? 'var(--color-gold)' : 'var(--color-chalk)', color: affordable ? 'var(--color-on-accent)' : 'var(--color-ash)' }}
+                      className="yv-act yv-price"
                     >
                       <Coin size={10} />{c.price}
                     </button>
@@ -170,8 +162,8 @@ export default function VaultModal({ isOpen, onClose }) {
           </div>
         </div>
       ))}
-      <p className="text-center font-sans text-xs" style={{ color: 'var(--color-ash)' }}>
-        Iron is earned as you train: <span style={{ color: 'var(--color-text-secondary)' }}>+{IRON_PER_SESSION} per workout · +{IRON_PER_PR} per PR · +{IRON_PER_QUEST} per quest</span>, plus your Daily Dungeon bonus.
+      <p className="yv-foot">
+        Iron is earned as you train: <span>+{IRON_PER_SESSION} per workout · +{IRON_PER_PR} per PR · +{IRON_PER_QUEST} per quest</span>, plus your Daily Dungeon bonus.
       </p>
     </Modal>
   );

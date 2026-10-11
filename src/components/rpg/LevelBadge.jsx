@@ -1,21 +1,27 @@
-// Compact level chip for top bars / cards. A prestige tier (> 0) adds a
-// bright outer halo ring so it reads as "ascended".
-export default function LevelBadge({ level, size = 'md', prestige = 0 }) {
+import '../../styles/ink-components.css';
+
+// Compact level chip: a vermilion seal with the level in Shippori. A prestige
+// tier (> 0) adds a washi hairline frame so it reads as "ascended".
+export default function LevelBadge({ level, size = 'md', prestige = 0, className = '' }) {
   const dim = size === 'sm' ? 28 : 36;
-  const font = size === 'sm' ? 12 : 15;
+  const font = size === 'sm' ? 13 : 16;
   return (
-    <div
-      className="flex shrink-0 items-center justify-center rounded-full font-mono font-semibold"
+    <span
+      className={`ink-seal ${className}`}
+      role="img"
+      aria-label={`Level ${level}${prestige > 0 ? `, prestige ${prestige}` : ''}`}
       style={{
         width: dim,
         height: dim,
         fontSize: font,
-        background: 'var(--gold-leaf)',
-        color: 'var(--color-obsidian)',
-        boxShadow: prestige > 0 ? '0 0 0 2px var(--color-stone), 0 0 0 3.5px #ECE4D2' : undefined,
+        fontFamily: 'var(--font-display)',
+        fontWeight: 800,
+        fontVariantNumeric: 'tabular-nums',
+        transform: 'rotate(-3deg)',
+        boxShadow: prestige > 0 ? '0 0 0 2px var(--ink-1), 0 0 0 3.5px var(--washi-2)' : undefined,
       }}
     >
       {level}
-    </div>
+    </span>
   );
 }
