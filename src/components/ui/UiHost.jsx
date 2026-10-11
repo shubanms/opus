@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Modal from './Modal.jsx';
+import InkButton from '../ink/InkButton.jsx';
+import '../../styles/ink-sheets.css';
 import useUIStore from '../../store/uiStore.js';
 
 function Toasts() {
@@ -65,22 +67,15 @@ function ConfirmDialog() {
         <p className="mb-5 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>{message}</p>
       )}
       <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => resolve(false)}
-          className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-        >
-          {cancelLabel}
-        </button>
-        <button
-          type="button"
+        <InkButton variant="secondary" block onClick={() => resolve(false)}>{cancelLabel}</InkButton>
+        <InkButton
+          variant="primary"
+          block
+          className={danger ? 'ink-btn--danger' : ''}
           onClick={() => resolve(true)}
-          className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: danger ? 'var(--color-ember)' : 'var(--color-gold)', color: danger ? 'var(--color-text-inverse)' : 'var(--color-on-accent)' }}
         >
           {confirmLabel}
-        </button>
+        </InkButton>
       </div>
     </Modal>
   );
@@ -107,26 +102,11 @@ function PromptDialog() {
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full resize-none rounded-xl px-3 py-2 font-sans text-sm outline-none"
-        style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+        className="ink-field w-full resize-none px-3 py-2 font-sans text-sm outline-none"
       />
       <div className="mt-4 flex gap-3">
-        <button
-          type="button"
-          onClick={() => resolve(null)}
-          className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={() => resolve(value.trim())}
-          className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-        >
-          Save
-        </button>
+        <InkButton variant="secondary" block onClick={() => resolve(null)}>Cancel</InkButton>
+        <InkButton variant="primary" block onClick={() => resolve(value.trim())}>Save</InkButton>
       </div>
     </Modal>
   );
