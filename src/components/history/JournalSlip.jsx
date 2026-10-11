@@ -113,6 +113,8 @@ export default function JournalSlip({ workout, hasRecord = false }) {
   }
 
   const kanjiDate = toKanjiDate(workout.date);
+  // Name first, then XP: the control reads as the session, like the card it replaces.
+  const headLabel = `${workout.name || "Workout"}${workout.xpEarned > 0 ? ` +${workout.xpEarned} XP` : ""}, ${friendlyDate(workout.date)}, ${workout.totalSets} sets`;
   const facts = [
     workout.totalVolume > 0 ? fmtVolume(workout.totalVolume, unit) : null,
     `${workout.totalSets} sets`,
@@ -126,7 +128,7 @@ export default function JournalSlip({ workout, hasRecord = false }) {
       seal={hasRecord ? <Seal kanji={UI_KANJI.new} size={30} rotate={5} label="A record fell in this session" /> : null}
     >
       <span className="jr-slip__dot" aria-hidden />
-      <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="jr-slip__head">
+      <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} aria-label={headLabel} className="jr-slip__head">
         <span className="jr-slip__dates">
           <span className="jr-slip__kanji" lang="ja">{kanjiDate}</span>
           <span className="jr-slip__en">{friendlyDate(workout.date)}</span>

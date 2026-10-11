@@ -56,11 +56,11 @@ function Banner({ b, blocking, unit }) {
   return (
     <li className={`pr-gate ${b.cleared ? 'is-cleared' : ''} ${blocking ? 'is-blocking' : ''}`}>
       <span className="pr-gate__pole" aria-hidden />
-      <div className="pr-gate__flag">
+      <div className="pr-gate__flag rounded-xl">
         <KanjiTile kanji={GATE_KANJI[b.gate] ?? '試'} state={b.cleared ? 'paper' : blocking ? 'lit' : 'outline'} size={44} />
         <div className="pr-gate__body">
           <span className="pr-gate__eye">Boss gate · Level {b.gate}</span>
-          <span className="pr-gate__title">{b.title}</span>
+          <p className="pr-gate__title">{b.title}</p>
           <span className="pr-gate__cond">Level {b.gate} · {bossDesc(b, unit)}</span>
         </div>
         <span className="pr-gate__status">{status}</span>
