@@ -867,7 +867,7 @@ test.describe('OPUS end-to-end', () => {
     await page.getByRole('button', { name: 'Quick start (empty)' }).click();
     await expect(clock).toBeVisible();
 
-    for (const tab of ['Progress', 'Exercises', 'Home']) {
+    for (const tab of ['Progress', 'Forms', 'Home']) {
       await gotoTab(page, tab);
       await dismissCoach(page);
       await expect(clock).toBeVisible();
