@@ -1,19 +1,28 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Dumbbell, Layers, Trophy, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { m } from '../motion/index.jsx';
 import { useWrapped } from '../hooks/useWrapped.js';
 import { useRPG } from '../hooks/useRPG.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
+import { STAT_KANJI, UI_KANJI } from '../utils/kanji.js';
 import CountUp from '../components/fx/CountUp.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
 import BackButton from '../components/layout/BackButton.jsx';
+import { BrushBar, InkTabs, Seal } from '../components/ink/index.js';
+import useInkMotion from '../components/ink/useInkMotion.js';
+import '../styles/ink-journal.css';
 
-function Stat({ icon: Icon, value, label }) {
+// The Season scroll: the chosen month or year painted on one long washi scroll,
+// rolled on two rods. Everything on it is the period's real numbers; the share
+// button renders the same data to the 1080 card.
+
+function Stat({ kanji, value, label }) {
   return (
-    <div className="flex-1 rounded-xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-      <Icon size={14} style={{ color: 'var(--color-gold)' }} />
-      <p className="mt-1 font-mono text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>{value}</p>
-      <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{label}</p>
+    <div className="wr-stat">
+      <span className="wr-stat__k" lang="ja" aria-hidden>{kanji}</span>
+      <span className="wr-stat__v">{value}</span>
+      <span className="wr-stat__l">{label}</span>
     </div>
   );
 }
@@ -24,14 +33,15 @@ export default function WrappedPage() {
   const { periods, data, period: active } = useWrapped(period);
   const unit = useSettingsStore((s) => s.unit);
   const effects = useSettingsStore((s) => s.effects);
+  const motionOn = useInkMotion();
   const { profile } = useRPG();
 
   const list = mode === 'month' ? periods.months : periods.years;
   const idx = Math.max(0, list.findIndex((p) => p.key === active?.key && p.kind === active?.kind));
 
-  function switchMode(m) {
-    setMode(m);
-    const l = m === 'month' ? periods.months : periods.years;
+  function switchMode(next) {
+    setMode(next);
+    const l = next === 'month' ? periods.months : periods.years;
     setPeriod(l[0] ?? null);
   }
   function step(delta) {
@@ -41,9 +51,10 @@ export default function WrappedPage() {
 
   const series = (data?.series ?? []).slice(-16);
   // A cardio-only period has weeks but no tonnage: every bar is 0, the peak is
-  // 0, and v / peak is NaN — bars with a NaN height. No lifting, no sparkline.
+  // 0, and v / peak is NaN. No lifting, no sparkline.
   const peak = series.length ? Math.max(...series) : 0;
   const showSpark = series.length > 1 && peak > 0;
+  const volume = data ? Math.round(toDisplay(data.volumeKg, unit)) : 0;
 
   const shareData = data && {
     name: profile?.name || 'Athlete',
@@ -60,104 +71,98 @@ export default function WrappedPage() {
     series: data.series,
   };
 
+  // Sections settle onto the scroll one after another; still when motion is off.
+  const rise = (i) => (motionOn ? { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5, delay: 0.1 + i * 0.09, ease: [0.16, 0.84, 0.3, 1] } } : {});
+
   return (
-    <div className="px-5 pb-8 pt-8">
-      <BackButton fallback="/profile" className="mb-3" />
+    <div className="jr-page jr-page--pad">
+      <header className="jr-head">
+        <div className="jr-head__l">
+          <BackButton fallback="/profile" label="" className="" />
+          <h1 className="jr-title">Wrapped</h1>
+        </div>
+        <span className="jr-kanji" lang="ja" aria-hidden>{UI_KANJI.season}</span>
+      </header>
 
-      <h1 className="flex items-center gap-2 font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-        <Sparkles size={26} style={{ color: 'var(--color-gold)' }} /> Wrapped
-      </h1>
+      <InkTabs
+        label="Period"
+        value={mode}
+        onChange={switchMode}
+        tabs={[
+          { id: 'month', label: 'By month' },
+          { id: 'year', label: 'By year' },
+        ]}
+      />
 
-      {/* Month / Year toggle */}
-      <div className="mt-5 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-ivory)' }}>
-        {['month', 'year'].map((m) => (
-          <button
-            type="button"
-            key={m}
-            onClick={() => switchMode(m)}
-            className="flex-1 rounded-lg py-2 font-sans text-xs font-medium capitalize"
-            style={{ background: mode === m ? 'var(--color-chalk)' : 'transparent', color: mode === m ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
-          >
-            {m === 'month' ? 'By month' : 'By year'}
-          </button>
-        ))}
-      </div>
-
-      {/* Period stepper */}
-      <div className="mt-3 flex items-center justify-between rounded-xl px-2 py-2" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <button type="button" onClick={() => step(1)} disabled={idx >= list.length - 1} aria-label="Older" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx >= list.length - 1 ? 0.3 : 1 }}>
-          <ChevronLeft size={18} style={{ color: 'var(--color-text-primary)' }} />
+      <div className="wr-step">
+        <button type="button" onClick={() => step(1)} disabled={idx >= list.length - 1} aria-label="Older" className="wr-step__b">
+          <ChevronLeft size={18} />
         </button>
-        <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{active?.label || data?.label || '—'}</span>
-        <button type="button" onClick={() => step(-1)} disabled={idx <= 0} aria-label="Newer" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx <= 0 ? 0.3 : 1 }}>
-          <ChevronRight size={18} style={{ color: 'var(--color-text-primary)' }} />
+        <span className="wr-step__t">{active?.label || data?.label || '—'}</span>
+        <button type="button" onClick={() => step(-1)} disabled={idx <= 0} aria-label="Newer" className="wr-step__b">
+          <ChevronRight size={18} />
         </button>
       </div>
 
       {!data || !data.hasData ? (
-        <div className="mt-12 text-center">
-          <Sparkles size={32} style={{ color: 'var(--color-ash)' }} className="mx-auto" />
-          <p className="mt-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            No training logged in {data?.label || 'this period'} yet.
-          </p>
+        <div className="jr-none">
+          <Sparkles size={32} aria-hidden />
+          <p className="jr-none__b">No training logged in {data?.label || 'this period'} yet.</p>
         </div>
       ) : (
-        <>
-          {/* Headline */}
-          <div className="mt-6 rounded-2xl p-5" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-stone)' }}>
-            <p className="font-mono text-xs uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>You lifted</p>
-            <p className="mt-1 font-display text-5xl font-bold leading-none" style={{ color: 'var(--color-text-inverse)' }}>
-              {effects ? <CountUp value={Math.round(toDisplay(data.volumeKg, unit))} /> : Math.round(toDisplay(data.volumeKg, unit)).toLocaleString()}
-              <span className="ml-2 font-sans text-lg" style={{ color: 'var(--color-ash)' }}>{unitLabel(unit)}</span>
-            </p>
-            <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-ash)' }}>across {data.sessions} {data.sessions === 1 ? 'session' : 'sessions'}</p>
+        <div className="wr-scroll">
+          <span className="wr-rod wr-rod--top" aria-hidden />
+          <div className="wr-paper washi">
+            <m.div className="wr-sec wr-sec--head" {...rise(0)}>
+              <p className="wr-eye">{data.label} · You lifted</p>
+              <p className="wr-vol">
+                {effects ? <CountUp value={volume} /> : volume.toLocaleString()}
+                <span className="wr-vol__u">{unitLabel(unit)}</span>
+              </p>
+              <p className="wr-sub">across {data.sessions} {data.sessions === 1 ? 'session' : 'sessions'}</p>
+              <span className="wr-seal"><Seal kanji={UI_KANJI.season} size={40} rotate={4} /></span>
+            </m.div>
 
             {showSpark && (
-              <div className="mt-4 flex items-end gap-1" style={{ height: 56 }}>
-                {series.map((v, i) => (
-                  // Weeks in a fixed order that never reorders: the index is the identity.
-                  // biome-ignore lint/suspicious/noArrayIndexKey: positional series
-                  <div key={i} className="flex-1 rounded" style={{ height: `${Math.max(8, (v / peak) * 100)}%`, background: 'var(--color-gold)', opacity: 0.5 + 0.5 * (v / peak) }} />
-                ))}
-              </div>
+              <m.div className="wr-sec" {...rise(1)}>
+                <p className="wr-cap">Volume by week</p>
+                <div className="wr-bars" role="img" aria-label={`Weekly volume, ${series.length} weeks`}>
+                  {series.map((v, i) => (
+                    // Weeks in a fixed order that never reorders: the index is the identity.
+                    // biome-ignore lint/suspicious/noArrayIndexKey: positional series
+                    <BrushBar key={i} ratio={Math.max(0.06, v / peak)} current={v === peak} delay={i * 0.03} />
+                  ))}
+                </div>
+              </m.div>
             )}
-          </div>
 
-          {/* Stats */}
-          <div className="mt-3 flex gap-3">
-            <Stat icon={Dumbbell} value={data.sessions} label="Sessions" />
-            <Stat icon={Layers} value={data.sets} label="Sets" />
-            <Stat icon={Trophy} value={data.prs} label="PRs" />
-            <Stat icon={Clock} value={`${Math.round(data.hours)}h`} label="Trained" />
-          </div>
+            <m.div className="wr-sec wr-stats" {...rise(2)}>
+              <Stat kanji={STAT_KANJI.sessions} value={data.sessions} label="Sessions" />
+              <Stat kanji={STAT_KANJI.sets} value={data.sets} label="Sets" />
+              <Stat kanji={STAT_KANJI.records} value={data.prs} label="PRs" />
+              <Stat kanji={STAT_KANJI.time} value={`${Math.round(data.hours)}h`} label="Trained" />
+            </m.div>
 
-          {(data.topLift || data.busiestDay) && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <m.ul className="wr-sec wr-facts" {...rise(3)}>
               {data.topLift && (
-                <span className="rounded-full px-3 py-1.5 font-sans text-xs font-medium" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
-                  Top lift · {data.topLift}
-                </span>
+                <li><span>Top lift</span><b>{data.topLift}</b></li>
               )}
               {data.busiestDay && (
-                <span className="rounded-full px-3 py-1.5 font-sans text-xs font-medium" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}>
-                  Busiest · {data.busiestDay}
-                </span>
+                <li><span>Busiest</span><b>{data.busiestDay}</b></li>
               )}
-              <span className="rounded-full px-3 py-1.5 font-mono text-xs font-medium" style={{ background: 'var(--color-ivory)', color: 'var(--color-gold)' }}>
-                +{data.xp.toLocaleString()} XP
-              </span>
-            </div>
-          )}
+              <li><span>XP earned</span><b>+{data.xp.toLocaleString()} XP</b></li>
+            </m.ul>
+          </div>
+          <span className="wr-rod wr-rod--bot" aria-hidden />
 
           <ShareButton
             data={shareData}
             kind="wrapped"
             filename="opus-wrapped.png"
             label="Share Wrapped"
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--grad-accent)', color: 'var(--color-on-accent)', boxShadow: 'var(--glow-accent)' }}
+            className="ink-btn ink-btn--primary ink-btn--block wr-share"
           />
-        </>
+        </div>
       )}
     </div>
   );

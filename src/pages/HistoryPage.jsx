@@ -1,45 +1,54 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, Search, SearchX, X } from 'lucide-react';
-import PageWrapper from '../components/layout/PageWrapper.jsx';
+import BackButton from '../components/layout/BackButton.jsx';
 import EmptyState from '../components/ui/EmptyState.jsx';
-import WorkoutCard from '../components/workout/WorkoutCard.jsx';
-import { m, TWEEN, useReducedMotion } from '../motion/index.jsx';
+import JournalSlip from '../components/history/JournalSlip.jsx';
+import { Chip, InkButton, SectionLabel } from '../components/ink/index.js';
+import useInkMotion from '../components/ink/useInkMotion.js';
+import { m, TWEEN } from '../motion/index.jsx';
 import { useHistoryIndex, useWorkoutList } from '../hooks/useWorkout.js';
+import { useAllPRs } from '../hooks/useProgress.js';
 import { filterHistory, groupByMonth, historyTags } from '../utils/historySearch.js';
 import { fmtVolume } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
+import '../styles/ink-journal.css';
 
-// Past sessions, grouped by month, searchable.
-//
-// An ungrouped list of identical cards gives you nothing to navigate by: after
-// a few months of training, scrolling it is guesswork. Each month heading
-// carries its own totals — over whatever is showing, so a filtered month says
-// what *those* sessions added up to. Search reads what people remember: the
-// session's name, its note, its tags, and the lifts in it.
+// The Journal: past sessions as paper slips on a timeline, grouped by month,
+// searchable. Each month heading carries its own totals over whatever is
+// showing, so a filtered month says what *those* sessions added up to. Search
+// reads what people remember: the session's name, its note, its tags, and the
+// lifts in it. A vermilion seal sits on a slip only if a record fell in it.
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-// Shown while the list loads. The page used to render "No workouts yet" for
-// that first moment on every visit — to people with months of history.
-function Skeleton() {
-  const effects = useSettingsStore((s) => s.effects);
-  const still = useReducedMotion() || !effects;
+function Header({ count }) {
   return (
-    <div aria-busy="true" aria-label="Loading history" className="pb-6">
-      <div className="mb-3 h-11 rounded-2xl" style={{ background: 'var(--color-ivory)' }} />
+    <header className="jr-head">
+      <div className="jr-head__l">
+        <BackButton fallback="/home" label="" className="" />
+        <h1 className="jr-title">Journal</h1>
+      </div>
+      {count ? <span className="jr-count">{count}</span> : null}
+    </header>
+  );
+}
+
+// Shown while the list loads, so people with months of history never see
+// "No workouts yet" for a moment.
+function Skeleton() {
+  const motionOn = useInkMotion();
+  return (
+    <div aria-busy="true" aria-label="Loading history">
+      <div className="jr-skel jr-skel--search" />
       {[0, 1, 2, 3].map((i) => (
         <m.div
           key={i}
-          className="mb-2 rounded-2xl px-4 py-3"
-          style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-          initial={{ opacity: 0.55 }}
-          animate={still ? { opacity: 0.8 } : { opacity: [0.55, 0.95, 0.55] }}
-          transition={still ? TWEEN.standard : { duration: 1.4, repeat: Number.POSITIVE_INFINITY, delay: i * 0.12 }}
-        >
-          <div className="mb-2.5 h-4 w-1/3 rounded-md" style={{ background: 'var(--color-ivory)' }} />
-          <div className="h-3 w-2/3 rounded-md" style={{ background: 'var(--color-ivory)' }} />
-        </m.div>
+          className="jr-skel"
+          initial={{ opacity: 0.4 }}
+          animate={motionOn ? { opacity: [0.4, 0.8, 0.4] } : { opacity: 0.6 }}
+          transition={motionOn ? { duration: 1.4, repeat: Number.POSITIVE_INFINITY, delay: i * 0.12 } : TWEEN.standard}
+        />
       ))}
     </div>
   );
@@ -55,6 +64,8 @@ export default function HistoryPage() {
   const deferredQuery = useDeferredValue(query);
   const searching = deferredQuery.trim().length > 0;
   const index = useHistoryIndex(searching);
+  const allPRs = useAllPRs();
+  const withRecord = useMemo(() => new Set(allPRs.map((p) => p.workoutId).filter((id) => id != null)), [allPRs]);
 
   const tags = useMemo(() => historyTags(workouts), [workouts]);
   const shown = useMemo(
@@ -66,15 +77,17 @@ export default function HistoryPage() {
 
   if (loading) {
     return (
-      <PageWrapper title="History" subtitle="Past workouts">
+      <div className="jr-page">
+        <Header />
         <Skeleton />
-      </PageWrapper>
+      </div>
     );
   }
 
   if (workouts.length === 0) {
     return (
-      <PageWrapper title="History" subtitle="Past workouts">
+      <div className="jr-page">
+        <Header />
         <EmptyState
           icon={Dumbbell}
           title="No workouts yet"
@@ -82,103 +95,77 @@ export default function HistoryPage() {
           actionLabel="Start a workout"
           onAction={() => navigate('/workout')}
         />
-      </PageWrapper>
+      </div>
     );
   }
 
-  const subtitle = filtering
-    ? `${shown.length} of ${plural(workouts.length, 'session')}`
-    : `${plural(workouts.length, 'session')} logged`;
+  const count = filtering ? `${shown.length} of ${plural(workouts.length, 'session')}` : `${plural(workouts.length, 'session')} logged`;
 
   return (
-    <PageWrapper title="History" subtitle={subtitle}>
-      <div className="pb-6">
-        <div className="mb-3 flex items-center gap-2 rounded-2xl px-3.5" style={{ background: 'var(--color-ivory)' }}>
-          <Search size={15} style={{ color: 'var(--color-ash)' }} />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search sessions, lifts, notes"
-            aria-label="Search history"
-            enterKeyHint="search"
-            // Chrome adds its own clear button to a search field; ours is the
-            // one sized for a thumb, so the native one is hidden.
-            className="min-w-0 flex-1 bg-transparent py-3 font-sans text-sm outline-none [&::-webkit-search-cancel-button]:hidden"
-            style={{ color: 'var(--color-text-primary)' }}
-          />
-          {query && (
-            <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="-mr-1.5 flex h-9 w-9 items-center justify-center">
-              <X size={15} style={{ color: 'var(--color-ash)' }} />
-            </button>
-          )}
-        </div>
+    <div className="jr-page">
+      <Header count={count} />
 
-        {tags.length > 0 && (
-          <div className="-mx-5 mb-4 flex gap-1.5 overflow-x-auto px-5 pb-1 scrollbar-hide">
-            {tags.map((t) => {
-              const on = tag === t;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => setTag(on ? null : t)}
-                  className="min-h-[34px] shrink-0 rounded-full px-3.5 font-sans text-xs font-medium"
-                  style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
-                >
-                  {t}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {months.length === 0 ? (
-          <m.div
-            className="flex flex-col items-center px-6 py-10 text-center"
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={TWEEN.enter}
-          >
-            <SearchX size={26} style={{ color: 'var(--color-ash)' }} />
-            <p className="mt-3 font-display text-xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-              No sessions match
-            </p>
-            <p className="mt-1 max-w-xs font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-              {searching ? `Nothing with “${deferredQuery.trim()}”` : 'Nothing with that tag'}
-              {searching && tag ? ` tagged ${tag}` : ''}.
-            </p>
-            <button
-              type="button"
-              onClick={() => { setQuery(''); setTag(null); }}
-              className="mt-4 rounded-xl px-4 py-2.5 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-            >
-              Show all sessions
-            </button>
-          </m.div>
-        ) : (
-          months.map((mo) => (
-            <div key={mo.key} className="mb-5">
-              <div className="mb-2 flex items-baseline justify-between">
-                <h2
-                  className="font-sans text-xs font-semibold uppercase tracking-widest"
-                  style={{ color: 'var(--color-text-secondary)' }}
-                >
-                  {mo.label}
-                </h2>
-                <span className="font-mono text-[11px]" style={{ color: 'var(--color-ash)' }}>
-                  {plural(mo.items.length, 'session')} · {fmtVolume(mo.volume, unit)}
-                </span>
-              </div>
-              {mo.items.map((w) => (
-                <WorkoutCard key={w.id} workout={w} />
-              ))}
-            </div>
-          ))
+      <div className="jr-search">
+        <Search size={15} aria-hidden />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search sessions, lifts, notes"
+          aria-label="Search history"
+          enterKeyHint="search"
+          // Chrome adds its own clear button; ours is sized for a thumb.
+          className="jr-search__input [&::-webkit-search-cancel-button]:hidden"
+        />
+        {query && (
+          <button type="button" onClick={() => setQuery('')} aria-label="Clear search" className="jr-search__clear">
+            <X size={15} />
+          </button>
         )}
       </div>
-    </PageWrapper>
+
+      {tags.length > 0 && (
+        <div className="jr-tags scrollbar-hide">
+          {tags.map((t) => (
+            <Chip key={t} selected={tag === t} onClick={() => setTag(tag === t ? null : t)}>
+              {t}
+            </Chip>
+          ))}
+        </div>
+      )}
+
+      {months.length === 0 ? (
+        <m.div className="jr-none" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={TWEEN.enter}>
+          <SearchX size={26} aria-hidden />
+          <p className="jr-none__t">No sessions match</p>
+          <p className="jr-none__b">
+            {searching ? `Nothing with “${deferredQuery.trim()}”` : 'Nothing with that tag'}
+            {searching && tag ? ` tagged ${tag}` : ''}.
+          </p>
+          <InkButton
+            variant="secondary"
+            onClick={() => {
+              setQuery('');
+              setTag(null);
+            }}
+          >
+            Show all sessions
+          </InkButton>
+        </m.div>
+      ) : (
+        months.map((mo) => (
+          <section key={mo.key} className="jr-month" aria-label={mo.label}>
+            <SectionLabel as="h2" rule meta={`${plural(mo.items.length, 'session')} · ${fmtVolume(mo.volume, unit)}`}>
+              {mo.label}
+            </SectionLabel>
+            <div className="jr-line">
+              {mo.items.map((w) => (
+                <JournalSlip key={w.id} workout={w} hasRecord={withRecord.has(w.id)} />
+              ))}
+            </div>
+          </section>
+        ))
+      )}
+    </div>
   );
 }
