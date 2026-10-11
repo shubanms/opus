@@ -240,7 +240,7 @@ export default function ProfilePage() {
           <Gem size={15} style={{ color: 'var(--color-gold)' }} /> The Vault — cosmetics &amp; loot
         </span>
         <span className="flex items-center gap-1.5 font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}>
-          <span style={{ display: 'inline-block', width: 11, height: 11, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
+          <span style={{ display: 'inline-block', width: 11, height: 11, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), var(--ver-deep, #8E2416))', borderRadius: 2 }} />
           {/* Nothing until it's read — a flashed "0" reads as a lost balance. */}
           {ironLoaded ? ironBal.toLocaleString() : ''}
         </span>

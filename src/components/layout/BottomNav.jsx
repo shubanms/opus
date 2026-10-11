@@ -119,7 +119,7 @@ export default function BottomNav() {
             type="button"
             aria-label="Close quick actions"
             className="fixed inset-0 z-[41]"
-            style={{ background: 'rgba(6,9,20,0.5)' }}
+            style={{ background: 'rgba(7,6,5,0.5)' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

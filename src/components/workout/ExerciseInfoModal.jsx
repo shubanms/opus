@@ -83,7 +83,7 @@ export default function ExerciseInfoModal({ exerciseId, isOpen, onClose }) {
           className="flex items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
           style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
         >
-          <Youtube size={16} style={{ color: '#FF4444' }} /> Watch how-to video
+          <Youtube size={16} style={{ color: 'var(--ver-light, #E0553B)' }} /> Watch how-to video
         </a>
       </div>
     </Modal>

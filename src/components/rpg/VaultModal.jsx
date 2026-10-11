@@ -15,15 +15,15 @@ import {
 
 const RARITY_COLOR = {
   common: 'var(--color-ash)',
-  rare: '#6ea3c9',
-  epic: '#b877dd',
+  rare: '#6E7FA8',
+  epic: '#DA7667',
   legendary: 'var(--color-gold)',
 };
 const TYPE_LABEL = { titleFlair: 'Title flair' };
 const TYPES = ['titleFlair'];
 
 function Coin({ size = 12 }) {
-  return <span style={{ display: 'inline-block', width: size, height: size, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />;
+  return <span style={{ display: 'inline-block', width: size, height: size, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), var(--ver-deep, #8E2416))', borderRadius: 2 }} />;
 }
 
 export default function VaultModal({ isOpen, onClose }) {

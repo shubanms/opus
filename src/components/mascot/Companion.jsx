@@ -103,9 +103,9 @@ function CompanionScene({ autoGreet = true, size = 164, bubbleWidth = 260, class
           gl={{ alpha: true, antialias: true }}
           style={{ background: 'transparent' }}
         >
-          <hemisphereLight args={[0xffffff, 0x2a2440, 1.15]} />
-          <directionalLight position={[3, 6, 5]} intensity={2.2} color="#e6ecff" />
-          <directionalLight position={[-4, 3, -4]} intensity={1.4} color="#8B7DFF" />
+          <hemisphereLight args={[0xffffff, 0x2a1a14, 1.15]} />
+          <directionalLight position={[3, 6, 5]} intensity={2.2} color="#F7F1E6" />
+          <directionalLight position={[-4, 3, -4]} intensity={1.4} color="#E0553B" />
           <Suspense fallback={null}>
             <RobotModel clip={clip} gesture={gesture} still={!animate} />
           </Suspense>

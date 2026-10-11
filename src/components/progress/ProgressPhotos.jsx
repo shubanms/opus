@@ -148,7 +148,7 @@ export default function ProgressPhotos() {
               aria-label="Close photo"
               onClick={() => setViewer(null)}
               className="absolute inset-0"
-              style={{ background: 'rgba(17,16,16,0.94)' }}
+              style={{ background: 'rgba(7,6,5,0.94)' }}
             />
             <img src={urls[viewerPhoto.id]} alt={`${viewerPhoto.category}, ${friendlyDate(viewerPhoto.date)}`} className="relative max-h-[75vh] max-w-full rounded-xl" style={{ objectFit: 'contain' }} />
             <p className="relative mt-3 font-mono text-sm" style={{ color: 'var(--color-ivory)' }}>{friendlyDate(viewerPhoto.date)} · <span className="capitalize">{viewerPhoto.category}</span></p>

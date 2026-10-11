@@ -99,7 +99,7 @@ export default function BodyPicker({ selected, onSelect }) {
           <div className="flex justify-center" style={{ maxHeight: 220, overflow: 'hidden' }}>
             <Model
               data={modelData}
-              highlightedColors={['#8B7DFF']}
+              highlightedColors={['#D2AE5A']}
               onClick={handleModelClick}
               type={view}
             />

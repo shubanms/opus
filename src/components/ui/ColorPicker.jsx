@@ -2,14 +2,14 @@ import { Check, Ban } from 'lucide-react';
 
 // Distinct label colours for marking exercises / templates / workouts.
 export const LABEL_COLORS = [
-  '#8B7DFF', // gold
-  '#FF8FA3', // ember
-  '#4FD8C4', // sage
-  '#5B7C99', // steel
-  '#8C6BA6', // plum
-  '#C2557A', // rose
-  '#3E8E8A', // teal
-  '#7B83A6', // ash
+  '#D2AE5A', // gold-leaf
+  '#C8361F', // vermilion
+  '#9DA67A', // moss
+  '#6E7FA8', // indigo-light
+  '#A86F5E', // clay
+  '#DA7667', // ver-soft
+  '#6F7A52', // moss-deep
+  '#8F877B', // ash
 ];
 
 export default function ColorPicker({ value, onChange }) {
@@ -31,7 +31,7 @@ export default function ColorPicker({ value, onChange }) {
           style={{ background: c }}
           aria-label={`Colour ${c}`}
         >
-          {value === c && <Check size={14} style={{ color: '#0A0E1C' }} strokeWidth={3} />}
+          {value === c && <Check size={14} style={{ color: '#100E0C' }} strokeWidth={3} />}
         </button>
       ))}
     </div>

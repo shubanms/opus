@@ -166,7 +166,7 @@ export default function HomePage() {
             width: 240,
             height: 240,
             borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(139, 125, 255,${scene.goldShade}) 0%, rgba(139, 125, 255,${scene.glowAlpha}) 38%, rgba(139, 125, 255,0) 70%)`,
+            background: `radial-gradient(circle, rgba(210,174,90,${scene.goldShade}) 0%, rgba(210,174,90,${scene.glowAlpha}) 38%, rgba(210,174,90,0) 70%)`,
             filter: `blur(${scene.glowBlur}px)`,
             animationDuration: scene.motionSpeed > 0 ? `${(7 - scene.motionSpeed * 3).toFixed(1)}s` : undefined,
           }}

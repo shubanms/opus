@@ -272,7 +272,7 @@ export function drawWorkoutCard(ctx, data, theme = DEFAULT_THEME) {
       x: CARD.pad,
       y: 812,
       fill: theme.accent,
-      color: '#0A0E1C',
+      color: '#100E0C',
     });
   }
 
@@ -368,7 +368,7 @@ export function drawRecapCard(ctx, data, theme = DEFAULT_THEME) {
       x: CARD.pad,
       y: 812,
       fill: theme.accent,
-      color: '#0A0E1C',
+      color: '#100E0C',
     });
   }
 
@@ -460,7 +460,7 @@ export function drawWrappedCard(ctx, data, theme = DEFAULT_THEME) {
       height: 60,
       padX: 28,
       fill: theme.accent,
-      color: '#0A0E1C',
+      color: '#100E0C',
     }) + 14;
   }
   if (d.busiestDay) {

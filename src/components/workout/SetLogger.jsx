@@ -435,7 +435,7 @@ export default function SetLogger({
                   <span
                     className="flex h-7 w-7 items-center justify-center rounded-full font-mono text-xs"
                     style={{
-                      background: s.isWarmup ? 'var(--ember-wash, #FF8FA322)' : 'var(--color-chalk)',
+                      background: s.isWarmup ? 'var(--ember-wash, #E0553B22)' : 'var(--color-chalk)',
                       color: 'var(--color-ash)',
                       boxShadow: effort ? `inset 0 0 0 2px ${effort.color}` : undefined,
                     }}
