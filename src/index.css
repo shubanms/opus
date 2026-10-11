@@ -185,3 +185,9 @@ svg * {
     animation: none !important;
   }
 }
+
+/* Keyboard focus: a gold-leaf ring that reads on sumi and on washi. */
+:focus-visible {
+  outline: 2px solid var(--gold-leaf);
+  outline-offset: 2px;
+}

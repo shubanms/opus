@@ -94,11 +94,6 @@
 .ink-halo {
   border: 2px solid var(--ver, #c8361f);
   border-radius: 12px;
-  animation: ink-halo-pulse 3.2s ease-in-out infinite;
-}
-@keyframes ink-halo-pulse {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 0; transform: scale(1.3); }
 }
 .ink-quick {
   background: var(--ink-2, #1a1613);
@@ -128,4 +123,10 @@
 @media (prefers-reduced-motion: reduce) {
   .ink-mist, .ink-leaf, .ink-grain, .ink-halo { animation: none !important; }
   .ink-toast { animation: none; }
+}
+
+/* Effects off: no blend layer to composite, and the grain sits still. */
+html[data-fx='off'] .ink-grain {
+  mix-blend-mode: normal;
+  opacity: 0.05;
 }

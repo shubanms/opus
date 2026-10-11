@@ -220,4 +220,12 @@ const useSettingsStore = create((set, get) => ({
 applyTheme();
 applySky(useSettingsStore.getState().sky);
 
+// 'auto' follows the clock, so re-resolve it when the app comes back to the
+// foreground (dawn, dusk and night change while it sits in the background).
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') applySky(useSettingsStore.getState().sky);
+  });
+}
+
 export default useSettingsStore;

@@ -38,9 +38,9 @@ export default function InkBackdrop() {
       <div className="ink-glow" />
       {live && <div className="ink-mist" />}
       {live &&
-        LEAVES.map((l, i) => (
+        LEAVES.map((l) => (
           <svg
-            key={i}
+            key={`leaf-${l.left}`}
             className="ink-leaf"
             viewBox="0 0 14 17"
             width={l.size}
