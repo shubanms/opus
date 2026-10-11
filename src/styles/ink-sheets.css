@@ -1,0 +1,56 @@
+/* Ink sheets: the shared modal/sheet layer. Panel on --ink-2, hairline top,
+   washi grabber, solid scrim (see .modal-scrim in index.css). */
+.ink-sheet {
+  background: var(--ink-2);
+  border-top: 1px solid var(--ink-line);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -12px 40px rgba(7, 6, 5, 0.55);
+  color: var(--washi-2);
+  /* Contents written against the legacy names still read as Ink. */
+  --color-ivory: var(--ink-3);
+}
+.ink-sheet__grabber {
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--washi-2);
+  opacity: 0.35;
+}
+.ink-sheet__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.01em;
+  color: var(--washi-2);
+}
+.ink-sheet__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-line);
+  color: var(--mute-2);
+}
+.ink-field {
+  background: var(--ink-3);
+  border: 1px solid var(--ink-line);
+  border-radius: 6px;
+  color: var(--washi-2);
+}
+.ink-field:focus {
+  border-color: var(--ver);
+}
+/* Destructive confirm: restrained deep vermilion, no sheen. */
+.ink-btn.ink-btn--danger {
+  background: var(--ver-deep);
+  color: var(--washi-3);
+}
+.ink-btn.ink-btn--danger:active {
+  background: var(--ver-dark);
+}
+.ink-btn.ink-btn--danger .ink-btn__sheen {
+  display: none;
+}
