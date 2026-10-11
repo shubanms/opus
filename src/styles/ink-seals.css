@@ -1,0 +1,58 @@
+/* Seal Book (Achievements). Tokens only; shapes lifted from the InkSeals artboard. */
+.seals-page { padding: 28px 20px 40px; }
+.seals-head { display: flex; align-items: center; gap: 4px; }
+.seals-title { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1; color: var(--washi-2); flex: 1; }
+.seals-count { font-family: var(--font-sans); font-size: 13px; color: var(--mute-2); }
+
+.seals-frame {
+  margin-top: 18px; display: flex; padding: 8px; border-radius: 4px; box-shadow: var(--elev-3);
+  background:
+    repeating-linear-gradient(45deg, rgba(210, 174, 90, 0.16) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(-45deg, rgba(210, 174, 90, 0.16) 0 2px, transparent 2px 9px),
+    var(--ver-deep);
+}
+.seals-page-l, .seals-page-r {
+  position: relative; flex: 1; min-height: 296px; overflow: hidden;
+  background: var(--washi-1); color: var(--paper-ink-1);
+}
+.seals-gutter { width: 2px; background: linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.05)); }
+.seals-vert { position: absolute; writing-mode: vertical-rl; font-family: var(--font-display); }
+.seals-hd { top: 12px; right: 12px; font-weight: 600; font-size: 12px; letter-spacing: 0.2em; color: var(--paper-ink-2); }
+.seals-hd--next { color: var(--ver-dark); }
+.seals-date { top: 120px; left: 12px; font-weight: 500; font-size: 10px; letter-spacing: 0.12em; color: var(--paper-ink-2); }
+.seals-big {
+  position: absolute; top: 46px; left: 0; right: 0; text-align: center; line-height: 1;
+  font-family: var(--font-brush); font-size: 92px; color: var(--paper-ink-1); filter: url(#ink-brush);
+}
+.seals-big--two { font-size: 56px; top: 62px; }
+.seals-stamp { position: absolute; top: 108px; left: 54px; opacity: 0.92; }
+.seals-ghost { position: absolute; top: 34px; left: 0; width: 100%; height: 140px; }
+.seals-ghost text { font-family: var(--font-brush); }
+.seals-foot { position: absolute; left: 12px; right: 12px; bottom: 12px; text-align: center; }
+.seals-name { font-family: var(--font-display); font-weight: 700; font-size: 14px; }
+.seals-meta { font-family: var(--font-sans); font-size: 10.5px; color: var(--paper-ink-3); margin-top: 1px; }
+.seals-track { margin-top: 6px; height: 5px; border-radius: 3px; background: rgba(21, 17, 14, 0.12); overflow: hidden; }
+.seals-fill { height: 100%; width: 100%; background: var(--ver-dark); transform-origin: left center; }
+.seals-note { margin-top: 5px; font-family: var(--font-sans); font-size: 10.5px; color: var(--paper-ink-2); }
+
+.seals-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); row-gap: 10px; margin-top: 10px; text-align: center; }
+.seals-cell { background: none; border: 0; padding: 4px 0; cursor: pointer; color: inherit; border-radius: 4px; }
+.seals-cell[aria-pressed='true'] { background: rgba(236, 228, 210, 0.08); outline: 1.5px solid var(--washi-2); outline-offset: 0; }
+.seals-lit { display: inline-flex; filter: url(#ink-stamp); }
+.seals-lit .ink-seal { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
+.seals-box {
+  margin: 0 auto; width: 44px; height: 44px; box-sizing: border-box; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center; font-family: var(--font-brush); line-height: 1;
+}
+.seals-box--reach { border: 1.2px dashed rgba(218, 118, 103, 0.7); color: rgba(236, 228, 210, 0.35); }
+.seals-box--hidden, .seals-box--locked { border: 1.2px dashed rgba(236, 228, 210, 0.3); color: rgba(236, 228, 210, 0.4); }
+.seals-box--hidden { font-family: var(--font-display); font-size: 20px; }
+.seals-box--gold { background: var(--gold-leaf); color: var(--ink-1); filter: url(#ink-stamp); }
+.seals-box--gold-off { border: 1.2px dashed var(--gold-leaf); color: var(--gold-leaf); opacity: 0.6; }
+.seals-cap { margin-top: 3px; font-family: var(--font-sans); font-size: 9.5px; color: var(--mute-2); }
+.seals-cap--reach { color: var(--ver-soft); }
+.seals-cap--gold { color: var(--gold-leaf); }
+.seals-cap--dim { color: var(--mute-3); }
+@keyframes seals-ghost { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.seals-ghost--pulse { animation: seals-ghost 3s ease-in-out infinite; }
+.seals-stamp--two .ink-seal { font-size: 24px !important; }
