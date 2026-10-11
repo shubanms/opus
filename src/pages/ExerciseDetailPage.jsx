@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Trophy, TrendingUp, PlayCircle, Trash2, Youtube, Star, StickyNote, Pencil, SearchX } from 'lucide-react';
+import { Trash2, Youtube, Star, Pencil, SearchX } from 'lucide-react';
 import { useExercise, useExerciseNote } from '../hooks/useExercises.js';
 import { usePRs, useExerciseVolume, useExerciseOneRepMax, useExerciseBestOneRepMax } from '../hooks/useProgress.js';
 import { E1RM_MAX_REPS } from '../utils/oneRepMax.js';
@@ -13,20 +13,21 @@ import { toDisplay, unitLabel } from '../utils/units.js';
 import useSettingsStore from '../store/settingsStore.js';
 import VolumeChart from '../components/charts/VolumeChart.jsx';
 import TrendChart from '../components/charts/TrendChart.jsx';
-import PRBadge from '../components/progress/PRBadge.jsx';
+import { InkButton, PaperCard, SectionLabel, Seal } from '../components/ink/index.js';
+import FormStillLife from '../components/exercise/FormStillLife.jsx';
+import { formKanji, muscleKanji } from '../utils/kanji.js';
+import { MUSCLE_LABEL } from '../utils/muscleTargets.js';
+import '../styles/ink-forms.css';
 import ColorPicker from '../components/ui/ColorPicker.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import ExerciseForm from '../components/exercise/ExerciseForm.jsx';
 import ExerciseHistory from '../components/exercise/ExerciseHistory.jsx';
 import BackButton from '../components/layout/BackButton.jsx';
 
-const DIFFICULTY_COLOR = {
-  beginner:     '#9DA67A',
-  intermediate: '#D2AE5A',
-  advanced:     '#E0553B',
-};
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-function PRCard({ prs, unit }) {
+// The record plaque: the best set as the headline mark, the three records under it.
+function RecordPlaque({ prs, unit }) {
   const weight = prs.find((p) => p.type === 'weight');
   const reps = prs.find((p) => p.type === 'reps');
   const volume = prs.find((p) => p.type === 'volume');
@@ -34,28 +35,39 @@ function PRCard({ prs, unit }) {
 
   if (!weight && !reps && !volume) {
     return (
-      <div className="glass rounded-2xl p-4 text-center" style={{ background: 'var(--color-ivory)' }}>
-        <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+      <div className="forms-plaque" style={{ textAlign: 'center' }}>
+        <p style={{ margin: 0, fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--mute-2)' }}>
           No records yet. Log a set to start tracking.
         </p>
       </div>
     );
   }
+  const fresh = prs.some((p) => p.achievedAt && Date.now() - p.achievedAt < WEEK_MS);
+  const headline = weight ? toDisplay(weight.value, unit) : reps?.value;
+  const headUnit = weight ? u : 'reps';
 
   return (
-    <div className="glass rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
-      <div className="mb-3 flex items-center gap-2">
-        <Trophy size={15} style={{ color: 'var(--color-gold)' }} />
-        <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-          Personal Records
+    <section className="forms-plaque" aria-label="Personal Records">
+      <SectionLabel>Personal Records</SectionLabel>
+      <div className="forms-plaque__top">
+        <span className="forms-plaque__mark">
+          {Math.round(headline * 10) / 10}
+          <span className="forms-plaque__unit">{headUnit}</span>
         </span>
+        {fresh && <Seal kanji="新" size={34} rotate={4} stamp label="New record this week" />}
       </div>
-      <div className="flex flex-col gap-2">
-        {weight && <PRBadge label="Best weight" value={toDisplay(weight.value, unit)} unit={u} />}
-        {reps && <PRBadge label="Best reps" value={reps.value} unit="reps" />}
-        {volume && <PRBadge label="Best volume" value={toDisplay(volume.value, unit)} unit={u} />}
+      <div className="forms-plaque__grid">
+        {weight && (
+          <span><span className="forms-plaque__k">Best weight</span><span className="forms-plaque__v">{toDisplay(weight.value, unit)} {u}</span></span>
+        )}
+        {reps && (
+          <span><span className="forms-plaque__k">Best reps</span><span className="forms-plaque__v">{reps.value} reps</span></span>
+        )}
+        {volume && (
+          <span><span className="forms-plaque__k">Best volume</span><span className="forms-plaque__v">{toDisplay(volume.value, unit)} {u}</span></span>
+        )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -96,39 +108,29 @@ export default function ExerciseDetailPage() {
   const toList = () => navigate('/exercises', { replace: true });
 
   if (exercise === undefined) {
-    return (
-      <div className="flex h-48 items-center justify-center">
-        <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Loading…</p>
-      </div>
-    );
+    return <div className="forms-empty">Loading…</div>;
   }
 
   if (exercise === null) {
     return (
-      <div className="px-5 pb-8 pt-6">
+      <div className="forms-detail">
         <BackButton onClick={toList} className="mb-5" />
-        <div className="glass mt-10 flex flex-col items-center rounded-2xl px-6 py-10 text-center" style={{ background: 'var(--color-ivory)' }}>
-          <SearchX size={28} style={{ color: 'var(--color-ash)' }} />
-          <h1 className="mt-3 font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
+        <PaperCard style={{ marginTop: 40, textAlign: 'center' }}>
+          <SearchX size={28} style={{ color: 'var(--paper-ink-3)', margin: '0 auto' }} />
+          <h1 style={{ margin: '12px 0 0', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, color: 'var(--paper-ink-1)' }}>
             Exercise not found
           </h1>
-          <p className="mt-2 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+          <p style={{ margin: '8px 0 20px', fontFamily: 'var(--font-sans)', fontSize: 14, color: 'var(--paper-ink-2)' }}>
             It may have been deleted. Your other exercises are all still there.
           </p>
-          <button
-            type="button"
-            onClick={toList}
-            className="mt-5 rounded-xl px-5 py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-          >
-            Back to exercises
-          </button>
-        </div>
+          <InkButton onClick={toList}>Back to exercises</InkButton>
+        </PaperCard>
       </div>
     );
   }
 
-  const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#8F877B';
+  const kanji = formKanji(exercise.name, exercise.muscleGroup);
+  const muscleName = MUSCLE_LABEL[exercise.muscleGroup] ?? (exercise.muscleGroup ?? '').replace(/-/g, ' ');
 
   async function handleDelete() {
     const snapshot = await deleteWithUndo({
@@ -136,7 +138,7 @@ export default function ExerciseDetailPage() {
       remove: () => deleteCustomExercise(exercise.id),
       restore: restoreCustomExercise,
       // Deleting from the detail page navigates away, so undoing has to bring
-      // you back — otherwise the exercise returns and you are left staring at
+      // you back; otherwise the exercise returns and you are left staring at
       // a list wondering whether it worked.
       onUndo: () => navigate(`/exercises/${exercise.id}`),
     });
@@ -144,170 +146,118 @@ export default function ExerciseDetailPage() {
   }
 
   return (
-    <div className="px-5 pb-8 pt-6">
+    <div className="forms-detail">
       <BackButton fallback="/exercises" className="mb-5" />
 
-      {/* Title + badges */}
-      <div className="flex items-start justify-between gap-3">
-        <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-          {exercise.name}
-        </h1>
-        <div className="flex shrink-0 gap-2">
+      {/* Hero: ink still-life, the big form kanji writing on, name, equipment, muscles */}
+      <PaperCard className="forms-hero" seal={<Seal kanji={muscleKanji(exercise.muscleGroup)} size={34} rotate={4} />}>
+        <div className="forms-hero__tools">
           {exercise.isCustom && (
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-full"
-              style={{ background: 'var(--color-ivory)' }}
-              aria-label={`Edit ${exercise.name}`}
-            >
-              <Pencil size={16} style={{ color: 'var(--color-ash)' }} />
+            <button type="button" onClick={() => setEditOpen(true)} className="forms-icon-btn" aria-label={`Edit ${exercise.name}`}>
+              <Pencil size={16} />
             </button>
           )}
           <button
             type="button"
             onClick={() => toggleFavorite(exercise.id)}
-            className="flex h-9 w-9 items-center justify-center rounded-full"
-            style={{ background: 'var(--color-ivory)' }}
+            className="forms-icon-btn"
             aria-label="Toggle favorite"
             aria-pressed={Boolean(exercise.favorite)}
           >
-            <Star size={18} fill={exercise.favorite ? 'var(--color-gold)' : 'none'} style={{ color: exercise.favorite ? 'var(--color-gold)' : 'var(--color-ash)' }} />
+            <Star size={18} fill={exercise.favorite ? 'currentColor' : 'none'} />
           </button>
         </div>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <p className="font-sans text-sm capitalize" style={{ color: 'var(--color-text-secondary)' }}>
-          {(exercise.muscleGroup ?? '').replace(/-/g, ' ')} · {exercise.equipment}
-        </p>
-        {exercise.difficulty && (
-          <span
-            className="rounded-full px-2 py-0.5 font-sans text-xs capitalize"
-            style={{ background: `${diffColor}22`, color: diffColor }}
-          >
-            {exercise.difficulty}
-          </span>
-        )}
-        {exercise.isCustom && (
-          <span className="rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
-            Custom
-          </span>
-        )}
-      </div>
+        <div className="forms-hero__art">
+          <FormStillLife kanji={kanji} equipment={exercise.equipment} label={`${exercise.name}: the character ${kanji}`} fontSize={70} />
+        </div>
+        <h1>{exercise.name}</h1>
+        <p className="forms-hero__meta">{muscleName} · {exercise.equipment}</p>
+        <div className="forms-hero__tags">
+          {exercise.difficulty && <span className="forms-tag">{exercise.difficulty}</span>}
+          {exercise.isCustom && <span className="forms-tag forms-tag--custom">Custom</span>}
+        </div>
+      </PaperCard>
 
-      {/* Session-by-session history — the first thing you came here for. */}
-      <div className="mt-5">
+      <RecordPlaque prs={prs} unit={unit} />
+
+      {/* Session-by-session history, the first thing you came here for. */}
+      <div className="forms-section">
         <ExerciseHistory exerciseId={exercise.id} unit={unit} />
-      </div>
-
-      {/* Marking + coaching note */}
-      <div className="glass mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
-        <div className="mb-2 flex items-center gap-2">
-          <StickyNote size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            Coaching note
-          </span>
-        </div>
-        <textarea
-          key={note}
-          defaultValue={note}
-          onBlur={(e) => setExerciseNote(exercise.id, e.target.value)}
-          placeholder="Cues you want every session — e.g. elbows tucked, brace, full ROM."
-          aria-label="Coaching note"
-          rows={2}
-          className="w-full resize-none rounded-xl px-3 py-2 font-sans text-sm outline-none"
-          style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
-        />
-        <p className="mb-2 mt-3 font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-          Label colour
-        </p>
-        <ColorPicker value={exercise.color ?? null} onChange={(c) => setExerciseColor(exercise.id, c)} />
-      </div>
-
-      {/* How to do it — always available via video; image when Wger has one */}
-      <div
-        className="glass mt-5 overflow-hidden rounded-2xl"
-        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-      >
-        <div className="flex items-center gap-2 px-4 pt-4">
-          <PlayCircle size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            How to do it
-          </span>
-        </div>
-
-        {demoUrl && (
-          // wger's drawings are dark line art on transparent or white — they
-          // need a light card under them to read in the dark theme too.
-          <div className="anim-fade-in mx-4 mt-3 overflow-hidden rounded-xl" style={{ background: '#fff' }}>
-            <img
-              src={demoUrl}
-              alt={`${exercise.name} demo`}
-              onError={() => setDemoUrl(null)}
-              className="w-full object-contain"
-              style={{ maxHeight: 220 }}
-            />
-          </div>
-        )}
-
-        <a
-          href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${exercise.name} proper form tutorial`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="m-4 flex items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
-        >
-          <Youtube size={16} style={{ color: 'var(--ver-light, #E0553B)' }} /> Watch how-to video
-        </a>
-      </div>
-
-      {/* PRs */}
-      <div className="mt-5">
-        <PRCard prs={prs} unit={unit} />
       </div>
 
       {/* Estimated 1RM */}
       {e1rmRaw.length > 0 && (
-        <div className="glass mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
-          <div className="mb-1 flex items-center gap-2">
-            <TrendingUp size={15} style={{ color: 'var(--color-ash)' }} />
-            <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-              Estimated 1RM
-            </span>
+        <div className="forms-section">
+          <SectionLabel rule>Estimated 1RM</SectionLabel>
+          <div className="forms-panel">
+            <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26, fontVariantNumeric: 'tabular-nums' }}>
+              {Math.round(toDisplay(bestE1rm, unit))} {unitLabel(unit)}
+              <span style={{ marginLeft: 8, fontFamily: 'var(--font-sans)', fontWeight: 400, fontSize: 12, color: 'var(--mute-2)' }}>
+                best{bestE1rmRow?.date ? ` · ${toDisplay(bestE1rmRow.weight, unit)}×${bestE1rmRow.reps} on ${friendlyDate(bestE1rmRow.date)}` : ''}
+              </span>
+            </p>
+            <TrendChart data={e1rm} unit={unitLabel(unit)} empty="Log weighted sets to estimate." />
+            <p style={{ marginTop: 8, fontFamily: 'var(--font-sans)', fontSize: 12, color: 'var(--mute-2)' }}>
+              Epley estimate from your best set of 1–{E1RM_MAX_REPS} reps each session; higher-rep sets overstate it.
+            </p>
           </div>
-          <p className="mb-2 font-mono text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-            {Math.round(toDisplay(bestE1rm, unit))} {unitLabel(unit)}
-            <span className="ml-2 font-sans text-xs font-normal" style={{ color: 'var(--color-text-secondary)' }}>
-              best{bestE1rmRow?.date ? ` · ${toDisplay(bestE1rmRow.weight, unit)}×${bestE1rmRow.reps} on ${friendlyDate(bestE1rmRow.date)}` : ''}
-            </span>
-          </p>
-          <TrendChart data={e1rm} unit={unitLabel(unit)} empty="Log weighted sets to estimate." />
-          <p className="mt-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            Epley estimate from your best set of 1–{E1RM_MAX_REPS} reps each session — higher-rep sets overstate it.
-          </p>
         </div>
       )}
 
       {/* Volume history */}
-      <div className="glass mt-4 rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
-        <div className="mb-2 flex items-center gap-2">
-          <TrendingUp size={15} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            Volume History
-          </span>
+      <div className="forms-section">
+        <SectionLabel rule>Volume History</SectionLabel>
+        <div className="forms-panel">
+          <VolumeChart data={volume} unit={unitLabel(unit)} />
         </div>
-        <VolumeChart data={volume} unit={unitLabel(unit)} />
+      </div>
+
+      {/* Coaching note + label colour */}
+      <div className="forms-section">
+        <SectionLabel rule>Coaching note</SectionLabel>
+        <div className="forms-panel">
+          <textarea
+            key={note}
+            defaultValue={note}
+            onBlur={(e) => setExerciseNote(exercise.id, e.target.value)}
+            placeholder="Cues you want every session, e.g. elbows tucked, brace, full ROM."
+            aria-label="Coaching note"
+            rows={2}
+            className="forms-note"
+          />
+          <p className="forms-sublabel">Label colour</p>
+          <ColorPicker value={exercise.color ?? null} onChange={(c) => setExerciseColor(exercise.id, c)} />
+        </div>
+      </div>
+
+      {/* How to do it: always available via video; image when there is one */}
+      <div className="forms-section">
+        <SectionLabel rule>How to do it</SectionLabel>
+        <div className="forms-panel">
+          {demoUrl && (
+            // The drawings are dark line art on transparent or white: they
+            // need a light card under them to read on the dark ground.
+            <div className="forms-demo anim-fade-in">
+              <img src={demoUrl} alt={`${exercise.name} demo`} onError={() => setDemoUrl(null)} />
+            </div>
+          )}
+          <a
+            href={`https://www.youtube.com/results?search_query=${encodeURIComponent(`${exercise.name} proper form tutorial`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ink-btn ink-btn--secondary ink-btn--block"
+          >
+            <Youtube size={16} /> Watch how-to video
+          </a>
+        </div>
       </div>
 
       {exercise.isCustom && (
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="glass mt-4 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-ember)' }}
-        >
-          <Trash2 size={15} /> Delete exercise
-        </button>
+        <div className="forms-delete">
+          <InkButton variant="secondary" block onClick={handleDelete}>
+            <Trash2 size={15} /> Delete exercise
+          </InkButton>
+        </div>
       )}
 
       {exercise.isCustom && (
