@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import Model from 'react-body-highlighter';
 import { Eye } from 'lucide-react';
+import { Chip } from '../ink/index.js';
 import { groupForRegion, regionsForGroup } from '../../utils/bodyMap.js';
+import '../../styles/ink-forms.css';
 
 const ANTERIOR = [
   'chest', 'abs', 'obliques', 'biceps', 'forearm',
@@ -38,88 +40,46 @@ export default function BodyPicker({ selected, onSelect }) {
 
   return (
     <div>
-      {/* Muscle pills — horizontal scroll */}
+      {/* One pill per tracked muscle, horizontal scroll */}
       <div className="flex items-center gap-2">
-        <div className="flex flex-1 gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="forms-chips flex-1" style={{ margin: 0, padding: 0 }}>
           {Object.entries(LABEL).map(([key, label]) => (
-            <button
-              type="button"
-              key={key}
-              aria-pressed={selected === key}
-              onClick={() => onSelect(selected === key ? null : key)}
-              className="flex min-h-9 shrink-0 items-center rounded-full px-3.5 font-sans text-xs font-medium"
-              style={{
-                background: selected === key ? 'var(--color-gold)' : 'var(--color-ivory)',
-                color: selected === key ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
-                border: selected === key ? 'none' : '1px solid transparent',
-              }}
-            >
+            <Chip key={key} selected={selected === key} onClick={() => onSelect(selected === key ? null : key)}>
               {label}
-            </button>
+            </Chip>
           ))}
         </div>
-
-        {/* Toggle body model */}
         <button
           type="button"
           onClick={() => setShowModel((v) => !v)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-          style={{ background: showModel ? 'var(--color-obsidian)' : 'var(--color-ivory)' }}
+          className="forms-icon-btn"
+          aria-pressed={showModel}
           aria-label="Toggle body map"
         >
-          <Eye size={14} style={{ color: showModel ? 'var(--color-text-inverse)' : 'var(--color-ash)' }} />
+          <Eye size={16} />
         </button>
       </div>
 
       {/* Expandable anatomy model */}
       {showModel && (
         <div className="mt-4">
-          {/* Front / Back toggle */}
-          <div
-            className="mb-3 flex overflow-hidden rounded-xl"
-            style={{ background: 'var(--color-chalk)' }}
-          >
+          <div className="mb-3 flex gap-2">
             {['anterior', 'posterior'].map((v) => (
-              <button
-                type="button"
-                key={v}
-                onClick={() => setView(v)}
-                className="flex-1 py-2 font-sans text-xs font-medium"
-                style={{
-                  background: view === v ? 'var(--color-obsidian)' : 'transparent',
-                  color: view === v ? 'var(--color-text-inverse)' : 'var(--color-ash)',
-                }}
-              >
+              <Chip key={v} selected={view === v} onClick={() => setView(v)}>
                 {v === 'anterior' ? 'Front' : 'Back'}
-              </button>
+              </Chip>
             ))}
           </div>
 
-          {/* Model SVG */}
           <div className="flex justify-center" style={{ maxHeight: 220, overflow: 'hidden' }}>
-            <Model
-              data={modelData}
-              highlightedColors={['#D2AE5A']}
-              onClick={handleModelClick}
-              type={view}
-            />
+            <Model data={modelData} highlightedColors={['#d2ae5a']} onClick={handleModelClick} type={view} />
           </div>
 
-          {/* Contextual muscle buttons for current view */}
           <div className="mt-3 flex flex-wrap gap-2">
-            {muscles.map((m) => (
-              <button
-                type="button"
-                key={m}
-                onClick={() => onSelect(selected === m ? null : m)}
-                className="rounded-full px-3 py-1 font-sans text-xs font-medium"
-                style={{
-                  background: selected === m ? 'var(--color-gold)' : 'var(--color-chalk)',
-                  color: selected === m ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
-                }}
-              >
-                {LABEL[m]}
-              </button>
+            {muscles.map((mu) => (
+              <Chip key={mu} selected={selected === mu} onClick={() => onSelect(selected === mu ? null : mu)}>
+                {LABEL[mu]}
+              </Chip>
             ))}
           </div>
         </div>
