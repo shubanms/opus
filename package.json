@@ -14,7 +14,6 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@paper-design/shaders-react": "0.0.53",
     "@react-three/fiber": "^8.18.0",
     "@visx/curve": "^3.12.0",
     "@visx/scale": "^3.12.0",

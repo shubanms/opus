@@ -6,7 +6,9 @@ import Tour from '../tour/Tour.jsx';
 import CoachMark from '../coach/CoachMark.jsx';
 import UiHost from '../ui/UiHost.jsx';
 import CinematicHost from '../cinematic/CinematicHost.jsx';
-import AuroraBackdrop from '../fx/AuroraBackdrop.jsx';
+import InkBackdrop from '../fx/InkBackdrop.jsx';
+import InkDefs from '../fx/InkDefs.jsx';
+import '../../styles/ink-chrome.css';
 import StreakRescueHost from '../streak/StreakRescueHost.jsx';
 import WipeAlert from '../backup/WipeAlert.jsx';
 import { useAutoBackup } from '../../hooks/useBackup.js';
@@ -28,9 +30,10 @@ export default function AppLayout() {
     <div
       className="min-h-full"
       style={{
-        // Transparent so the body's fixed aurora shows through — the light
-        // source stays anchored to the viewport instead of scrolling away.
+        // Transparent so the fixed InkBackdrop shows through — the glow stays
+        // anchored to the viewport instead of scrolling away.
         background: 'transparent',
+        color: 'var(--washi-2, var(--color-text-primary))',
         // Clear the status bar / notch on edge-to-edge devices (Android 15+,
         // iOS notch). Zero on platforms that don't report insets.
         paddingTop: 'env(safe-area-inset-top)',
@@ -58,7 +61,8 @@ export default function AppLayout() {
           <Outlet />
         </m.div>
       </main>
-      <AuroraBackdrop />
+      <InkDefs />
+      <InkBackdrop />
       <BottomNav />
       {loaded && !onboarded && <Onboarding />}
       {loaded && onboarded && !tourSeen && <Tour />}
