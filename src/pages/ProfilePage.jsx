@@ -21,7 +21,6 @@ import { STAT_KANJI, UI_KANJI, rankSealKanji } from '../utils/kanji.js';
 import { flairSeal } from '../utils/flairSeal.js';
 import useSettingsStore from '../store/settingsStore.js';
 import CharacterCard from '../components/rpg/CharacterCard.jsx';
-import LevelBadge from '../components/rpg/LevelBadge.jsx';
 import XPBar from '../components/rpg/XPBar.jsx';
 import TrophyCase from '../components/rpg/TrophyCase.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
@@ -266,7 +265,6 @@ export default function ProfilePage() {
           <svg className="you-leaf" viewBox="0 0 12 12" style={{ top: 50, width: 10, height: 10, animationDelay: '-2s' }}><path d={LEAF} /></svg>
           <svg className="you-leaf you-leaf--b" viewBox="0 0 12 12" style={{ top: 96, width: 8, height: 8 }}><path d={LEAF} /></svg>
         </div>
-        <LevelBadge level={level} size="sm" prestige={prestige} className="you-hero__lv" />
         <div className={`you-hero__kanji ${magnum ? 'you-hero__kanji--gold' : ''}`} lang="ja" aria-hidden="true">
           {rankSealKanji(level, prestige)}
         </div>

@@ -13,9 +13,9 @@ import '../../styles/ink-you.css';
 const RINGS = [0.33, 0.66, 1];
 const MAX = 100;
 // Room beside the rim for the widest side label ("Balance", "Power").
-const SIDE_ROOM = 52;
+const SIDE_ROOM = 50;
 
-export default function RadarChart({ data, height = 184 }) {
+export default function RadarChart({ data, height = 196 }) {
   const [ref, width] = useMeasure();
   const effects = useMotionEnabled();
   const reduced = useReducedMotion();
@@ -31,7 +31,7 @@ export default function RadarChart({ data, height = 184 }) {
   const cy = height / 2 + 2;
   // Bounded by both axes: labels sit outside the rim, so width has to hold the
   // rim *and* the side labels, while height has to clear the top and bottom.
-  const radius = Math.max(36, Math.min(cy - 34, cx - SIDE_ROOM));
+  const radius = Math.max(36, Math.min(cy - 38, cx - SIDE_ROOM));
 
   const n = rows.length;
   const rim = rows.map((_, i) => radarPoint(i, n, MAX, MAX, radius));
@@ -48,7 +48,7 @@ export default function RadarChart({ data, height = 184 }) {
         style={{ display: 'block' }}
       >
         <g transform={`translate(${cx},${cy})`}>
-          <g filter="url(#ink-brush-fine)" fill="none" stroke="var(--washi-2)" strokeOpacity={0.22} strokeWidth={1}>
+          <g filter="url(#ink-brush-fine)" fill="none" stroke="var(--washi-2)" strokeOpacity={0.18} strokeWidth={0.8}>
             {RINGS.map((ratio) => (
               <path key={ratio} d={polygonPath(rim.map((p) => ({ x: p.x * ratio, y: p.y * ratio })))} />
             ))}
@@ -74,7 +74,7 @@ export default function RadarChart({ data, height = 184 }) {
           <m.path
             d={polygonPath(now)}
             fill="var(--ver)"
-            fillOpacity={0.38}
+            fillOpacity={0.22}
             stroke="none"
             initial={animate ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
@@ -111,24 +111,24 @@ export default function RadarChart({ data, height = 184 }) {
             const base = radarPoint(i, n, MAX, MAX, radius);
             const cos = Math.cos(base.angle);
             const sin = Math.sin(base.angle);
-            const side = Math.abs(cos) > 0.25;
-            const anchor = cos > 0.8 ? 'start' : cos < -0.8 ? 'end' : 'middle';
-            const gap = Math.abs(cos) > 0.8 ? 5 : 13;
-            // The two bottom labels would meet under the rim; nudge them apart.
-            const x = base.x + cos * gap + (side && anchor === 'middle' ? Math.sign(cos) * 6 : 0);
-            const y = base.y + sin * gap;
+            const side = Math.abs(cos) > 0.8;
+            const bottom = !side && sin > 0.3;
+            // Bottom labels sit under the rim and open outward from the centre line.
+            const anchor = side ? (cos > 0 ? 'start' : 'end') : bottom ? (cos > 0 ? 'start' : 'end') : 'middle';
+            const x = bottom ? Math.sign(cos) * 4 : base.x + cos * (side ? 5 : 13);
+            const y = bottom ? base.y + 16 : base.y + sin * (side ? 5 : 13);
             const common = { fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 600, textAnchor: anchor };
-            // Side labels stack (name over value) like the artboard so they fit
-            // beside the rim; top and bottom labels run on one line.
+            // Side labels stack (name over value) so they fit beside the rim;
+            // top and bottom labels run on one line.
             return side ? (
               <g key={d.axis}>
-                <text x={x} y={y + (sin > 0 ? 6 : -1)} {...common} fill="var(--mute-1)">{d.axis}</text>
-                <text x={x} y={y + (sin > 0 ? 19 : 12)} {...common} fill="var(--ver-soft)">{Math.round(d.value)}</text>
+                <text x={x} y={y - 1} {...common} fill="var(--washi-2)">{d.axis}</text>
+                <text x={x} y={y + 12} {...common} fill="var(--mute-2)">{Math.round(d.value)}</text>
               </g>
             ) : (
-              <text key={d.axis} x={x} y={y} dy={`${0.32 + sin * 0.45}em`} {...common} fill="var(--mute-1)">
+              <text key={d.axis} x={x} y={y} dy={bottom ? 0 : `${0.32 + sin * 0.45}em`} {...common} fill="var(--washi-2)">
                 {d.axis}
-                <tspan fill="var(--ver-soft)" dx={4}>{Math.round(d.value)}</tspan>
+                <tspan fill="var(--mute-2)" dx={4}>{Math.round(d.value)}</tspan>
               </text>
             );
           })}
