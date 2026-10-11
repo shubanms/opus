@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Github, Trash2, Info, Bell, User, Database, Download, Upload, Sparkles, FileText, Printer, ShieldCheck, CalendarPlus, ShieldAlert, Check, Share2 } from 'lucide-react';
+import { Github, Bell, Download, Upload, Sparkles, FileText, Printer, ShieldCheck, CalendarPlus, ShieldAlert, Check, Share2 } from 'lucide-react';
 import ResetDataModal from '../components/settings/ResetDataModal.jsx';
 import EquipmentModal from '../components/settings/EquipmentModal.jsx';
+import { KanjiTile } from '../components/ink/index.js';
+import '../styles/ink-system.css';
 import BackButton from '../components/layout/BackButton.jsx';
 import { useNotifications } from '../hooks/useNotifications.js';
 import { useRPG } from '../hooks/useRPG.js';
@@ -267,8 +269,8 @@ export default function SettingsPage() {
     restore(e.target, toDisplay(parsed.value, unit));
   }
 
-  const inputCls = 'w-24 rounded-lg px-3 py-2 text-right font-mono text-sm outline-none';
-  const inputStyle = { background: 'var(--color-ivory)', color: 'var(--color-text-primary)' };
+  const inputCls = 'w-24 rounded px-3 py-2 text-right font-mono text-sm outline-none';
+  const inputStyle = { background: 'var(--ink-3)', color: 'var(--color-text-primary)', border: '1px solid var(--ink-line)' };
 
   return (
     <div className="px-5 pb-8 pt-8">
@@ -281,14 +283,12 @@ export default function SettingsPage() {
       {/* Settings is a long single scroll — six sections deep to change your
           units. This is a table of contents, not a search box: with a fixed and
           known set of sections, jumping beats filtering. */}
-      <nav className="mb-5 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 scrollbar-hide" aria-label="Jump to settings section">
+      <nav className="set-nav scrollbar-hide" aria-label="Jump to settings section">
         {SECTIONS.map((sec) => (
           <button
             key={sec.id}
             type="button"
             onClick={() => document.getElementById(`settings-${sec.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="flex min-h-11 shrink-0 items-center rounded-full px-4 font-sans text-xs font-medium"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }}
           >
             {sec.label}
           </button>
@@ -296,17 +296,15 @@ export default function SettingsPage() {
       </nav>
 
       {/* Profile */}
-      <section id="settings-profile" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <div className="mb-3 flex items-center gap-2">
-          <User size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            Profile
-          </span>
+      <section id="settings-profile" className="set-group">
+        <div className="set-head">
+          <KanjiTile kanji="志" state="outline" size={28} />
+          <span>Profile</span>
         </div>
         {/* Units */}
         <div className="flex items-center justify-between py-1.5">
           <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Units</span>
-          <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
+          <div className="set-seg">
             {['kg', 'lbs'].map((u) => (
               <button key={u} type="button" onClick={() => setUnit(u)} aria-pressed={unit === u} className="min-h-11 px-4 font-sans text-sm font-medium"
                 style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
@@ -326,7 +324,7 @@ export default function SettingsPage() {
                 defaultValue={profile.name ?? ''}
                 onBlur={(e) => { const v = e.target.value.trim(); if (v !== (profile.name ?? '')) updateProfile({ name: v }); }}
                 placeholder="Athlete"
-                className="w-40 rounded-lg px-3 py-2 text-right font-sans text-sm outline-none"
+                className="w-40 rounded px-3 py-2 text-right font-sans text-sm outline-none"
                 style={inputStyle}
               />
             </Row>
@@ -374,8 +372,8 @@ export default function SettingsPage() {
               <div className="-my-1 flex gap-1">
                 {SEXES.map((s) => (
                   <button key={s} type="button" onClick={() => updateProfile({ sex: profile.sex === s ? null : s })} aria-pressed={profile.sex === s} aria-label={s}
-                    className="h-11 w-11 rounded-lg font-sans text-xs"
-                    style={{ background: profile.sex === s ? 'var(--color-gold)' : 'var(--color-ivory)', color: profile.sex === s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
+                    className="h-11 w-11 rounded font-sans text-xs"
+                    style={{ background: profile.sex === s ? 'var(--color-gold)' : 'var(--ink-3)', color: profile.sex === s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
                     {s[0]}
                   </button>
                 ))}
@@ -399,8 +397,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => setEquip(true)}
-          className="mt-1 flex min-h-11 w-full items-center justify-between rounded-xl px-3 py-2.5"
-          style={{ background: 'var(--color-ivory)' }}
+          className="set-btn mt-1 w-full justify-between"
         >
           <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>Equipment &amp; plates</span>
           <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Gym / Home →</span>
@@ -419,16 +416,15 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => { setRestDuration(c.s); playChime('tick'); }}
                 aria-pressed={restDuration === c.s}
-                className="min-h-11 flex-1 rounded-lg font-mono text-xs font-medium"
-                style={{ background: restDuration === c.s ? 'var(--color-gold)' : 'var(--color-ivory)', color: restDuration === c.s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
+                className="min-h-11 flex-1 rounded font-mono text-xs font-medium"
+                style={{ background: restDuration === c.s ? 'var(--color-gold)' : 'var(--ink-3)', color: restDuration === c.s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
               >
                 {c.label}
               </button>
             ))}
             {restIsCustom && (
               <span
-                className="flex min-h-11 flex-1 items-center justify-center rounded-lg font-mono text-xs font-medium"
-                style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
+                className="set-btn set-btn--accent flex-1"
                 title="Set during a workout"
               >
                 {restDuration}s
@@ -463,12 +459,10 @@ export default function SettingsPage() {
       </section>
 
       {/* Notifications */}
-      <section id="settings-notifications" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <div className="mb-3 flex items-center gap-2">
-          <Bell size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            Notifications
-          </span>
+      <section id="settings-notifications" className="set-group">
+        <div className="set-head">
+          <KanjiTile kanji="刻" state="outline" size={28} />
+          <span>Notifications</span>
         </div>
 
         {/* In-app reminders fire for everyone, so everyone needs their
@@ -493,7 +487,7 @@ export default function SettingsPage() {
               aria-label="Quiet hours start"
               value={settings.dndStart}
               onChange={(e) => update({ dndStart: Number(e.target.value) })}
-              className="min-h-9 rounded-lg px-2 py-1 font-mono text-xs outline-none"
+              className="min-h-9 rounded px-2 py-1 font-mono text-xs outline-none"
               style={inputStyle}
             >
               {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
@@ -503,7 +497,7 @@ export default function SettingsPage() {
               aria-label="Quiet hours end"
               value={settings.dndEnd}
               onChange={(e) => update({ dndEnd: Number(e.target.value) })}
-              className="min-h-9 rounded-lg px-2 py-1 font-mono text-xs outline-none"
+              className="min-h-9 rounded px-2 py-1 font-mono text-xs outline-none"
               style={inputStyle}
             >
               {HOURS.map((h) => <option key={h} value={h}>{String(h).padStart(2, '0')}:00</option>)}
@@ -511,7 +505,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="my-3 h-px" style={{ background: 'var(--color-ivory)' }} />
+        <div className="set-rule" />
 
         <div className="flex items-center justify-between py-1.5">
           <div className="min-w-0 pr-3">
@@ -545,16 +539,14 @@ export default function SettingsPage() {
                 useUIStore.getState().showToast("Couldn't send a notification — check OS settings.", { type: 'error' });
               }
             }}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-xs font-medium"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            className="set-btn flex-1"
           >
             <Bell size={14} /> Test notification
           </button>
           <button
             type="button"
             onClick={() => { playChime('goal', { force: true }); setTimeout(() => playChime('anthem', { force: true }), 1000); }}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-xs font-medium"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            className="set-btn flex-1"
           >
             <Sparkles size={14} /> Preview sounds
           </button>
@@ -565,15 +557,13 @@ export default function SettingsPage() {
       </section>
 
       {/* Experience */}
-      <section id="settings-experience" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            Experience
-          </span>
+      <section id="settings-experience" className="set-group">
+        <div className="set-head">
+          <KanjiTile kanji="和" state="outline" size={28} />
+          <span>Experience</span>
         </div>
         <Row label="Sky">
-          <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
+          <div className="set-seg">
             {['auto', 'dawn', 'dusk', 'night'].map((t) => (
               <button key={t} type="button" onClick={() => setSky(t)} aria-pressed={sky === t} className="min-h-11 px-3 font-sans text-xs font-medium capitalize"
                 style={{ background: sky === t ? 'var(--color-gold)' : 'transparent', color: sky === t ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
@@ -594,28 +584,24 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => { setTourSeen(false); navigate('/home'); }}
-          className="mt-3 min-h-11 w-full rounded-xl py-2.5 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          className="set-btn mt-3 w-full"
         >
           Replay walkthrough
         </button>
         <button
           type="button"
           onClick={() => { resetCoachMarks(); useUIStore.getState().showToast('Tips will show again as you browse.'); }}
-          className="mt-2 min-h-11 w-full rounded-xl py-2.5 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          className="set-btn mt-2 w-full"
         >
           Show tips again
         </button>
       </section>
 
       {/* Data */}
-      <section id="settings-data" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <div className="mb-3 flex items-center gap-2">
-          <Database size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            Data
-          </span>
+      <section id="settings-data" className="set-group">
+        <div className="set-head">
+          <KanjiTile kanji="蔵" state="outline" size={28} />
+          <span>Data</span>
         </div>
         <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           Back up everything to a file, or restore from one.
@@ -624,8 +610,7 @@ export default function SettingsPage() {
         {/* Storage protection — IndexedDB is evictable unless the browser
             grants persistence, and this app has no server-side copy. */}
         <div
-          className="mb-3 flex items-start gap-2 rounded-xl p-3"
-          style={{ background: 'var(--color-ivory)' }}
+          className="set-tile mb-3 flex items-start gap-2 p-3"
         >
           <ShieldCheck
             size={15}
@@ -646,8 +631,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={handleInstall}
-                className="mt-2 flex min-h-10 items-center gap-2 rounded-xl px-3 font-sans text-xs font-semibold"
-                style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
+                className="set-btn set-btn--accent mt-2"
               >
                 <Download size={14} /> Install OPUS
               </button>
@@ -657,7 +641,7 @@ export default function SettingsPage() {
         {/* Backups first in the Data section, and stated in terms of what is at
             stake rather than what the button does. A browser wipe takes
             IndexedDB with it; a file in Downloads is the only thing left. */}
-        <div className="mb-4 rounded-2xl p-3" style={{ background: 'var(--color-ivory)' }}>
+        <div className="set-tile mb-4 p-3">
           <div className="mb-2 flex items-center gap-2">
             <ShieldAlert size={14} style={{ color: 'var(--color-gold)' }} />
             <span className="font-sans text-xs font-semibold" style={{ color: 'var(--color-text-primary)' }}>
@@ -688,8 +672,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={async () => { await runBackup(); useUIStore.getState().showToast('Backup saved to Downloads', { type: 'success' }); }}
-              className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
-              style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
+              className="set-btn flex-1"
             >
               <Download size={15} /> Back up now
             </button>
@@ -702,8 +685,7 @@ export default function SettingsPage() {
                 if (how === 'cancelled') return;
                 useUIStore.getState().showToast(how === 'shared' ? 'Backup sent' : 'Backup saved to Downloads', { type: 'success' });
               }}
-              className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
-              style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
+              className="set-btn flex-1"
             >
               <Share2 size={15} /> Send a copy
             </button>
@@ -717,16 +699,14 @@ export default function SettingsPage() {
             // left Home saying "Never backed up" and the weekly backup wrote
             // a duplicate a few days later.
             onClick={async () => { await runBackup(); useUIStore.getState().showToast('Backup saved to Downloads', { type: 'success' }); }}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
+            className="set-btn flex-1"
           >
             <Download size={15} /> Export
           </button>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            className="set-btn flex-1"
           >
             <Upload size={15} /> Import
           </button>
@@ -746,7 +726,7 @@ export default function SettingsPage() {
             id="ics-hour"
             value={icsHour}
             onChange={(e) => setIcsHour(Number(e.target.value))}
-            className="rounded-xl px-3 py-2.5 font-mono text-sm outline-none"
+            className="rounded px-3 py-2.5 font-mono text-sm outline-none"
             style={inputStyle}
           >
             {Array.from({ length: 17 }, (_, i) => i + 5).map((h) => (
@@ -756,8 +736,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={handleCalendar}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            className="set-btn flex-1"
           >
             <CalendarPlus size={15} /> Add to calendar
           </button>
@@ -770,16 +749,14 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={() => exportSetsCsv(unit)}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            className="set-btn flex-1"
           >
             <FileText size={15} /> CSV
           </button>
           <button
             type="button"
             onClick={() => exportPdf(unit)}
-            className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
-            style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+            className="set-btn flex-1"
           >
             <Printer size={15} /> PDF
           </button>
@@ -787,12 +764,10 @@ export default function SettingsPage() {
       </section>
 
       {/* About */}
-      <section id="settings-about" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <div className="mb-3 flex items-center gap-2">
-          <Info size={14} style={{ color: 'var(--color-ash)' }} />
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-            About
-          </span>
+      <section id="settings-about" className="set-group">
+        <div className="set-head">
+          <KanjiTile kanji="印" state="outline" size={28} />
+          <span>About</span>
         </div>
         <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>OPUS</p>
         <p className="font-sans text-sm italic" style={{ color: 'var(--color-text-secondary)' }}>Build your masterpiece.</p>
@@ -811,13 +786,11 @@ export default function SettingsPage() {
       {/* Developer — dev builds only; the whole block (and the seed it loads) is
           removed from production bundles. */}
       {import.meta.env.DEV && (
-        <section id="settings-developer" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-          <div className="mb-3 flex items-center gap-2">
-            <Sparkles size={14} style={{ color: 'var(--color-ash)' }} />
-            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-              Developer
-            </span>
-          </div>
+        <section id="settings-developer" className="set-group">
+          <div className="set-head">
+          <KanjiTile kanji="作" state="outline" size={28} />
+          <span>Developer</span>
+        </div>
           <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
             Fill this device with three weeks of sample training. Also loads from any page with ?demo=1.
           </p>
@@ -837,8 +810,7 @@ export default function SettingsPage() {
                 setDemoBusy(false);
               }
             }}
-            className="min-h-11 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
+            className="set-btn set-btn--accent w-full"
           >
             {demoBusy ? 'Loading…' : 'Load demo data'}
           </button>
@@ -847,12 +819,10 @@ export default function SettingsPage() {
 
       {/* Danger zone — last, where the jump-nav says it is, and the furthest a
           careless scroll can take you from it. */}
-      <section id="settings-danger" className="scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #E0553B55' }}>
-        <div className="mb-1 flex items-center gap-2">
-          <Trash2 size={14} style={{ color: 'var(--color-ember)' }} />
-          <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-ember)' }}>
-            Danger zone
-          </span>
+      <section id="settings-danger" className="set-group set-group--danger">
+        <div className="set-head">
+          <KanjiTile kanji="止" state="outline" size={28} />
+          <span>Danger zone</span>
         </div>
         <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
           Reset the app to a clean slate. Everything stored on this device is erased.
@@ -860,8 +830,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => setReset(true)}
-          className="w-full rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-ember)', color: 'var(--color-text-inverse)' }}
+          className="set-btn set-btn--danger w-full"
         >
           Reset all data
         </button>

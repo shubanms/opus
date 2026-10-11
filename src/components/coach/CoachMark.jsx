@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
-import { Lightbulb } from 'lucide-react';
+import { KanjiTile } from '../ink/index.js';
+import '../../styles/ink-system.css';
 import useSettingsStore from '../../store/settingsStore.js';
 
 // First-use tip per tab. Shows once per route (localStorage seen-state) after
@@ -26,19 +27,10 @@ export default function CoachMark() {
       className="pointer-events-none fixed inset-x-0 z-[60] flex justify-center px-5"
       style={{ bottom: 'calc(96px + env(safe-area-inset-bottom))' }}
     >
-      <div
-        className="anim-fade-slide-up pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl px-4 py-3"
-        style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}
-      >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
-          <Lightbulb size={16} style={{ color: 'var(--color-on-accent)' }} />
-        </div>
-        <p className="flex-1 font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-inverse)' }}>{tip}</p>
-        <button
-          onClick={() => markSeen(pathname)}
-          className="shrink-0 rounded-lg px-3 py-1.5 font-sans text-[11px] font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-        >
+      <div className="washi sy-coach pointer-events-auto">
+        <KanjiTile kanji="記" state="lit" size={32} />
+        <p>{tip}</p>
+        <button type="button" onClick={() => markSeen(pathname)} className="sy-coach__ok">
           Got it
         </button>
       </div>

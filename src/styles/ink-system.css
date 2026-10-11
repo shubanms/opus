@@ -1,0 +1,159 @@
+/* Ink: system screens (Settings, Onboarding, Tour, Coach marks, Loading,
+   Streak rescue, Wipe alert, DB recovery). Tokens only; scene colours for the
+   sky come from home/skyPalettes via custom properties set inline. */
+
+/* ── Sky backdrop (onboarding, tour, loading) ───────────────────────────── */
+.sy-sky {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  background: linear-gradient(to bottom, var(--sy-top), var(--sy-mid) 55%, var(--sy-bot));
+}
+.sy-sky__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sy-sky__veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 55%, color-mix(in srgb, var(--ink-1) 60%, transparent) 100%);
+}
+.sy-stage { position: fixed; inset: 0; overflow: hidden; background: var(--ink-1); }
+.sy-scroll {
+  position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; align-items: center;
+  padding: max(28px, env(safe-area-inset-top)) 20px max(28px, env(safe-area-inset-bottom));
+}
+.sy-scroll > :first-child { margin-top: auto; }
+.sy-scroll > :last-child { margin-bottom: auto; }
+
+/* ── Washi step card ────────────────────────────────────────────────────── */
+.sy-card { width: 100%; max-width: 360px; position: relative; padding: 22px 20px 18px; }
+.sy-card--enter { animation: sy-rise var(--dur-enter, 340ms) var(--ink-ease) both; }
+@keyframes sy-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.sy-title { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.1; color: var(--paper-ink-1); }
+.sy-sub { margin-top: 4px; font-size: 14px; color: var(--paper-ink-2); }
+.sy-body { margin-top: 10px; font-size: 14px; line-height: 1.55; color: var(--paper-ink-2); }
+.sy-label {
+  display: block; margin-top: 14px; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--paper-ink-2);
+}
+.sy-field {
+  margin-top: 6px; width: 100%; min-height: 44px; padding: 0 12px; border-radius: 4px;
+  background: rgba(21, 17, 14, 0.06); border: 1px solid rgba(21, 17, 14, 0.28);
+  color: var(--paper-ink-1); font-size: 15px; outline: none;
+}
+.sy-field:focus-visible { border-color: var(--ver); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ver) 30%, transparent); }
+.sy-field::placeholder { color: var(--paper-ink-3); }
+.sy-seg { margin-top: 6px; display: flex; gap: 4px; }
+.sy-seg > button {
+  flex: 1; min-height: 44px; border-radius: 4px; font-size: 13px; font-weight: 500; text-transform: capitalize;
+  background: transparent; color: var(--paper-ink-2); border: 1px solid rgba(21, 17, 14, 0.28);
+}
+.sy-seg > button[aria-pressed='true'] { background: var(--ver); border-color: var(--ver); color: var(--washi-3); }
+.sy-option {
+  display: block; width: 100%; text-align: left; padding: 10px 14px; border-radius: 4px; min-height: 44px;
+  background: transparent; border: 1px solid rgba(21, 17, 14, 0.28); color: var(--paper-ink-1);
+}
+.sy-option[aria-pressed='true'] { border-color: var(--ver); background: color-mix(in srgb, var(--ver) 10%, transparent); box-shadow: inset 3px 0 0 var(--ver); }
+.sy-option small { display: block; margin-top: 2px; font-size: 12px; color: var(--paper-ink-2); }
+.sy-quiet {
+  display: flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; width: 100%;
+  background: transparent; font-size: 14px; font-weight: 500; color: var(--paper-ink-2);
+}
+.sy-quiet--corner { position: absolute; top: 4px; right: 6px; width: auto; padding: 0 12px; font-size: 13px; }
+
+.sy-brand { display: flex; flex-direction: column; align-items: center; margin-bottom: 18px; }
+.sy-dots { display: flex; justify-content: center; gap: 6px; margin: 16px 0 14px; }
+.sy-dots span {
+  height: 4px; width: 10px; border-radius: 2px; background: rgba(21, 17, 14, 0.2);
+  transition: width var(--dur-standard, 240ms) var(--ink-ease), background-color var(--dur-standard, 240ms);
+}
+.sy-dots span.is-on { width: 24px; background: var(--ver); }
+.sy-row { display: flex; gap: 10px; }
+.sy-row > * { flex: 1; min-width: 0; }
+.sy-actions { display: flex; gap: 10px; margin-top: 4px; }
+.sy-actions > * { flex: 1; }
+
+/* ── Coach mark: a paper slip above the nav ────────────────────────────── */
+.sy-coach {
+  display: flex; align-items: center; gap: 12px; width: 100%; max-width: 440px; padding: 12px 14px; border-radius: 4px;
+  animation: sy-rise var(--dur-enter, 340ms) var(--ink-ease) both;
+}
+.sy-coach p { flex: 1; font-size: 12px; line-height: 1.5; color: var(--paper-ink-1); }
+.sy-coach__ok {
+  min-height: 44px; min-width: 44px; padding: 0 14px; border-radius: 4px; background: var(--ver); color: var(--washi-3);
+  font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* ── Loading: the ensō writes on around OPUS ───────────────────────────── */
+.sy-load { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--ink-1); transition: opacity 600ms var(--ink-ease); }
+.sy-load__ring { position: relative; width: 260px; height: 260px; display: flex; align-items: center; justify-content: center; }
+.sy-load__ring svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.sy-load__word { font-family: var(--font-display); font-weight: 700; font-size: 36px; letter-spacing: 0.26em; padding-left: 0.26em; color: var(--washi-2); }
+.sy-load__tag { margin-top: 18px; font-size: 12px; letter-spacing: 0.32em; text-indent: 0.32em; text-transform: uppercase; color: var(--mute-2); }
+.sy-write { stroke-dasharray: 100 100; stroke-dashoffset: 100; animation: sy-write var(--dur-write, 1200ms) var(--ink-ease) 0.2s forwards; }
+.sy-load--still .sy-write { stroke-dashoffset: 0; animation: sy-fade 150ms ease-out both; }
+@keyframes sy-write { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes sy-fade { from { opacity: 0; } to { opacity: 1; } }
+.sy-rise { opacity: 0; animation: sy-rise var(--dur-enter, 340ms) var(--ink-ease) forwards; }
+.sy-load--still .sy-rise { animation: sy-fade 150ms ease-out forwards; }
+
+/* ── Kintsugi (streak rescue) ──────────────────────────────────────────── */
+.sy-kin { display: block; width: 100%; max-width: 280px; height: auto; margin: 0 auto 6px; overflow: visible; }
+.sy-kin__seam { stroke-dasharray: 100 100; stroke-dashoffset: 100; animation: sy-write 1200ms var(--ink-ease) 0.3s forwards; }
+.sy-kin--still .sy-kin__seam { stroke-dashoffset: 0; animation: sy-fade 150ms ease-out both; }
+.sy-lost { font-family: var(--font-display); font-weight: 700; font-size: 30px; text-align: center; color: var(--washi-2); }
+.sy-note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 6px; background: var(--ink-3); border: 1px solid var(--ink-line); }
+.sy-note p { font-size: 12px; line-height: 1.55; color: var(--mute-2); }
+.sy-note strong { color: var(--washi-2); }
+.sy-hint { margin-top: 8px; text-align: center; font-size: 12px; color: var(--mute-2); }
+.sy-btnrow { display: flex; gap: 10px; }
+.sy-btnrow > * { flex: 1; min-width: 0; }
+
+/* ── Alert content on dark (WipeAlert, DbRecovery) ─────────────────────── */
+.sy-alert { display: flex; gap: 12px; align-items: stretch; margin-bottom: 14px; }
+.sy-alert__rule { flex: none; width: 3px; border-radius: 2px; background: var(--ver-light); }
+.sy-alert p { font-size: 14px; line-height: 1.55; color: var(--washi-2); }
+.sy-alert p + p { margin-top: 8px; font-size: 12px; color: var(--mute-2); }
+.sy-mono { font-family: var(--font-mono); }
+.sy-recover { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 28px; text-align: center; background: var(--ink-1); }
+.sy-recover .ink-btn, .sy-recover .sy-ghost { width: 100%; max-width: 320px; margin-top: 12px; }
+.sy-ghost { min-height: 44px; border-radius: 4px; background: transparent; border: 1px solid var(--ink-line); color: var(--washi-2); font-weight: 500; font-size: 14px; }
+.sy-ghost--danger { color: var(--ver-light); border-color: color-mix(in srgb, var(--ver-light) 45%, transparent); }
+.sy-recover__dialog { margin-top: 20px; width: 100%; max-width: 320px; padding: 16px; text-align: left; border-radius: 6px; background: var(--ink-3); border: 1px solid color-mix(in srgb, var(--ver-light) 50%, transparent); }
+
+/* ── Settings ──────────────────────────────────────────────────────────── */
+.set-nav { margin: 0 -20px 18px; padding: 0 20px 4px; display: flex; gap: 8px; overflow-x: auto; }
+.set-nav button {
+  flex: none; min-height: 44px; padding: 0 16px; border-radius: 4px; font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+  background: var(--ink-2); border: 1px solid var(--ink-line); color: var(--mute-1);
+}
+.set-group {
+  position: relative; margin-bottom: 18px; scroll-margin-top: 16px; padding: 16px;
+  background: var(--ink-2); border: 1px solid var(--ink-line); border-radius: 6px;
+}
+.set-group--danger { border-color: color-mix(in srgb, var(--ver-light) 45%, transparent); }
+.set-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.set-head > span:last-child {
+  font-family: var(--font-display); font-weight: 700; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute-1);
+}
+.set-group--danger .set-head > span:last-child { color: var(--ver-light); }
+.set-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 4px;
+  background: var(--ink-3); border: 1px solid var(--ink-line); color: var(--washi-2); font-size: 14px; font-weight: 500;
+}
+.set-btn:active:not(:disabled) { transform: scale(0.985); }
+.set-btn--accent { background: var(--ver); border-color: var(--ver); color: var(--washi-3); font-weight: 600; }
+.set-btn--danger { background: transparent; border-color: var(--ver-light); color: var(--ver-light); font-weight: 600; }
+.set-btn:disabled { opacity: 0.5; }
+.set-seg { display: flex; border-radius: 4px; overflow: hidden; background: var(--ink-3); border: 1px solid var(--ink-line); }
+.set-seg > button { min-height: 44px; padding: 0 14px; font-size: 13px; font-weight: 500; color: var(--mute-1); }
+.set-seg > button[aria-pressed='true'] { background: var(--ver); color: var(--washi-3); }
+.set-input {
+  background: var(--ink-3); border: 1px solid var(--ink-line); color: var(--washi-2); border-radius: 4px; outline: none;
+}
+.set-input:focus-visible { border-color: var(--ver-light); }
+.set-sub { font-size: 12px; color: var(--mute-2); }
+.set-tile { background: var(--ink-3); border: 1px solid var(--ink-line); border-radius: 6px; }
+.set-rule { height: 1px; margin: 12px 0; background: var(--ink-line); }
+
+/* Reduced motion: no transforms, quick fades only. */
+@media (prefers-reduced-motion: reduce) {
+  .sy-card--enter, .sy-coach, .sy-rise { animation: sy-fade 150ms ease-out both; }
+  .sy-write, .sy-kin__seam { animation: sy-fade 150ms ease-out both; stroke-dashoffset: 0; }
+}

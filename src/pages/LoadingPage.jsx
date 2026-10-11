@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LoadingScreen from '../components/logo/LoadingScreen.jsx';
+import InkLoading from '../components/onboarding/InkLoading.jsx';
 import useSettingsStore from '../store/settingsStore.js';
 import { playIntro } from '../utils/sound.js';
 
@@ -52,7 +52,7 @@ export default function LoadingPage() {
 
   return (
     <>
-      <LoadingScreen fadingOut={fadingOut} />
+      <InkLoading fadingOut={fadingOut} />
       {/* The whole screen is the skip button: a tap anywhere goes straight in. */}
       <button
         type="button"

@@ -1,5 +1,6 @@
 import { ShieldAlert, ShieldCheck, Download, Share2, Info } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import '../../styles/ink-system.css';
 import { db } from '../../db/db.js';
 import { m, TWEEN } from '../../motion/index.jsx';
 import useUIStore from '../../store/uiStore.js';
@@ -76,8 +77,8 @@ export default function BackupCard() {
 
   return (
     <m.div
-      className="glass mb-4 rounded-2xl px-4 py-3.5"
-      style={{ background: 'var(--color-chalk)', border: `1px solid ${accent}55` }}
+      className="set-group"
+      style={{ borderColor: `color-mix(in srgb, ${accent} 55%, transparent)` }}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={TWEEN.enter}
@@ -101,7 +102,7 @@ export default function BackupCard() {
         <button
           type="button"
           onClick={save}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-semibold"
+          className="flex flex-1 items-center justify-center gap-2 rounded py-2.5 font-sans text-sm font-semibold"
           style={{ background: accent, color: 'var(--color-on-accent)' }}
         >
           <Download size={15} /> Back up now
@@ -109,8 +110,8 @@ export default function BackupCard() {
         <button
           type="button"
           onClick={send}
-          className="flex items-center justify-center gap-2 rounded-xl px-3.5 py-2.5 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          className="flex items-center justify-center gap-2 rounded px-3.5 py-2.5 font-sans text-sm font-medium"
+          style={{ background: 'var(--ink-3)', color: 'var(--color-text-primary)', border: '1px solid var(--ink-line)' }}
           aria-label="Send backup somewhere else"
         >
           <Share2 size={15} />
