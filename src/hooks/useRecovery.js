@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
-import { todayKey, daysBetween } from '../utils/dateKey.js';
+import { daysBetween } from '../utils/dateKey.js';
+import { useTodayKey } from './useTodayKey.js';
 
 export const ALL_MUSCLES = [
   'chest', 'triceps', 'biceps', 'front-deltoids', 'back-deltoids',
@@ -10,12 +11,14 @@ export const ALL_MUSCLES = [
 
 // Per-muscle days-since-last-trained + the most neglected muscle.
 export function useRecovery() {
-  // `today` is computed OUTSIDE the live query and passed as a dependency, so
-  // day-counts advance across midnight even without a new DB write. Parsing is
-  // done in local-calendar terms (dateKey.js) to match how dates are stored —
-  // mixing local/UTC previously made a fresh workout read "today" for an extra
-  // full day for any non-UTC user.
-  const today = todayKey();
+  // `today` is a dependency of the live query rather than read inside it, so
+  // day-counts advance at midnight even without a new DB write — useTodayKey
+  // re-renders when the day turns over (a plain todayKey() here only changed
+  // if something else happened to re-render the card). Parsing is done in
+  // local-calendar terms (dateKey.js) to match how dates are stored — mixing
+  // local/UTC previously made a fresh workout read "today" for an extra full
+  // day for any non-UTC user.
+  const today = useTodayKey();
   return useLiveQuery(async () => {
     const sets = (await db.sets.toArray()).filter((s) => !s.isWarmup);
     const workouts = await db.workouts.toArray();

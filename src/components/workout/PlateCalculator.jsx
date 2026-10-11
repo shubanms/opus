@@ -27,7 +27,7 @@ export default function PlateCalculator({ weight, onClose }) {
         <p className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-inverse)' }}>
           Plates per side — {weight}{u}
         </p>
-        <button onClick={onClose} aria-label="Close plate calculator">
+        <button type="button" onClick={onClose} aria-label="Close plate calculator" className="-m-2 flex h-10 w-10 items-center justify-center">
           <X size={16} style={{ color: 'var(--color-ash)' }} />
         </button>
       </div>
@@ -38,17 +38,19 @@ export default function PlateCalculator({ weight, onClose }) {
         </p>
       ) : (
         <div className="flex flex-wrap items-end gap-1.5">
-          {plates.map(({ kg, count }) =>
-            Array.from({ length: count }).map((_, i) => (
+          {/* One tile per physical plate, heaviest first; the key is the
+              plate's own identity (size + which one of that size). */}
+          {plates
+            .flatMap(({ kg, count }) => Array.from({ length: count }, (_, n) => ({ kg, id: `${kg}#${n + 1}` })))
+            .map(({ kg, id }) => (
               <div
-                key={`${kg}-${i}`}
+                key={id}
                 className="flex items-center justify-center rounded"
                 style={{ background: PLATE_BG[kg] ?? '#161B2E', width: 36, height: 48 + Math.min(kg, 25) * 0.8 }}
               >
                 <span className="font-mono font-bold" style={{ color: 'var(--color-text-inverse)', fontSize: 10 }}>{kg}</span>
               </div>
-            ))
-          )}
+            ))}
         </div>
       )}
 

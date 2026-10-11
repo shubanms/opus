@@ -1,7 +1,10 @@
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Award, Lock, HelpCircle } from 'lucide-react';
+import { Award, Lock, HelpCircle } from 'lucide-react';
 import { useAchievements } from '../hooks/useAchievements.js';
+import useSettingsStore from '../store/settingsStore.js';
+import BackButton from '../components/layout/BackButton.jsx';
+import { achievementDesc } from '../utils/achievements.js';
 import { compactNumber } from '../utils/chartMath.js';
+import { toDisplay } from '../utils/units.js';
 import { m, itemVariants, listVariants } from '../motion/index.jsx';
 
 // The achievement wall.
@@ -45,12 +48,14 @@ function Ring({ count, total }) {
   );
 }
 
-function Row({ item }) {
+function Row({ item, unit }) {
   const secret = item.hidden && !item.unlocked;
   const p = item.progress;
   // A bar at 0% is noise on something you have not started; the description
   // already says what it wants.
   const showBar = !item.unlocked && !secret && p && p.current > 0;
+  // Volume is stored in kg; the numbers beside the bar follow the unit.
+  const shown = (v) => compactNumber(item.metric === 'totalVolume' ? toDisplay(v, unit) : v);
 
   return (
     <m.div
@@ -79,7 +84,7 @@ function Row({ item }) {
           {secret ? 'Hidden achievement' : item.title}
         </p>
         <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          {secret ? 'Keep training to reveal this one.' : item.desc}
+          {secret ? 'Keep training to reveal this one.' : achievementDesc(item, unit)}
         </p>
 
         {showBar && (
@@ -97,7 +102,7 @@ function Row({ item }) {
               />
             </div>
             <span className="font-mono text-[10px]" style={{ color: 'var(--color-ash)' }}>
-              {compactNumber(p.current)}/{compactNumber(p.target)}
+              {shown(p.current)}/{shown(p.target)}
             </span>
           </div>
         )}
@@ -116,8 +121,8 @@ function Row({ item }) {
 }
 
 export default function AchievementsPage() {
-  const navigate = useNavigate();
   const { items, count, total } = useAchievements();
+  const unit = useSettingsStore((s) => s.unit);
 
   const earned = items.filter((i) => i.unlocked);
   // Closest-first, so the top of the locked list is what you might actually get
@@ -129,12 +134,7 @@ export default function AchievementsPage() {
 
   return (
     <div className="px-5 pb-8 pt-8">
-      <button onClick={() => navigate(-1)} className="mb-5 flex items-center gap-2">
-        <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-          Back
-        </span>
-      </button>
+      <BackButton fallback="/profile" className="mb-3" />
 
       <h1
         className="font-display text-4xl font-bold leading-none"
@@ -168,7 +168,7 @@ export default function AchievementsPage() {
           </h2>
           <m.div className="flex flex-col gap-2" variants={listVariants} initial="initial" animate="animate">
             {earned.map((it) => (
-              <Row key={it.key} item={it} />
+              <Row key={it.key} item={it} unit={unit} />
             ))}
           </m.div>
         </>
@@ -184,7 +184,7 @@ export default function AchievementsPage() {
           </h2>
           <m.div className="flex flex-col gap-2" variants={listVariants} initial="initial" animate="animate">
             {locked.map((it) => (
-              <Row key={it.key} item={it} />
+              <Row key={it.key} item={it} unit={unit} />
             ))}
           </m.div>
         </>

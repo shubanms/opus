@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MUSCLE_LABEL } from '../../utils/muscleTargets.js';
+import { MUSCLE_LABEL, mapRegions, muscleForRegion } from '../../utils/muscleTargets.js';
 import Model from 'react-body-highlighter';
 import { Activity } from 'lucide-react';
 import { useRecovery } from '../../hooks/useRecovery.js';
@@ -11,10 +11,6 @@ import { useRecovery } from '../../hooks/useRecovery.js';
 // `export { MUSCLE_LABEL } from '...'`. That form forwards the name without
 // creating a local one, so every use below it was a ReferenceError at runtime.
 export { MUSCLE_LABEL };
-
-// The muscles react-body-highlighter can render (== the anatomical groups we
-// label). Anything else (e.g. 'cardio') must be filtered out before the map.
-const SUPPORTED_MUSCLES = new Set(Object.keys(MUSCLE_LABEL));
 
 // frequency → highlightedColors index: 1=sage(2d), 2=gold(1d), 3=ember(today)
 const COLORS = ['#4FD8C4', '#8B7DFF', '#FF8FA3'];
@@ -41,16 +37,21 @@ export default function RecoveryMap({ data: extData, onSelect, legend: extLegend
   }
   const legend = extLegend ?? RECOVERY_LEGEND;
 
-  // react-body-highlighter only knows anatomical muscles; a non-body group like
-  // 'cardio' makes its internal lookup crash (undefined.exercises). Keep only
-  // muscles the map supports, and drop items left with none.
+  // react-body-highlighter only knows anatomical regions; a non-body group like
+  // 'cardio' makes its internal lookup crash (undefined.exercises). mapRegions
+  // keeps the muscles the map can draw — and adds the soleus to the calves,
+  // which the map draws as separate regions — and items left with none go.
   const safeData = (data ?? [])
-    .map((d) => ({ ...d, muscles: (d.muscles ?? []).filter((m) => SUPPORTED_MUSCLES.has(m)) }))
+    .map((d) => ({ ...d, muscles: mapRegions(d.muscles) }))
     .filter((d) => d.muscles.length > 0);
 
-  const handleClick = ({ muscle }) => {
+  // A tap names a map region, not one of our muscles: the soleus is calves, and
+  // the head, neck, knees and inner/outer thigh are scenery no exercise trains.
+  const handleClick = ({ muscle: region }) => {
+    const muscle = muscleForRegion(region);
+    if (!muscle) return;
     if (onSelect) onSelect(muscle);
-    else setSel(muscle);
+    else setSel((prev) => (prev === muscle ? null : muscle));
   };
 
   // Recovery-specific detail lines (only meaningful for the default view).
@@ -80,9 +81,11 @@ export default function RecoveryMap({ data: extData, onSelect, legend: extLegend
         <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
           {['anterior', 'posterior'].map((v) => (
             <button
+              type="button"
               key={v}
               onClick={() => setView(v)}
-              className="px-3 py-1 font-sans text-xs font-medium"
+              aria-pressed={view === v}
+              className="h-8 px-3 font-sans text-xs font-medium"
               style={{ background: view === v ? 'var(--color-obsidian)' : 'transparent', color: view === v ? 'var(--color-text-inverse)' : 'var(--color-ash)' }}
             >
               {v === 'anterior' ? 'Front' : 'Back'}

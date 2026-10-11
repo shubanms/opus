@@ -16,7 +16,9 @@ import { useHaptics } from '../../hooks/useHaptics.js';
 // to sit on Home as an unexplained "🛡️ 2 banked", which is a number, not a
 // mechanic.
 
-export default function StreakRescueModal({ offer, tokens, onRescue, onDecline }) {
+// `onLater` is every way of closing the sheet (X, scrim, drag, Esc, Back): not
+// now. `onDecline` is only the "Let it go" button: not this lapse, ever.
+export default function StreakRescueModal({ offer, tokens, onRescue, onLater, onDecline }) {
   const haptic = useHaptics();
   if (!offer) return null;
 
@@ -32,7 +34,7 @@ export default function StreakRescueModal({ offer, tokens, onRescue, onDecline }
   }
 
   return (
-    <Modal isOpen onClose={onDecline} title="Your streak ended">
+    <Modal isOpen onClose={onLater ?? onDecline} title="Your streak ended">
       <div className="mb-5 flex flex-col items-center text-center">
         <m.div
           className="mb-3 flex h-16 w-16 items-center justify-center rounded-full"
@@ -93,6 +95,11 @@ export default function StreakRescueModal({ offer, tokens, onRescue, onDecline }
       {!affordable && (
         <p className="mt-2 text-center font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
           Not enough tokens this time — but now you know what they are for.
+        </p>
+      )}
+      {affordable && onLater && (
+        <p className="mt-2 text-center font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          Not sure yet? Close this and it will ask again next time you open OPUS.
         </p>
       )}
     </Modal>

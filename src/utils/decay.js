@@ -3,19 +3,23 @@
 // mutated — it's your earned history), so training (days→0) fully recovers it.
 // Pure + unit-tested.
 
+import { daysBetween, todayKey } from './dateKey.js';
+
 const GRACE_DAYS = 4;            // free rest before decay starts
 const DECAY_PCT_PER_DAY = 0.025; // 2.5% of earned XP lost per day past grace
 const MAX_DECAY_PCT = 0.4;       // inactivity never costs more than 40%
 const STREAK_PENALTY_PER_DAY = 20; // XP per day of the streak you let lapse
 const MAX_STREAK_PENALTY = 1000;
 
+// Whole local calendar days since `dateStr`, never negative.
+//
+// Delegates to `dateKey.daysBetween`, which rounds: the gap between two local
+// midnights across a spring-forward change is 23 hours, and flooring it here
+// read the day after the clocks changed as "0 days" — a day of inactivity that
+// never happened as far as decay was concerned.
 export function daysSince(dateStr, now = new Date()) {
   if (!dateStr) return 0;
-  const last = new Date(`${dateStr}T00:00:00`);
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  const d = Math.floor((today - last) / 86400000);
-  return d > 0 ? d : 0;
+  return daysBetween(dateStr, todayKey(now)) ?? 0;
 }
 
 export function inactivityDecay(days, earnedXp) {

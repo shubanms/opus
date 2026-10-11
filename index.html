@@ -6,6 +6,30 @@
     <meta name="theme-color" content="#0b1020" />
     <meta name="description" content="OPUS — Build your masterpiece. A free, offline-first gym tracker." />
 
+    <!--
+      Theme before first paint. main.jsx applies the saved theme too, but only
+      once the bundle has downloaded and run — until then a light-theme user
+      saw the dark status bar hard-coded above, and a dark-theme user a light
+      page. Mirrors utils/theme.js (resolveTheme + the theme-color values) and
+      settingsStore's `effects` flag; any failure leaves the defaults.
+    -->
+    <script>
+      (function () {
+        try {
+          var prefs = JSON.parse(localStorage.getItem('opus_prefs') || '{}') || {};
+          var theme = prefs.theme === 'light' || prefs.theme === 'dark' ? prefs.theme : 'system';
+          var dark = theme === 'dark' || (theme === 'system' && !!window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var root = document.documentElement;
+          root.setAttribute('data-theme', dark ? 'dark' : 'light');
+          root.setAttribute('data-fx', prefs.effects === false ? 'off' : 'on');
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', dark ? '#0b1020' : '#f4f6fd');
+        } catch (e) {
+          /* storage blocked or corrupt: the app applies its defaults on boot */
+        }
+      })();
+    </script>
+
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

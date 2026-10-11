@@ -1,10 +1,7 @@
 import { useEffect } from 'react';
 import RadarChart from '../charts/RadarChart.jsx';
-import { getXPProgress, getRankLabel, getPrestige, getTitle } from '../../utils/rpg.js';
 import { useCharacterStats } from '../../hooks/useRPG.js';
-import { useBossStats } from '../../hooks/useBosses.js';
-import { cappedLevel } from '../../utils/bosses.js';
-import { decayInfo } from '../../utils/decay.js';
+import { useEffectiveXp } from '../../hooks/useEffectiveXp.js';
 import { monthKeyOf, saveSnapshot, getSnapshots, previousSnapshot, mergeRadarSeries } from '../../utils/snapshots.js';
 import OpusMark from '../logo/OpusMark.jsx';
 import TitleBadge from './TitleBadge.jsx';
@@ -12,12 +9,10 @@ import XPBar from './XPBar.jsx';
 
 export default function CharacterCard({ profile }) {
   const stats = useCharacterStats();
-  const bossStats = useBossStats();
-  const { effectiveXp } = decayInfo(profile ?? {});
-  const { level: rawLevel } = getXPProgress(effectiveXp);
-  const prestige = getPrestige(effectiveXp);
-  const level = bossStats ? cappedLevel(rawLevel, bossStats) : rawLevel;
-  const title = prestige > 0 ? getRankLabel(effectiveXp) : getTitle(level);
+  // The same level, title and XP as everywhere else: shield-aware and capped
+  // at an uncleared boss gate. The card used to say "Lv. 20" above a bar that
+  // said "Level 23", and to keep charging an XP penalty a rest token had waived.
+  const { effectiveXp, level, prestige, title } = useEffectiveXp(profile);
 
   // Keep this month's snapshot fresh; overlay the most recent prior month.
   useEffect(() => {
@@ -48,7 +43,7 @@ export default function CharacterCard({ profile }) {
       </div>
 
       <div className="mt-2">
-        <XPBar totalXp={effectiveXp} />
+        <XPBar totalXp={effectiveXp} level={level} />
       </div>
     </div>
   );

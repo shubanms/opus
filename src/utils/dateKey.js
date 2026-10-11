@@ -21,11 +21,16 @@ export function parseKey(key) {
 }
 
 // Whole local days between two date keys (b - a). Negative clamped to 0.
+//
+// Rounded, not floored: across a spring-forward change the gap between two
+// local midnights is 23 hours, and flooring that read "the day after the
+// clocks changed" as zero days later — a streak that should have been at risk
+// read as safe, and one that should have broken read as at risk.
 export function daysBetween(aKey, bKey) {
   const a = parseKey(aKey);
   const b = parseKey(bKey);
   if (!a || !b) return null;
-  const d = Math.floor((b - a) / 86400000);
+  const d = Math.round((b - a) / 86400000);
   return d > 0 ? d : 0;
 }
 
@@ -58,6 +63,20 @@ export function friendlyDate(key, now = new Date()) {
   if (key === yesterdayKey) return 'Yesterday';
   const label = `${d.getDate()} ${MONTHS[d.getMonth()]}`;
   return d.getFullYear() === now.getFullYear() ? label : `${label} ${d.getFullYear()}`;
+}
+
+/**
+ * "17 Aug" — the compact form, for chart axes and dense rows.
+ *
+ * Charts were labelling ticks "8/17" (month-first, which reads as the 8th of
+ * the 17th month to most of the world) or "08-17", while every list said
+ * "17 Aug". One format, everywhere a date is short. Never "Today": an axis
+ * tick is a position, not a relative time.
+ */
+export function shortDate(key) {
+  const d = parseKey(key);
+  if (!d) return '';
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
 /** "August 2026" — the heading a list of days is grouped under. */

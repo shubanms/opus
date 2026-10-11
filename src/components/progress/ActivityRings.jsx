@@ -3,11 +3,14 @@ import { Footprints, Droplet, Plus, Minus } from 'lucide-react';
 import { useDailyActivity } from '../../hooks/useProgress.js';
 import { setSteps, addWater } from '../../utils/healthActions.js';
 import { crossedGoal } from '../../utils/goals.js';
+import { readField, rangeHint } from '../../utils/health.js';
+import { todayKey } from '../../utils/dateKey.js';
 import { playChime } from '../../utils/sound.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import Particles from '../fx/Particles.jsx';
+import Modal from '../ui/Modal.jsx';
+import { NumberRow, SaveButton } from './FormRows.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
-import useUIStore from '../../store/uiStore.js';
 
 const RADIUS = 34;
 const CIRC = 2 * Math.PI * RADIUS;
@@ -48,11 +51,21 @@ function Ring({ value, goal, color, icon: Icon, center, label }) {
 }
 
 export default function ActivityRings() {
-  const { steps, water } = useDailyActivity();
+  const activity = useDailyActivity();
+  const { steps, water } = activity;
   const stepGoal = useSettingsStore((s) => s.stepGoal);
   const waterGoal = useSettingsStore((s) => s.waterGoal);
   const haptic = useHaptics();
   const [burst, setBurst] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const [stepsText, setStepsText] = useState('');
+  const [stepsError, setStepsError] = useState(null);
+
+  // What today's totals were *before* this tap. The rings can only be a frame
+  // behind the clock — useDailyActivity re-reads at midnight and on resume —
+  // but if they are, the morning's first glass must not be measured against
+  // last night's total (that used to play the goal fanfare at 7 am).
+  const base = (field) => (activity.date === todayKey() ? activity[field] : 0);
 
   function celebrateGoal() {
     haptic('pr');
@@ -61,21 +74,29 @@ export default function ActivityRings() {
     setTimeout(() => setBurst(false), 1300);
   }
 
-  async function editSteps() {
-    const v = await useUIStore.getState().prompt({
-      title: "Today's steps",
-      placeholder: 'e.g. 8000',
-      defaultValue: steps ? String(steps) : '',
-    });
-    if (v !== null && v !== '') {
-      const next = Math.max(0, Number.parseInt(v) || 0);
-      if (crossedGoal(steps, next, stepGoal)) celebrateGoal();
-      setSteps(next);
+  function openSteps() {
+    setStepsText(steps ? String(steps) : '');
+    setStepsError(null);
+    setStepsOpen(true);
+  }
+
+  async function saveSteps() {
+    const { value, error } = readField('steps', stepsText);
+    if (error) {
+      setStepsError(error);
+      haptic('tap');
+      return;
     }
+    const next = value ?? 0;
+    if (crossedGoal(base('steps'), next, stepGoal)) celebrateGoal();
+    else haptic('tap');
+    await setSteps(next);
+    setStepsOpen(false);
   }
 
   function addGlass() {
-    if (crossedGoal(water, water + 1, waterGoal)) celebrateGoal();
+    const before = base('water');
+    if (crossedGoal(before, before + 1, waterGoal)) celebrateGoal();
     addWater(1);
   }
 
@@ -93,13 +114,15 @@ export default function ActivityRings() {
 
       <div className="mt-3 flex gap-2">
         <button
-          onClick={editSteps}
+          type="button"
+          onClick={openSteps}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
           style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
         >
-          <Footprints size={15} /> Add steps
+          <Footprints size={15} /> Set steps
         </button>
         <button
+          type="button"
           onClick={() => addWater(-1)}
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
           style={{ background: 'var(--color-ivory)' }}
@@ -108,6 +131,7 @@ export default function ActivityRings() {
           <Minus size={15} style={{ color: 'var(--color-ash)' }} />
         </button>
         <button
+          type="button"
           onClick={addGlass}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-medium"
           style={{ background: 'var(--color-sage)', color: 'var(--color-text-inverse)' }}
@@ -115,6 +139,26 @@ export default function ActivityRings() {
           <Plus size={15} /> Glass
         </button>
       </div>
+
+      {/* Its own sheet rather than the generic text prompt: that one is a
+          textarea, which gets a letter keyboard, and the old handler ran
+          parseInt over it — "8,000" became 8 steps. */}
+      <Modal isOpen={stepsOpen} onClose={() => setStepsOpen(false)} title="Today's steps">
+        <NumberRow
+          label="Steps"
+          icon={Footprints}
+          iconColor="var(--color-gold)"
+          inputMode="numeric"
+          placeholder="0"
+          value={stepsText}
+          onChange={(v) => { setStepsText(v); setStepsError(null); }}
+          error={stepsError}
+        />
+        <p className="mt-2 px-1 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          Sets today's total — copy it from your phone or watch. "8,000" and "8k" both work ({rangeHint('steps')}).
+        </p>
+        <SaveButton onClick={saveSteps} enabled label="Set steps" />
+      </Modal>
     </div>
   );
 }

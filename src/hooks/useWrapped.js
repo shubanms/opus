@@ -2,10 +2,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db.js';
 import { availablePeriods, rangeOf, buildWrapped } from '../utils/wrapped.js';
 import { monthKeyOf } from '../utils/snapshots.js';
+import { useTodayKey } from './useTodayKey.js';
 
 // Live Wrapped data for a selected period (defaults to the current month) plus
 // the list of selectable periods. Aggregation math lives in utils/wrapped.js.
 export function useWrapped(period) {
+  // A dependency so the period list gains the new month when the day turns
+  // over, not at the next workout.
+  const today = useTodayKey();
   return useLiveQuery(async () => {
     const now = new Date();
     const workouts = await db.workouts.toArray();
@@ -22,5 +26,5 @@ export function useWrapped(period) {
     const exName = Object.fromEntries(exercises.map((e) => [e.id, e.name]));
     const data = buildWrapped(workouts, sets, prs, rangeOf(sel), exName);
     return { periods, data, period: sel };
-  }, [period?.kind, period?.key]) ?? { periods: { months: [], years: [] }, data: null, period: null };
+  }, [period?.kind, period?.key, today]) ?? { periods: { months: [], years: [] }, data: null, period: null };
 }

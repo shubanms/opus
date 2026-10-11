@@ -3,17 +3,20 @@
 // every device shows the same dungeon and it can't be re-rolled.
 import { hashSeed } from './crit.js';
 
+// Names here must not reuse a rank or a boss gate: "The Crucible" was both
+// today's dungeon and the level-30 gate, and "Iron Will" both an affix and the
+// level 21–25 rank. Ids are what the logic keys on; names are free to change.
 export const DUNGEON_THEMES = [
   { id: 'legs', name: 'Leg Day Labyrinth', group: 'Legs', boss: 'The Quad Colossus' },
   { id: 'push', name: 'Hall of Presses', group: 'Chest', boss: 'The Iron Warden' },
   { id: 'pull', name: 'Vault of Chains', group: 'Back', boss: 'The Lat Leviathan' },
   { id: 'arms', name: 'Gauntlet of Steel', group: 'Arms', boss: 'The Curl Fiend' },
   { id: 'shoulders', name: 'Atlas Ascent', group: 'Shoulders', boss: 'The Deltoid Titan' },
-  { id: 'full', name: 'The Crucible', group: 'Full Body', boss: 'The Ironmonger' },
+  { id: 'full', name: 'The Foundry', group: 'Full Body', boss: 'The Ironmonger' },
 ];
 
 export const AFFIXES = [
-  { id: 'ironwill', name: 'Iron Will', desc: '+20% XP for clearing the dungeon' },
+  { id: 'ironwill', name: 'Zeal', desc: '+20% XP for clearing the dungeon' },
   { id: 'volatile', name: 'Volatile', desc: 'Crit chance runs hot — more crit sets today' },
   { id: 'glass', name: 'Glass Cannon', desc: 'Double the Iron reward' },
   { id: 'endurance', name: 'Endurance Trial', desc: 'One extra set on every lift — and a longer clear' },
@@ -80,4 +83,23 @@ export function todaysDungeon(dateKey = '') {
     .map((x) => x.a);
   const ironReward = IRON_BASE + Math.round(hashSeed(dateKey, 'iron') * 80);
   return { dateKey, id: theme.id, name: theme.name, group: theme.group, boss: theme.boss, muscles: DUNGEON_MUSCLES[theme.id] ?? [], affixes, ironReward };
+}
+
+/**
+ * Has `dateKey`'s dungeon already been cleared, judged from that day's workout
+ * rows?
+ *
+ * The clear used to live only in settings (`lastDungeonClaim`), so deleting the
+ * dungeon workout took its Iron away (Iron is summed from rows) but left the
+ * card saying "Cleared today ✓" and refused a re-run's reward — a delete that
+ * reverted half of what it should. A cleared session now carries
+ * `dungeonDate`, and the row is the record. `lastClaim` still counts for a day
+ * whose sessions were all saved before rows carried that (no `ironEarned` on
+ * any of them), so nobody can clear the same dungeon twice across the upgrade.
+ */
+export function dungeonClearedOn(dayRows = [], dateKey = '', lastClaim = '') {
+  const rows = dayRows ?? [];
+  if (rows.some((w) => w?.dungeonDate === dateKey)) return true;
+  if (!dateKey || lastClaim !== dateKey) return false;
+  return rows.length > 0 && rows.every((w) => w?.ironEarned === undefined);
 }

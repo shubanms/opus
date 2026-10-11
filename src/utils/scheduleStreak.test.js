@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planDays, scheduleStreak } from './scheduleStreak.js';
+import { bestScheduleRun, planDays, scheduleStreak } from './scheduleStreak.js';
 import { STREAK } from './streak.js';
 
 // 2026-08-03 is a Monday, so the whole file reads in weekdays.
@@ -59,6 +59,15 @@ describe('scheduleStreak', () => {
     expect(s.state).toBe(STREAK.AT_RISK);
     expect(s.count).toBe(1);
     expect(s.nextDue).toBe(WED);
+  });
+
+  it('says when the open window actually closes', () => {
+    // Wednesday's window runs Wed→Thu, so Thursday is the last day that still
+    // counts — the difference between "a session is due" and "last chance".
+    expect(run([MON], WED).deadline).toBe(THU);
+    expect(run([MON], THU).deadline).toBe(THU);
+    // Friday's window runs to Sunday.
+    expect(run([MON, WED], SAT).deadline).toBe(SUN);
   });
 
   it('breaks only once a scheduled window has closed unfilled', () => {
@@ -137,5 +146,81 @@ describe('scheduleStreak', () => {
     expect(scheduleStreak({ plan: MWF, dates: null, today: MON }).count).toBe(0);
     expect(scheduleStreak({ plan: [1, 3, 5], dates: [MON], today: MON }).count).toBe(1);
     expect(scheduleStreak({ plan: MWF, dates: [null, undefined, MON], today: MON }).count).toBe(1);
+  });
+});
+
+describe('bestScheduleRun', () => {
+  const best = (dates, today) => bestScheduleRun({ plan: MWF, dates, today });
+
+  it('is zero without a plan or without sessions', () => {
+    expect(bestScheduleRun({ plan: new Set(), dates: [MON, WED], today: FRI })).toBe(0);
+    expect(bestScheduleRun({})).toBe(0);
+    expect(best([], FRI)).toBe(0);
+    expect(best(null, FRI)).toBe(0);
+  });
+
+  it('counts a perfect Mon/Wed/Fri plan the way the live streak does', () => {
+    // The bug this exists for: three sessions a week read as a best of 1,
+    // because no two of them were on consecutive calendar days.
+    const weeks = ['2026-07-27', '2026-07-29', '2026-07-31', MON, WED, FRI];
+    expect(best(weeks, FRI)).toBe(6);
+    expect(best(weeks, FRI)).toBe(scheduleStreak({ plan: MWF, dates: weeks, today: FRI }).count);
+  });
+
+  it('remembers the longest run after it has ended', () => {
+    // Four hit, Friday's window missed (Fri→Sun), then two more.
+    const dates = ['2026-07-27', '2026-07-29', '2026-07-31', MON, '2026-08-10', '2026-08-12'];
+    // Mon 3 Aug hit, Wed 5 Aug window (Wed→Thu) missed, so the run is 4.
+    expect(best(dates, '2026-08-12')).toBe(4);
+    expect(scheduleStreak({ plan: MWF, dates, today: '2026-08-12' }).count).toBe(2);
+  });
+
+  it('does not let an open, unfilled window break or extend the run', () => {
+    // Today is Wednesday and the session is not in yet: still 2, not 0.
+    expect(best(['2026-07-31', MON], WED)).toBe(2);
+    // On Thursday the window is still open; on Friday it has closed, but a run
+    // that ended is still a run that happened.
+    expect(best(['2026-07-31', MON], THU)).toBe(2);
+    expect(best(['2026-07-31', MON], FRI)).toBe(2);
+  });
+
+  it('is never below the live count, whatever the day', () => {
+    const dates = ['2026-07-20', '2026-07-22', '2026-07-24', '2026-07-27', '2026-07-29', '2026-07-31', MON, WED];
+    for (const today of [WED, THU, FRI, SAT, SUN, '2026-08-10', '2026-08-11']) {
+      const live = scheduleStreak({ plan: MWF, dates, today });
+      expect(best(dates, today)).toBeGreaterThanOrEqual(live.count);
+    }
+  });
+
+  it('forgives being late and does not double-count a window', () => {
+    // Tuesday is late for Monday; Monday + Tuesday together are one hit.
+    expect(best([TUE, WED, FRI], FRI)).toBe(3);
+    expect(best([MON, TUE], TUE)).toBe(1);
+  });
+
+  it('counts sessions bought back with rest tokens', () => {
+    // The caller folds credited days into `dates`, as the live streak does.
+    const credited = [WED];
+    expect(best([MON, FRI], SAT)).toBe(1);
+    expect(best([MON, FRI, ...credited], SAT)).toBe(3);
+  });
+
+  it('treats an everyday plan as a day streak', () => {
+    const every = new Set([0, 1, 2, 3, 4, 5, 6]);
+    expect(bestScheduleRun({ plan: every, dates: [MON, TUE, WED, FRI, SAT], today: SAT })).toBe(3);
+  });
+
+  it('copes with a once-a-week plan over months and with junk', () => {
+    const sunday = new Set([0]);
+    const dates = ['2026-06-07', '2026-06-14', '2026-06-21', '2026-07-05', '2026-07-12'];
+    expect(bestScheduleRun({ plan: sunday, dates, today: '2026-07-12' })).toBe(3);
+    expect(bestScheduleRun({ plan: [1, 3, 5], dates: [MON, 'nope', null, WED], today: WED })).toBe(2);
+  });
+
+  it('crosses a DST change without losing a day', () => {
+    // US spring-forward 2026-03-08 (Sunday) and EU 2026-03-29: windows are
+    // walked by calendar key, so a 23-hour day is still a day.
+    const dates = ['2026-03-06', '2026-03-09', '2026-03-11', '2026-03-27', '2026-03-30', '2026-04-01'];
+    expect(bestScheduleRun({ plan: MWF, dates, today: '2026-04-01' })).toBe(3);
   });
 });

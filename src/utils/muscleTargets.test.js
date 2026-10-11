@@ -8,6 +8,8 @@ import {
   weeklyBreakdown,
   pushPullBalance,
   balanceMessage,
+  mapRegions,
+  muscleForRegion,
 } from './muscleTargets.js';
 
 describe('the muscle vocabulary', () => {
@@ -118,5 +120,30 @@ describe('balanceMessage', () => {
     expect(balanceMessage(pushPullBalance({ chest: 12, biceps: 2 }))).toContain('Push-heavy');
     expect(balanceMessage(pushPullBalance({ chest: 3 }))).toBe('');
     expect(balanceMessage(undefined)).toBe('');
+  });
+});
+
+describe('body-map regions', () => {
+  it('lights the soleus with the calves', () => {
+    expect(mapRegions(['calves'])).toEqual(['calves', 'left-soleus', 'right-soleus']);
+    expect(mapRegions(['chest', 'triceps'])).toEqual(['chest', 'triceps']);
+  });
+
+  it('drops anything the map has no region for', () => {
+    expect(mapRegions(['cardio', 'abs'])).toEqual(['abs']);
+    expect(mapRegions(undefined)).toEqual([]);
+  });
+
+  it('reads a soleus tap as the calves', () => {
+    expect(muscleForRegion('left-soleus')).toBe('calves');
+    expect(muscleForRegion('right-soleus')).toBe('calves');
+    expect(muscleForRegion('calves')).toBe('calves');
+    expect(muscleForRegion('quadriceps')).toBe('quadriceps');
+  });
+
+  it('ignores scenery regions instead of naming them "undefined"', () => {
+    for (const region of ['head', 'neck', 'knees', 'adductor', 'abductors', undefined]) {
+      expect(muscleForRegion(region)).toBeNull();
+    }
   });
 });

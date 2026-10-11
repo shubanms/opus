@@ -7,6 +7,8 @@ import ExerciseCard from './ExerciseCard.jsx';
 // you either search or you scroll blind. Off by default, because the pickers
 // that reuse this list show a short filtered set where headings are noise.
 
+const SKELETON_ROWS = ['s1', 's2', 's3', 's4', 's5', 's6'];
+
 function initialOf(exercise) {
   const c = (exercise?.name ?? '').trim().charAt(0).toUpperCase();
   // Anything not A–Z (a custom exercise named "3-Way Raise") buckets together
@@ -21,12 +23,14 @@ export default function ExerciseList({
   showArrow = false,
   grouped = false,
 }) {
+  // `undefined` = still loading. Showing "No exercises found." for the first
+  // frames of every visit read as an empty library.
   if (exercises === undefined) {
     return (
-      <div className="flex flex-col gap-2">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading exercises">
+        {SKELETON_ROWS.map((row, i) => (
           <div
-            key={i}
+            key={row}
             className="h-16 rounded-xl"
             style={{ background: 'var(--color-ivory)', opacity: 1 - i * 0.12 }}
           />

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Sparkles, Dumbbell, Layers, Trophy, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Dumbbell, Layers, Trophy, Clock } from 'lucide-react';
 import { useWrapped } from '../hooks/useWrapped.js';
 import { useRPG } from '../hooks/useRPG.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
 import CountUp from '../components/fx/CountUp.jsx';
 import ShareButton from '../components/share/ShareButton.jsx';
+import BackButton from '../components/layout/BackButton.jsx';
 
 function Stat({ icon: Icon, value, label }) {
   return (
@@ -19,7 +19,6 @@ function Stat({ icon: Icon, value, label }) {
 }
 
 export default function WrappedPage() {
-  const navigate = useNavigate();
   const [mode, setMode] = useState('month');
   const [period, setPeriod] = useState(null);
   const { periods, data, period: active } = useWrapped(period);
@@ -41,7 +40,10 @@ export default function WrappedPage() {
   }
 
   const series = (data?.series ?? []).slice(-16);
-  const peak = series.length ? Math.max(...series) : 1;
+  // A cardio-only period has weeks but no tonnage: every bar is 0, the peak is
+  // 0, and v / peak is NaN — bars with a NaN height. No lifting, no sparkline.
+  const peak = series.length ? Math.max(...series) : 0;
+  const showSpark = series.length > 1 && peak > 0;
 
   const shareData = data && {
     name: profile?.name || 'Athlete',
@@ -60,10 +62,7 @@ export default function WrappedPage() {
 
   return (
     <div className="px-5 pb-8 pt-8">
-      <button onClick={() => navigate(-1)} className="mb-5 flex items-center gap-2">
-        <ArrowLeft size={18} style={{ color: 'var(--color-text-secondary)' }} />
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Back</span>
-      </button>
+      <BackButton fallback="/profile" className="mb-3" />
 
       <h1 className="flex items-center gap-2 font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
         <Sparkles size={26} style={{ color: 'var(--color-gold)' }} /> Wrapped
@@ -73,6 +72,7 @@ export default function WrappedPage() {
       <div className="mt-5 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-ivory)' }}>
         {['month', 'year'].map((m) => (
           <button
+            type="button"
             key={m}
             onClick={() => switchMode(m)}
             className="flex-1 rounded-lg py-2 font-sans text-xs font-medium capitalize"
@@ -85,11 +85,11 @@ export default function WrappedPage() {
 
       {/* Period stepper */}
       <div className="mt-3 flex items-center justify-between rounded-xl px-2 py-2" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        <button onClick={() => step(1)} disabled={idx >= list.length - 1} aria-label="Older" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx >= list.length - 1 ? 0.3 : 1 }}>
+        <button type="button" onClick={() => step(1)} disabled={idx >= list.length - 1} aria-label="Older" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx >= list.length - 1 ? 0.3 : 1 }}>
           <ChevronLeft size={18} style={{ color: 'var(--color-text-primary)' }} />
         </button>
         <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{active?.label || data?.label || '—'}</span>
-        <button onClick={() => step(-1)} disabled={idx <= 0} aria-label="Newer" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx <= 0 ? 0.3 : 1 }}>
+        <button type="button" onClick={() => step(-1)} disabled={idx <= 0} aria-label="Newer" className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ opacity: idx <= 0 ? 0.3 : 1 }}>
           <ChevronRight size={18} style={{ color: 'var(--color-text-primary)' }} />
         </button>
       </div>
@@ -112,9 +112,11 @@ export default function WrappedPage() {
             </p>
             <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-ash)' }}>across {data.sessions} {data.sessions === 1 ? 'session' : 'sessions'}</p>
 
-            {series.length > 1 && (
+            {showSpark && (
               <div className="mt-4 flex items-end gap-1" style={{ height: 56 }}>
                 {series.map((v, i) => (
+                  // Weeks in a fixed order that never reorders: the index is the identity.
+                  // biome-ignore lint/suspicious/noArrayIndexKey: positional series
                   <div key={i} className="flex-1 rounded" style={{ height: `${Math.max(8, (v / peak) * 100)}%`, background: 'var(--color-gold)', opacity: 0.5 + 0.5 * (v / peak) }} />
                 ))}
               </div>

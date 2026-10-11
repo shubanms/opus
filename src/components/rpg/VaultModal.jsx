@@ -1,20 +1,17 @@
 import { useState } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { Check } from 'lucide-react';
+import { Check, Shield } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import Particles from '../fx/Particles.jsx';
 import CountUp from '../fx/CountUp.jsx';
-import { db } from '../../db/db.js';
-import { useLifetimeStats } from '../../hooks/useProgress.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
+import { useIronBalance } from '../../hooks/useIronBalance.js';
+import { useRestTokens } from '../../hooks/useRestTokens.js';
 import { playChime } from '../../utils/sound.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import {
-  COSMETICS, cosmeticById, earnedIron, ironBalance, canAfford, rollChest, CHEST_PRICE,
+  COSMETICS, canAfford, rollChest, CHEST_PRICE,
   TOKEN_IRON_PRICE, IRON_PER_SESSION, IRON_PER_PR, IRON_PER_QUEST,
 } from '../../utils/economy.js';
-import { tokensEarned, tokenBalance } from '../../utils/streakShield.js';
-import { Shield } from 'lucide-react';
 
 const RARITY_COLOR = {
   common: 'var(--color-ash)',
@@ -30,33 +27,33 @@ function Coin({ size = 12 }) {
 }
 
 export default function VaultModal({ isOpen, onClose }) {
-  const life = useLifetimeStats();
-  const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
-  const ironSpent = useSettingsStore((s) => s.ironSpent);
-  const dungeonIron = useSettingsStore((s) => s.dungeonIron);
+  const { balance, loaded } = useIronBalance();
+  const tokens = useRestTokens();
   const owned = useSettingsStore((s) => s.ownedCosmetics);
   const equipped = useSettingsStore((s) => s.equipped);
   const buyCosmetic = useSettingsStore((s) => s.buyCosmetic);
   const equipCosmetic = useSettingsStore((s) => s.equipCosmetic);
   const openChest = useSettingsStore((s) => s.openChest);
-  const tokensSpent = useSettingsStore((s) => s.tokensSpent);
-  const tokensPurchased = useSettingsStore((s) => s.tokensPurchased);
   const buyToken = useSettingsStore((s) => s.buyToken);
   const haptic = useHaptics();
 
-  const balance = ironBalance(earnedIron({ workouts: life.workouts, prCount: life.prCount, questClaims, bonusIron: dungeonIron }), ironSpent);
-  const tokens = tokenBalance(tokensEarned({ workouts: life.workouts, questClaims }) + (tokensPurchased || 0), tokensSpent);
   const [burst, setBurst] = useState(null);
   const [chestResult, setChestResult] = useState(null);
 
+  // A chest can only drop something you do not own. With the whole catalogue
+  // owned it used to take 200 Iron and hand back "nothing new dropped".
+  const ownsEverything = COSMETICS.every((c) => owned.includes(c.id));
+  const chestOpen = loaded && !ownsEverything && balance >= CHEST_PRICE;
+  const tokenOpen = loaded && balance >= TOKEN_IRON_PRICE;
+
   function purchaseToken() {
-    if (balance < TOKEN_IRON_PRICE) return;
+    if (!tokenOpen) return;
     buyToken(TOKEN_IRON_PRICE);
     haptic('pr'); playChime('quest'); setBurst(Date.now()); setTimeout(() => setBurst(null), 1200);
   }
 
   function buy(c) {
-    if (!canAfford(balance, c.price) || owned.includes(c.id)) return;
+    if (!loaded || !canAfford(balance, c.price) || owned.includes(c.id)) return;
     buyCosmetic(c.id, c.price);
     haptic('pr'); playChime('quest'); setBurst(Date.now()); setTimeout(() => setBurst(null), 1200);
   }
@@ -64,10 +61,11 @@ export default function VaultModal({ isOpen, onClose }) {
     equipCosmetic(c.type, c.id); haptic('tap'); playChime('tick');
   }
   function chest() {
-    if (balance < CHEST_PRICE) return;
+    if (!chestOpen) return;
     const rolled = rollChest(Date.now(), owned);
-    openChest(CHEST_PRICE, rolled?.id ?? null);
-    setChestResult(rolled ? { ...rolled, key: Date.now() } : { none: true, key: Date.now() });
+    if (!rolled) return;
+    openChest(CHEST_PRICE, rolled.id);
+    setChestResult({ ...rolled, key: Date.now() });
     haptic('pr'); playChime('achievement'); setBurst(Date.now()); setTimeout(() => setBurst(null), 1400);
   }
 
@@ -84,23 +82,26 @@ export default function VaultModal({ isOpen, onClose }) {
 
       {/* Chest */}
       <button
+        type="button"
         onClick={chest}
-        disabled={balance < CHEST_PRICE}
+        disabled={!chestOpen}
         className="mb-4 flex w-full items-center justify-between rounded-2xl px-4 py-3"
-        style={{ background: 'var(--color-ivory)', opacity: balance < CHEST_PRICE ? 0.5 : 1, border: '1px solid var(--color-gold)' }}
+        style={{ background: 'var(--color-ivory)', opacity: chestOpen ? 1 : 0.5, border: '1px solid var(--color-gold)' }}
       >
         <span className="flex items-center gap-2">
           <span style={{ fontSize: 20 }}>🎁</span>
           <span className="text-left">
             <span className="block font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>Open a Loot Chest</span>
-            <span className="block font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>A random cosmetic — rarer is luckier</span>
+            <span className="block font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {ownsEverything ? 'You own every cosmetic — nothing left to drop' : 'A random cosmetic — rarer is luckier'}
+            </span>
           </span>
         </span>
         <span className="flex items-center gap-1 font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}><Coin />{CHEST_PRICE}</span>
       </button>
       {chestResult && (
         <p key={chestResult.key} className="mb-4 text-center font-sans text-sm" style={{ color: 'var(--color-gold)' }}>
-          {chestResult.none ? 'You already own everything — nothing new dropped.' : `✦ ${chestResult.name} (${chestResult.rarity}) added to your collection!`}
+          ✦ {chestResult.name} ({chestResult.rarity}) added to your collection!
         </p>
       )}
 
@@ -114,10 +115,12 @@ export default function VaultModal({ isOpen, onClose }) {
           </span>
         </span>
         <button
+          type="button"
           onClick={purchaseToken}
-          disabled={balance < TOKEN_IRON_PRICE}
-          className="flex items-center gap-1 rounded-lg px-3 py-2 font-mono text-sm font-bold"
-          style={{ background: balance < TOKEN_IRON_PRICE ? 'var(--color-chalk)' : 'var(--color-gold)', color: balance < TOKEN_IRON_PRICE ? 'var(--color-ash)' : 'var(--color-obsidian)' }}
+          disabled={!tokenOpen}
+          aria-label={`Buy a rest token for ${TOKEN_IRON_PRICE} Iron`}
+          className="flex min-h-11 items-center gap-1 rounded-lg px-3 py-2 font-mono text-sm font-bold"
+          style={{ background: tokenOpen ? 'var(--color-gold)' : 'var(--color-chalk)', color: tokenOpen ? 'var(--color-obsidian)' : 'var(--color-ash)' }}
         >
           <Coin size={10} />{TOKEN_IRON_PRICE}
         </button>
@@ -131,7 +134,7 @@ export default function VaultModal({ isOpen, onClose }) {
             {COSMETICS.filter((c) => c.type === type).map((c) => {
               const isOwned = owned.includes(c.id);
               const isEquipped = equipped?.[type] === c.id;
-              const affordable = canAfford(balance, c.price);
+              const affordable = loaded && canAfford(balance, c.price);
               return (
                 <div key={c.id} className="rounded-xl p-3" style={{ background: 'var(--color-ivory)', border: `1px solid ${isEquipped ? 'var(--color-gold)' : 'transparent'}` }}>
                   <div className="flex items-center justify-between">
@@ -142,6 +145,7 @@ export default function VaultModal({ isOpen, onClose }) {
                   </div>
                   {isOwned ? (
                     <button
+                      type="button"
                       onClick={() => equip(c)}
                       className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 font-sans text-xs font-semibold"
                       style={{ background: isEquipped ? 'var(--color-gold)' : 'var(--color-chalk)', color: isEquipped ? 'var(--color-obsidian)' : 'var(--color-text-primary)' }}
@@ -150,8 +154,10 @@ export default function VaultModal({ isOpen, onClose }) {
                     </button>
                   ) : (
                     <button
+                      type="button"
                       onClick={() => buy(c)}
                       disabled={!affordable}
+                      aria-label={`Buy ${c.name} for ${c.price} Iron`}
                       className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg py-1.5 font-mono text-xs font-bold"
                       style={{ background: affordable ? 'var(--color-gold)' : 'var(--color-chalk)', color: affordable ? 'var(--color-obsidian)' : 'var(--color-ash)' }}
                     >

@@ -60,6 +60,7 @@ export default function RobotModel({ clip = CLIP.idle, gesture = 0, still = fals
     });
   }, [scene]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `gesture` is the replay trigger — a repeated clip name must still replay
   useEffect(() => {
     const idle = actions[CLIP.idle];
     if (still) {

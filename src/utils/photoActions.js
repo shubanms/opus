@@ -8,6 +8,22 @@ import { todayKey } from './dateKey.js';
 
 export const PHOTO_CATEGORIES = ['front', 'side', 'back'];
 
+/**
+ * The first and latest photo of one pose, for a side-by-side — or null when
+ * that pose has fewer than two. Pure.
+ *
+ * Comparing the oldest and newest photo overall paired a front shot with a
+ * side shot, which shows nothing. Ordered by date, then by when it was added,
+ * so two photos taken the same day still have a first and a latest.
+ */
+export function comparePair(photos, category) {
+  const same = (photos ?? [])
+    .filter((p) => p?.category === category && p.date)
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.createdAt ?? a.id ?? 0) - (b.createdAt ?? b.id ?? 0));
+  if (same.length < 2) return null;
+  return { first: same[0], latest: same[same.length - 1] };
+}
+
 // Downscale a File/Blob to a bounded JPEG Blob using a canvas.
 export function resizeImage(file, max = 1080, quality = 0.8) {
   return new Promise((resolve, reject) => {

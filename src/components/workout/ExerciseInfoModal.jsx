@@ -6,7 +6,7 @@ import { usePRs } from '../../hooks/useProgress.js';
 import { setExerciseNote } from '../../utils/noteActions.js';
 import { setExerciseColor } from '../../utils/exerciseActions.js';
 import useSettingsStore from '../../store/settingsStore.js';
-import { toDisplay, unitLabel } from '../../utils/units.js';
+import { fmtWeight } from '../../utils/units.js';
 
 // Quick exercise reference you can open mid-workout — coaching note, label
 // colour, PRs to chase, and a how-to video — without leaving the session.
@@ -17,8 +17,14 @@ export default function ExerciseInfoModal({ exerciseId, isOpen, onClose }) {
   const unit = useSettingsStore((s) => s.unit);
   if (!isOpen || !exercise) return null;
 
-  const weightPR = prs.find((p) => p.type === 'weight');
-  const repsPR = prs.find((p) => p.type === 'reps');
+  // The best on record, read the same way as the set logger's reference line
+  // (largest value, shown with the one decimal every other weight gets).
+  const best = (type) => {
+    const vals = prs.filter((p) => p.type === type).map((p) => p.value ?? 0);
+    return vals.length ? { value: Math.max(...vals) } : null;
+  };
+  const weightPR = best('weight');
+  const repsPR = best('reps');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={exercise.name}>
@@ -31,7 +37,7 @@ export default function ExerciseInfoModal({ exerciseId, isOpen, onClose }) {
         <div className="mb-4 flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
           <Trophy size={14} style={{ color: 'var(--color-gold)' }} />
           <span className="font-mono text-sm font-semibold" style={{ color: 'var(--color-gold)' }}>
-            {weightPR ? `${toDisplay(weightPR.value, unit)}${unitLabel(unit)}` : ''}
+            {weightPR ? fmtWeight(weightPR.value, unit) : ''}
             {weightPR && repsPR ? ' · ' : ''}
             {repsPR ? `${repsPR.value} reps` : ''}
           </span>

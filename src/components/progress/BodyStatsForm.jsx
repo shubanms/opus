@@ -1,66 +1,72 @@
-import { useState } from 'react';
 import Modal from '../ui/Modal.jsx';
-import { logBodyStat } from '../../utils/healthActions.js';
 import useSettingsStore from '../../store/settingsStore.js';
-import { toKg, unitLabel } from '../../utils/units.js';
+import { unitLabel } from '../../utils/units.js';
+import { BODY_FIELDS, MEASUREMENTS, lengthUnit } from '../../utils/health.js';
+import { useDayEntry } from '../../hooks/useDayEntry.js';
+import { useTodayKey } from '../../hooks/useTodayKey.js';
+import { useHaptics } from '../../hooks/useHaptics.js';
+import { playChime } from '../../utils/sound.js';
+import { DateRow, NumberRow, SaveButton } from './FormRows.jsx';
 
-export default function BodyStatsForm({ isOpen, onClose }) {
-  const [vals, setVals] = useState({});
+const LABEL = { weight: 'Weight', bodyFat: 'Body fat', chest: 'Chest', waist: 'Waist', hips: 'Hips', arms: 'Arms', thighs: 'Thighs' };
+
+// Log or correct one day's body stats. Opens on `date` (today by default);
+// the date picker moves it to any earlier day, prefilled with what that day
+// already holds. Circumferences are stored in cm and shown in inches to
+// anyone weighing in pounds.
+export default function BodyStatsForm({ isOpen, onClose, date: initialDate }) {
   const unit = useSettingsStore((s) => s.unit);
+  const today = useTodayKey();
+  const haptic = useHaptics();
+  const entry = useDayEntry({ kind: 'body', isOpen, initialDate, fields: BODY_FIELDS, unit });
 
-  const FIELDS = [
-    { key: 'weight', label: 'Weight', unit: unitLabel(unit), isWeight: true },
-    { key: 'bodyFat', label: 'Body fat', unit: '%' },
-    { key: 'chest', label: 'Chest', unit: 'cm' },
-    { key: 'waist', label: 'Waist', unit: 'cm' },
-    { key: 'hips', label: 'Hips', unit: 'cm' },
-    { key: 'arms', label: 'Arms', unit: 'cm' },
-    { key: 'thighs', label: 'Thighs', unit: 'cm' },
-  ];
+  const unitOf = (f) => (f === 'weight' ? unitLabel(unit) : f === 'bodyFat' ? '%' : lengthUnit(unit));
 
   async function save() {
-    const entry = { date: new Date().toISOString().slice(0, 10) };
-    for (const f of FIELDS) {
-      if (vals[f.key] !== undefined && vals[f.key] !== '') {
-        entry[f.key] = f.isWeight ? toKg(Number(vals[f.key]), unit) : Number(vals[f.key]);
-      }
+    if (!(await entry.save())) {
+      haptic('tap');
+      return;
     }
-    await logBodyStat(entry);
-    setVals({});
+    haptic('success');
+    playChime('success');
     onClose();
   }
 
-  const canSave = Object.values(vals).some((v) => v !== '' && v != null);
-
   return (
-    <Modal isOpen={isOpen} onClose={() => { setVals({}); onClose(); }} title="Log body stats">
+    <Modal isOpen={isOpen} onClose={onClose} title={entry.original ? 'Edit body stats' : 'Log body stats'}>
+      <DateRow value={entry.date} max={today} onChange={entry.setDate} existing={!!entry.original} />
       <div className="flex flex-col gap-2">
-        {FIELDS.map((f) => (
-          <div key={f.key} className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: 'var(--color-ivory)' }}>
-            <span className="font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>{f.label}</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                inputMode="decimal"
-                value={vals[f.key] ?? ''}
-                onChange={(e) => setVals((v) => ({ ...v, [f.key]: e.target.value }))}
-                placeholder="—"
-                className="w-20 rounded-lg px-2 py-1.5 text-right font-mono text-sm outline-none"
-                style={{ background: 'var(--color-chalk)', color: 'var(--color-text-primary)' }}
-              />
-              <span className="w-6 font-sans text-xs" style={{ color: 'var(--color-ash)' }}>{f.unit}</span>
-            </div>
-          </div>
+        {['weight', 'bodyFat'].map((f) => (
+          <NumberRow
+            key={f}
+            label={LABEL[f]}
+            unit={unitOf(f)}
+            value={entry.form[f]}
+            onChange={(v) => entry.setField(f, v)}
+            onBlur={() => entry.touch(f)}
+            error={entry.errors[f]}
+          />
+        ))}
+        <p className="mt-2 font-sans text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+          Measurements
+        </p>
+        {MEASUREMENTS.map((f) => (
+          <NumberRow
+            key={f}
+            label={LABEL[f]}
+            unit={unitOf(f)}
+            value={entry.form[f]}
+            onChange={(v) => entry.setField(f, v)}
+            onBlur={() => entry.touch(f)}
+            error={entry.errors[f]}
+          />
         ))}
       </div>
-      <button
+      <SaveButton
         onClick={save}
-        disabled={!canSave}
-        className="mt-4 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: canSave ? 1 : 0.35 }}
-      >
-        Save today's entry
-      </button>
+        enabled={entry.changed || entry.hasErrors}
+        label={entry.original ? 'Save changes' : 'Save'}
+      />
     </Modal>
   );
 }

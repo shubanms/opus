@@ -139,6 +139,18 @@ describe('buildIcs', () => {
     expect(out.match(/END:VEVENT/g).length).toBe(2);
   });
 
+  it('writes one event per weekday — the routine that owns it — even if two share a day', () => {
+    // Left behind by an older version, or by installing a program twice.
+    const out = ics([
+      { ...routine(1, 1, 'Push'), createdAt: 100 },
+      { ...routine(2, 1, 'Workout A'), createdAt: 900 },
+      { ...routine(3, 3, 'Pull'), createdAt: 100 },
+    ]);
+    expect(out.match(/BEGIN:VEVENT/g).length).toBe(2);
+    expect(out).toContain('SUMMARY:Workout A');
+    expect(out).not.toContain('SUMMARY:Push');
+  });
+
   it('maps every weekday to its BYDAY code', () => {
     expect(BYDAY.length).toBe(7);
     for (let d = 0; d < 7; d += 1) {

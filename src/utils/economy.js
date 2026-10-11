@@ -3,6 +3,14 @@
 // claimed quests), so existing users already have a fair balance with no
 // migration and deletes re-derive it. Spending (ironSpent) + owned/equipped
 // cosmetics live in settings. Pure + unit-tested.
+//
+// Each finished workout now carries what it earned (`ironEarned`, the session
+// plus its records) and its dungeon reward (`dungeonIron`) on its own row. The
+// balance used to count *record rows* instead — but a record row is
+// overwritten in place when you beat it, so an established lifter who beat two
+// records was told "+45" and paid 25. And dungeon Iron lived in settings, so it
+// survived deleting the workout that earned it. Rows that predate the change
+// keep the old formula (see `earnedIronFrom`).
 import { hashSeed } from './crit.js';
 
 export const IRON_PER_SESSION = 25;
@@ -20,8 +28,60 @@ export function sessionIron(prCount = 0) {
   return IRON_PER_SESSION + (prCount || 0) * IRON_PER_PR;
 }
 
+/**
+ * The old formula, from lifetime counts. It cannot see a record beaten in place
+ * (the row count does not move), so the balance comes from `earnedIronFrom`.
+ */
 export function earnedIron({ workouts = 0, prCount = 0, questClaims = 0, bonusIron = 0 } = {}) {
   return (workouts || 0) * IRON_PER_SESSION + (prCount || 0) * IRON_PER_PR + (questClaims || 0) * IRON_PER_QUEST + (bonusIron || 0);
+}
+
+const amount = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : 0);
+/** Whether a workout row records its own Iron (finished after `ironEarned` existed). */
+export const hasOwnIron = (w) => w?.ironEarned != null && Number.isFinite(Number(w.ironEarned));
+
+/**
+ * All Iron ever earned, from the rows themselves.
+ *
+ * - A workout with `ironEarned` is worth exactly that — what its finish screen
+ *   promised — plus its `dungeonIron`. Deleting it takes both away.
+ * - A workout from before `ironEarned` existed is worth the flat session rate,
+ *   and its records are counted the old way: ten per record row. Which rows are
+ *   "old" has to survive those rows being overwritten by a newer session (that
+ *   overwrite is the bug), so a row counts as legacy when it belongs to a
+ *   legacy workout *or* to an exercise a legacy workout trained — the record
+ *   existed before, and beating it now is paid by the new row's `ironEarned`.
+ *   A first-ever record set after the change is in `ironEarned` alone.
+ * - Quests pay a flat rate per claim.
+ *
+ * `sets` only needs the legacy workouts' sets (it is filtered here anyway).
+ * The frozen `settings.dungeonIron` from before the change is added by the
+ * caller, as is spending.
+ */
+export function earnedIronFrom({ workouts = [], prs = [], sets = [], questClaims = 0 } = {}) {
+  let total = 0;
+  const legacy = new Set();
+  for (const w of workouts ?? []) {
+    if (!w) continue;
+    if (hasOwnIron(w)) total += amount(w.ironEarned);
+    else {
+      total += IRON_PER_SESSION;
+      legacy.add(w.id);
+    }
+    total += amount(w.dungeonIron);
+  }
+
+  if (legacy.size) {
+    const trained = new Set();
+    for (const s of sets ?? []) {
+      if (s && legacy.has(s.workoutId) && !s.isWarmup) trained.add(s.exerciseId);
+    }
+    for (const r of prs ?? []) {
+      if (r && (legacy.has(r.workoutId) || trained.has(r.exerciseId))) total += IRON_PER_PR;
+    }
+  }
+
+  return total + amount(questClaims) * IRON_PER_QUEST;
 }
 
 export function ironBalance(earned = 0, spent = 0) {

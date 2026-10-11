@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { formatDuration } from '../../utils/duration.js';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Trophy, Clock, Zap, BookmarkPlus, Check } from 'lucide-react';
+import { Clock, Zap, BookmarkPlus, Check, ListChecks, Weight, Flame, Loader2, Hourglass } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import { db } from '../../db/db.js';
 import { calcWorkoutXP, sessionQuality } from '../../utils/rpg.js';
@@ -11,14 +11,17 @@ import { deriveRoutineName } from '../../utils/routineName.js';
 import { fmtVolume } from '../../utils/units.js';
 import { IRON_PER_SESSION, IRON_PER_PR } from '../../utils/economy.js';
 import { strengthKcal } from '../../utils/calories.js';
-import { Flame } from 'lucide-react';
+import { todayKey } from '../../utils/dateKey.js';
+import { suggestEndAt } from '../../utils/workoutSession.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import XPBar from '../rpg/XPBar.jsx';
 import ShareButton from '../share/ShareButton.jsx';
 import CountUp from '../fx/CountUp.jsx';
 
-export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, onSave, onClose }) {
+const NOOP = () => {};
+
+export default function EndWorkoutModal({ isOpen, activeWorkout, onSave, onClose }) {
   const { profile } = useRPG();
   const unit = useSettingsStore((s) => s.unit);
   // Best working weight per lift, as it stands *right now* — the PR rows are
@@ -30,6 +33,28 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
     for (const p of rows) map[p.exerciseId] = Math.max(map[p.exerciseId] ?? 0, p.value ?? 0);
     return map;
   }, []);
+
+  // "Now" is when the sheet opened, so the numbers hold still while you read.
+  const [openedAt, setOpenedAt] = useState(() => Date.now());
+  useEffect(() => {
+    if (isOpen) setOpenedAt(Date.now());
+  }, [isOpen]);
+
+  // Left the gym without tapping Finish? Offer to end at the last set, so the
+  // walk home is not recorded as training time — or as calories.
+  const idleEnd = useMemo(
+    () => (activeWorkout ? suggestEndAt(activeWorkout, openedAt) : null),
+    [activeWorkout, openedAt]
+  );
+  const [endAtLast, setEndAtLast] = useState(true);
+  useEffect(() => {
+    if (isOpen) setEndAtLast(true);
+  }, [isOpen]);
+  const endAt = idleEnd && endAtLast ? idleEnd : null;
+  const elapsedSecs = activeWorkout
+    ? Math.max(0, Math.round(((endAt ?? openedAt) - activeWorkout.startedAt) / 1000))
+    : 0;
+  const idleMin = idleEnd ? Math.round((openedAt - idleEnd) / 60000) : 0;
 
   const stats = useMemo(() => {
     if (!activeWorkout) return null;
@@ -95,6 +120,13 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
     if (!touched && derived.name) setRoutineName(derived.name);
   }, [derived.name, touched]);
 
+  // While the save runs, the sheet cannot be closed and neither button does
+  // anything. A double tap used to save the whole workout twice; closing
+  // mid-save let you log sets into a session that was already being written —
+  // and then dropped.
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+
   if (!stats) return null;
 
   // Below 3% either way is rounding, not a story worth telling.
@@ -114,18 +146,29 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
           }
         : null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (savingRef.current || stats.sets === 0) return;
+    savingRef.current = true;
+    setSaving(true);
     const trimmed = routineName.trim();
     const routine = canSaveRoutine && saveRoutine
       ? { saveRoutine: true, routineName: trimmed || derived.name, autoKey: derived.autoKey, nameEdited: trimmed !== derived.name }
       : null;
-    onSave(stats.xp, routine);
+    try {
+      await onSave(stats.xp, routine, { endAt });
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
 
   const shareData = {
-    name: activeWorkout.name,
+    name: (activeWorkout.name ?? '').trim() || 'Workout',
     athlete: profile?.name || null,
-    date: new Date().toISOString().slice(0, 10),
+    // The day the session started, as a local calendar key — the same date it
+    // is saved under. `toISOString()` was the UTC date: tomorrow's, for an
+    // evening session anywhere west of Greenwich.
+    date: todayKey(new Date(activeWorkout.startedAt)),
     duration: elapsedSecs,
     totalVolume,
     totalSets: stats.sets,
@@ -136,30 +179,61 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
     unit,
   };
 
+  const tile = 'rounded-xl p-3';
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Workout complete">
+    <Modal isOpen={isOpen} onClose={saving ? NOOP : onClose} title="Workout complete">
+      {idleEnd && (
+        <div className="mb-4 rounded-2xl p-3" style={{ background: 'var(--color-ivory)' }}>
+          <p className="flex items-center gap-2 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+            <Hourglass size={14} style={{ color: 'var(--color-gold)' }} />
+            Your last set was {idleMin >= 60 ? `${Math.floor(idleMin / 60)} h ${idleMin % 60} min` : `${idleMin} min`} ago
+          </p>
+          <div className="mt-2.5 flex gap-2">
+            {[
+              { on: true, label: 'End at last set' },
+              { on: false, label: 'End now' },
+            ].map((opt) => (
+              <button
+                key={opt.label}
+                type="button"
+                aria-pressed={endAtLast === opt.on}
+                onClick={() => setEndAtLast(opt.on)}
+                disabled={saving}
+                className="h-10 flex-1 rounded-xl font-sans text-xs font-semibold"
+                style={{
+                  background: endAtLast === opt.on ? 'var(--color-gold)' : 'var(--color-chalk)',
+                  color: endAtLast === opt.on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats grid */}
       <div className="mb-5 grid grid-cols-2 gap-3">
-        <div className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
+        <div className={tile} style={{ background: 'var(--color-ivory)' }}>
           <Clock size={14} style={{ color: 'var(--color-ash)' }} />
           <p className="mt-1 font-mono text-xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
             {formatDuration(elapsedSecs)}
           </p>
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Duration</p>
         </div>
-        <div className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
-          <Trophy size={14} style={{ color: 'var(--color-ash)' }} />
+        <div className={tile} style={{ background: 'var(--color-ivory)' }}>
+          <ListChecks size={14} style={{ color: 'var(--color-ash)' }} />
           <p className="mt-1 font-mono text-xl font-medium" style={{ color: 'var(--color-text-primary)' }}>
             {stats.sets}
           </p>
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Sets</p>
         </div>
-        <div className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
-          <p className="font-sans text-xs font-medium" style={{ color: 'var(--color-ash)' }}>vol</p>
+        <div className={tile} style={{ background: 'var(--color-ivory)' }}>
+          <Weight size={14} style={{ color: 'var(--color-ash)' }} />
           <CountUp value={totalVolume} format={(n) => fmtVolume(n, unit)} className="mt-1 block font-mono text-xl font-medium" style={{ color: 'var(--color-text-primary)' }} />
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Total volume</p>
         </div>
-        <div className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
+        <div className={tile} style={{ background: 'var(--color-ivory)' }}>
           <Zap size={14} style={{ color: 'var(--color-gold)' }} />
           <CountUp value={stats.xp} format={(n) => `+${Math.round(n)}`} className="mt-1 block font-mono text-xl font-medium" style={{ color: 'var(--color-gold)' }} />
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>XP earned</p>
@@ -210,8 +284,11 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
       {canSaveRoutine && (
         <div className="mb-5 rounded-2xl p-3" style={{ background: 'var(--color-ivory)' }}>
           <button
+            type="button"
             onClick={() => setSaveRoutine((v) => !v)}
-            className="flex w-full items-center gap-2.5"
+            disabled={saving}
+            aria-pressed={saveRoutine}
+            className="flex min-h-10 w-full items-center gap-2.5"
           >
             <span
               className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
@@ -229,6 +306,8 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
               value={routineName}
               onChange={(e) => { setRoutineName(e.target.value); setTouched(true); }}
               placeholder="Routine name"
+              aria-label="Routine name"
+              disabled={saving}
               className="mt-2.5 w-full rounded-xl px-3 py-2.5 font-sans text-sm outline-none"
               style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)', color: 'var(--color-text-primary)' }}
             />
@@ -239,33 +318,40 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, elapsedSecs, on
       {/* Actions */}
       <div className="flex gap-3">
         <button
+          type="button"
           onClick={onClose}
+          disabled={saving}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
+          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)', opacity: saving ? 0.5 : 1 }}
         >
           Keep going
         </button>
         <button
+          type="button"
           onClick={handleSave}
-          disabled={!stats || stats.sets === 0}
-          className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: !stats || stats.sets === 0 ? 0.35 : 1 }}
+          disabled={saving || stats.sets === 0}
+          aria-busy={saving}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
+          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: stats.sets === 0 ? 0.35 : 1 }}
         >
-          Save & finish
+          {saving && <Loader2 size={15} className="animate-spin motion-reduce:animate-none" aria-hidden />}
+          {saving ? 'Saving…' : 'Save & finish'}
         </button>
       </div>
-      {stats && stats.sets === 0 && (
+      {stats.sets === 0 && (
         <p className="mt-2 text-center font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
           Log at least one set to finish — or discard the session.
         </p>
       )}
 
-      <ShareButton
-        data={shareData}
-        label="Share card"
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium"
-        style={{ background: 'var(--color-stone)', color: 'var(--color-text-inverse)' }}
-      />
+      {!saving && (
+        <ShareButton
+          data={shareData}
+          label="Share card"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium"
+          style={{ background: 'var(--color-stone)', color: 'var(--color-text-inverse)' }}
+        />
+      )}
     </Modal>
   );
 }

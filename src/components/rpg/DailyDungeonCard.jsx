@@ -1,14 +1,17 @@
 import { Swords, Check, Target } from 'lucide-react';
-import { todaysDungeon, affixEffects, dungeonObjective } from '../../utils/dungeon.js';
+import { todaysDungeon, affixEffects, dungeonObjective, dungeonClearedOn } from '../../utils/dungeon.js';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../../db/db.js';
 import { generateRoutine, makeRng } from '../../utils/routineGenerator.js';
 import { hashSeed } from '../../utils/crit.js';
-import { todayKey } from '../../utils/dateKey.js';
+import { useTodayKey } from '../../hooks/useTodayKey.js';
 import { useRPG } from '../../hooks/useRPG.js';
 import { useExercises } from '../../hooks/useExercises.js';
 import useWorkoutStore from '../../store/workoutStore.js';
 import useSettingsStore from '../../store/settingsStore.js';
 import { useNavigate } from 'react-router-dom';
 import { playChime } from '../../utils/sound.js';
+import { confirmReplaceSession } from '../../utils/sessionGuard.js';
 
 // Map a numeric level to the generator's difficulty band.
 function levelBand(level = 1) {
@@ -27,13 +30,21 @@ export default function DailyDungeonCard() {
   const startDungeon = useWorkoutStore((s) => s.startDungeon);
   const lastDungeonClaim = useSettingsStore((s) => s.lastDungeonClaim);
 
-  const today = todayKey();
+  // Re-renders at midnight: a card left open overnight kept offering
+  // yesterday's dungeon, already marked cleared.
+  const today = useTodayKey();
   const dungeon = todaysDungeon(today);
   const fx = affixEffects(dungeon.affixes);
   const objective = dungeonObjective(dungeon);
-  const cleared = lastDungeonClaim === today;
+  // From the day's workout rows, not just settings: deleting the session that
+  // cleared it re-opens the dungeon (and its Iron leaves with it).
+  const todayRows = useLiveQuery(() => db.workouts.where('date').equals(today).toArray(), [today]);
+  const cleared = dungeonClearedOn(todayRows ?? [], today, lastDungeonClaim);
 
-  function enter() {
+  async function enter() {
+    // The card stays on Home while a session is open, and entering used to
+    // overwrite that session — sets and all — without a word.
+    if (!(await confirmReplaceSession('the dungeon'))) return;
     const level = levelBand(profile?.level ?? 1);
     const rng = makeRng(Math.floor(hashSeed(dungeon.dateKey, 'gen') * 1e9));
     const slots = generateRoutine({ exercises: allExercises, groups: dungeon.muscles, level, rng });
@@ -83,6 +94,7 @@ export default function DailyDungeonCard() {
       </div>
 
       <button
+        type="button"
         onClick={enter}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 font-sans text-sm font-semibold"
         style={{ background: cleared ? 'var(--color-ivory)' : 'var(--color-gold)', color: cleared ? 'var(--color-text-primary)' : 'var(--color-obsidian)' }}

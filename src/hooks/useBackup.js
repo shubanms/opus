@@ -5,6 +5,34 @@ import useSettingsStore from '../store/settingsStore.js';
 import useUIStore from '../store/uiStore.js';
 import { buildBackup, exportData, shareBackup } from '../utils/dataActions.js';
 import { BACKUP, backupSignature, backupStatus, looksWiped, shouldBackup } from '../utils/backup.js';
+import { seedDatabase } from '../utils/wger.js';
+import { healRecords } from '../utils/workoutActions.js';
+
+/**
+ * Mend the data before anything reads it for a backup: put back missing stock
+ * exercises, give orphaned ids their rows (see utils/catalogue.js), and re-date
+ * records an older build stamped "now". Once per app open; cheap when there is
+ * nothing to do, which is almost always.
+ *
+ * This is what heals a device that already restored a broken backup — and it
+ * runs before the weekly backup is built, because the last time a catalogue
+ * broke, the very next automatic backup saved the broken state over the good
+ * one.
+ */
+let healing = null;
+function healOnce() {
+  healing ??= (async () => {
+    try {
+      await seedDatabase();
+      await healRecords();
+    } catch (e) {
+      // Never let a repair stop the app (or the backup) it is protecting.
+      console.error('Startup repair failed:', e);
+      healing = null;
+    }
+  })();
+  return healing;
+}
 
 // The weekly backup, and the alarm for when it was needed and wasn't there.
 //
@@ -58,16 +86,25 @@ export function useRunBackup() {
   }, [recordBackup]);
 }
 
-/** Push a copy off the device entirely. Falls back to a download. */
+/**
+ * Push a copy off the device entirely. Resolves 'shared', 'cancelled' (the
+ * sheet was dismissed — nothing happened, say nothing) or 'downloaded' (no
+ * Web Share here, or it failed, so the copy went to Downloads instead).
+ *
+ * Dismissing the sheet used to download anyway, which is not what "close"
+ * means; and the signature recorded is of the payload actually shared, not a
+ * second one built afterwards.
+ */
 export function useShareBackup() {
   const runBackup = useRunBackup();
   const recordBackup = useSettingsStore((s) => s.recordBackup);
   return useCallback(async () => {
-    const shared = await shareBackup();
-    if (shared) {
-      recordBackup(Date.now(), backupSignature(await buildBackup()));
+    const { outcome, payload } = await shareBackup();
+    if (outcome === 'shared') {
+      recordBackup(Date.now(), backupSignature(payload));
       return 'shared';
     }
+    if (outcome === 'cancelled') return 'cancelled';
     await runBackup();
     return 'downloaded';
   }, [runBackup, recordBackup]);
@@ -89,6 +126,12 @@ export function useAutoBackup() {
   const lastBackupSig = useSettingsStore((s) => s.lastBackupSig);
   const recordBackup = useSettingsStore((s) => s.recordBackup);
 
+  // Mounted once in AppLayout, so this is the one place every app open passes
+  // through — whichever screen it opens on.
+  useEffect(() => {
+    healOnce();
+  }, []);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs once per app open. lastBackupAt/lastBackupSig/recordBackup are read at run time; tracking them would fire a second backup the instant the first records itself.
   useEffect(() => {
     if (!enabled || !onboarded) return;
@@ -96,6 +139,7 @@ export function useAutoBackup() {
 
     (async () => {
       try {
+        await healOnce();
         const status = backupStatus(lastBackupAt);
         if (status.state === BACKUP.FRESH) return;
 

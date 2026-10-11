@@ -24,6 +24,40 @@ export const MUSCLE_LABEL = {
   hamstring: 'Hamstrings', gluteal: 'Glutes', calves: 'Calves', forearm: 'Forearms',
 };
 
+/**
+ * Extra regions the body map draws for one of our muscle groups.
+ *
+ * react-body-highlighter splits the lower leg into `calves` and a left/right
+ * `soleus`, while exercises only ever say "calves" — so a calf day lit half
+ * the calf, and the back view's soleus never lit at all.
+ */
+const MAP_EXTRA = { calves: ['left-soleus', 'right-soleus'] };
+
+/** Our muscle names → every map region that should light for them. */
+export function mapRegions(muscles) {
+  const out = [];
+  for (const m of muscles ?? []) {
+    if (!MUSCLE_LABEL[m]) continue;
+    out.push(m, ...(MAP_EXTRA[m] ?? []));
+  }
+  return out;
+}
+
+/**
+ * A tapped map region → the muscle group it belongs to, or null.
+ *
+ * The map also draws regions no exercise trains (head, neck, knees, the
+ * adductors and abductors). Tapping one printed "undefined — not trained yet";
+ * they are scenery, and a tap on them should do nothing.
+ */
+export function muscleForRegion(region) {
+  if (MUSCLE_LABEL[region]) return region;
+  for (const [muscle, extra] of Object.entries(MAP_EXTRA)) {
+    if (extra.includes(region)) return muscle;
+  }
+  return null;
+}
+
 const LARGE = 12;
 const MEDIUM = 8;
 const SMALL = 6;

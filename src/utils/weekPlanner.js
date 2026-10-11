@@ -1,9 +1,9 @@
 // Split-aware WEEK planner. Turns a chosen split + days/week + level + session
 // length + rest preference into a full week of day-routines, composing the
 // single-day generateRoutine() per day. Pure (seeded rng, no DB/Date) so it's
-// unit-testable and shared by web + native. Each day is ready for the platform's
-// createTemplate: { name, dayOfWeek, autoKey, groups, exercises:[{exerciseId,
-// targetSets, targetReps, targetWeight, targetRest}] }.
+// unit-testable. Each day is ready for createTemplate: { name, dayOfWeek,
+// autoKey, groups, exercises:[{exerciseId, targetSets, targetReps,
+// targetWeight, targetRest}] }.
 import { generateRoutine, LEVEL_DEFAULTS } from './routineGenerator.js';
 
 // Muscle buckets over the 15-token taxonomy (matches routineName's grouping).
@@ -36,7 +36,8 @@ function letterize(blueprints) {
 }
 
 // Each split: allowed days-per-week + a layout(days) → ordered day blueprints
-// ({ key, name, groups }). key becomes the day's autoKey (day-of-week re-match).
+// ({ key, name, groups }). The key becomes the day's autoKey, namespaced by
+// PLAN_KEY_PREFIX (see planWeek).
 export const SPLITS = {
   ppl: {
     key: 'ppl', label: 'Push · Pull · Legs',
@@ -111,6 +112,14 @@ export const SPLITS = {
 // Ordered list for pickers.
 export const SPLIT_LIST = Object.values(SPLITS);
 
+// Planned days carry `plan:push`, never a bare `push`. "Save as routine" on a
+// finished quick-start session re-finds the routine it saved last time by
+// deriveRoutineName's key — 'push', 'pull', 'legs', 'upper', 'full-body',
+// 'chest' — and a planned "Push A" stored under the same bare key was found
+// instead: a three-exercise ad-hoc session silently replaced its six planned
+// lifts. A namespaced key can't be produced by deriveRoutineName.
+export const PLAN_KEY_PREFIX = 'plan:';
+
 // Which weekdays (1=Mon … 7=Sun) the N training days land on, spreading rest.
 export function weekdayLayout(days) {
   const MAP = { 1: [1], 2: [1, 4], 3: [1, 3, 5], 4: [1, 2, 4, 5], 5: [1, 2, 3, 4, 5], 6: [1, 2, 3, 4, 5, 6], 7: [1, 2, 3, 4, 5, 6, 7] };
@@ -168,6 +177,6 @@ export function planWeek({ split, days, level = 'intermediate', sessionMinutes =
       targetWeight: sl.targetWeight ?? null,
       targetRest: restFor(rest, isCompound(byId.get(sl.exerciseId))),
     }));
-    return { name: bp.name, dayOfWeek: weekdays[i] ?? null, autoKey: bp.key, groups: bp.groups, exercises: withRest };
+    return { name: bp.name, dayOfWeek: weekdays[i] ?? null, autoKey: `${PLAN_KEY_PREFIX}${bp.key}`, groups: bp.groups, exercises: withRest };
   });
 }

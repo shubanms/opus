@@ -15,18 +15,21 @@ import useUIStore from '../store/uiStore.js';
 import { playChime } from './sound.js';
 
 /**
- * @param label   What was deleted, as a person would say it ("Workout").
+ * @param label   What was deleted, as a person would say it ("Push · 28 Sep").
+ *                May be a function of the snapshot, for a delete that can turn
+ *                out bigger than asked (a session's last set takes the session).
  * @param remove  Async, returns a snapshot (or null if nothing was deleted).
  * @param restore Async, takes that snapshot and puts it back.
  * @param onUndo  Optional side effect after a successful restore — a page that
  *                navigated away on delete needs to come back.
  */
-export async function deleteWithUndo({ label, remove, restore, onUndo }) {
+export async function deleteWithUndo({ label: labelOf, remove, restore, onUndo }) {
   const snapshot = await remove();
   // Nothing was deleted — a missing row, or a built-in exercise that cannot be.
   // Saying "deleted" here would be a lie with an Undo button on it.
   if (!snapshot) return null;
 
+  const label = typeof labelOf === 'function' ? labelOf(snapshot) : labelOf;
   playChime('delete');
   useUIStore.getState().showToast(`${label} deleted`, {
     action: {

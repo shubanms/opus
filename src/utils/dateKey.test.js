@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { todayKey, parseKey, daysBetween, friendlyDate, monthLabel, shiftKey } from './dateKey.js';
+import { todayKey, parseKey, daysBetween, friendlyDate, monthLabel, shiftKey, shortDate } from './dateKey.js';
 
 describe('todayKey', () => {
   it('formats a local calendar date as YYYY-MM-DD', () => {
@@ -114,5 +114,30 @@ describe('shiftKey', () => {
   it('returns null rather than a bogus date', () => {
     expect(shiftKey(null, -1)).toBe(null);
     expect(shiftKey('nonsense', -1)).toBe(null);
+  });
+});
+
+describe('shortDate', () => {
+  it('reads day-first with a month name', () => {
+    expect(shortDate('2026-08-17')).toBe('17 Aug');
+    expect(shortDate('2026-01-05')).toBe('5 Jan');
+  });
+  it('never says Today — an axis tick is a position', () => {
+    expect(shortDate(todayKey())).not.toBe('Today');
+  });
+  it('is empty for junk', () => {
+    expect(shortDate('')).toBe('');
+    expect(shortDate(null)).toBe('');
+  });
+});
+
+describe('daysBetween across a clock change', () => {
+  it('counts one day across a 23-hour spring-forward day', () => {
+    // Whatever the runner's zone, consecutive keys are one day apart and two
+    // keys straddling any DST change are two days apart.
+    expect(daysBetween('2026-03-08', '2026-03-09')).toBe(1);
+    expect(daysBetween('2026-03-07', '2026-03-09')).toBe(2);
+    expect(daysBetween('2026-03-28', '2026-03-30')).toBe(2);
+    expect(daysBetween('2026-10-24', '2026-10-26')).toBe(2);
   });
 });

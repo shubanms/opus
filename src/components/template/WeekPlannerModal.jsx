@@ -4,15 +4,17 @@ import Modal from '../ui/Modal.jsx';
 import Particles from '../fx/Particles.jsx';
 import { useExercises } from '../../hooks/useExercises.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
-import { createTemplate } from '../../utils/templateActions.js';
+import { createWeek, ROUTINE_SOURCE } from '../../utils/templateActions.js';
 import { makeRng } from '../../utils/routineGenerator.js';
 import { planWeek, SPLIT_LIST, REST_PREFS } from '../../utils/weekPlanner.js';
+import { DAY_SHORT } from '../../utils/routineDays.js';
+import { confirmReplaceWeek } from './confirmReplaceWeek.js';
 import { playChime } from '../../utils/sound.js';
+import useUIStore from '../../store/uiStore.js';
 
 const LEVELS = ['beginner', 'intermediate', 'advanced'];
 const MINUTES = [30, 45, 60, 75, 90];
 const REST_LABEL = { short: 'Short', standard: 'Standard', long: 'Long' };
-const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 // weekPlanner uses 1=Mon … 7=Sun; the app stores 0=Sun … 6=Sat.
 const toAppDow = (d) => (d === 7 ? 0 : d);
@@ -25,8 +27,10 @@ function Segmented({ options, value, onChange }) {
         const l = typeof o === 'object' ? o.l : cap(o);
         return (
           <button
+            type="button"
             key={v}
             onClick={() => onChange(v)}
+            aria-pressed={value === v}
             className="flex-1 rounded-lg py-2 font-sans text-xs font-medium"
             style={{ background: value === v ? 'var(--color-chalk)' : 'transparent', color: value === v ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
           >
@@ -38,7 +42,7 @@ function Segmented({ options, value, onChange }) {
   );
 }
 
-export default function WeekPlannerModal({ isOpen, onClose }) {
+export default function WeekPlannerModal({ isOpen, onClose, templates = [] }) {
   const allExercises = useExercises();
   const haptic = useHaptics();
   const [splitKey, setSplitKey] = useState('ppl');
@@ -62,7 +66,8 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
 
   function generate() {
     if (!allExercises.length) return;
-    const w = planWeek({ split: splitKey, days, level, sessionMinutes: minutes, rest, exercises: allExercises, rng: makeRng(Date.now()) });
+    const w = planWeek({ split: splitKey, days, level, sessionMinutes: minutes, rest, exercises: allExercises, rng: makeRng(Date.now()) })
+      .map((d) => ({ ...d, dayOfWeek: toAppDow(d.dayOfWeek) }));
     setWeek(w);
     haptic('success');
     playChime('start');
@@ -74,12 +79,16 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
     if (!week?.length || saving) return;
     setSaving(true);
     try {
-      for (const day of week) {
-        await createTemplate({ name: day.name, dayOfWeek: toAppDow(day.dayOfWeek), autoKey: day.autoKey, exercises: day.exercises });
-      }
+      const ok = await confirmReplaceWeek(templates, week.map((d) => d.dayOfWeek), 'The new week');
+      if (!ok) return;
+      await createWeek(week, { source: ROUTINE_SOURCE.plan });
       haptic('success');
       playChime('success');
+      useUIStore.getState().showToast(`Week planned — ${week.length} routine${week.length === 1 ? '' : 's'}`, { type: 'success' });
       close();
+    } catch (e) {
+      console.error('Save week failed:', e);
+      useUIStore.getState().showToast('Could not save that week', { type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -100,8 +109,10 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
           const on = s.key === splitKey;
           return (
             <button
+              type="button"
               key={s.key}
               onClick={() => pickSplit(s.key)}
+              aria-pressed={on}
               className="rounded-xl border px-4 py-3 text-left"
               style={{ borderColor: on ? 'var(--color-gold)' : 'transparent', background: on ? 'var(--color-gold-soft, rgba(139, 125, 255,0.12))' : 'var(--color-ivory)' }}
             >
@@ -128,6 +139,7 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
       <Segmented options={REST_PREFS.map((r) => ({ v: r, l: REST_LABEL[r] }))} value={rest} onChange={(v) => { setRest(v); setWeek(null); }} />
 
       <button
+        type="button"
         onClick={generate}
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
         style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
@@ -137,11 +149,11 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
 
       {week && (
         <div className="mt-4 flex flex-col gap-3">
-          {week.map((day, i) => (
-            <div key={i} className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
+          {week.map((day) => (
+            <div key={`${day.dayOfWeek}-${day.name}`} className="rounded-xl p-3" style={{ background: 'var(--color-ivory)' }}>
               <div className="mb-1.5 flex items-center justify-between">
                 <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  {DOW[toAppDow(day.dayOfWeek)]} · {day.name}
+                  {DAY_SHORT[day.dayOfWeek]} · {day.name}
                 </span>
                 <span className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>{day.exercises.length} lifts</span>
               </div>
@@ -157,6 +169,7 @@ export default function WeekPlannerModal({ isOpen, onClose }) {
           ))}
 
           <button
+            type="button"
             onClick={saveWeek}
             disabled={saving}
             className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"

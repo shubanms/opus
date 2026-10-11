@@ -10,12 +10,15 @@
 const SETTINGS_KEY = 'opus_notif_settings';
 const PROMPTED_KEY = 'opus_notif_prompted';
 
+// `inApp` types are the reminders shown inside the app on open (see
+// utils/reminders.js) — they need no permission, so Settings always offers
+// their switches. The others only ever arrive as system notifications.
 export const NOTIF_TYPES = [
-  { key: 'prCelebration', label: 'PR celebrations' },
-  { key: 'streakRisk', label: 'Streak at risk' },
-  { key: 'gymNudge', label: 'Daily gym reminder' },
-  { key: 'weeklySummary', label: 'Weekly summary' },
-  { key: 'staleRoutine', label: 'Switch up a stale routine' },
+  { key: 'prCelebration', label: 'PR celebrations', inApp: false },
+  { key: 'streakRisk', label: 'Streak at risk', inApp: true },
+  { key: 'gymNudge', label: 'Daily gym reminder', inApp: true },
+  { key: 'weeklySummary', label: 'Weekly summary', inApp: true },
+  { key: 'staleRoutine', label: 'Switch up a stale routine', inApp: true },
 ];
 
 const DEFAULTS = {

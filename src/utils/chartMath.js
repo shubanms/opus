@@ -98,6 +98,25 @@ function trimZero(n) {
 }
 
 /**
+ * A value as the scrub readout states it: 100.4 → "100.4", 12345 → "12,345".
+ *
+ * The readout used the axis formatter, which exists to be short, so dragging
+ * onto a 100.4 kg weigh-in said "100 kg" and a 12,345-step day said "12k" —
+ * the one place you go for the exact number gave you the rounded one. One
+ * decimal below 1,000; whole and grouped above it. Locale-free, like the rest
+ * of the chart text.
+ */
+export function preciseNumber(n) {
+  if (!Number.isFinite(n)) return '';
+  if (Math.abs(n) >= 1000) {
+    const r = Math.round(n);
+    const sign = r < 0 ? '-' : '';
+    return sign + String(Math.abs(r)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  return trimZero(Math.round(n * 10) / 10);
+}
+
+/**
  * Index of the position nearest `x` — the scrub hit test.
  *
  * Linear because these series are tens of points, not thousands; a binary

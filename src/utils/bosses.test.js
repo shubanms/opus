@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { levelCap, cappedLevel, activeBoss, bossList } from './bosses.js';
+import { levelCap, cappedLevel, activeBoss, bossList, bossDesc, BOSSES } from './bosses.js';
 
 const none = { totalVolume: 0, bestStreak: 0, prCount: 0, muscleVariety: 0 };
 const past10 = { ...none, totalVolume: 30000 };           // clears boss10 only
@@ -47,5 +47,27 @@ describe('bossList', () => {
     const list = bossList(past10);
     expect(list.find((b) => b.gate === 10).cleared).toBe(true);
     expect(list.find((b) => b.gate === 20).cleared).toBe(false);
+  });
+});
+
+describe('bossDesc', () => {
+  const proving = BOSSES.find((b) => b.key === 'boss10');
+  const gauntlet = BOSSES.find((b) => b.key === 'boss20');
+
+  it('words a volume gate in the lifter\'s unit', () => {
+    expect(bossDesc(proving, 'kg')).toBe('Lift 25,000 kg in total');
+    expect(bossDesc(proving, 'lbs')).toBe('Lift 55,116 lbs in total');
+  });
+
+  it('leaves other feats as written', () => {
+    expect(bossDesc(gauntlet, 'lbs')).toBe('Keep a streak of 7');
+    expect(bossDesc(null)).toBe('');
+  });
+
+  it('agrees with the gate it describes', () => {
+    for (const b of BOSSES.filter((x) => x.volumeKg)) {
+      expect(b.test({ totalVolume: b.volumeKg, bestStreak: 0, prCount: 0, muscleVariety: 0 })).toBe(true);
+      expect(b.test({ totalVolume: b.volumeKg - 1, bestStreak: 0, prCount: 0, muscleVariety: 0 })).toBe(false);
+    }
   });
 });

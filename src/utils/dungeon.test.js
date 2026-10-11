@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { todaysDungeon, DUNGEON_THEMES, AFFIXES, DUNGEON_MUSCLES, affixEffects, dungeonObjective, isDungeonCleared, dungeonReward } from './dungeon.js';
+import { todaysDungeon, DUNGEON_THEMES, AFFIXES, DUNGEON_MUSCLES, affixEffects, dungeonObjective, isDungeonCleared, dungeonReward, dungeonClearedOn } from './dungeon.js';
 
 describe('todaysDungeon', () => {
   it('is deterministic for a date key', () => {
@@ -74,5 +74,35 @@ describe('dungeonReward', () => {
   });
   it('adds a per-PR bonus under Berserk', () => {
     expect(dungeonReward({ ironReward: 150, affixes: [{ id: 'berserk' }] }, { prCount: 2 })).toBe(150 + 60);
+  });
+});
+
+describe('dungeon names', () => {
+  it('never reuse a rank or a boss gate', async () => {
+    const { TITLES } = await import('./rpg.js');
+    const { BOSSES } = await import('./bosses.js');
+    const taken = new Set([...Object.values(TITLES), ...BOSSES.map((b) => b.title)]);
+    for (const t of DUNGEON_THEMES) {
+      expect(taken.has(t.name)).toBe(false);
+      expect(taken.has(t.boss)).toBe(false);
+    }
+    for (const a of AFFIXES) expect(taken.has(a.name)).toBe(false);
+  });
+});
+
+describe('dungeonClearedOn', () => {
+  const day = '2026-10-05';
+  it('a session that cleared it carries the date', () => {
+    expect(dungeonClearedOn([{ dungeonDate: day, ironEarned: 25 }], day, day)).toBe(true);
+  });
+  it('deleting that session re-opens the dungeon, whatever settings remember', () => {
+    expect(dungeonClearedOn([], day, day)).toBe(false);
+    expect(dungeonClearedOn([{ dungeonDate: null, ironEarned: 25 }], day, day)).toBe(false);
+  });
+  it('a claim from before rows carried the date still counts that day', () => {
+    expect(dungeonClearedOn([{ totalSets: 8 }], day, day)).toBe(true);
+  });
+  it('a claim on another day says nothing about this one', () => {
+    expect(dungeonClearedOn([{ totalSets: 8 }], day, '2026-10-04')).toBe(false);
   });
 });

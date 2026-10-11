@@ -27,7 +27,9 @@ const DEFAULTS = {
   autoBackup: true, lastBackupAt: 0, lastBackupSig: '', hadData: false, lastKnownWorkouts: 0,
   // Iron economy: spent Iron + owned/equipped cosmetics (balance is derived).
   ironSpent: 0, ownedCosmetics: [], equipped: { titleFlair: null, cardTheme: null, logoSkin: null },
-  // Daily dungeon: claimed bonus Iron + the date key of the last claim.
+  // Daily dungeon: the date key of the last claim. `dungeonIron` is frozen —
+  // the dungeon Iron banked before each workout row carried its own
+  // `dungeonIron`; it is still part of the balance, but nothing adds to it.
   dungeonIron: 0, lastDungeonClaim: '',
   // Equipment per location. barKg null → use global barWeight; plates null → standard
   // set for the current unit; plates are display-unit numbers stamped with `unit`.
@@ -52,8 +54,13 @@ const useSettingsStore = create((set, get) => ({
     const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
     localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
   },
-  claimDungeon(amount, dateKey) {
-    set((s) => (s.lastDungeonClaim === dateKey ? s : { dungeonIron: (s.dungeonIron || 0) + amount, lastDungeonClaim: dateKey }));
+  // Marks today's dungeon as claimed. The Iron itself now lives on the workout
+  // row (`dungeonIron`), so deleting that workout takes it back; adding it here
+  // too would pay it twice and keep it after the delete. `amount` stays in the
+  // signature for callers that still pass it.
+  claimDungeon(_amount, dateKey) {
+    if (get().lastDungeonClaim === dateKey) return;
+    set({ lastDungeonClaim: dateKey });
     get().persist();
   },
   // `count` because a streak rescue costs one token per day missed, while the
@@ -85,7 +92,15 @@ const useSettingsStore = create((set, get) => ({
    */
   noteData(workouts) {
     const n = Math.max(0, workouts || 0);
-    set((s) => ({ hadData: s.hadData || n > 0, lastKnownWorkouts: n > 0 ? n : s.lastKnownWorkouts }));
+    const s = get();
+    const hadData = s.hadData || n > 0;
+    const lastKnownWorkouts = n > 0 ? n : s.lastKnownWorkouts;
+    // Nothing new is the common case (every workout-count change re-runs this),
+    // and writing anyway is not harmless: during "Reset everything" the wipe
+    // empties the tables, this runs with 0, and an unconditional persist wrote
+    // the old prefs back into localStorage after it had been cleared.
+    if (hadData === s.hadData && lastKnownWorkouts === s.lastKnownWorkouts) return;
+    set({ hadData, lastKnownWorkouts });
     get().persist();
   },
   /**

@@ -15,6 +15,8 @@
 //
 // Pure + unit-tested.
 
+import { planByDay, WEEK_ORDER } from './routineDays.js';
+
 /** RFC 5545 BYDAY codes, indexed by JS `getDay()`. */
 export const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
@@ -91,13 +93,17 @@ export function nextOccurrence(dayOfWeek, hour, from = new Date()) {
 /**
  * A weekly recurring VEVENT per scheduled routine, each with a reminder.
  *
+ * One event per weekday: the routine that owns the day (routineDays — the
+ * newest, as on the plan grid and Home). Two routines left on one day by an
+ * older version, or a program installed twice, wrote two events for every
+ * session.
+ *
  * Returns null when no routine has a day assigned — an empty calendar file is a
  * confusing thing to hand someone.
  */
 export function buildIcs({ templates = [], hour = 18, durationMin = 60, alarmMin = 30, now = new Date() } = {}) {
-  const scheduled = (templates ?? []).filter(
-    (t) => Number.isInteger(t?.dayOfWeek) && t.dayOfWeek >= 0 && t.dayOfWeek <= 6
-  );
+  const byDay = planByDay(templates);
+  const scheduled = WEEK_ORDER.map((d) => byDay[d]).filter(Boolean);
   if (!scheduled.length) return null;
 
   const stamp = formatUtc(now);

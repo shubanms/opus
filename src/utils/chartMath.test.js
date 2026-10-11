@@ -3,6 +3,7 @@ import {
   niceTicks,
   padDomain,
   compactNumber,
+  preciseNumber,
   nearestIndex,
   tickIndices,
   radarPoint,
@@ -110,6 +111,29 @@ describe('compactNumber', () => {
   it('handles negatives and rubbish', () => {
     expect(compactNumber(-1500)).toBe('-1.5k');
     expect(compactNumber(Number.NaN)).toBe('');
+  });
+});
+
+describe('preciseNumber', () => {
+  it('keeps the decimal the axis rounds away', () => {
+    // The readout used compactNumber: 100.4 kg read "100", 12,345 steps "12k".
+    expect(preciseNumber(100.4)).toBe('100.4');
+    expect(compactNumber(100.4)).toBe('100');
+    expect(preciseNumber(99.96)).toBe('100');
+    expect(preciseNumber(7.25)).toBe('7.3');
+  });
+
+  it('groups large values instead of abbreviating them', () => {
+    expect(preciseNumber(12345)).toBe('12,345');
+    expect(preciseNumber(1000)).toBe('1,000');
+    expect(preciseNumber(2400000.4)).toBe('2,400,000');
+    expect(preciseNumber(-1500)).toBe('-1,500');
+  });
+
+  it('handles zero and rubbish', () => {
+    expect(preciseNumber(0)).toBe('0');
+    expect(preciseNumber(Number.NaN)).toBe('');
+    expect(preciseNumber(undefined)).toBe('');
   });
 });
 

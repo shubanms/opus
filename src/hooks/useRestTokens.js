@@ -11,10 +11,20 @@ import { tokenBalance, tokensEarned } from '../utils/streakShield.js';
 //
 // This was assembled inline on Home, which is why nothing else could offer a
 // token: the arithmetic lived in a page rather than anywhere reusable.
-export function useRestTokens() {
-  const workouts = useLiveQuery(() => db.workouts.count(), []) ?? 0;
-  const questClaims = useLiveQuery(() => db.questClaims.count(), []) ?? 0;
+
+/** `{ tokens, ready }` — `ready` is false until the history has been counted. */
+export function useRestTokenBalance() {
+  const counts = useLiveQuery(
+    async () => ({ workouts: await db.workouts.count(), questClaims: await db.questClaims.count() }),
+    []
+  );
   const spent = useSettingsStore((s) => s.tokensSpent);
   const purchased = useSettingsStore((s) => s.tokensPurchased);
-  return tokenBalance(tokensEarned({ workouts, questClaims }) + (purchased || 0), spent);
+  const tokens = tokenBalance(tokensEarned(counts ?? {}) + (purchased || 0), spent);
+  return { tokens, ready: counts !== undefined };
+}
+
+/** The balance on its own. Reads 0 for the moment before history is counted. */
+export function useRestTokens() {
+  return useRestTokenBalance().tokens;
 }

@@ -4,6 +4,9 @@
 // Day strings are built from integers, never via toISOString, so there is no
 // timezone drift.
 
+import { shiftKey } from './dateKey.js';
+import { lastWeeks } from './weeks.js';
+
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -54,4 +57,22 @@ export function stepMonth(year, month, delta) {
   const y = year + Math.floor(t / 12);
   const m = ((t % 12) + 12) % 12;
   return { year: y, month: m };
+}
+
+/**
+ * The consistency heatmap: `weeks` columns of Monday→Sunday cells, ending with
+ * the current week. Each cell is `{ key, trained, future }`.
+ *
+ * Built from date keys end to end. The grid used to make its keys with
+ * `toISOString()`, which is the UTC day — east of Greenwich every local
+ * midnight is the previous UTC day, so in India each Monday session lit the
+ * Tuesday row and today's session landed on tomorrow's (blank, "future") cell.
+ */
+export function heatmapWeeks(today, trainedDays = new Set(), weeks = 12) {
+  return lastWeeks(today, weeks).map((monday) =>
+    Array.from({ length: 7 }, (_, i) => {
+      const k = shiftKey(monday, i);
+      return { key: k, trained: trainedDays.has(k), future: k > today };
+    })
+  );
 }

@@ -1,7 +1,22 @@
 # OPUS — Project State
 
-Last updated: 2026-08-14
+Last updated: 2026-10-10
 Current sprint: **v7 — durability.** Roadmap v6 complete. App at v3.0.0.
+
+---
+
+**QA SWEEP (2026-10-10) — COMPLETE.** A full visual and functional test of every screen, then fixes. The full found-and-fixed list is in `docs/QA_SWEEP_2026-10.md`.
+- **Gates:** lint 0 errors and 11 warnings (was 214); 1,215 unit tests (was 661); build OK; 31 E2E tests (10 are new regression tests in `QA sweep regressions`).
+- **Worst finds:**
+  - A backup restore lost the exercise catalogue. Sets were orphaned because slim backups dropped stock and cardio rows.
+  - UTC date keys put the heatmap and health logs a day off in India.
+  - The day-streak capped Mon/Wed/Fri lifters at level 20.
+  - Records were re-dated to today on every recompute.
+  - The reduced-motion CSS collapsed every chart.
+- **New modules:** listed in ARCHITECTURE.md under "Added in the 2026-10 QA sweep".
+- **Lessons:**
+  - On the sandbox Chromium, Playwright's path-based `setInputFiles` silently attaches nothing. Pass `{ name, mimeType, buffer }` instead.
+  - The vite dev server must ignore `.claude/**`, or agent worktrees reload it constantly.
 
 ---
 

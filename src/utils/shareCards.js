@@ -223,14 +223,32 @@ export function drawWorkoutCard(ctx, data, theme = DEFAULT_THEME) {
     titleSize: 100,
   });
 
-  const muscles = muscleLine(d.muscles);
+  // The muscle line has to fit inside the card's margins. Four long names
+  // ("QUADRICEPS · LOWER BACK · HAMSTRING · CALVES") ran straight off the
+  // right edge of the image at 30px. Shrink to a floor first, then drop
+  // muscles from the end — a shorter true list beats a clipped one.
+  const lineOpts = { family: FONT.sans, tracking: 3 };
+  let muscles = '';
+  let muscleSize = 30;
+  for (let count = 4; count >= 1; count -= 1) {
+    const text = muscleLine(d.muscles, count).toUpperCase();
+    if (!text) break;
+    const size = fitFontSize({
+      measure: (sz) => measureText(ctx, text, { ...lineOpts, size: sz }),
+      maxWidth: CARD.inner,
+      max: 30,
+      min: 22,
+    });
+    muscles = text;
+    muscleSize = size;
+    if (measureText(ctx, text, { ...lineOpts, size }) <= CARD.inner) break;
+  }
   if (muscles) {
-    drawText(ctx, muscles.toUpperCase(), {
+    drawText(ctx, muscles, {
       x: CARD.pad,
       y: 548,
-      family: FONT.sans,
-      size: 30,
-      tracking: 3,
+      ...lineOpts,
+      size: muscleSize,
       color: theme.sub,
     });
   }

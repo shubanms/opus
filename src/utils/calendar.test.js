@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthLabel, dowLabels, monthGrid, monthStats, stepMonth } from './calendar.js';
+import { monthLabel, dowLabels, monthGrid, monthStats, stepMonth, heatmapWeeks } from './calendar.js';
 
 describe('monthLabel', () => {
   it('names the month and year', () => {
@@ -74,5 +74,41 @@ describe('stepMonth', () => {
   });
   it('wraps backward across January', () => {
     expect(stepMonth(2026, 0, -1)).toEqual({ year: 2025, month: 11 });
+  });
+});
+
+describe('heatmapWeeks', () => {
+  // Wednesday 7 Oct 2026; Mon/Wed/Fri trained.
+  const trained = new Set(['2026-09-28', '2026-09-30', '2026-10-02', '2026-10-05', '2026-10-07']);
+
+  it('puts each session on its own weekday row', () => {
+    const cols = heatmapWeeks('2026-10-07', trained, 2);
+    // Rows are Monday-first: 0 = Mon, 2 = Wed, 4 = Fri.
+    const litRows = cols.flatMap((col) => col.map((c, row) => (c.trained ? row : null)).filter((r) => r !== null));
+    expect(litRows).toEqual([0, 2, 4, 0, 2]);
+  });
+
+  it("lights today's session on today's cell and blanks only the days after it", () => {
+    const thisWeek = heatmapWeeks('2026-10-07', trained, 1)[0];
+    expect(thisWeek.map((c) => c.key)).toEqual([
+      '2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11',
+    ]);
+    expect(thisWeek[2]).toEqual({ key: '2026-10-07', trained: true, future: false });
+    expect(thisWeek.slice(3).every((c) => c.future)).toBe(true);
+    expect(thisWeek.slice(0, 3).some((c) => c.future)).toBe(false);
+  });
+
+  it('spans 12 weeks by default, oldest first', () => {
+    const cols = heatmapWeeks('2026-10-07', trained);
+    expect(cols).toHaveLength(12);
+    expect(cols[0][0].key).toBe('2026-07-20');
+    expect(cols[11][0].key).toBe('2026-10-05');
+  });
+
+  it('keeps seven distinct days per column across a clock change', () => {
+    const col = heatmapWeeks('2026-11-04', new Set(), 2)[0];
+    expect(col.map((c) => c.key)).toEqual([
+      '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01',
+    ]);
   });
 });

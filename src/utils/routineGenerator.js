@@ -46,6 +46,29 @@ export function pickForGroup(exercises, group, level, rng) {
   return buckets.flatMap((b) => shuffle(b, rng));
 }
 
+// The order groups are filled in. Round-robin over the groups as listed used
+// to take one exercise per group in list order and stop at the count — a Full
+// Body day (13 groups, 4–8 exercises) ran out on the pushing and pulling
+// muscles and never reached the legs, and an Upper day never reached biceps.
+// Big movers first, alternating lower / push / pull, then the smaller groups.
+export const MUSCLE_PRIORITY = [
+  'quadriceps', 'chest', 'upper-back', 'hamstring',
+  'front-deltoids', 'biceps', 'gluteal', 'triceps', 'back-deltoids', 'calves',
+  'abs', 'lower-back', 'trapezius', 'obliques', 'forearm',
+];
+
+/** Groups in fill order (MUSCLE_PRIORITY), unknown groups last in their given order. */
+export function orderGroups(groups) {
+  const rank = (g) => {
+    const i = MUSCLE_PRIORITY.indexOf(g);
+    return i < 0 ? MUSCLE_PRIORITY.length : i;
+  };
+  return [...new Set((groups ?? []).filter(Boolean))]
+    .map((g, i) => ({ g, i }))
+    .sort((a, b) => rank(a.g) - rank(b.g) || a.i - b.i)
+    .map(({ g }) => g);
+}
+
 // Default exercise count for a level + number of chosen groups (capped at 10).
 export function defaultCount(level, groupCount) {
   const base = (LEVEL_DEFAULTS[level] ?? LEVEL_DEFAULTS.beginner).count;
@@ -54,10 +77,11 @@ export function defaultCount(level, groupCount) {
 
 // Returns an ordered list ready for createTemplate:
 //   [{ exerciseId, targetSets, targetReps, targetWeight: null }]
-// Round-robins across the chosen groups for balance; never duplicates an exercise.
+// Round-robins across the chosen groups (in MUSCLE_PRIORITY order) for balance;
+// never duplicates an exercise.
 export function generateRoutine({ exercises, groups, level, count, rng }) {
   const lvl = LEVEL_DEFAULTS[level] ?? LEVEL_DEFAULTS.beginner;
-  const groupList = (groups ?? []).filter(Boolean);
+  const groupList = orderGroups(groups);
   if (!groupList.length) return [];
   const target = count ?? defaultCount(level, groupList.length);
 
@@ -102,10 +126,15 @@ const SWAP_COUNT = {
 };
 
 // Swap some exercises in a routine while keeping its shape. Each `slot` carries
-// { exerciseId, muscleGroup, difficulty, targetSets, targetReps, targetWeight }.
-// Pinned exercise ids are never swapped; targets are preserved; replacements come
-// from the same muscle group at similar difficulty and don't collide with other
-// exercises already in the routine. intensity: light=1, medium≈half, full=all.
+// { exerciseId, muscleGroup, difficulty, targetSets, targetReps, targetWeight, … }.
+// Pinned exercise ids are never swapped; replacements come from the same muscle
+// group at similar difficulty and don't collide with other exercises already in
+// the routine. intensity: light=1, medium≈half, full=all.
+//
+// A swapped slot keeps its sets, reps and rest but NOT its weight, miss count
+// or per-lift step: those belong to the lift that left. Bench Press's 100 kg
+// carried over to a Push-Up read "Target 3×10 @ 100kg" and started counting
+// misses against it.
 export function reshuffleRoutine({ slots, intensity = 'full', pinnedIds = [], pool, rng }) {
   const pinned = new Set(pinnedIds);
   const swappable = slots.map((_, i) => i).filter((i) => !pinned.has(slots[i].exerciseId));
@@ -121,7 +150,15 @@ export function reshuffleRoutine({ slots, intensity = 'full', pinnedIds = [], po
     if (pick) {
       usedIds.delete(slot.exerciseId);
       usedIds.add(pick.id);
-      result[i] = { ...slot, exerciseId: pick.id, muscleGroup: pick.muscleGroup, difficulty: pick.difficulty };
+      result[i] = {
+        ...slot,
+        exerciseId: pick.id,
+        muscleGroup: pick.muscleGroup,
+        difficulty: pick.difficulty,
+        targetWeight: null,
+        misses: 0,
+        weightStep: null,
+      };
     }
   }
   return result;

@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import Modal from '../ui/Modal.jsx';
 import Particles from '../fx/Particles.jsx';
 import { ALL_MUSCLES } from '../../hooks/useRecovery.js';
 import { useExercises } from '../../hooks/useExercises.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
-import { createTemplate } from '../../utils/templateActions.js';
+import { createTemplate, ROUTINE_SOURCE } from '../../utils/templateActions.js';
 import { makeRng, generateRoutine } from '../../utils/routineGenerator.js';
+import { weekdayConflicts, DAY_SHORT } from '../../utils/routineDays.js';
 import { playChime } from '../../utils/sound.js';
 
 const DAYS = [
@@ -22,21 +23,27 @@ const LABEL = {
 const LEVELS = ['beginner', 'intermediate', 'advanced'];
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-export default function RoutineGeneratorModal({ isOpen, onClose }) {
+export default function RoutineGeneratorModal({ isOpen, onClose, templates = [] }) {
   const allExercises = useExercises();
   const haptic = useHaptics();
   const [groups, setGroups] = useState([]);
   const [level, setLevel] = useState('beginner');
   const [day, setDay] = useState(null);
+  // Until you type, the name field shows the suggested name; once you have, it
+  // shows exactly what you typed — including nothing. It used to fall back to
+  // the suggestion the moment the field emptied, so it could not be cleared.
   const [name, setName] = useState('');
   const [nameEdited, setNameEdited] = useState(false);
   const [preview, setPreview] = useState(null);
   const [burst, setBurst] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const exById = Object.fromEntries(allExercises.map((e) => [e.id, e]));
   const autoName = groups.length
     ? `${groups.slice(0, 2).map((g) => LABEL[g] ?? g).join(' & ')}${groups.length > 2 ? ' +' : ''} · ${cap(level)}`
     : '';
+  const conflict = day == null ? null : weekdayConflicts(templates, [day])[0];
 
   function reset() {
     setGroups([]); setLevel('beginner'); setDay(null); setName(''); setNameEdited(false); setPreview(null);
@@ -52,7 +59,6 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
     if (!groups.length) return;
     const slots = generateRoutine({ exercises: allExercises, groups, level, rng: makeRng(Date.now()) });
     setPreview(slots);
-    if (!nameEdited) setName(autoName);
     haptic('success');
     playChime('start');
     setBurst(true);
@@ -60,9 +66,19 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
   }
 
   async function handleSave() {
-    if (!preview?.length) return;
-    await createTemplate({ name: (name || autoName || 'Routine').trim(), dayOfWeek: day, exercises: preview });
-    close();
+    // A double-tap on Save created the routine twice.
+    if (!preview?.length || savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      const finalName = (nameEdited ? name.trim() : '') || autoName || 'Routine';
+      await createTemplate({ name: finalName, dayOfWeek: day, source: ROUTINE_SOURCE.generator, exercises: preview });
+      playChime('success');
+      close();
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   }
 
   return (
@@ -77,8 +93,10 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
           const on = groups.includes(g);
           return (
             <button
+              type="button"
               key={g}
               onClick={() => toggleGroup(g)}
+              aria-pressed={on}
               className="rounded-full px-3 py-1.5 font-sans text-xs font-medium"
               style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
             >
@@ -94,8 +112,10 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
       <div className="flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-ivory)' }}>
         {LEVELS.map((l) => (
           <button
+            type="button"
             key={l}
-            onClick={() => { setLevel(l); setPreview(null); if (!nameEdited) setName(''); }}
+            onClick={() => { setLevel(l); setPreview(null); }}
+            aria-pressed={level === l}
             className="flex-1 rounded-lg py-2 font-sans text-xs font-medium capitalize"
             style={{ background: level === l ? 'var(--color-chalk)' : 'transparent', color: level === l ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}
           >
@@ -105,6 +125,7 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
       </div>
 
       <button
+        type="button"
         onClick={handleGenerate}
         disabled={!groups.length}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
@@ -116,9 +137,10 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
       {preview && (
         <div className="mt-4">
           <input
-            value={name || autoName}
+            value={nameEdited ? name : autoName}
             onChange={(e) => { setName(e.target.value); setNameEdited(true); }}
-            placeholder="Routine name"
+            placeholder={autoName || 'Routine name'}
+            aria-label="Routine name"
             className="mb-3 w-full rounded-xl px-4 py-3 font-sans text-sm outline-none"
             style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
           />
@@ -126,8 +148,10 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
           <div className="mb-3 flex flex-wrap gap-2">
             {DAYS.map((d) => (
               <button
+                type="button"
                 key={d.l}
                 onClick={() => setDay(d.v)}
+                aria-pressed={day === d.v}
                 className="rounded-full px-3 py-1.5 font-sans text-xs font-medium"
                 style={{ background: day === d.v ? 'var(--color-gold)' : 'var(--color-ivory)', color: day === d.v ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
               >
@@ -135,6 +159,11 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
               </button>
             ))}
           </div>
+          {conflict && (
+            <p className="-mt-1.5 mb-3 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
+              {DAY_SHORT[conflict.dayOfWeek]} is “{conflict.template.name}” now — saving moves it off the plan.
+            </p>
+          )}
 
           {preview.length === 0 ? (
             <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>No exercises found for that selection.</p>
@@ -155,12 +184,13 @@ export default function RoutineGeneratorModal({ isOpen, onClose }) {
           )}
 
           <button
+            type="button"
             onClick={handleSave}
-            disabled={!preview.length}
+            disabled={!preview.length || saving}
             className="mt-4 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)', opacity: preview.length ? 1 : 0.35 }}
+            style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)', opacity: preview.length && !saving ? 1 : 0.35 }}
           >
-            Save routine
+            {saving ? 'Saving…' : 'Save routine'}
           </button>
           <p className="mt-2 text-center font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
             You can fine-tune or shuffle it afterwards.
