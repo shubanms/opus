@@ -11,7 +11,9 @@ import { sessionCounts, isStaleRoutine } from '../utils/staleRoutine.js';
 import { ownsItsDay } from '../utils/routineDays.js';
 import { confirmReplaceSession } from '../utils/sessionGuard.js';
 import { playChime } from '../utils/sound.js';
-import TemplateCard from '../components/template/TemplateCard.jsx';
+import RoutineSlip from '../components/template/RoutineSlip.jsx';
+import { Chip, InkButton } from '../components/ink/index.js';
+import '../styles/ink-journal.css';
 import TemplateBuilder from '../components/template/TemplateBuilder.jsx';
 import RoutineGeneratorModal from '../components/template/RoutineGeneratorModal.jsx';
 import WeekPlannerModal from '../components/template/WeekPlannerModal.jsx';
@@ -120,103 +122,65 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="px-5 pb-24 pt-8">
-      <BackButton fallback="/workout" className="mb-5" />
-
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-            Routines
-          </h1>
-          <p className="mt-1 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Reusable workout templates
-          </p>
+    <div className="jr-page jr-page--pad">
+      <header className="jr-head">
+        <div className="jr-head__l">
+          <BackButton fallback="/workout" label="" className="" />
+          <div className="min-w-0">
+            <h1 className="jr-title">Routines</h1>
+            <p className="jr-sub">Reusable workout templates</p>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={openNew}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-gold)' }}
-          aria-label="New routine"
-        >
-          <Plus size={20} style={{ color: 'var(--color-on-accent)' }} strokeWidth={2.5} />
+        <button type="button" onClick={openNew} className="jr-add" aria-label="New routine">
+          <Plus size={20} strokeWidth={2} />
         </button>
-      </div>
+      </header>
 
-      {/* Action pills — their own edge-to-edge scrollable row so they never
+      {/* Action chips — their own edge-to-edge scrollable row so they never
           push the page wider than the screen. */}
-      <div className="no-scrollbar -mx-5 mb-6 flex gap-2 overflow-x-auto px-5 pb-1">
-        <button
-          type="button"
-          onClick={() => setProgramsOpen(true)}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-        >
-          <BookOpen size={15} style={{ color: 'var(--color-gold)' }} /> Programs
-        </button>
-        <button
-          type="button"
-          onClick={() => setPlanOpen(true)}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-        >
-          <CalendarRange size={15} style={{ color: 'var(--color-gold)' }} /> Plan week
-        </button>
-        <button
-          type="button"
-          onClick={() => setGenOpen(true)}
-          className="flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 font-sans text-xs font-semibold"
-          style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}
-        >
-          <Sparkles size={15} style={{ color: 'var(--color-gold)' }} /> Auto
-        </button>
+      <div className="jr-tags scrollbar-hide">
+        <Chip onClick={() => setProgramsOpen(true)}>
+          <BookOpen size={15} /> Programs
+        </Chip>
+        <Chip onClick={() => setPlanOpen(true)}>
+          <CalendarRange size={15} /> Plan week
+        </Chip>
+        <Chip onClick={() => setGenOpen(true)}>
+          <Sparkles size={15} /> Auto
+        </Chip>
       </div>
 
       {templates.length > 0 && <WeeklyPlanner templates={templates} />}
 
       {templates.length === 0 ? (
-        <div className="mt-16 text-center">
-          <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            No routines yet
-          </p>
-          <p className="mt-2 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Build a routine to start workouts in one tap.
-          </p>
-          <div className="mt-5 flex flex-col items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setGenOpen(true)}
-              className="flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-            >
-              <Sparkles size={16} /> Auto-generate one for me
-            </button>
-            <button
-              type="button"
-              onClick={openNew}
-              className="font-sans text-sm font-medium"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              or build it yourself
-            </button>
-          </div>
+        <div className="jr-none">
+          <p className="jr-none__t">No routines yet</p>
+          <p className="jr-none__b">Build a routine to start workouts in one tap.</p>
+          <InkButton variant="primary" onClick={() => setGenOpen(true)}>
+            <Sparkles size={16} /> Auto-generate one for me
+          </InkButton>
+          <button type="button" onClick={openNew} className="jr-link">
+            or build it yourself
+          </button>
         </div>
       ) : (
-        templates.map((t) => (
-          <TemplateCard
-            key={t.id}
-            template={t}
-            onStart={handleStart}
-            onEdit={openEdit}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onDuplicate={handleDuplicate}
-            onShuffle={handleShuffle}
-            busy={busy.has(t.id)}
-            showDay={ownsItsDay(t, templates)}
-            stale={isStaleRoutine(t, counts[t.id] ?? 0)}
-          />
-        ))
+        <div className="jr-stack">
+          {templates.map((t) => (
+            <RoutineSlip
+              key={t.id}
+              template={t}
+              onStart={handleStart}
+              onEdit={openEdit}
+              onRename={handleRename}
+              onDelete={handleDelete}
+              onDuplicate={handleDuplicate}
+              onShuffle={handleShuffle}
+              busy={busy.has(t.id)}
+              showDay={ownsItsDay(t, templates)}
+              stale={isStaleRoutine(t, counts[t.id] ?? 0)}
+            />
+          ))}
+        </div>
       )}
 
       <TemplateBuilder
