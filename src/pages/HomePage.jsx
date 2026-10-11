@@ -1,10 +1,9 @@
 import { lazy, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, ChevronRight, Play, Moon, TrendingDown, Swords, Activity, Droplet, Target, Lock } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useRPG } from '../hooks/useRPG.js';
 import { useWorkouts } from '../hooks/useWorkout.js';
 import { useToday } from '../hooks/useTemplates.js';
-import { sceneParams } from '../utils/ambient.js';
 import { STREAK, rescueOffer, streakLabel } from '../utils/streak.js';
 import { usePlanDays, useStreak } from '../hooks/useStreak.js';
 import { useRestTokens } from '../hooks/useRestTokens.js';
@@ -13,9 +12,16 @@ import { playChime } from '../utils/sound.js';
 import useSettingsStore from '../store/settingsStore.js';
 import { useWeeklyRecap } from '../hooks/useWeeklyRecap.js';
 import { toDisplay, unitLabel } from '../utils/units.js';
+import { getXPProgress } from '../utils/rpg.js';
+import { rankSealKanji, UI_KANJI } from '../utils/kanji.js';
+import { InkTabs, Seal, SectionLabel } from '../components/ink/index.js';
+import useInkMotion from '../components/ink/useInkMotion.js';
+import SkyScene from '../components/home/SkyScene.jsx';
+import TodayCard from '../components/home/TodayCard.jsx';
+import WeekRow from '../components/home/WeekRow.jsx';
+import useSky from '../components/home/useSky.js';
+import { SKY_PALETTES } from '../components/home/skyPalettes.js';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
-import LevelBadge from '../components/rpg/LevelBadge.jsx';
-import XPBar from '../components/rpg/XPBar.jsx';
 import RecoveryMap from '../components/progress/RecoveryMap.jsx';
 import SessionVerdict from '../components/progress/SessionVerdict.jsx';
 import BackupCard from '../components/backup/BackupCard.jsx';
@@ -27,64 +33,26 @@ import DailyDungeonCard from '../components/rpg/DailyDungeonCard.jsx';
 import MascotBoundary from '../components/mascot/MascotBoundary.jsx';
 import { hasWebGL } from '../components/mascot/webgl.js';
 import useWorkoutStore from '../store/workoutStore.js';
+import '../styles/ink-home.css';
 
 const Companion = lazy(() => import('../components/mascot/Companion.jsx'));
 
-function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center justify-between rounded-2xl px-5 py-4"
-      style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-stone)' }}
-    >
-      <div className="min-w-0 text-left">
-        <p className="truncate font-sans text-base font-semibold" style={{ color: 'var(--color-text-inverse)' }}>
-          {title}
-        </p>
-        <p className="truncate font-sans text-xs" style={{ color: 'var(--color-ash)' }}>
-          {subtitle}
-        </p>
-      </div>
-      <div
-        className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-        style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.6s var(--opus-ease-out) infinite' }}
-      >
-        <Icon size={16} strokeWidth={2.4} style={{ color: 'var(--color-on-accent)' }} />
-      </div>
-    </button>
-  );
-}
+const NUMBER_WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
 
-// Consolidates the three heavy stacked widgets (activity / recovery / quests)
-// into one swappable deck so the home feed stays short. Each keeps its full UI.
+// Activity / Recovery / Quests in one swappable deck so the feed stays short.
+// Each keeps its full UI.
 function SecondaryDeck({ hasWorkouts }) {
   const tabs = [
-    { key: 'activity', label: 'Activity', icon: Droplet },
-    ...(hasWorkouts ? [{ key: 'recovery', label: 'Recovery', icon: Activity }] : []),
-    { key: 'quests', label: 'Quests', icon: Target },
+    { id: 'activity', label: 'Activity', tabId: 'home-tab-activity', panelId: 'home-panel' },
+    ...(hasWorkouts ? [{ id: 'recovery', label: 'Recovery', tabId: 'home-tab-recovery', panelId: 'home-panel' }] : []),
+    { id: 'quests', label: 'Quests', tabId: 'home-tab-quests', panelId: 'home-panel' },
   ];
-  const [tab, setTab] = useState(tabs[0].key);
+  const [tab, setTab] = useState('activity');
 
   return (
     <div>
-      <div className="mb-3 flex gap-1.5 overflow-hidden rounded-xl p-1" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-        {tabs.map((t) => {
-          const active = tab === t.key;
-          return (
-            <button
-              type="button"
-              key={t.key}
-              onClick={() => { setTab(t.key); playChime('tap'); }}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 font-sans text-xs font-semibold transition-colors"
-              style={{ background: active ? 'var(--color-obsidian)' : 'transparent', color: active ? 'var(--color-text-inverse)' : 'var(--color-ash)' }}
-            >
-              <t.icon size={13} />{t.label}
-            </button>
-          );
-        })}
-      </div>
-      <div key={tab} className="anim-fade-in">
+      <InkTabs tabs={tabs} value={tab} onChange={(id) => { setTab(id); playChime('tap'); }} label="Home sections" />
+      <div key={tab} id="home-panel" role="tabpanel" aria-labelledby={`home-tab-${tab}`} className="anim-fade-in" style={{ marginTop: 14 }}>
         {tab === 'activity' && <ActivityRings />}
         {tab === 'recovery' && <RecoveryMap />}
         {tab === 'quests' && <QuestBoard />}
@@ -98,11 +66,10 @@ export default function HomePage() {
   const { profile } = useRPG();
   const workouts = useWorkouts();
   const today = useToday();
-  const activeWorkout = useWorkoutStore(s => s.activeWorkout);
-  const startFromTemplate = useWorkoutStore(s => s.startFromTemplate);
+  const activeWorkout = useWorkoutStore((s) => s.activeWorkout);
+  const startFromTemplate = useWorkoutStore((s) => s.startFromTemplate);
   const recent = workouts.slice(0, 2);
 
-  const effects = useSettingsStore((s) => s.effects);
   const unit = useSettingsStore((s) => s.unit);
   const week = useWeeklyRecap();
 
@@ -112,7 +79,7 @@ export default function HomePage() {
   const spendShield = useSettingsStore((s) => s.spendShield);
   const declineRescue = useSettingsStore((s) => s.declineRescue);
   const shieldTokens = useRestTokens();
-  // Effective XP, level and title — shared with Profile and Progression so the
+  // Effective XP, level and title: shared with Profile and Progression so the
   // shield and the boss-gate cap read the same everywhere (hooks/useEffectiveXp).
   const { effectiveXp, rawDecay, shieldActive, streakPenalty, decaying, lost, rawLevel, prestige, level, boss, title, sealed } =
     useEffectiveXp(profile);
@@ -124,19 +91,19 @@ export default function HomePage() {
   const plan = usePlanDays();
   const streakLoading = plan == null || (plan.size > 0 && !streak.scheduled);
   // The offer itself lives in StreakRescueHost, app-wide. This is only the way
-  // back to it after "let it go" — a lapse you dismissed once should still be
-  // recoverable while it is still recoverable, and Home is where you look.
-  // It is given the same live streak the host uses: without it this banner
-  // said "3-day streak ended" while the flame said 4 and at risk, and tapping
-  // it did nothing because the host (rightly) had no offer to show.
+  // back to it after "let it go", given the same live streak the host uses.
   const offer = !profile || streakLoading ? null : rescueOffer(profile, shieldTokens, undefined, streak);
   const banked = sealed ? rawLevel - level : 0;
   const canShield = rawDecay.decaying && streakPenalty > 0 && !shieldActive && shieldTokens > 0;
 
-  const reducedMotion = typeof window !== 'undefined' && window.matchMedia
-    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    : false;
-  const scene = sceneParams({ streak: streak.count, level, prestige, reducedMotion: reducedMotion || !effects });
+  const live = useInkMotion();
+  const sky = useSky();
+  const pal = SKY_PALETTES[sky] ?? SKY_PALETTES.dusk;
+  const { progress, xpToNext } = getXPProgress(effectiveXp);
+  const caption = sealed
+    ? `Sealed at the boss gate · ${banked} ${banked === 1 ? 'level' : 'levels'} banked`
+    : `${xpToNext.toLocaleString()} XP to the next mark`;
+  const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
   // The week tiles open the Progress overview, scrolled to what they summarise.
   const openProgress = (focus) => {
@@ -151,145 +118,126 @@ export default function HomePage() {
     navigate('/workout');
   }
 
-  return (
-    <div className="px-5 pb-24 pt-6">
-      {/* Compact hero — greeting + level/XP merged into one card (declutters
-          three former full-width strips into one), over a living aura. */}
-      <div className="relative mb-4">
-        <div
-          aria-hidden
-          className={scene.motionSpeed > 0 ? 'anim-breathe pointer-events-none' : 'pointer-events-none'}
-          style={{
-            position: 'absolute',
-            left: -48,
-            top: -56,
-            width: 240,
-            height: 240,
-            borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(210,174,90,${scene.goldShade}) 0%, rgba(210,174,90,${scene.glowAlpha}) 38%, rgba(210,174,90,0) 70%)`,
-            filter: `blur(${scene.glowBlur}px)`,
-            animationDuration: scene.motionSpeed > 0 ? `${(7 - scene.motionSpeed * 3).toFixed(1)}s` : undefined,
-          }}
-        />
-        <div className="glass relative rounded-2xl px-4 py-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-          <div className="flex items-start justify-between">
-            <div className="min-w-0">
-              <h1 className="font-display text-4xl font-bold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-                OPUS
-              </h1>
-              <p className="mt-1 truncate font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                {profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}
-              </p>
-            </div>
-            {/* Only shown while the streak is actually standing. It used to
-                read `profile.streak`, which is frozen at the last workout — so
-                a streak that ended three weeks ago still displayed its old
-                count. At risk (trained yesterday, not today) is called out
-                rather than looking identical to safe. */}
-            {streak.count > 0 && (
-              <span
-                className="flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold"
-                style={{
-                  background: streak.state === STREAK.AT_RISK ? 'var(--accent-wash)' : 'var(--color-ivory)',
-                  color: 'var(--color-ember)',
-                  border: streak.state === STREAK.AT_RISK ? '1px solid var(--color-ember)' : '1px solid transparent',
-                }}
-                title={streakLabel(streak)}
-                aria-label={streakLabel(streak)}
-              >
-                <Flame size={12} />
-                {streak.count}
-              </span>
-            )}
-          </div>
+  const atRisk = streak.state === STREAK.AT_RISK;
+  const hasNotes = Boolean(profile) && (banked > 0 || decaying || shieldActive || offer || shieldTokens > 0);
+  const nForms = today.type === 'template' ? today.template.exercises.length : 0;
 
-          {profile && (
-            <div className="mt-4">
-              <div className="mb-2 flex items-center gap-2.5">
-                <LevelBadge level={level} size="sm" prestige={prestige} />
-                <span className="min-w-0 truncate font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-                  {title}
-                </span>
-                {/* XP past a boss gate isn't lost, it's held. Capping the badge
-                    without saying so read as levelling having stopped. */}
-                {banked > 0 && (
-                  <span
-                    className="ml-auto flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold"
-                    style={{ background: 'var(--accent-wash)', color: 'var(--color-gold)' }}
-                    title={`XP for level ${rawLevel} earned — clear the boss gate to claim it`}
-                  >
-                    <Lock size={11} />
-                    Lv {level} · {banked} {banked === 1 ? 'level' : 'levels'} banked
-                  </span>
-                )}
-              </div>
-              <XPBar totalXp={effectiveXp} level={level} showLabel={false} />
-              {decaying && (
-                <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <p className="flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-ember)' }}>
-                    <TrendingDown size={12} />
-                    Rank slipping — train to recover (−{lost.toLocaleString()} XP)
-                  </p>
-                  {canShield && (
-                    <button
-                      type="button"
-                      onClick={() => { spendShield(profile?.lastWorkoutDate); playChime('goal'); }}
-                      className="flex items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold"
-                      style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
-                    >
-                      🛡️ Use shield ({shieldTokens})
-                    </button>
-                  )}
-                </div>
-              )}
-              {!decaying && shieldActive && (
-                <p className="mt-2 flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: 'var(--color-sage)' }}>
-                  🛡️ Streak shielded — your rest day is protected
-                </p>
-              )}
-              {/* A streak you can still buy back. The prompt on app-open is the
-                  primary offer; this is the way back to it, and it replaces the
-                  old bare "🛡️ 2 banked" line — a number with no mechanic
-                  attached, in the one place it could never be spent. */}
-              {offer && (
-                <button
-                  type="button"
-                  onClick={() => { declineRescue(null); playChime('tick'); }}
-                  className="mt-2 flex w-full items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-sans text-xs font-semibold"
-                  style={{ background: 'var(--accent-wash)', color: 'var(--color-ember)' }}
-                >
-                  <Flame size={12} />
-                  {/* On a plan the streak is counted in sessions, as in the offer itself. */}
-                  {offer.lost}-{offer.scheduled ? 'session' : 'day'} streak ended
-                  <span className="ml-auto font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                    {offer.affordable ? `Rescue · ${offer.cost} token${offer.cost === 1 ? '' : 's'}` : 'See what it costs'}
-                  </span>
+  return (
+    <div className="hm-page">
+      <div className="relative">
+        <header className="hm-header" style={{ color: pal.headerInk }}>
+          <div>
+            <h1 className="hm-header__word">OPUS</h1>
+            <span className="hm-header__hello">{profile?.name ? `Welcome back, ${profile.name}.` : 'Build your masterpiece.'}</span>
+          </div>
+          {/* Only while the streak is standing (profile.streak is frozen at the
+              last workout). At risk is called out rather than looking safe. */}
+          {streak.count > 0 && (
+            <span className={`hm-header__streak${atRisk ? ' hm-header__streak--risk' : ''}`} title={streakLabel(streak)} aria-label={streakLabel(streak)}>
+              <Seal kanji={UI_KANJI.streak} size={28} rotate={-4} />
+              <span className="hm-header__text" aria-hidden>{streak.count} in a row</span>
+            </span>
+          )}
+        </header>
+        <SkyScene
+          pal={pal}
+          level={level}
+          title={title}
+          sealKanji={rankSealKanji(level, prestige)}
+          progress={sealed ? 1 : progress}
+          caption={caption}
+          live={live}
+        />
+      </div>
+
+      <div className="hm-over">
+        {activeWorkout ? (
+          <TodayCard weekday={weekday} title="Continue workout" meta="In progress" line={`${activeWorkout.name} in progress`} cta="Continue the duel" ctaLabel="Continue workout" onBegin={() => navigate('/workout')} />
+        ) : today.type === 'template' ? (
+          <TodayCard
+            weekday={weekday}
+            title={today.template.name}
+            meta={`${NUMBER_WORDS[nForms] ?? nForms} ${nForms === 1 ? 'form' : 'forms'}`}
+            line={today.reason}
+            ctaLabel="Start today's routine"
+            onBegin={startTemplate}
+          />
+        ) : today.type === 'rest' ? (
+          <TodayCard weekday={weekday} title="Rest day" meta={UI_KANJI.rest} line={today.reason} cta="Train anyway" ctaLabel="Train anyway" rest onBegin={() => navigate('/workout')} />
+        ) : (
+          <TodayCard weekday={weekday} title="A fresh session" meta="Open plan" line={today.reason || 'Jump into a new session.'} ctaLabel="Open workout" onBegin={() => navigate('/workout')} />
+        )}
+      </div>
+
+      {hasNotes && (
+        <div className="hm-notes">
+          {banked > 0 && (
+            <p className="hm-note" title={`XP for level ${rawLevel} earned — clear the boss gate to claim it`}>
+              Lv {level} · {banked} {banked === 1 ? 'level' : 'levels'} banked
+            </p>
+          )}
+          {decaying && (
+            <div className="hm-note hm-note--ver">
+              <span>Rank slipping — train to recover (−{lost.toLocaleString()} XP)</span>
+              {canShield && (
+                <button type="button" className="hm-note__btn hm-note__btn--ver" onClick={() => { spendShield(profile?.lastWorkoutDate); playChime('goal'); }}>
+                  Use shield ({shieldTokens})
                 </button>
-              )}
-              {!offer && !decaying && !shieldActive && shieldTokens > 0 && (
-                <p className="mt-2 font-mono text-[11px]" style={{ color: 'var(--color-ash)' }}>
-                  🛡️ {shieldTokens} rest {shieldTokens === 1 ? 'token' : 'tokens'} banked
-                </p>
               )}
             </div>
           )}
+          {!decaying && shieldActive && <p className="hm-note">Streak shielded — your rest day is protected</p>}
+          {/* A streak you can still buy back. The app-open prompt is the primary offer; this is the way back after "let it go". */}
+          {offer && (
+            <button type="button" className="hm-note hm-note--row hm-note--ver" onClick={() => { declineRescue(null); playChime('tick'); }}>
+              <span>{offer.lost}-{offer.scheduled ? 'session' : 'day'} streak ended</span>
+              <span className="hm-note__aside">{offer.affordable ? `Rescue · ${offer.cost} token${offer.cost === 1 ? '' : 's'}` : 'See what it costs'}</span>
+            </button>
+          )}
+          {!offer && !decaying && !shieldActive && shieldTokens > 0 && (
+            <p className="hm-note">{shieldTokens} rest {shieldTokens === 1 ? 'token' : 'tokens'} banked</p>
+          )}
         </div>
-      </div>
+      )}
 
-      <BackupCard />
-      <InstallCard />
+      <WeekRow onOpen={() => openProgress(null)} />
 
-      <SessionVerdict workout={recent[0]} />
+      <DailyDungeonCard />
 
-      {/* Bento row. Magnus previously floated between two full-width cards with
-          a tall empty band above him — the speech bubble is absolutely
-          positioned, so its space was reserved whether or not he was talking.
-          Giving him a tile turns that reserved space into deliberate padding,
-          and the stats beside him fill the row. */}
-      <div className="mb-4 flex flex-col gap-3">
-        {/* Only where WebGL works, and fenced: a device that can't create a
-            context used to take the whole app to the error screen here. The
-            tile is Magnus's own root, so if he can't show it goes with him. */}
+      <div className="hm-below">
+        <BackupCard />
+        <InstallCard />
+        <SessionVerdict workout={recent[0]} />
+
+        <div className="hm-stats">
+          {[
+            { k: 'This week', v: String(week.sessions), u: week.sessions === 1 ? 'session' : 'sessions', focus: null },
+            { k: 'Volume', v: Math.round(toDisplay(week.volumeKg, unit)).toLocaleString(), u: `${unitLabel(unit)} lifted`, focus: 'volume' },
+            { k: 'Records', v: String(week.prCount), u: week.prCount === 1 ? 'PR' : 'PRs', focus: 'prs' },
+          ].map((t) => (
+            <button type="button" key={t.k} className="hm-stat" onClick={() => openProgress(t.focus)} aria-label={`${t.k}: ${t.v} ${t.u}. Open progress`}>
+              <span className="hm-stat__k">{t.k}</span>
+              <span className="hm-stat__v">{t.v}</span>
+              <span className="hm-stat__u">{t.u}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Boss gate: blocks the next milestone level until cleared. */}
+        {boss && (
+          <div className="hm-gate">
+            <span className="hm-gate__eyebrow">Boss gate · Level {boss.gate}</span>
+            <p className="hm-gate__name">{boss.title}</p>
+            <p className="hm-gate__desc">{boss.desc} to break past level {boss.gate}.</p>
+          </div>
+        )}
+
+        <WeeklyRecap />
+
+        <SecondaryDeck hasWorkouts={workouts.length > 0} />
+
+        {/* Magnus keeps this slot until Phase 5 replaces him. Only where WebGL
+            works, and fenced so a device without a context can't take the app down. */}
         {webgl && (
           <MascotBoundary>
             <Suspense fallback={<div className="glass rounded-2xl" style={{ height: 132 }} />}>
@@ -298,124 +246,26 @@ export default function HomePage() {
           </MascotBoundary>
         )}
 
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { k: 'This week', v: String(week.sessions), u: week.sessions === 1 ? 'session' : 'sessions', focus: null },
-            { k: 'Volume', v: Math.round(toDisplay(week.volumeKg, unit)).toLocaleString(), u: `${unitLabel(unit)} lifted`, focus: 'volume' },
-            { k: 'Records', v: String(week.prCount), u: week.prCount === 1 ? 'PR' : 'PRs', focus: 'prs' },
-          ].map((t) => (
-            <button
-              type="button"
-              key={t.k}
-              onClick={() => openProgress(t.focus)}
-              aria-label={`${t.k}: ${t.v} ${t.u}. Open progress`}
-              className="glass rounded-2xl px-3 py-3 text-left transition-transform active:scale-95"
+        {recent.length > 0 ? (
+          <div>
+            <SectionLabel
+              meta={(
+                <button type="button" className="hm-more" onClick={() => navigate('/history')}>
+                  See all <ChevronRight size={12} />
+                </button>
+              )}
             >
-              <p className="flex items-center justify-between font-sans text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-                {t.k}
-                <ChevronRight size={11} style={{ color: 'var(--color-ash)' }} />
-              </p>
-              <p className="mt-1.5 truncate font-mono text-xl leading-none" style={{ color: 'var(--color-text-primary)' }}>
-                {t.v}
-              </p>
-              <p className="mt-1 truncate font-sans text-[10px]" style={{ color: 'var(--color-text-secondary)' }}>
-                {t.u}
-              </p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Boss gate — blocks the next milestone level until cleared */}
-      {boss && (
-        <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--gold-leaf)' }}>
-          <div className="mb-1 flex items-center gap-2">
-            <Swords size={15} style={{ color: 'var(--gold-leaf)' }} />
-            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--gold-leaf)' }}>
-              Boss gate · Level {boss.gate}
-            </span>
-          </div>
-          <p className="font-display text-xl font-bold" style={{ color: 'var(--color-text-inverse)' }}>{boss.title}</p>
-          <p className="mt-0.5 font-sans text-sm" style={{ color: 'var(--color-ash)' }}>
-            {boss.desc} to break past level {boss.gate}.
-          </p>
-        </div>
-      )}
-
-      {/* Today's workout — primary action */}
-      <div className="mb-5">
-        {activeWorkout ? (
-          <TodayCard
-            title="Continue workout"
-            subtitle={`${activeWorkout.name} in progress`}
-            onClick={() => navigate('/workout')}
-          />
-        ) : today.type === 'template' ? (
-          <TodayCard
-            title={today.template.name}
-            subtitle={`${today.reason} · ${today.template.exercises.length} exercises`}
-            onClick={startTemplate}
-          />
-        ) : today.type === 'rest' ? (
-          <div
-            className="glass flex items-center gap-3 rounded-2xl px-5 py-4"
-            style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
-              <Moon size={16} style={{ color: 'var(--color-sage)' }} />
-            </div>
-            <div className="flex-1">
-              <p className="font-sans text-base font-semibold" style={{ color: 'var(--color-text-primary)' }}>Rest day</p>
-              <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{today.reason}</p>
-            </div>
-            <button type="button" onClick={() => navigate('/workout')} className="-mr-2 h-10 shrink-0 rounded-lg px-2 font-sans text-xs font-medium" style={{ color: 'var(--color-gold)' }}>
-              Train anyway
-            </button>
+              RECENT
+            </SectionLabel>
+            {recent.map((w) => <WorkoutCard key={w.id} workout={w} />)}
           </div>
         ) : (
-          <TodayCard title="Start workout" subtitle={today.reason || 'Jump into a new session'} onClick={() => navigate('/workout')} />
+          <div className="hm-legacy">
+            <p className="hm-legacy__t">Your legacy starts here</p>
+            <p className="hm-legacy__s">Complete your first workout to begin the journey.</p>
+          </div>
         )}
       </div>
-
-      {/* Daily dungeon */}
-      <DailyDungeonCard />
-
-      {/* Weekly recap — compact, auto-hides when no data / dismissed */}
-      <WeeklyRecap />
-
-      {/* Secondary widgets collapsed into one tabbed deck */}
-      <div className="mb-6">
-        <SecondaryDeck hasWorkouts={workouts.length > 0} />
-      </div>
-
-      {/* Recent workouts */}
-      {recent.length > 0 ? (
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-              Recent
-            </h2>
-            <button
-              type="button"
-              onClick={() => navigate('/history')}
-              className="-mr-2 flex h-10 items-center gap-1 rounded-lg px-2 font-sans text-xs"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              See all <ChevronRight size={12} />
-            </button>
-          </div>
-          {recent.map(w => <WorkoutCard key={w.id} workout={w} />)}
-        </div>
-      ) : (
-        <div className="mt-10 text-center">
-          <p className="font-display text-3xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            Your legacy starts here
-          </p>
-          <p className="mt-2 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Complete your first workout to begin the journey.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

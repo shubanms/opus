@@ -297,7 +297,7 @@ test.describe('OPUS end-to-end', () => {
       // hence seedHistory) and under Progress's By Exercise tab. A sweep that
       // never clicks anything sees neither.
       for (const label of PAGE_TABS[path] ?? []) {
-        const tab = page.getByRole('button', { name: label, exact: true });
+        const tab = page.getByRole('button', { name: label, exact: true }).or(page.getByRole('tab', { name: label, exact: true }));
         if (await tab.count()) {
           await tab.first().click();
           await page.waitForTimeout(700);
