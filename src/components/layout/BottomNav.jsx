@@ -179,7 +179,7 @@ export default function BottomNav() {
                   className="-mt-7 flex h-14 w-14 items-center justify-center"
                   style={{
                     background: 'var(--grad-accent)',
-                    color: 'var(--color-obsidian)',
+                    color: 'var(--color-on-accent)',
                     borderRadius: 'var(--opus-radius-lg)',
                     boxShadow: 'var(--glow-accent)',
                   }}
@@ -227,7 +227,7 @@ export default function BottomNav() {
                       className="pointer-events-none absolute -top-8 flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums"
                       style={{
                         background: resting && !restDone ? 'var(--color-gold)' : 'var(--color-sage)',
-                        color: 'var(--color-obsidian)',
+                        color: 'var(--color-on-accent)',
                         boxShadow: 'var(--elev-2)',
                         transition: 'background-color var(--dur-standard) var(--opus-ease-out)',
                       }}

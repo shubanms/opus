@@ -86,7 +86,7 @@ export default function RestTimer({ nextName = null }) {
                     className="h-10 flex-1 rounded-xl font-mono text-sm font-semibold"
                     style={{
                       background: rest.duration === p ? 'var(--color-gold)' : 'var(--color-ivory)',
-                      color: rest.duration === p ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                      color: rest.duration === p ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
                     }}
                   >
                     {presetLabel(p)}
@@ -131,7 +131,7 @@ export default function RestTimer({ nextName = null }) {
                 }}
               >
                 {done ? (
-                  <Check size={16} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />
+                  <Check size={16} strokeWidth={3} style={{ color: 'var(--color-on-accent)' }} />
                 ) : (
                   <Timer size={15} style={{ color: tone }} />
                 )}

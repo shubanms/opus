@@ -108,7 +108,7 @@ function StaleSessionCard({ session, onSave, onDiscard, busy }) {
           onClick={onSave}
           disabled={busy}
           className="h-11 flex-1 rounded-xl font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: busy ? 0.6 : 1 }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.6 : 1 }}
         >
           {busy ? 'Saving…' : 'Save it'}
         </button>
@@ -363,7 +363,7 @@ export default function WorkoutPage() {
           type="button"
           onClick={() => { playChime('start'); startWorkout(); }}
           className="mt-6 w-full rounded-2xl py-4 font-sans text-base font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
         >
           Quick start (empty)
         </button>
@@ -592,7 +592,7 @@ export default function WorkoutPage() {
             type="button"
             onClick={() => setEndOpen(true)}
             className="h-10 shrink-0 rounded-xl px-4 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', boxShadow: compact ? 'var(--glow-accent)' : 'none' }}
+            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', boxShadow: compact ? 'var(--glow-accent)' : 'none' }}
           >
             Finish
           </button>
@@ -639,7 +639,7 @@ export default function WorkoutPage() {
                     className="flex h-11 flex-1 items-center justify-center rounded-xl font-mono text-sm font-medium"
                     style={{
                       background: activeWorkout.energy === n ? 'var(--color-gold)' : 'var(--color-ivory)',
-                      color: activeWorkout.energy === n ? 'var(--color-obsidian)' : 'var(--color-text-primary)',
+                      color: activeWorkout.energy === n ? 'var(--color-on-accent)' : 'var(--color-text-primary)',
                     }}
                   >
                     {n}

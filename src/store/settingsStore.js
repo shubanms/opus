@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { applyTheme } from '../utils/theme.js';
+import { applySky, applyTheme } from '../utils/theme.js';
 
 // Mirror the effects setting onto <html> so CSS can gate the expensive material
 // (backdrop-filter) centrally, in one selector, instead of every glass surface
@@ -12,7 +12,7 @@ export function applyEffects(on) {
 
 const KEY = 'opus_prefs';
 const DEFAULTS = {
-  barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, theme: 'system', themeOnOpen: true,
+  barWeight: 20, unit: 'kg', onboarded: false, effects: true, sound: false, sky: 'auto', themeOnOpen: true,
   tourSeen: false, restDuration: 90, stepGoal: 8000, waterGoal: 8, recapDismissedWeek: '', coachMarksSeen: {},
   // Streak shield / rest token: tokens spent, tokens bought with Iron, and the
   // lapse date a shield protects. Balance = earned-from-history + bought − spent.
@@ -40,9 +40,16 @@ const DEFAULTS = {
   },
 };
 
+const SKY_VALUES = ['auto', 'dawn', 'dusk', 'night'];
+
 function load() {
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || '{}') };
+    const { theme: _legacyTheme, ...saved } = JSON.parse(localStorage.getItem(KEY) || '{}') || {};
+    // The Light/Dark/System `theme` setting is gone (Ink is dark-only; Sky
+    // replaced it). Drop it from old saves.
+    const merged = { ...DEFAULTS, ...saved };
+    if (!SKY_VALUES.includes(merged.sky)) merged.sky = 'auto';
+    return merged;
   } catch {
     return { ...DEFAULTS };
   }
@@ -51,8 +58,8 @@ function load() {
 const useSettingsStore = create((set, get) => ({
   ...load(),
   persist() {
-    const { barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
-    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, theme, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
+    const { barWeight, unit, onboarded, effects, sound, sky, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim } = get();
+    localStorage.setItem(KEY, JSON.stringify({ barWeight, unit, onboarded, effects, sound, sky, themeOnOpen, tourSeen, restDuration, stepGoal, waterGoal, recapDismissedWeek, coachMarksSeen, inventory, tokensSpent, tokensPurchased, shieldedLapseDate, rescueDeclinedFor, autoBackup, lastBackupAt, lastBackupSig, hadData, lastKnownWorkouts, ironSpent, ownedCosmetics, equipped, dungeonIron, lastDungeonClaim }));
   },
   // Marks today's dungeon as claimed. The Iron itself now lives on the workout
   // row (`dungeonIron`), so deleting that workout takes it back; adding it here
@@ -175,10 +182,11 @@ const useSettingsStore = create((set, get) => ({
     set({ waterGoal });
     get().persist();
   },
-  setTheme(theme) {
-    set({ theme });
+  setSky(sky) {
+    const next = SKY_VALUES.includes(sky) ? sky : 'auto';
+    set({ sky: next });
     get().persist();
-    applyTheme(theme);
+    applySky(next);
   },
   setBarWeight(barWeight) {
     set({ barWeight });
@@ -206,5 +214,10 @@ const useSettingsStore = create((set, get) => ({
     get().persist();
   },
 }));
+
+// Stamp the dark theme and the saved sky as soon as the store exists, so the
+// first paint after the bundle loads already matches the pre-paint script.
+applyTheme();
+applySky(useSettingsStore.getState().sky);
 
 export default useSettingsStore;

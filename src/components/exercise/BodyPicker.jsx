@@ -50,7 +50,7 @@ export default function BodyPicker({ selected, onSelect }) {
               className="flex min-h-9 shrink-0 items-center rounded-full px-3.5 font-sans text-xs font-medium"
               style={{
                 background: selected === key ? 'var(--color-gold)' : 'var(--color-ivory)',
-                color: selected === key ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                color: selected === key ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
                 border: selected === key ? 'none' : '1px solid transparent',
               }}
             >
@@ -115,7 +115,7 @@ export default function BodyPicker({ selected, onSelect }) {
                 className="rounded-full px-3 py-1 font-sans text-xs font-medium"
                 style={{
                   background: selected === m ? 'var(--color-gold)' : 'var(--color-chalk)',
-                  color: selected === m ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                  color: selected === m ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
                 }}
               >
                 {LABEL[m]}

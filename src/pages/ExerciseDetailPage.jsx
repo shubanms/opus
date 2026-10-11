@@ -119,7 +119,7 @@ export default function ExerciseDetailPage() {
             type="button"
             onClick={toList}
             className="mt-5 rounded-xl px-5 py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
           >
             Back to exercises
           </button>
@@ -189,7 +189,7 @@ export default function ExerciseDetailPage() {
           </span>
         )}
         {exercise.isCustom && (
-          <span className="rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}>
+          <span className="rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
             Custom
           </span>
         )}

@@ -495,7 +495,7 @@ export default function SetLogger({
                         className="h-10 rounded-full px-3.5 font-sans text-xs font-semibold"
                         style={{
                           background: picked ? level.color : 'var(--color-chalk)',
-                          color: picked ? 'var(--color-obsidian)' : level.color,
+                          color: picked ? 'var(--color-on-accent)' : level.color,
                         }}
                         aria-label={`${level.label} — ${level.rir}`}
                       >
@@ -580,7 +580,7 @@ export default function SetLogger({
               className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 font-sans text-xs font-semibold"
               style={{
                 background: warmup ? 'var(--color-ember)' : 'var(--color-ivory)',
-                color: warmup ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                color: warmup ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
               }}
             >
               <Flame size={14} /> Warm-up
@@ -624,7 +624,7 @@ export default function SetLogger({
           className="flex h-12 shrink-0 items-center justify-center gap-1.5 px-5 font-sans text-sm font-bold"
           style={{
             background: warmup && !editingSet ? 'var(--color-ember)' : 'var(--grad-accent)',
-            color: 'var(--color-obsidian)',
+            color: 'var(--color-on-accent)',
             borderRadius: 'var(--opus-radius-md)',
             boxShadow: canLog ? 'var(--glow-accent)' : 'none',
             opacity: canLog ? 1 : 0.35,

@@ -139,7 +139,7 @@ export default function TemplatesPage() {
           style={{ background: 'var(--color-gold)' }}
           aria-label="New routine"
         >
-          <Plus size={20} style={{ color: 'var(--color-obsidian)' }} strokeWidth={2.5} />
+          <Plus size={20} style={{ color: 'var(--color-on-accent)' }} strokeWidth={2.5} />
         </button>
       </div>
 
@@ -187,7 +187,7 @@ export default function TemplatesPage() {
               type="button"
               onClick={() => setGenOpen(true)}
               className="flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
             >
               <Sparkles size={16} /> Auto-generate one for me
             </button>

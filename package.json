@@ -10,6 +10,7 @@
     "lint": "biome check src",
     "lint:fix": "biome check --write src",
     "test": "vitest run",
+    "fonts:subset": "node scripts/collect-glyphs.mjs && python scripts/subset-fonts.py",
     "test:e2e": "playwright test"
   },
   "dependencies": {

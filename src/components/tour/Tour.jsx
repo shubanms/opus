@@ -56,7 +56,7 @@ export default function Tour() {
           className="flex h-20 w-20 items-center justify-center rounded-full"
           style={{ background: 'var(--color-gold)', animation: effects && !reduced ? 'goldPulse 2.4s var(--opus-ease-out) infinite' : undefined }}
         >
-          <Icon size={34} style={{ color: 'var(--color-obsidian)' }} />
+          <Icon size={34} style={{ color: 'var(--color-on-accent)' }} />
         </div>
         <h2 className="mt-6 font-display text-3xl font-bold" style={{ color: 'var(--color-text-inverse)' }}>
           {step.title}
@@ -108,7 +108,7 @@ export default function Tour() {
           type="button"
           onClick={() => (last ? finish(true) : setI(i + 1))}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
         >
           {last ? 'Open Settings' : 'Next'}
         </button>

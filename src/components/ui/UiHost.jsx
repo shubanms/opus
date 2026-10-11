@@ -38,7 +38,7 @@ function Toasts() {
               type="button"
               onClick={() => { dismiss(t.id); t.action.onAction(); }}
               className="-my-1 shrink-0 rounded-lg px-3 py-2 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
             >
               {t.action.label}
             </button>
@@ -74,7 +74,7 @@ function ConfirmDialog() {
           type="button"
           onClick={() => resolve(true)}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: danger ? 'var(--color-ember)' : 'var(--color-gold)', color: danger ? 'var(--color-text-inverse)' : 'var(--color-obsidian)' }}
+          style={{ background: danger ? 'var(--color-ember)' : 'var(--color-gold)', color: danger ? 'var(--color-text-inverse)' : 'var(--color-on-accent)' }}
         >
           {confirmLabel}
         </button>
@@ -120,7 +120,7 @@ function PromptDialog() {
           type="button"
           onClick={() => resolve(value.trim())}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
         >
           Save
         </button>

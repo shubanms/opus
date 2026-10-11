@@ -31,13 +31,13 @@ export default function CoachMark() {
         style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}
       >
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'var(--color-gold)' }}>
-          <Lightbulb size={16} style={{ color: 'var(--color-obsidian)' }} />
+          <Lightbulb size={16} style={{ color: 'var(--color-on-accent)' }} />
         </div>
         <p className="flex-1 font-sans text-xs leading-relaxed" style={{ color: 'var(--color-text-inverse)' }}>{tip}</p>
         <button
           onClick={() => markSeen(pathname)}
           className="shrink-0 rounded-lg px-3 py-1.5 font-sans text-[11px] font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
         >
           Got it
         </button>
