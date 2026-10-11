@@ -1,27 +1,22 @@
-import { useId } from 'react';
 import { useMeasure } from './useMeasure.js';
 import { m, TWEEN, SPRING, useMotionEnabled, useReducedMotion } from '../../motion/index.jsx';
-import { polygonPath, radarPoint, radialAnchor } from '../../utils/chartMath.js';
+import { polygonPath, radarPoint } from '../../utils/chartMath.js';
+import '../../styles/ink-you.css';
 
-// The character sheet: five stats, 0–100, with last month's shape behind this
-// month's so progress is visible as a shape growing rather than as five
-// numbers that each moved a bit.
+// The character sheet in ink: five stats, 0–100, a hairline web, a vermilion
+// polygon with dots, and last month's shape dashed behind it so progress reads
+// as a shape growing rather than five numbers that each moved a bit.
 //
-// Deliberately not a visx chart — visx earns its place on the cartesian ones,
-// where scales and curve interpolation are real work. Here the whole job is
-// five points on a circle, and the tested geometry in utils/chartMath.js is
-// both smaller and shared with the vertex dots and the label placement, which
-// a radial line generator would not be.
+// Deliberately not a visx chart: the whole job is five points on a circle, and
+// the tested geometry in utils/chartMath.js is shared with the dots and labels.
 
-const RINGS = [0.25, 0.5, 0.75, 1];
+const RINGS = [0.33, 0.66, 1];
 const MAX = 100;
-const LABEL_GAP = 16;
-// Widest label ("Consistency 13") at 11px, plus the gap it sits behind.
-const LABEL_ROOM = 74;
+// Room beside the rim for the widest side label ("Balance", "Power").
+const SIDE_ROOM = 52;
 
-export default function RadarChart({ data, height = 268 }) {
+export default function RadarChart({ data, height = 184 }) {
   const [ref, width] = useMeasure();
-  const gradientId = useId();
   const effects = useMotionEnabled();
   const reduced = useReducedMotion();
   const animate = effects && !reduced;
@@ -33,11 +28,10 @@ export default function RadarChart({ data, height = 268 }) {
   if (width <= 0) return <div ref={ref} style={{ height }} />;
 
   const cx = width / 2;
-  const cy = height / 2;
+  const cy = height / 2 + 2;
   // Bounded by both axes: labels sit outside the rim, so width has to hold the
-  // rim *and* "Consistency", while height has to clear the top and bottom
-  // labels. Sizing off one axis alone either clips a label or wastes the card.
-  const radius = Math.max(40, Math.min(cy - 30, cx - LABEL_ROOM));
+  // rim *and* the side labels, while height has to clear the top and bottom.
+  const radius = Math.max(36, Math.min(cy - 34, cx - SIDE_ROOM));
 
   const n = rows.length;
   const rim = rows.map((_, i) => radarPoint(i, n, MAX, MAX, radius));
@@ -53,45 +47,24 @@ export default function RadarChart({ data, height = 268 }) {
         aria-label={`Character stats: ${rows.map((d) => `${d.axis} ${Math.round(d.value)}`).join(', ')}`}
         style={{ display: 'block' }}
       >
-        <defs>
-          <radialGradient id={gradientId}>
-            <stop offset="0%" stopColor="var(--color-sage)" stopOpacity={0.5} />
-            <stop offset="100%" stopColor="var(--color-gold)" stopOpacity={0.45} />
-          </radialGradient>
-        </defs>
-
         <g transform={`translate(${cx},${cy})`}>
-          {RINGS.map((ratio) => (
-            <path
-              key={ratio}
-              d={polygonPath(rim.map((p) => ({ x: p.x * ratio, y: p.y * ratio })))}
-              fill="none"
-              stroke="var(--color-ash)"
-              strokeOpacity={ratio === 1 ? 0.34 : 0.16}
-            />
-          ))}
-
-          {rim.map((p) => (
-            <line
-              key={p.angle}
-              x1={0}
-              y1={0}
-              x2={p.x}
-              y2={p.y}
-              stroke="var(--color-ash)"
-              strokeOpacity={0.16}
-            />
-          ))}
+          <g filter="url(#ink-brush-fine)" fill="none" stroke="var(--washi-2)" strokeOpacity={0.22} strokeWidth={1}>
+            {RINGS.map((ratio) => (
+              <path key={ratio} d={polygonPath(rim.map((p) => ({ x: p.x * ratio, y: p.y * ratio })))} />
+            ))}
+            {rim.map((p) => (
+              <line key={p.angle} x1={0} y1={0} x2={p.x} y2={p.y} />
+            ))}
+          </g>
 
           {prev && (
             <m.path
               d={polygonPath(prev)}
-              fill="var(--color-ash)"
-              fillOpacity={0.1}
-              stroke="var(--color-ash)"
+              fill="none"
+              stroke="var(--washi-2)"
               strokeOpacity={0.55}
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
+              strokeWidth={1.2}
+              strokeDasharray="3 3"
               initial={animate ? { opacity: 0 } : false}
               animate={{ opacity: 1 }}
               transition={TWEEN.standard}
@@ -100,7 +73,8 @@ export default function RadarChart({ data, height = 268 }) {
 
           <m.path
             d={polygonPath(now)}
-            fill={`url(#${gradientId})`}
+            fill="var(--ver)"
+            fillOpacity={0.38}
             stroke="none"
             initial={animate ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
@@ -109,9 +83,10 @@ export default function RadarChart({ data, height = 268 }) {
           <m.path
             d={polygonPath(now)}
             fill="none"
-            stroke="var(--color-gold)"
+            stroke="var(--ver-light)"
             strokeWidth={2}
             strokeLinejoin="round"
+            filter="url(#ink-brush-fine)"
             initial={animate ? { pathLength: 0 } : false}
             animate={{ pathLength: 1 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
@@ -124,14 +99,8 @@ export default function RadarChart({ data, height = 268 }) {
               key={rows[i].axis}
               cx={p.x}
               cy={p.y}
-              r={3}
-              fill="var(--color-gold)"
-              // The halo separates the dot from the polygon behind it, so it
-              // has to be the card's own ground — `chalk` is the page canvas,
-              // which on this deliberately-dark card is the wrong colour in
-              // light mode.
-              stroke="var(--color-stone)"
-              strokeWidth={1.5}
+              r={2.6}
+              fill="var(--ver-light)"
               initial={animate ? { scale: 0 } : false}
               animate={{ scale: 1 }}
               transition={{ ...SPRING.pop, delay: animate ? 0.5 + i * 0.05 : 0 }}
@@ -139,25 +108,27 @@ export default function RadarChart({ data, height = 268 }) {
           ))}
 
           {rows.map((d, i) => {
-            const p = radarPoint(i, n, MAX, MAX, radius + LABEL_GAP);
-            const anchor = radialAnchor(p.angle);
-            return (
-              <text
-                key={d.axis}
-                x={p.x}
-                y={p.y}
-                textAnchor={anchor}
-                // Nudge by where the label sits: one above the chart needs to
-                // clear the rim upward, one below needs to hang under it.
-                dy={`${0.32 + Math.sin(p.angle) * 0.45}em`}
-                fontSize={11}
-                fontFamily="Zen Kaku Gothic New, sans-serif"
-                fill="var(--color-ash)"
-              >
+            const base = radarPoint(i, n, MAX, MAX, radius);
+            const cos = Math.cos(base.angle);
+            const sin = Math.sin(base.angle);
+            const side = Math.abs(cos) > 0.25;
+            const anchor = cos > 0.8 ? 'start' : cos < -0.8 ? 'end' : 'middle';
+            const gap = Math.abs(cos) > 0.8 ? 5 : 13;
+            // The two bottom labels would meet under the rim; nudge them apart.
+            const x = base.x + cos * gap + (side && anchor === 'middle' ? Math.sign(cos) * 6 : 0);
+            const y = base.y + sin * gap;
+            const common = { fontFamily: 'var(--font-display)', fontSize: 11, fontWeight: 600, textAnchor: anchor };
+            // Side labels stack (name over value) like the artboard so they fit
+            // beside the rim; top and bottom labels run on one line.
+            return side ? (
+              <g key={d.axis}>
+                <text x={x} y={y + (sin > 0 ? 6 : -1)} {...common} fill="var(--mute-1)">{d.axis}</text>
+                <text x={x} y={y + (sin > 0 ? 19 : 12)} {...common} fill="var(--ver-soft)">{Math.round(d.value)}</text>
+              </g>
+            ) : (
+              <text key={d.axis} x={x} y={y} dy={`${0.32 + sin * 0.45}em`} {...common} fill="var(--mute-1)">
                 {d.axis}
-                <tspan fontFamily="Zen Kaku Gothic New, sans-serif" fill="var(--color-text-inverse)" dx={5}>
-                  {Math.round(d.value)}
-                </tspan>
+                <tspan fill="var(--ver-soft)" dx={4}>{Math.round(d.value)}</tspan>
               </text>
             );
           })}
@@ -165,13 +136,9 @@ export default function RadarChart({ data, height = 268 }) {
       </svg>
 
       {hasPrev && (
-        <div className="-mt-1 flex items-center justify-center gap-4">
-          <span className="flex items-center gap-1.5 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
-            <span style={{ width: 10, height: 3, borderRadius: 2, background: 'var(--color-gold)' }} /> Now
-          </span>
-          <span className="flex items-center gap-1.5 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
-            <span style={{ width: 10, height: 0, borderTop: '2px dashed var(--color-ash)' }} /> Last month
-          </span>
+        <div className="you-radar__legend">
+          <span><i />Now</span>
+          <span><i className="dash" />Last month</span>
         </div>
       )}
     </div>
