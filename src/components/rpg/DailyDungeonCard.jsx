@@ -1,4 +1,6 @@
-import { Swords, Check, Target } from 'lucide-react';
+import { Check, Target } from 'lucide-react';
+import { UI_KANJI } from '../../utils/kanji.js';
+import '../../styles/ink-home.css';
 import { todaysDungeon, affixEffects, dungeonObjective, dungeonClearedOn } from '../../utils/dungeon.js';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/db.js';
@@ -63,44 +65,34 @@ export default function DailyDungeonCard() {
     navigate('/workout');
   }
 
+  const affixNames = dungeon.affixes.map((a) => a.name).join(' · ');
   return (
-    <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--gold-leaf)' }}>
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 font-sans text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--gold-leaf)' }}>
-          <Swords size={13} /> Daily Dungeon
+    <button
+      type="button"
+      onClick={enter}
+      aria-label={cleared ? 'Run again' : 'Enter dungeon'}
+      title={dungeon.affixes.map((a) => `${a.name}: ${a.desc}`).join(" / ")}
+      className="hm-trial"
+    >
+      <span className="hm-trial__row">
+        <span className="hm-trial__kanji" lang="ja">{UI_KANJI.trial}</span>
+        <span className="hm-trial__body">
+          <span className="hm-trial__eyebrow">TRIAL OF THE DAY</span>
+          <span className="hm-trial__name">{dungeon.name}</span>
+          <span className="hm-trial__duel">Duel: {dungeon.boss}{affixNames ? ` · ${affixNames}` : ''} · {dungeon.group}</span>
         </span>
-        <span className="flex items-center gap-1 font-mono text-xs font-bold" style={{ color: 'var(--gold-leaf)' }}>
-          <span style={{ display: 'inline-block', width: 10, height: 10, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), color-mix(in srgb, var(--gold-leaf) 62%, #000))', borderRadius: 2 }} />
-          {dungeon.ironReward}{fx.ironMult > 1 ? ` ×${fx.ironMult}` : ''}
+        <span className="hm-trial__iron">
+          <span className="hm-trial__amt">+{dungeon.ironReward}{fx.ironMult > 1 ? ` ×${fx.ironMult}` : ''}</span>
+          <span className="hm-trial__unit">Iron</span>
         </span>
-      </div>
-      <h3 className="mt-1.5 font-display text-lg font-bold" style={{ color: 'var(--color-text-primary)' }}>{dungeon.name}</h3>
-      <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>⚔ {dungeon.boss} · {dungeon.group}</p>
-
-      {/* Objective — how to clear it. */}
-      <div className="mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5" style={{ background: 'var(--color-ivory)' }}>
-        <Target size={13} style={{ color: cleared ? 'var(--color-sage)' : 'var(--gold-leaf)' }} />
-        <span className="font-sans text-xs" style={{ color: 'var(--color-text-primary)' }}>
-          {cleared ? 'Cleared today — Iron awarded ✓' : `Clear it: log ${objective.minSets}+ working sets in this dungeon`}
-        </span>
-      </div>
-
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {dungeon.affixes.map((a) => (
-          <span key={a.id} className="rounded-full px-2 py-0.5 font-sans text-[11px]" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }} title={a.desc}>
-            {a.name}
-          </span>
-        ))}
-      </div>
-
-      <button
-        type="button"
-        onClick={enter}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 font-sans text-sm font-semibold"
-        style={{ background: cleared ? 'var(--color-ivory)' : 'var(--gold-leaf)', color: cleared ? 'var(--color-text-primary)' : 'var(--color-obsidian)' }}
-      >
+      </span>
+      <span className="hm-trial__obj">
+        <Target size={13} aria-hidden style={{ color: cleared ? 'var(--ver-soft)' : 'var(--gold-leaf)' }} />
+        {cleared ? 'Cleared today — Iron awarded' : `Clear it: log ${objective.minSets}+ working sets in this dungeon`}
+      </span>
+      <span className={`hm-trial__cta${cleared ? ' hm-trial__cta--done' : ''}`} aria-hidden>
         {cleared ? <><Check size={15} /> Run again</> : 'Enter dungeon'}
-      </button>
-    </div>
+      </span>
+    </button>
   );
 }
