@@ -61,12 +61,12 @@ export default function TrendChart({ data, unit = '', empty = 'No data yet.', av
           <>
             <defs>
               <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--color-gold)" stopOpacity={0.34} />
-                <stop offset="100%" stopColor="var(--color-gold)" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--ver)" stopOpacity={0.28} />
+                <stop offset="100%" stopColor="var(--ver)" stopOpacity={0} />
               </linearGradient>
               <linearGradient id={strokeId} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="var(--color-gold)" />
-                <stop offset="100%" stopColor="var(--color-sage)" />
+                <stop offset="0%" stopColor="var(--mute-1)" />
+                <stop offset="100%" stopColor="var(--washi-2)" />
               </linearGradient>
             </defs>
 
@@ -109,7 +109,7 @@ export default function TrendChart({ data, unit = '', empty = 'No data yet.', av
                     cx={xs[i]}
                     cy={y(d)}
                     r={2.2}
-                    fill="var(--color-gold)"
+                    fill="var(--ver)"
                     fillOpacity={activeIndex === i ? 1 : 0.55}
                   />
                 ))}
@@ -122,7 +122,8 @@ export default function TrendChart({ data, unit = '', empty = 'No data yet.', av
                   d={path(data) || ''}
                   fill="none"
                   stroke={`url(#${strokeId})`}
-                  strokeWidth={2.5}
+                  strokeWidth={3}
+                  filter="url(#ink-brush-fine)"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   initial={animate ? { pathLength: 0 } : false}
@@ -138,9 +139,9 @@ export default function TrendChart({ data, unit = '', empty = 'No data yet.', av
               <circle
                 cx={xs[last]}
                 cy={y(data[last])}
-                r={3.5}
-                fill="var(--color-sage)"
-                stroke="var(--color-chalk)"
+                r={4.5}
+                fill="var(--ver)"
+                stroke="var(--ink-1)"
                 strokeWidth={2}
               />
             )}
@@ -151,7 +152,7 @@ export default function TrendChart({ data, unit = '', empty = 'No data yet.', av
                 cy={lineY(data[activeIndex])}
                 r={3.5}
                 fill="none"
-                stroke="var(--color-gold)"
+                stroke="var(--ver)"
                 strokeWidth={1.5}
               />
             )}
@@ -161,8 +162,8 @@ export default function TrendChart({ data, unit = '', empty = 'No data yet.', av
                 cx={xs[activeIndex]}
                 cy={y(data[activeIndex])}
                 r={5}
-                fill="var(--color-gold)"
-                stroke="var(--color-chalk)"
+                fill="var(--ver)"
+                stroke="var(--ink-1)"
                 strokeWidth={2.5}
               />
             )}

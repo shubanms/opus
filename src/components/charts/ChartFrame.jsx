@@ -56,6 +56,8 @@ export default function ChartFrame({
   /** Draw a vertical guide at the scrubbed point. */
   guide = true,
   empty = 'No data yet.',
+  /** Drop the y-axis labels and gridlines (brush bar charts). */
+  bare = false,
   ariaLabel,
   children,
 }) {
@@ -69,7 +71,7 @@ export default function ChartFrame({
     const extra = getExtra ? rows.map(getExtra).filter((v) => Number.isFinite(v)) : [];
     const [lo, hi] = padDomain([...values, ...extra], { zeroBased });
     const ticks = niceTicks(lo, hi);
-    const left = gutterFor(ticks.length ? ticks : [hi]);
+    const left = bare ? 4 : gutterFor(ticks.length ? ticks : [hi]);
 
     const innerWidth = Math.max(0, width - left - RIGHT);
     const innerHeight = Math.max(0, height - TOP - BOTTOM);
@@ -90,7 +92,7 @@ export default function ChartFrame({
     }
 
     return { left, innerWidth, innerHeight, yScale, xs, bandWidth, ticks, values };
-  }, [rows, width, height, getValue, getExtra, zeroBased, xKind]);
+  }, [rows, width, height, getValue, getExtra, zeroBased, xKind, bare]);
 
   const { index, handlers } = useScrub(layout?.xs ?? []);
   const active = index != null && index < rows.length ? rows[index] : null;
@@ -127,7 +129,7 @@ export default function ChartFrame({
         style={{ display: 'block', touchAction: 'pan-y' }}
       >
         <g transform={`translate(${left},${TOP})`}>
-          {ticks.map((t) => (
+          {!bare && ticks.map((t) => (
             <line
               key={t}
               x1={0}
@@ -140,7 +142,7 @@ export default function ChartFrame({
             />
           ))}
 
-          {ticks.map((t) => (
+          {!bare && ticks.map((t) => (
             <text
               key={t}
               x={-7}

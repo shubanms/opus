@@ -1,20 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Plus, ChevronRight, ChevronDown, Trash2, Pencil, Footprints, Droplet, Search, ArrowLeft, Trophy, Dumbbell,
-  Layers, Clock, Flame, TrendingUp, TrendingDown, Minus, Moon, Ruler,
+  Plus, ChevronRight, ChevronDown, Trash2, Pencil, Footprints, Droplet, Search, ArrowLeft, Moon, Ruler,
 } from 'lucide-react';
 import { deleteBodyStat, deleteSleep, deleteActivity, restoreEntry } from '../utils/healthActions.js';
 import { deleteWithUndo } from '../utils/undoable.js';
 import { useStreak } from '../hooks/useStreak.js';
 import { useTodayKey } from '../hooks/useTodayKey.js';
-import PageWrapper from '../components/layout/PageWrapper.jsx';
 import VolumeChart from '../components/charts/VolumeChart.jsx';
 import TrendChart from '../components/charts/TrendChart.jsx';
 import MuscleFrequency from '../components/progress/MuscleFrequency.jsx';
 import WeeklyMuscleTargets from '../components/progress/WeeklyMuscleTargets.jsx';
 import Heatmap from '../components/progress/Heatmap.jsx';
 import MonthCalendar from '../components/progress/MonthCalendar.jsx';
+import RecoveryGrid from '../components/progress/RecoveryGrid.jsx';
 import WorkoutCard from '../components/workout/WorkoutCard.jsx';
 import BodyStatsForm from '../components/progress/BodyStatsForm.jsx';
 import SleepForm from '../components/progress/SleepForm.jsx';
@@ -23,8 +22,10 @@ import WeeklyRecap from '../components/progress/WeeklyRecap.jsx';
 import RecoveryMap, { MUSCLE_LABEL } from '../components/progress/RecoveryMap.jsx';
 import ProgressPhotos from '../components/progress/ProgressPhotos.jsx';
 import PRBadge from '../components/progress/PRBadge.jsx';
+import { volumeSummary, weekLabels } from '../components/progress/chronicleLogic.js';
 import CountUp from '../components/fx/CountUp.jsx';
 import ExercisePicker from '../components/workout/ExercisePicker.jsx';
+import { InkButton, InkTabs, KanjiTile, ListRow, SectionLabel, Seal } from '../components/ink/index.js';
 import {
   useWeeklyVolume, useMuscleFrequency, useWorkoutDays,
   useExerciseVolume, useExerciseMaxWeight, useExerciseOneRepMax, useExerciseBestOneRepMax, useBodyStats, useSleepLogs,
@@ -37,11 +38,17 @@ import { friendlyDate, shortDate, todayKey } from '../utils/dateKey.js';
 import { MEASUREMENTS, latestByField, latestPerDay, lengthToDisplay, lengthUnit, rollingAverage, weightTrend } from '../utils/health.js';
 import { E1RM_MAX_REPS } from '../utils/oneRepMax.js';
 import { compactNumber } from '../utils/chartMath.js';
+import { formKanji, STAT_KANJI } from '../utils/kanji.js';
 import { m, itemVariants, listVariants, useReducedMotion } from '../motion/index.jsx';
 import useSettingsStore from '../store/settingsStore.js';
 import { toDisplay, unitLabel, fmtVolume, fmtWeight } from '../utils/units.js';
+import '../styles/ink-chronicle.css';
 
+// Tab ids stay as they were (Home's links and the remembered tab use them);
+// only the label shown is Ink-cased.
 const TABS = ['Overview', 'By Exercise', 'Body'];
+const TAB_LABEL = { Overview: 'Overview', 'By Exercise': 'By exercise', Body: 'Body' };
+const TAB_ITEMS = TABS.map((id) => ({ id, label: TAB_LABEL[id], tabId: `chr-tab-${id}`, panelId: 'chr-panel' }));
 
 // The tab you were on, per device. A convenience, so it lives in localStorage
 // and every access is guarded — private mode and blocked storage throw.
@@ -71,19 +78,10 @@ function prValue(pr, unit) {
   return pr.type === 'volume' ? fmtVolume(pr.value, unit) : fmtWeight(pr.value, unit);
 }
 
-function Section({ id, title, action, children }) {
+function Section({ id, title, meta, rule = false, children }) {
   return (
-    <section
-      id={id}
-      className="glass mb-5 rounded-2xl p-4"
-      style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)', scrollMarginTop: 16 }}
-    >
-      <div className="mb-3 flex min-h-5 items-center justify-between gap-2">
-        <h3 className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
-          {title}
-        </h3>
-        {action}
-      </div>
+    <section id={id} className="chr-sec">
+      <SectionLabel meta={meta} rule={rule}>{title}</SectionLabel>
       {children}
     </section>
   );
@@ -92,25 +90,18 @@ function Section({ id, title, action, children }) {
 /** A quiet text action for a section header, with a full-height tap target. */
 function HeaderLink({ onClick, children }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="-my-2.5 -mr-2 flex h-10 shrink-0 items-center gap-1 rounded-lg px-2 font-sans text-xs font-medium"
-      style={{ color: 'var(--color-gold)' }}
-    >
+    <button type="button" onClick={onClick} className="chr-action">
       {children}
     </button>
   );
 }
 
-function KpiTile({ icon: Icon, label, value, countTo, effects, format }) {
+function Kpi({ kanji, label, value, countTo, effects, format }) {
   return (
-    <div className="glass rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-      <Icon size={14} style={{ color: 'var(--color-gold)' }} />
-      <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-        {countTo != null && effects ? <CountUp value={countTo} format={format} /> : value}
-      </p>
-      <p className="mt-1 font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>{label}</p>
+    <div className="chr-kpi">
+      <span aria-hidden className="chr-kpi__k">{kanji}</span>
+      <span className="chr-kpi__v">{countTo != null && effects ? <CountUp value={countTo} format={format} /> : value}</span>
+      <span className="chr-kpi__l">{label}</span>
     </div>
   );
 }
@@ -119,42 +110,15 @@ function PrRow({ pr, unit, onClick }) {
   const El = onClick ? 'button' : 'div';
   const date = pr.achievedAt ? friendlyDate(todayKey(new Date(pr.achievedAt))) : '';
   return (
-    <El
-      {...(onClick ? { type: 'button', onClick } : {})}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left"
-      style={{ background: 'var(--color-ivory)' }}
-    >
-      <Trophy size={14} className="shrink-0" style={{ color: 'var(--color-gold)' }} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{pr.exerciseName}</p>
-        <p className="truncate font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-          {PR_LABEL[pr.type] ?? pr.type}{date ? ` · ${date}` : ''}
-        </p>
-      </div>
-      <span className="shrink-0 font-mono text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-        {prValue(pr, unit)}
+    <El {...(onClick ? { type: 'button', onClick } : {})} className="chr-pr">
+      <KanjiTile kanji={formKanji(pr.exerciseName)} state="paper" size={40} />
+      <span className="chr-pr__body">
+        <span className="chr-pr__t">{pr.exerciseName}</span>
+        <span className="chr-pr__m">{PR_LABEL[pr.type] ?? pr.type}{date ? ` · ${date}` : ''}</span>
       </span>
-      {onClick && <ChevronRight size={15} className="shrink-0" style={{ color: 'var(--color-ash)' }} />}
+      <span className="chr-pr__v">{prValue(pr, unit)}</span>
+      {onClick && <ChevronRight size={16} aria-hidden style={{ color: 'var(--mute-3)' }} />}
     </El>
-  );
-}
-
-/**
- * "This week so far" against last week at the same point (utils/weeks.js).
- * Says nothing when last week had nothing yet — comparing against zero, or a
- * Monday morning against a whole week, is how this used to read −100%.
- */
-function WeekComparison({ cmp }) {
-  if (!cmp) return null;
-  const { pct } = cmp;
-  const tone = pct > 0 ? 'var(--color-sage)' : pct < 0 ? 'var(--color-ember)' : 'var(--color-text-secondary)';
-  const Icon = pct > 0 ? TrendingUp : pct < 0 ? TrendingDown : Minus;
-  const text = pct === 0 ? 'Level with' : `${pct > 0 ? '+' : '−'}${Math.abs(pct)}% vs`;
-  return (
-    <div className="mb-2 flex items-center gap-1.5 font-sans text-xs font-medium" style={{ color: tone }} data-testid="week-comparison">
-      <Icon size={13} />
-      {text} this point last week
-    </div>
   );
 }
 
@@ -179,6 +143,12 @@ function useFocusSection(focus, ready) {
   }, [focus, ready, reduced]);
 }
 
+/** "14.8 t" for kilos at tonne scale, otherwise the plain volume string. */
+function headlineVolume(kg, unit) {
+  if (unit === 'kg' && kg >= 1000) return `${(kg / 1000).toFixed(1)} t`;
+  return fmtVolume(kg, unit);
+}
+
 function Overview({ focus }) {
   const navigate = useNavigate();
   const unit = useSettingsStore((s) => s.unit);
@@ -188,7 +158,9 @@ function Overview({ focus }) {
   const liveStreak = useStreak().count;
   const lifetime = useLifetimeStats();
   const weeklyRaw = useWeeklyVolume(8);
-  const weekly = weeklyRaw.map((d) => ({ label: d.label, volume: Math.round(toDisplay(d.volume, unit)) }));
+  const wLabels = weekLabels(weeklyRaw);
+  const weekly = weeklyRaw.map((d, i) => ({ label: wLabels[i], volume: Math.round(toDisplay(d.volume, unit)) }));
+  const summary = volumeSummary(weeklyRaw);
   const muscles = useMuscleFrequency();
   const days = useWorkoutDays();
   const allPRs = useAllPRs();
@@ -200,64 +172,89 @@ function Overview({ focus }) {
 
   // Calories: derived per workout (includes pre-cardio history). This-week vs
   // all-time totals + an 8-week trend, bucketed by local Monday like volume.
-  const calWeeks = weeklyTotals(workouts, { today, weeks: 8, getValue: workoutCalories })
-    .map((b) => ({ label: b.label, volume: Math.round(b.value) }));
+  const calRaw = weeklyTotals(workouts, { today, weeks: 8, getValue: workoutCalories });
+  const calLabels = weekLabels(calRaw);
+  const calWeeks = calRaw.map((b, i) => ({ label: calLabels[i], volume: Math.round(b.value) }));
   const weekCalories = calWeeks[calWeeks.length - 1]?.volume ?? 0;
   const lifetimeCalories = Math.round(workouts.reduce((a, w) => a + workoutCalories(w), 0));
 
   const comparison = weekToDate(workouts, { now: new Date() });
+  const sealedToday = days.has(today);
+  const weekPct = comparison ? (comparison.pct === 0 ? 'level with last week' : comparison.pct > 0 ? `+${comparison.pct}% on last week` : null) : null;
 
   return (
     <>
       <WeeklyRecap />
 
-      {/* Lifetime headline numbers */}
-      <div className="mb-5 grid grid-cols-3 gap-2.5">
-        <KpiTile icon={Dumbbell} label="Workouts" value={lifetime.workouts} countTo={lifetime.workouts} effects={effects} />
-        {/* Compact, with the unit in the label: "202,777 kg" wrapped onto two
-            lines in a third of a phone and knocked the row out of line. */}
-        <KpiTile
-          icon={Layers}
-          label={`${unitLabel(unit)} lifted`}
-          value={compactNumber(toDisplay(lifetime.totalVolume, unit))}
-          countTo={lifetime.totalVolume}
-          format={(n) => compactNumber(toDisplay(n, unit))}
-          effects={effects}
-        />
-        <KpiTile icon={Trophy} label="PRs" value={lifetime.prCount} countTo={lifetime.prCount} effects={effects} />
-        <KpiTile icon={Flame} label="Streak" value={liveStreak} countTo={liveStreak} effects={effects} />
-        <KpiTile icon={Clock} label="Hours" value={Math.round(lifetime.hours)} countTo={Math.round(lifetime.hours)} effects={effects} />
-        <KpiTile icon={TrendingUp} label="Sets" value={lifetime.totalSets} countTo={lifetime.totalSets} effects={effects} />
-      </div>
+      <Section
+        id="progress-volume"
+        title="Volume · last 8 weeks"
+        meta={
+          summary.cur > 0 ? (
+            <>
+              <span className="chr-sec__strong">{headlineVolume(summary.cur, unit)}</span>
+              {summary.pct != null && summary.pct > 0 ? <span className="chr-sec__note">↑ {summary.pct}%{summary.best ? ' · best yet' : ''}</span> : null}
+              {weekPct != null && !(summary.pct > 0) ? <span className="chr-sec__note">{weekPct}</span> : null}
+              {summary.pct == null && summary.best ? <span className="chr-sec__note">best yet</span> : null}
+            </>
+          ) : null
+        }
+      >
+        <VolumeChart data={weekly} unit={unitLabel(unit)} />
+      </Section>
+
+      <Section title="Recovery" meta={<span className="chr-lc">deeper red = still recovering</span>}>
+        <RecoveryGrid />
+      </Section>
 
       <Section title="This week by muscle">
         <WeeklyMuscleTargets />
       </Section>
 
-      <Section id="progress-volume" title="Weekly volume (8 weeks)">
-        <WeekComparison cmp={comparison} />
-        <VolumeChart data={weekly} unit={unitLabel(unit)} />
+      <section className="chr-sec">
+        <MonthCalendar days={days} selected={calDay} onSelect={setCalDay} />
+        {calDay && (
+          <div style={{ marginTop: 12 }}>
+            {calDayWorkouts.length > 0 ? (
+              calDayWorkouts.map((w) => <WorkoutCard key={w.id} workout={w} />)
+            ) : (
+              <p className="chr-muted" style={{ textAlign: 'center', padding: '14px 0' }}>
+                No workout logged on {friendlyDate(calDay)}
+              </p>
+            )}
+          </div>
+        )}
+        <p className="chr-coach">
+          Every session stamps its day. {sealedToday ? 'Today is sealed.' : 'Seal today to close the week.'}
+        </p>
+      </section>
+
+      <Section title="The record so far">
+        <div className="chr-kpis" style={{ marginTop: 10 }}>
+          <Kpi kanji={STAT_KANJI.sessions} label="Workouts" value={lifetime.workouts} countTo={lifetime.workouts} effects={effects} />
+          {/* Compact, with the unit in the label: "202,777 kg" wraps in a third of a phone. */}
+          <Kpi
+            kanji={STAT_KANJI.iron}
+            label={`${unitLabel(unit)} lifted`}
+            value={compactNumber(toDisplay(lifetime.totalVolume, unit))}
+            countTo={lifetime.totalVolume}
+            format={(n) => compactNumber(toDisplay(n, unit))}
+            effects={effects}
+          />
+          <Kpi kanji={STAT_KANJI.records} label="PRs" value={lifetime.prCount} countTo={lifetime.prCount} effects={effects} />
+          <Kpi kanji={STAT_KANJI.streak} label="Streak" value={liveStreak} countTo={liveStreak} effects={effects} />
+          <Kpi kanji={STAT_KANJI.time} label="Hours" value={Math.round(lifetime.hours)} countTo={Math.round(lifetime.hours)} effects={effects} />
+          <Kpi kanji={STAT_KANJI.sets} label="Sets" value={lifetime.totalSets} countTo={lifetime.totalSets} effects={effects} />
+        </div>
       </Section>
 
       <Section title="Calories burned">
-        <div className="mb-3 grid grid-cols-2 gap-2.5">
-          <div className="glass rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-            <Flame size={14} style={{ color: 'var(--color-ember)' }} />
-            <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-              {effects ? <CountUp value={weekCalories} /> : weekCalories.toLocaleString()}
-            </p>
-            <p className="mt-1 font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>kcal this week</p>
-          </div>
-          <div className="glass rounded-2xl p-3" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
-            <Flame size={14} style={{ color: 'var(--color-ember)' }} />
-            <p className="mt-1.5 font-mono text-2xl font-semibold leading-none" style={{ color: 'var(--color-text-primary)' }}>
-              {effects ? <CountUp value={lifetimeCalories} /> : lifetimeCalories.toLocaleString()}
-            </p>
-            <p className="mt-1 font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>kcal all time</p>
-          </div>
+        <div className="chr-kpis" style={{ gridTemplateColumns: '1fr 1fr', margin: '10px 0' }}>
+          <Kpi kanji="火" label="kcal this week" value={weekCalories.toLocaleString()} countTo={weekCalories} effects={effects} />
+          <Kpi kanji="火" label="kcal all time" value={lifetimeCalories.toLocaleString()} countTo={lifetimeCalories} effects={effects} />
         </div>
         <VolumeChart data={calWeeks} unit="kcal" />
-        <p className="mt-2 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
+        <p className="chr-muted" style={{ marginTop: 8, fontSize: 11.5 }}>
           Cardio is calculated; lifting is estimated from session time + bodyweight.
         </p>
       </Section>
@@ -266,9 +263,10 @@ function Overview({ focus }) {
         <Section
           id="progress-prs"
           title="Recent PRs"
-          action={<HeaderLink onClick={() => navigate('/records')}>All records <ChevronRight size={13} /></HeaderLink>}
+          rule
+          meta={<HeaderLink onClick={() => navigate('/records')}>All records <ChevronRight size={13} /></HeaderLink>}
         >
-          <div className="flex flex-col gap-2">
+          <div className="chr-list">
             {allPRs.slice(0, 4).map((pr) => (
               <PrRow key={pr.id} pr={pr} unit={unit} onClick={() => navigate(`/exercises/${pr.exerciseId}`)} />
             ))}
@@ -277,20 +275,6 @@ function Overview({ focus }) {
       )}
 
       <Section title="Muscle focus"><MuscleFrequency data={muscles} /></Section>
-      <Section title="Training calendar">
-        <MonthCalendar days={days} selected={calDay} onSelect={setCalDay} />
-        {calDay && (
-          <div className="mt-3">
-            {calDayWorkouts.length > 0 ? (
-              calDayWorkouts.map((w) => <WorkoutCard key={w.id} workout={w} />)
-            ) : (
-              <p className="py-4 text-center font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                No workout logged on {friendlyDate(calDay)}
-              </p>
-            )}
-          </div>
-        )}
-      </Section>
       <Section title="Consistency (last 12 weeks)"><Heatmap days={days} /></Section>
     </>
   );
@@ -309,13 +293,13 @@ function ExerciseDetail({ exercise, unit, onBack }) {
 
   return (
     <>
-      <button type="button" onClick={onBack} className="mb-4 flex h-10 items-center gap-1.5 font-sans text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+      <button type="button" onClick={onBack} className="chr-back">
         <ArrowLeft size={15} /> All exercises
       </button>
-      <h2 className="mb-4 font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>{exercise.name}</h2>
+      <h2 className="chr-h2">{exercise.name}</h2>
 
       {(weight || reps || vol) && (
-        <div className="mb-5 flex flex-col gap-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
           {weight && <PRBadge label="Best weight" value={fmtWeight(weight.value, unit)} unit="" />}
           {reps && <PRBadge label="Best reps" value={reps.value} unit="reps" />}
           {vol && <PRBadge label="Best volume" value={fmtVolume(vol.value, unit)} unit="" />}
@@ -324,16 +308,14 @@ function ExerciseDetail({ exercise, unit, onBack }) {
 
       <Section title="Estimated 1RM">
         {bestOneRM && (
-          <p className="mb-2 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            <span className="font-mono text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              {fmtWeight(bestOneRM.value, unit)}
-            </span>{' '}
+          <p className="chr-muted" style={{ margin: '8px 0' }}>
+            <b style={{ fontFamily: 'var(--font-display)', color: 'var(--washi-2)' }}>{fmtWeight(bestOneRM.value, unit)}</b>{' '}
             all-time best — {fmtWeight(bestOneRM.weight, unit)} × {bestOneRM.reps}
             {bestOneRM.date ? `, ${friendlyDate(bestOneRM.date)}` : ''}
           </p>
         )}
         <TrendChart data={oneRM} unit={u} empty="Log weighted sets to estimate 1RM." />
-        <p className="mt-2 font-sans text-[11px]" style={{ color: 'var(--color-ash)' }}>
+        <p className="chr-muted" style={{ marginTop: 8, fontSize: 11.5 }}>
           Epley estimate from your best set of 1–{E1RM_MAX_REPS} reps each session.
         </p>
       </Section>
@@ -380,22 +362,16 @@ function ByExercise() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setPicker(true)}
-        className="mb-5 flex w-full items-center gap-2 rounded-2xl px-4 py-3"
-        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}
-      >
-        <Search size={16} style={{ color: 'var(--color-ash)' }} />
-        <span className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>Search all exercises…</span>
+      <button type="button" onClick={() => setPicker(true)} className="chr-search">
+        <Search size={16} aria-hidden />
+        <span>Search all exercises…</span>
       </button>
 
       {ranked.length > 0 ? (
         <>
-          <div className="mb-5">
+          <div className="chr-sec">
             <RecoveryMap
               title="Muscle map"
-              icon={Dumbbell}
               data={mapData}
               legend={[['#E0553B', 'Most trained'], ['#D2AE5A', 'Moderate'], ['#9DA67A', 'Least']]}
               selectedMuscle={muscleFilter}
@@ -403,29 +379,22 @@ function ByExercise() {
             />
           </div>
 
-          <Section title={muscleFilter ? `Top ${MUSCLE_LABEL[muscleFilter] ?? ''} lifts` : 'Top exercises'}>
+          <Section title={muscleFilter ? `Top ${MUSCLE_LABEL[muscleFilter] ?? ''} lifts` : 'Top exercises'} rule>
             {filtered.length === 0 ? (
-              <p className="font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>No lifts logged for this muscle yet.</p>
+              <p className="chr-muted" style={{ marginTop: 10 }}>No lifts logged for this muscle yet.</p>
             ) : (
-              <div className="flex flex-col gap-1.5">
-                {filtered.map((e, i) => (
-                  <button
+              <div className="chr-list" style={{ borderTop: 0 }}>
+                {filtered.map((e) => (
+                  <ListRow
+                    as="button"
                     type="button"
                     key={e.exerciseId}
+                    kanji={formKanji(e.name, e.muscleGroup)}
+                    tileState="paper"
+                    title={e.name}
+                    meta={`${e.sets} ${e.sets === 1 ? 'set' : 'sets'} · ${e.kind === 'cardio' ? 'Cardio' : MUSCLE_LABEL[e.muscleGroup] ?? e.muscleGroup ?? '—'} · ${exerciseFigure(e, unit)}`}
                     onClick={() => setSelected({ id: e.exerciseId, name: e.name })}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left"
-                    style={{ background: 'var(--color-ivory)' }}
-                  >
-                    <span className="shrink-0 font-mono text-xs font-semibold" style={{ color: 'var(--color-ash)', width: 16 }}>{i + 1}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>{e.name}</p>
-                      <p className="truncate font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                        {e.sets} {e.sets === 1 ? 'set' : 'sets'} · {e.kind === 'cardio' ? 'Cardio' : MUSCLE_LABEL[e.muscleGroup] ?? e.muscleGroup ?? '—'}
-                      </p>
-                    </div>
-                    <span className="shrink-0 font-mono text-sm" style={{ color: 'var(--color-text-primary)' }}>{exerciseFigure(e, unit)}</span>
-                    <ChevronRight size={15} className="shrink-0" style={{ color: 'var(--color-ash)' }} />
-                  </button>
+                  />
                 ))}
               </div>
             )}
@@ -434,9 +403,10 @@ function ByExercise() {
           {allPRs.length > 0 && (
             <Section
               title="Recent PRs"
-              action={<HeaderLink onClick={() => navigate('/records')}>All records <ChevronRight size={13} /></HeaderLink>}
+              rule
+              meta={<HeaderLink onClick={() => navigate('/records')}>All records <ChevronRight size={13} /></HeaderLink>}
             >
-              <div className="flex flex-col gap-2">
+              <div className="chr-list" style={{ borderTop: 0 }}>
                 {allPRs.slice(0, 4).map((pr) => (
                   <PrRow key={pr.id} pr={pr} unit={unit} onClick={() => setSelected({ id: pr.exerciseId, name: pr.exerciseName })} />
                 ))}
@@ -445,11 +415,9 @@ function ByExercise() {
           )}
         </>
       ) : (
-        <div className="mt-10 text-center">
-          <p className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>No lifts yet</p>
-          <p className="mt-2 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-            Log a workout, then explore your numbers here.
-          </p>
+        <div className="chr-empty">
+          <b>No lifts yet</b>
+          <p className="chr-muted" style={{ marginTop: 8 }}>Log a workout, then explore your numbers here.</p>
         </div>
       )}
 
@@ -463,14 +431,9 @@ function ByExercise() {
 }
 
 /** A 40 px square icon button — the size a thumb can hit on the first try. */
-function IconButton({ label, onClick, children }) {
+function IconButton({ label, onClick, danger = false, children }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
-    >
+    <button type="button" onClick={onClick} aria-label={label} className={`chr-icon ${danger ? 'chr-icon--del' : ''}`}>
       {children}
     </button>
   );
@@ -487,42 +450,27 @@ function EntryList({ title, rows, limit = 6, summary, onEdit, onDelete, empty, a
   const [all, setAll] = useState(false);
   const shown = all ? rows : rows.slice(0, limit);
   return (
-    <Section title={title} action={action}>
+    <Section title={title} meta={action} rule>
       {rows.length === 0 ? (
-        <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{empty}</p>
+        <p className="chr-muted" style={{ marginTop: 10 }}>{empty}</p>
       ) : (
-        <m.div className="flex flex-col gap-1.5" variants={listVariants} initial="initial" animate="animate">
+        <m.div className="chr-list" style={{ borderTop: 0 }} variants={listVariants} initial="initial" animate="animate">
           {shown.map((r) => (
-            <m.div
-              key={r.id}
-              variants={itemVariants}
-              layout="position"
-              className="flex items-center gap-2 rounded-xl py-0.5 pl-3 pr-0.5"
-              style={{ background: 'var(--color-ivory)' }}
-            >
-              <span className="w-[4.5rem] shrink-0 truncate font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-                {friendlyDate(r.date)}
-              </span>
-              <span className="flex min-w-0 flex-1 items-center gap-3 truncate font-mono text-xs" style={{ color: 'var(--color-text-primary)' }}>
-                {summary(r)}
-              </span>
+            <m.div key={r.id} variants={itemVariants} layout="position" className="chr-entry">
+              <span className="chr-entry__date">{friendlyDate(r.date)}</span>
+              <span className="chr-entry__sum">{summary(r)}</span>
               <IconButton label={`Edit ${friendlyDate(r.date)}`} onClick={() => onEdit(r)}>
-                <Pencil size={15} style={{ color: 'var(--color-ash)' }} />
+                <Pencil size={15} />
               </IconButton>
-              <IconButton label={`Delete ${friendlyDate(r.date)}`} onClick={() => onDelete(r)}>
-                <Trash2 size={15} style={{ color: 'var(--color-ember)' }} />
+              <IconButton label={`Delete ${friendlyDate(r.date)}`} onClick={() => onDelete(r)} danger>
+                <Trash2 size={15} />
               </IconButton>
             </m.div>
           ))}
         </m.div>
       )}
       {rows.length > limit && (
-        <button
-          type="button"
-          onClick={() => setAll((v) => !v)}
-          className="mt-2 flex h-10 w-full items-center justify-center gap-1 rounded-lg font-sans text-xs"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
+        <button type="button" onClick={() => setAll((v) => !v)} className="chr-more">
           {all ? 'Show less' : `Show all ${rows.length}`}
           <ChevronDown size={13} style={{ transform: all ? 'rotate(180deg)' : 'none', transition: 'transform 200ms' }} />
         </button>
@@ -539,17 +487,11 @@ function WeightHeadline({ trend, unit }) {
   if (!trend) return null;
   const delta = toDisplay(trend.delta, unit);
   const steady = Math.abs(delta) < 0.05;
-  const Icon = steady ? Minus : delta < 0 ? TrendingDown : TrendingUp;
   const amount = Math.abs(delta).toFixed(1);
   return (
-    <div className="mb-3 flex flex-wrap items-baseline gap-x-2" data-testid="weight-trend">
-      <span className="flex items-center gap-1.5 font-mono text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-        <Icon size={16} style={{ color: 'var(--color-gold)', alignSelf: 'center' }} />
-        {steady ? 'Steady' : `${delta < 0 ? '−' : '+'}${amount} ${unitLabel(unit)}`}
-      </span>
-      <span className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-        in {trend.days} days
-      </span>
+    <div className="chr-trend" data-testid="weight-trend">
+      <b>{steady ? 'Steady' : `${delta < 0 ? '−' : '+'}${amount} ${unitLabel(unit)}`}</b>
+      <span className="chr-muted">in {trend.days} days</span>
     </div>
   );
 }
@@ -557,15 +499,9 @@ function WeightHeadline({ trend, unit }) {
 /** What the two weight series are. */
 function WeightLegend() {
   return (
-    <div className="mt-2 flex items-center gap-4 font-sans text-[11px]" style={{ color: 'var(--color-text-secondary)' }}>
-      <span className="flex items-center gap-1.5">
-        <span className="h-[3px] w-4 rounded-full" style={{ background: 'var(--grad-accent)' }} />
-        7-day average
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className="h-[5px] w-[5px] rounded-full" style={{ background: 'var(--color-gold)', opacity: 0.7 }} />
-        Weigh-ins
-      </span>
+    <div className="chr-legend">
+      <span><i style={{ width: 16, height: 3, borderRadius: 2, background: 'var(--washi-2)' }} />7-day average</span>
+      <span><i style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--ver)' }} />Weigh-ins</span>
     </div>
   );
 }
@@ -607,33 +543,27 @@ function Body() {
 
   return (
     <>
-      <div className="mb-5 flex gap-2">
-        <button type="button" onClick={() => open('body')} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
-          <Plus size={15} /> Body stats
-        </button>
-        <button type="button" onClick={() => open('sleep')} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}>
-          <Plus size={15} /> Sleep
-        </button>
+      <div className="chr-btnrow">
+        <InkButton onClick={() => open('body')}><Plus size={15} aria-hidden /> Body stats</InkButton>
+        <InkButton variant="secondary" onClick={() => open('sleep')}><Plus size={15} aria-hidden /> Sleep</InkButton>
       </div>
 
       <Section title="Body weight">
-        <WeightHeadline trend={trend} unit={unit} />
-        <TrendChart data={weightTrendData} unit={unitLabel(unit)} empty="Log your weight to see the trend." />
-        {weightTrendData.length > 1 && <WeightLegend />}
+        <div style={{ marginTop: 10 }}>
+          <WeightHeadline trend={trend} unit={unit} />
+          <TrendChart data={weightTrendData} unit={unitLabel(unit)} empty="Log your weight to see the trend." />
+          {weightTrendData.length > 1 && <WeightLegend />}
+        </div>
       </Section>
 
       {hasMeasurements && (
         <Section title="Latest measurements">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="chr-meas" style={{ marginTop: 12 }}>
             {[...MEASUREMENTS, 'bodyFat'].map((key) => (
-              <div key={key} className="text-center">
-                <p className="font-mono text-base font-medium" style={{ color: 'var(--color-text-primary)' }}>
-                  {latest[key] ? measText(key, latest[key].value) : '—'}
-                </p>
-                <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>{MEAS_LABEL[key]}</p>
-                {latest[key] && (
-                  <p className="font-sans text-[10px]" style={{ color: 'var(--color-ash)' }}>{friendlyDate(latest[key].date)}</p>
-                )}
+              <div key={key}>
+                <b>{latest[key] ? measText(key, latest[key].value) : '—'}</b>
+                <span className="chr-muted">{MEAS_LABEL[key]}</span>
+                {latest[key] && <span className="chr-muted" style={{ display: 'block', fontSize: 10.5 }}>{friendlyDate(latest[key].date)}</span>}
               </div>
             ))}
           </div>
@@ -654,8 +584,8 @@ function Body() {
         action={<HeaderLink onClick={() => open('activity')}><Plus size={13} /> Log a day</HeaderLink>}
         summary={(a) => (
           <>
-            <span className="flex items-center gap-1"><Footprints size={12} style={{ color: 'var(--color-gold)' }} />{(a.steps ?? 0).toLocaleString()}</span>
-            <span className="flex items-center gap-1"><Droplet size={12} style={{ color: 'var(--color-sage)' }} />{a.water ?? 0}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Footprints size={12} aria-hidden />{(a.steps ?? 0).toLocaleString()}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Droplet size={12} aria-hidden />{a.water ?? 0}</span>
           </>
         )}
         onEdit={(a) => open('activity', a.date)}
@@ -674,11 +604,10 @@ function Body() {
                 {s.bodyFat != null && <span>{Number(s.bodyFat).toFixed(1)}%</span>}
                 {measured > 0 && (
                   <span
-                    className="flex items-center gap-1"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--mute-2)' }}
                     title={`${measured} ${measured === 1 ? 'measurement' : 'measurements'}`}
                   >
-                    <Ruler size={12} style={{ color: 'var(--color-sage)' }} />{measured}
+                    <Ruler size={12} aria-hidden />{measured}
                   </span>
                 )}
               </>
@@ -695,7 +624,7 @@ function Body() {
           rows={sleep}
           summary={(s) => (
             <>
-              {s.hours != null && <span className="flex items-center gap-1"><Moon size={12} style={{ color: 'var(--color-gold)' }} />{s.hours}h</span>}
+              {s.hours != null && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Moon size={12} aria-hidden />{s.hours}h</span>}
               {s.quality > 0 && <span>{'★'.repeat(s.quality)}</span>}
             </>
           )}
@@ -716,6 +645,7 @@ function Body() {
 export default function ProgressPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const today = useTodayKey();
   // A link can ask for a tab (and a section to scroll to) — Home's tiles do.
   // Otherwise you come back to the tab you left.
   const requested = TABS.includes(location.state?.tab) ? location.state.tab : null;
@@ -735,31 +665,22 @@ export default function ProgressPage() {
     rememberTab(t);
   }
 
-  return (
-    <PageWrapper title="Progress" subtitle="Charts & stats">
-      {/* Plain buttons with aria-pressed, like every other segmented control
-          here — the E2E route sweep finds these tabs as buttons by name. */}
-      <div className="mb-5 flex gap-1 rounded-xl p-1" style={{ background: 'var(--color-ivory)' }}>
-        {TABS.map((t) => (
-          <button
-            type="button"
-            aria-pressed={tab === t}
-            key={t}
-            onClick={() => setTab(t)}
-            className="flex-1 rounded-lg py-2 font-sans text-xs font-medium"
-            style={{
-              background: tab === t ? 'var(--color-chalk)' : 'transparent',
-              color: tab === t ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-            }}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+  const monthName = new Date(`${today}T00:00:00`).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
 
-      {tab === 'Overview' && <Overview focus={focus} />}
-      {tab === 'By Exercise' && <ByExercise />}
-      {tab === 'Body' && <Body />}
-    </PageWrapper>
+  return (
+    <div className="chr-page">
+      <span aria-hidden className="chr-watermark" lang="ja">記録</span>
+      <header className="chr-head">
+        <Seal kanji="記" size={30} rotate={-3} />
+        <h1 className="chr-title">The Chronicle</h1>
+        <span className="chr-month">{monthName}</span>
+      </header>
+      <InkTabs className="chr-tabs" tabs={TAB_ITEMS} value={tab} onChange={setTab} label="Progress views" />
+      <div role="tabpanel" id="chr-panel" aria-labelledby={`chr-tab-${tab}`}>
+        {tab === 'Overview' && <Overview focus={focus} />}
+        {tab === 'By Exercise' && <ByExercise />}
+        {tab === 'Body' && <Body />}
+      </div>
+    </div>
   );
 }

@@ -4,11 +4,13 @@ import { monthGrid, monthLabel, dowLabels, monthStats, stepMonth } from '../../u
 import { friendlyDate } from '../../utils/dateKey.js';
 import { useHaptics } from '../../hooks/useHaptics.js';
 import { useTodayKey } from '../../hooks/useTodayKey.js';
+import { SectionLabel } from '../ink/index.js';
+import useInkMotion from '../ink/useInkMotion.js';
+import '../../styles/ink-chronicle.css';
 
-// Tappable month grid of training days (richer than the 12-week heatmap).
+// "The month · sealed days": tappable month grid. Sealed days are vermilion
+// stamped squares, today is a dashed pulsing outline, future days plain.
 // `days` is a Set of YYYY-MM-DD keys; onSelect(dateKey|null) fires on tap.
-// The "today" ring follows useTodayKey, so it moves at midnight instead of
-// staying on yesterday until something else re-renders the card.
 export default function MonthCalendar({ days, selected, onSelect }) {
   const [{ year, month }, setYM] = useState(() => {
     const now = new Date();
@@ -16,88 +18,70 @@ export default function MonthCalendar({ days, selected, onSelect }) {
   });
   const haptic = useHaptics();
   const tk = useTodayKey();
+  const motionOn = useInkMotion();
   const weeks = monthGrid(year, month, days, { todayKey: tk });
   const stats = monthStats(year, month, days);
   const labels = dowLabels();
 
   function tap(cell) {
-    if (!cell) return;
     haptic('tap');
     onSelect?.(selected === cell.dateKey ? null : cell.dateKey);
   }
+  const step = (d) => {
+    setYM(stepMonth(year, month, d));
+    onSelect?.(null);
+  };
 
   return (
-    <div className="glass rounded-2xl p-4" style={{ background: 'var(--color-ivory)' }}>
-      <div className="mb-3 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => { setYM(stepMonth(year, month, -1)); onSelect?.(null); }}
-          aria-label="Previous month"
-          className="flex h-10 w-10 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-chalk)' }}
-        >
-          <ChevronLeft size={16} style={{ color: 'var(--color-text-primary)' }} />
+    <div className={`chr-cal ${motionOn ? 'chr-cal--motion' : ''}`}>
+      <SectionLabel meta={`${stats.trained} sealed`}>The month · sealed days</SectionLabel>
+      <div className="chr-cal__nav">
+        <button type="button" className="chr-cal__btn" aria-label="Previous month" onClick={() => step(-1)}>
+          <ChevronLeft size={16} />
         </button>
-        <div className="text-center">
-          <p className="font-display text-base font-bold" style={{ color: 'var(--color-text-primary)' }}>
-            {monthLabel(year, month)}
-          </p>
-          <p className="font-mono text-xs" style={{ color: 'var(--color-text-secondary)' }}>
-            {stats.trained} training {stats.trained === 1 ? 'day' : 'days'}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => { setYM(stepMonth(year, month, 1)); onSelect?.(null); }}
-          aria-label="Next month"
-          className="flex h-10 w-10 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-chalk)' }}
-        >
-          <ChevronRight size={16} style={{ color: 'var(--color-text-primary)' }} />
+        <span>{monthLabel(year, month)}</span>
+        <button type="button" className="chr-cal__btn" aria-label="Next month" onClick={() => step(1)}>
+          <ChevronRight size={16} />
         </button>
       </div>
 
-      <div className="mb-1 grid grid-cols-7 gap-1">
+      <div className="chr-cal__dow" aria-hidden>
         {labels.map((l) => (
-          <span key={l} className="text-center font-mono text-[10px] uppercase" style={{ color: 'var(--color-ash)' }}>
-            {l}
-          </span>
+          <span key={l}>{l[0]}</span>
         ))}
       </div>
 
-      <div className="flex flex-col gap-1">
-        {weeks.map((w) => {
-          // A week is identified by its first real day; blanks by their slot
-          // within that week (they never move or reorder).
-          const weekId = w.find(Boolean)?.dateKey;
-          return (
-            <div key={weekId} className="grid grid-cols-7 gap-1">
-              {w.map((cell, j) => {
-                if (!cell) return <span key={`${weekId}-blank-${labels[j]}`} />;
-                const isSel = selected === cell.dateKey;
-                return (
-                  <button
-                    type="button"
-                    key={cell.dateKey}
-                    onClick={() => tap(cell)}
-                    aria-label={`${friendlyDate(cell.dateKey)}${cell.trained ? ', trained' : ''}`}
-                    aria-pressed={isSel}
-                    className="flex aspect-square items-center justify-center rounded-lg font-mono text-xs transition-transform active:scale-90"
-                    style={{
-                      background: cell.trained ? 'var(--color-gold)' : 'var(--color-chalk)',
-                      color: cell.trained ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
-                      boxShadow: isSel ? '0 0 0 2px var(--color-gold)' : cell.isToday ? '0 0 0 2px var(--color-ash)' : 'none',
-                      fontWeight: cell.trained ? 700 : 400,
-                    }}
-                  >
-                    {cell.day}
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
+      {weeks.map((w) => {
+        const weekId = w.find(Boolean)?.dateKey;
+        return (
+          <div key={weekId} className="chr-cal__row">
+            {w.map((cell, j) => {
+              if (!cell) return <span key={`${weekId}-blank-${labels[j]}`} />;
+              const cls = [
+                'chr-cal__cell',
+                cell.trained && 'chr-cal__cell--sealed',
+                cell.isToday && 'chr-cal__cell--today',
+                cell.dateKey > tk && 'chr-cal__cell--future',
+                selected === cell.dateKey && 'chr-cal__cell--sel',
+              ]
+                .filter(Boolean)
+                .join(' ');
+              return (
+                <button
+                  type="button"
+                  key={cell.dateKey}
+                  onClick={() => tap(cell)}
+                  aria-label={`${friendlyDate(cell.dateKey)}${cell.trained ? ', trained' : ''}`}
+                  aria-pressed={selected === cell.dateKey}
+                  className={cls}
+                >
+                  <span className="chr-cal__num"><span>{cell.day}</span></span>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
