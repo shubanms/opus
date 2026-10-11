@@ -10,7 +10,8 @@ const PAST = '#B5AC9C';
 
 const getValue = (d) => d.volume;
 const MAX_STAGGER = 0.28;
-const MAX_BAR = 30;
+const MAX_BAR = 22;
+const MIN_BAR = 8;
 
 export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exercise to see volume trends.' }) {
   const effects = useMotionEnabled();
@@ -25,6 +26,8 @@ export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exerc
       getValue={getValue}
       format={format}
       zeroBased
+      bare
+      height={130}
       guide={false}
       empty={empty}
       ariaLabel={data?.length ? `Volume chart, ${data.length} bars, in ${unit}` : empty}
@@ -40,9 +43,11 @@ export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exerc
         // than a year of history — so the key carries both.
         const bars = data.map((d, i) => {
           const top = yScale(getValue(d));
+          const h = Math.max(MIN_BAR, Math.abs(baseline - top));
           return {
             key: `${d.label}#${i}`,
-            d: roundedTopRect(xs[i] - width / 2, Math.min(top, baseline), width, Math.abs(baseline - top)),
+            empty: !(getValue(d) > 0),
+            d: roundedTopRect(xs[i] - width / 2, baseline - h, width, h),
             current: i === data.length - 1,
             dimmed: activeIndex != null && activeIndex !== i,
             delay: animate ? i * step : 0,
@@ -64,7 +69,7 @@ export default function VolumeChart({ data, unit = 'kg', empty = 'Log this exerc
                 // Dimmed, not erased. Anything below ~0.4 disappears entirely
                 // against the light theme's near-white ground, which loses the
                 // shape of the series you are scrubbing through.
-                animate={{ scaleY: 1, opacity: bar.dimmed ? 0.45 : 1 }}
+                animate={{ scaleY: 1, opacity: bar.dimmed ? 0.45 : bar.empty ? 0.4 : 1 }}
                 transition={{
                   scaleY: { duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: bar.delay },
                   opacity: { duration: 0.14 },

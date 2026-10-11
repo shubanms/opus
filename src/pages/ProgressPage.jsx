@@ -123,22 +123,6 @@ function PrRow({ pr, unit, onClick }) {
 }
 
 /**
- * "This week so far" against last week at the same point (utils/weeks.js).
- * Says nothing when last week had nothing yet — comparing against zero, or a
- * Monday morning against a whole week, is how this used to read −100%.
- */
-function WeekComparison({ cmp }) {
-  if (!cmp) return null;
-  const { pct } = cmp;
-  const text = pct === 0 ? 'Level with' : `${pct > 0 ? '+' : '−'}${Math.abs(pct)}% vs`;
-  return (
-    <p className="chr-muted" style={{ marginTop: 10 }} data-testid="week-comparison">
-      {text} this point last week
-    </p>
-  );
-}
-
-/**
  * Scroll a section into view once, when a link asked for it. Waits for the
  * data above it to land (`ready`) and then a beat more: the recap and the
  * muscle targets grow from nothing as their queries resolve, and scrolling
@@ -196,6 +180,7 @@ function Overview({ focus }) {
 
   const comparison = weekToDate(workouts, { now: new Date() });
   const sealedToday = days.has(today);
+  const weekPct = comparison ? (comparison.pct === 0 ? 'level with last week' : comparison.pct > 0 ? `+${comparison.pct}% on last week` : null) : null;
 
   return (
     <>
@@ -209,16 +194,16 @@ function Overview({ focus }) {
             <>
               <span className="chr-sec__strong">{headlineVolume(summary.cur, unit)}</span>
               {summary.pct != null && summary.pct > 0 ? <span className="chr-sec__note">↑ {summary.pct}%{summary.best ? ' · best yet' : ''}</span> : null}
+              {weekPct != null && !(summary.pct > 0) ? <span className="chr-sec__note">{weekPct}</span> : null}
               {summary.pct == null && summary.best ? <span className="chr-sec__note">best yet</span> : null}
             </>
           ) : null
         }
       >
         <VolumeChart data={weekly} unit={unitLabel(unit)} />
-        <WeekComparison cmp={comparison} />
       </Section>
 
-      <Section title="Recovery" meta="deeper red = still recovering">
+      <Section title="Recovery" meta={<span className="chr-lc">deeper red = still recovering</span>}>
         <RecoveryGrid />
       </Section>
 

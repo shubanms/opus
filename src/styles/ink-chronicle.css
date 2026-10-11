@@ -1,16 +1,16 @@
 /* The Chronicle (Progress). Chronicle-only styles; tokens come from tokens.css. */
-.chr-page { padding: 28px 20px 24px; color: var(--washi-2); position: relative; overflow: hidden; }
-.chr-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-.chr-title { flex: 1; margin: 0; white-space: nowrap; font-family: var(--font-display); font-weight: 800; font-size: 29px; line-height: 1; color: var(--washi-2); }
-.chr-month { white-space: nowrap; font-size: 12.5px; color: var(--mute-2); letter-spacing: 0.04em; }
+.chr-page { padding: 28px 20px calc(104px + env(safe-area-inset-bottom, 0px)); color: var(--washi-2); position: relative; overflow: hidden; }
+.chr-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.chr-title { flex: 1; margin: 0; white-space: nowrap; font-family: var(--font-display); font-weight: 800; font-size: 32px; line-height: 1; color: var(--washi-2); }
+.chr-month { white-space: nowrap; font-size: 11.5px; color: var(--mute-3); letter-spacing: 0.04em; }
 .chr-tabs { margin-bottom: 14px; }
 .chr-watermark {
-  position: absolute; top: 120px; right: -34px; font-family: var(--font-brush); font-size: 150px; line-height: 1;
-  color: var(--washi-2); opacity: 0.04; pointer-events: none; user-select: none;
+  position: absolute; top: 330px; right: -22px; font-family: var(--font-brush); font-size: 110px; line-height: 1;
+  color: var(--washi-2); opacity: 0.035; pointer-events: none; user-select: none;
 }
-.chr-sec { position: relative; margin-bottom: 26px; scroll-margin-top: 16px; }
+.chr-sec { position: relative; margin-bottom: 24px; scroll-margin-top: 16px; }
 .chr-sec__strong { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: 0; color: var(--washi-2); text-transform: none; }
-.chr-sec__note { font-size: 11.5px; letter-spacing: 0.06em; color: var(--ver-soft); text-transform: none; margin-left: 6px; }
+.chr-sec__note { white-space: nowrap; font-size: 11.5px; letter-spacing: 0.06em; color: var(--ver-soft); text-transform: none; margin-left: 6px; }
 .chr-action { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; background: none; border: 0; color: var(--ver-soft); font: inherit; font-size: 12px; letter-spacing: 0.06em; cursor: pointer; text-transform: none; }
 .chr-card { background: var(--ink-2); border: 1px solid var(--ink-line); border-radius: 6px; padding: 14px; }
 .chr-muted { color: var(--mute-2); font-size: 13px; }
@@ -18,13 +18,15 @@
 .chr-vol .ink-bar { flex: 1; }
 
 .chr-rec { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-.chr-tile { position: relative; display: flex; align-items: center; gap: 6px; min-height: 72px; padding: 8px; border-radius: 4px; border: 1px solid var(--ink-line); color: var(--washi-2); overflow: hidden; }
-.chr-tile__k { font-family: var(--font-brush); font-size: 28px; line-height: 1; flex: none; }
-.chr-tile__n { display: block; font-family: var(--font-display); font-weight: 700; font-size: 13.5px; line-height: 1.2; }
+.chr-tile { position: relative; display: flex; align-items: center; gap: 5px; min-height: 72px; padding: 8px 6px; border-radius: 4px; border: 1px solid var(--ink-line); color: var(--washi-2); overflow: hidden; }
+.chr-tile__k { font-family: var(--font-brush); font-size: 26px; line-height: 1; flex: none; }
+.chr-tile__n { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-weight: 700; font-size: 12.5px; line-height: 1.2; }
 .chr-tile__w { display: block; font-size: 12px; color: var(--washi-3); opacity: 0.85; }
 .chr-tile--fresh .chr-tile__w { color: var(--mute-2); opacity: 1; }
 .chr-tile__fill { position: absolute; inset: 0; background: var(--ver); pointer-events: none; }
-.chr-tile > span:not(.chr-tile__fill) { position: relative; }
+.chr-tile > span:not(.chr-tile__fill) { position: relative; min-width: 0; }
+.chr-tile--fresh .chr-tile__k { color: var(--washi-2); opacity: 0.9; }
+.chr-lc { text-transform: lowercase; letter-spacing: 0.04em; font-size: 11.5px; color: var(--mute-3); }
 .chr-coach { margin: 14px 0 0; font-size: 14px; color: var(--mute-1); }
 
 .chr-cal__nav { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; font-size: 12.5px; color: var(--mute-1); }
