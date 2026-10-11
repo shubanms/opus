@@ -79,7 +79,7 @@ export default function WeeklyRecap({ dismissible = true }) {
         filename="opus-week.png"
         label="Share my week"
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+        style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
       />
     </div>
   );

@@ -29,7 +29,7 @@ function Ring({ count, total }) {
           cy={32}
           r={R}
           fill="none"
-          stroke="var(--color-gold)"
+          stroke="var(--gold-leaf)"
           strokeWidth={5}
           strokeLinecap="round"
           strokeDasharray={C}
@@ -63,7 +63,7 @@ function Row({ item, unit }) {
       className="glass flex items-center gap-3 rounded-2xl px-3.5 py-3"
       style={{
         background: item.unlocked ? 'var(--accent-wash)' : 'var(--color-chalk)',
-        border: `1px solid ${item.unlocked ? 'var(--color-gold)' : 'var(--color-ivory)'}`,
+        border: `1px solid ${item.unlocked ? 'var(--gold-leaf)' : 'var(--color-ivory)'}`,
       }}
     >
       <div
@@ -71,7 +71,7 @@ function Row({ item, unit }) {
         style={{ background: item.unlocked ? 'var(--grad-accent)' : 'var(--color-ivory)' }}
       >
         {item.unlocked ? (
-          <Award size={20} style={{ color: 'var(--color-obsidian)' }} />
+          <Award size={20} style={{ color: 'var(--color-on-accent)' }} />
         ) : secret ? (
           <HelpCircle size={18} style={{ color: 'var(--color-ash)' }} />
         ) : (
@@ -111,7 +111,7 @@ function Row({ item, unit }) {
       {item.xp > 0 && (
         <span
           className="font-mono text-xs"
-          style={{ color: item.unlocked ? 'var(--color-gold)' : 'var(--color-ash)' }}
+          style={{ color: item.unlocked ? 'var(--gold-leaf)' : 'var(--color-ash)' }}
         >
           +{item.xp}
         </span>

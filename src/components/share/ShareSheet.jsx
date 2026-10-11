@@ -92,7 +92,7 @@ export default function ShareSheet({ isOpen, onClose, kind, data, filename = 'op
             style={{ background: a.color }}
             aria-label={a.id}
           >
-            {accentIdx === i && <Check size={16} style={{ color: '#0A0E1C' }} strokeWidth={3} />}
+            {accentIdx === i && <Check size={16} style={{ color: '#100E0C' }} strokeWidth={3} />}
           </button>
         ))}
       </div>
@@ -102,7 +102,7 @@ export default function ShareSheet({ isOpen, onClose, kind, data, filename = 'op
         onClick={doShare}
         disabled={busy}
         className="mt-6 w-full rounded-xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: busy ? 0.6 : 1 }}
+        style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.6 : 1 }}
       >
         {busy ? 'Preparing…' : 'Share'}
       </button>

@@ -250,19 +250,19 @@ test.describe('OPUS end-to-end', () => {
     expect(realErrors(errors)).toEqual([]);
   });
 
-  test('settings: dark theme and lbs units apply and persist', async ({ page, errors }) => {
+  test('settings: sky and lbs units apply and persist', async ({ page, errors }) => {
     // Boots the app twice (onboarding, then a reload to prove persistence).
     test.setTimeout(90_000);
     await onboard(page);
     await dismissCoach(page);
 
     await goto(page, 'settings');
-    await page.getByRole('button', { name: 'dark', exact: true }).click();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await page.getByRole('button', { name: 'night', exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-sky', 'night');
 
     await page.getByRole('button', { name: 'lbs', exact: true }).click();
     await reload(page);
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('html')).toHaveAttribute('data-sky', 'night');
     await expect(page.getByText('Bodyweight (lbs)')).toBeVisible();
     expect(realErrors(errors)).toEqual([]);
   });
@@ -867,7 +867,7 @@ test.describe('OPUS end-to-end', () => {
     await page.getByRole('button', { name: 'Quick start (empty)' }).click();
     await expect(clock).toBeVisible();
 
-    for (const tab of ['Progress', 'Exercises', 'Home']) {
+    for (const tab of ['Progress', 'Forms', 'Home']) {
       await gotoTab(page, tab);
       await dismissCoach(page);
       await expect(clock).toBeVisible();

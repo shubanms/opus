@@ -7,7 +7,7 @@ export default function AchievementBadge({ item }) {
     <div className="flex flex-col items-center text-center" title={secret ? 'Hidden' : desc}>
       <div
         className="flex h-14 w-14 items-center justify-center rounded-full"
-        style={{ background: unlocked ? 'var(--color-gold)' : 'var(--color-ivory)', opacity: unlocked ? 1 : 0.6 }}
+        style={{ background: unlocked ? 'var(--gold-leaf)' : 'var(--color-ivory)', opacity: unlocked ? 1 : 0.6 }}
       >
         {unlocked
           ? <Award size={24} style={{ color: 'var(--color-obsidian)' }} />

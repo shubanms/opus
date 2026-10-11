@@ -50,7 +50,7 @@ function TodayCard({ icon: Icon = Play, title, subtitle, onClick }) {
         className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
         style={{ background: 'var(--color-gold)', animation: 'goldPulse 2.6s var(--opus-ease-out) infinite' }}
       >
-        <Icon size={16} strokeWidth={2.4} style={{ color: 'var(--color-obsidian)' }} />
+        <Icon size={16} strokeWidth={2.4} style={{ color: 'var(--color-on-accent)' }} />
       </div>
     </button>
   );
@@ -166,7 +166,7 @@ export default function HomePage() {
             width: 240,
             height: 240,
             borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(139, 125, 255,${scene.goldShade}) 0%, rgba(139, 125, 255,${scene.glowAlpha}) 38%, rgba(139, 125, 255,0) 70%)`,
+            background: `radial-gradient(circle, rgba(210,174,90,${scene.goldShade}) 0%, rgba(210,174,90,${scene.glowAlpha}) 38%, rgba(210,174,90,0) 70%)`,
             filter: `blur(${scene.glowBlur}px)`,
             animationDuration: scene.motionSpeed > 0 ? `${(7 - scene.motionSpeed * 3).toFixed(1)}s` : undefined,
           }}
@@ -235,7 +235,7 @@ export default function HomePage() {
                       type="button"
                       onClick={() => { spendShield(profile?.lastWorkoutDate); playChime('goal'); }}
                       className="flex items-center gap-1 rounded-full px-2.5 py-1 font-sans text-xs font-semibold"
-                      style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+                      style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
                     >
                       🛡️ Use shield ({shieldTokens})
                     </button>
@@ -328,10 +328,10 @@ export default function HomePage() {
 
       {/* Boss gate — blocks the next milestone level until cleared */}
       {boss && (
-        <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}>
+        <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-obsidian)', border: '1px solid var(--gold-leaf)' }}>
           <div className="mb-1 flex items-center gap-2">
-            <Swords size={15} style={{ color: 'var(--color-gold)' }} />
-            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
+            <Swords size={15} style={{ color: 'var(--gold-leaf)' }} />
+            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--gold-leaf)' }}>
               Boss gate · Level {boss.gate}
             </span>
           </div>

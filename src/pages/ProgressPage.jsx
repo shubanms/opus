@@ -397,7 +397,7 @@ function ByExercise() {
               title="Muscle map"
               icon={Dumbbell}
               data={mapData}
-              legend={[['#FF8FA3', 'Most trained'], ['#8B7DFF', 'Moderate'], ['#4FD8C4', 'Least']]}
+              legend={[['#E0553B', 'Most trained'], ['#D2AE5A', 'Moderate'], ['#9DA67A', 'Least']]}
               selectedMuscle={muscleFilter}
               onSelect={(mu) => setMuscleFilter((prev) => (prev === mu ? null : mu))}
             />
@@ -608,7 +608,7 @@ function Body() {
   return (
     <>
       <div className="mb-5 flex gap-2">
-        <button type="button" onClick={() => open('body')} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold" style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}>
+        <button type="button" onClick={() => open('body')} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
           <Plus size={15} /> Body stats
         </button>
         <button type="button" onClick={() => open('sleep')} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-medium" style={{ background: 'var(--color-ivory)', color: 'var(--color-text-primary)' }}>

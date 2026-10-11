@@ -150,7 +150,7 @@ describe('slimExercises', () => {
 
   it('keeps a stock row the user starred, coloured or that is not the seed\'s', () => {
     const starred = { ...STOCK_BY_ID.get(3), favorite: true };
-    const coloured = { ...STOCK_BY_ID.get(4), color: '#4FD8C4' };
+    const coloured = { ...STOCK_BY_ID.get(4), color: '#123456' };
     const unstarred = { ...STOCK_BY_ID.get(5), favorite: false, color: null };
     const strange = { id: 6, name: 'Something else', isCustom: false };
     expect(slimExercises([starred, coloured, unstarred, strange])).toEqual([starred, coloured, strange]);
@@ -297,10 +297,10 @@ describe('summarizeBackup / inspectBackupText / describeBackup', () => {
 describe('backup prefs', () => {
   it('carries only the allowlisted, well-formed settings', () => {
     const state = {
-      unit: 'lbs', theme: 'dark', effects: false, ironSpent: 120, ownedCosmetics: ['a'], dungeonIron: 30,
+      unit: 'lbs', sky: 'night', effects: false, ironSpent: 120, ownedCosmetics: ['a'], dungeonIron: 30,
       lastBackupAt: 123, hadData: true, onboarded: true, coachMarksSeen: { home: true }, persist() {},
     };
-    expect(pickBackupPrefs(state)).toEqual({ unit: 'lbs', theme: 'dark', effects: false, ironSpent: 120, ownedCosmetics: ['a'], dungeonIron: 30 });
+    expect(pickBackupPrefs(state)).toEqual({ unit: 'lbs', sky: 'night', effects: false, ironSpent: 120, ownedCosmetics: ['a'], dungeonIron: 30 });
   });
 
   it('skips values that would put the store in a state no screen expects', () => {

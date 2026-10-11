@@ -21,9 +21,9 @@ import ExerciseHistory from '../components/exercise/ExerciseHistory.jsx';
 import BackButton from '../components/layout/BackButton.jsx';
 
 const DIFFICULTY_COLOR = {
-  beginner:     '#4FD8C4',
-  intermediate: '#8B7DFF',
-  advanced:     '#FF8FA3',
+  beginner:     '#9DA67A',
+  intermediate: '#D2AE5A',
+  advanced:     '#E0553B',
 };
 
 function PRCard({ prs, unit }) {
@@ -119,7 +119,7 @@ export default function ExerciseDetailPage() {
             type="button"
             onClick={toList}
             className="mt-5 rounded-xl px-5 py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
           >
             Back to exercises
           </button>
@@ -128,7 +128,7 @@ export default function ExerciseDetailPage() {
     );
   }
 
-  const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#7B83A6';
+  const diffColor = DIFFICULTY_COLOR[exercise.difficulty] ?? '#8F877B';
 
   async function handleDelete() {
     const snapshot = await deleteWithUndo({
@@ -189,7 +189,7 @@ export default function ExerciseDetailPage() {
           </span>
         )}
         {exercise.isCustom && (
-          <span className="rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}>
+          <span className="rounded-full px-2 py-0.5 font-sans text-xs" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
             Custom
           </span>
         )}
@@ -257,7 +257,7 @@ export default function ExerciseDetailPage() {
           className="m-4 flex items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
           style={{ background: 'var(--color-obsidian)', color: 'var(--color-text-inverse)' }}
         >
-          <Youtube size={16} style={{ color: '#FF4444' }} /> Watch how-to video
+          <Youtube size={16} style={{ color: 'var(--ver-light, #E0553B)' }} /> Watch how-to video
         </a>
       </div>
 

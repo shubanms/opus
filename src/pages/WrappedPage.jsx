@@ -134,7 +134,7 @@ export default function WrappedPage() {
           {(data.topLift || data.busiestDay) && (
             <div className="mt-3 flex flex-wrap gap-2">
               {data.topLift && (
-                <span className="rounded-full px-3 py-1.5 font-sans text-xs font-medium" style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}>
+                <span className="rounded-full px-3 py-1.5 font-sans text-xs font-medium" style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}>
                   Top lift · {data.topLift}
                 </span>
               )}
@@ -155,7 +155,7 @@ export default function WrappedPage() {
             filename="opus-wrapped.png"
             label="Share Wrapped"
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl py-3 font-sans text-sm font-semibold"
-            style={{ background: 'var(--grad-accent)', color: 'var(--color-obsidian)', boxShadow: 'var(--glow-accent)' }}
+            style={{ background: 'var(--grad-accent)', color: 'var(--color-on-accent)', boxShadow: 'var(--glow-accent)' }}
           />
         </>
       )}

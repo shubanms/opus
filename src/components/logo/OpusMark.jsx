@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import useSettingsStore from '../../store/settingsStore.js';
 
-// The OPUS monogram: an "O" drawn as a living ring of light.
+// The OPUS monogram: an "O" drawn as a brush ensō.
 //
 // Canvas 2D rather than SVG or a raster image. The previous mark was a gold PNG
 // of a lifter — it couldn't be recoloured with the palette (it stayed gold
@@ -12,9 +12,10 @@ import useSettingsStore from '../../store/settingsStore.js';
 // The mark still evolves with progression: `level` thickens the ring and adds
 // one stud per level, `prestige` adds a crown and a brighter halo.
 
-const ACCENT = '#8b7dff';
-const ACCENT_2 = '#4fd8c4';
-const BRIGHT = '#c4bcff';
+// Canvas cannot read CSS variables cheaply, so the HANDOFF 8.1 values are literal.
+const WASHI = '#EEE6D6';
+const VER = '#C8361F';
+const GOLD = '#D2AE5A';
 
 export default function OpusMark({ size = 200, dark = true, animate = false, level = 0, prestige = 0 }) {
   const ref = useRef(null);
@@ -59,37 +60,39 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
       ctx.translate(c, c);
       ctx.rotate(-Math.PI / 2);
 
-      // Base ring, swept through the accent gradient.
-      const grad = ctx.createConicGradient
-        ? ctx.createConicGradient(0, 0, 0)
-        : ctx.createLinearGradient(-R, -R, R, R);
-      grad.addColorStop(0, ACCENT);
-      grad.addColorStop(0.5, ACCENT_2);
-      grad.addColorStop(1, ACCENT);
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = width;
+      // Brush ensō: a washi stroke that swells then tapers, with a gap near
+      // 1 o clock (the canvas is rotated so angle 0 is 12 o clock). `eased` writes it on.
+      const start0 = Math.PI / 6 + 0.5;
+      const span = Math.PI * 2 - 0.5;
+      const steps = 48;
+      ctx.strokeStyle = WASHI;
       ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.arc(0, 0, R, 0, Math.PI * 2 * eased);
-      ctx.stroke();
+      for (let i = 0; i < steps; i += 1) {
+        const f0 = i / steps;
+        if (f0 > eased) break;
+        const f1 = Math.min((i + 1.4) / steps, eased);
+        ctx.lineWidth = width * (0.45 + 0.95 * Math.sin(Math.PI * f0 ** 0.6) * (1 - f0 * 0.35));
+        ctx.beginPath();
+        ctx.arc(0, 0, R, start0 + f0 * span, start0 + f1 * span);
+        ctx.stroke();
+      }
 
       if (eased >= 1) {
-        // Specular highlight travelling around the ring.
-        ctx.strokeStyle = BRIGHT;
-        ctx.globalAlpha = 0.9;
-        ctx.lineWidth = width * 0.9;
+        // Vermilion sun disc inside the ring.
+        ctx.fillStyle = VER;
+        ctx.globalAlpha = moving ? 0.9 + Math.sin(spin * 3) * 0.1 : 1;
         ctx.beginPath();
-        ctx.arc(0, 0, R, spin, spin + 0.5);
-        ctx.stroke();
+        ctx.arc(0, 0, R * 0.36, 0, Math.PI * 2);
+        ctx.fill();
         ctx.globalAlpha = 1;
 
-        // One stud per level, seated on the ring.
+        // One gold-leaf stud per level, seated on the ring.
         if (lv >= 2) {
-          ctx.fillStyle = ACCENT;
+          ctx.fillStyle = GOLD;
           for (let i = 0; i < lv; i += 1) {
-            const a = (Math.PI * 2 * i) / lv;
+            const ang = start0 + (span * (i + 0.5)) / lv;
             ctx.beginPath();
-            ctx.arc(Math.cos(a) * R, Math.sin(a) * R, width * 0.55, 0, Math.PI * 2);
+            ctx.arc(Math.cos(ang) * R, Math.sin(ang) * R, width * 0.5, 0, Math.PI * 2);
             ctx.fill();
           }
         }
@@ -98,7 +101,7 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
 
       // Prestige crown — diamonds above the ring.
       if (p > 0 && eased >= 1) {
-        ctx.fillStyle = BRIGHT;
+        ctx.fillStyle = GOLD;
         for (let i = 0; i < p; i += 1) {
           const x = c + (i - (p - 1) / 2) * size * 0.075;
           ctx.save();
@@ -129,7 +132,7 @@ export default function OpusMark({ size = 200, dark = true, animate = false, lev
         background: dark ? 'transparent' : 'var(--color-ivory)',
         boxShadow:
           level >= 3
-            ? `0 0 ${Math.round(10 + level * 1.6 + prestige * 3)}px rgba(139,125,255,${glow})`
+            ? `0 0 ${Math.round(10 + level * 1.6 + prestige * 3)}px rgba(200,54,31,${glow})`
             : undefined,
       }}
     >

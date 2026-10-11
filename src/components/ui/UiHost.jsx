@@ -9,21 +9,24 @@ function Toasts() {
   if (!toasts.length) return null;
 
   return createPortal(
-    <div className="pointer-events-none fixed inset-x-0 bottom-28 z-[80] flex flex-col items-center gap-2 px-5">
+    <div
+      className="pointer-events-none fixed inset-x-0 z-[80] flex flex-col items-center gap-2 px-5"
+      style={{ top: 'calc(12px + env(safe-area-inset-top))' }}
+    >
       {toasts.map((t) => (
         // A toast with an action is a div with two controls inside it, not one
         // big button — nesting the Undo inside the dismiss button would make
         // every undo tap a coin flip between the two.
         <div
           key={t.id}
-          className="anim-fade-slide-up pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl px-4 py-3 font-sans text-sm"
-          style={{
-            background: 'var(--color-obsidian)',
-            color: 'var(--color-text-inverse)',
-            borderLeft: `3px solid ${t.type === 'error' ? 'var(--color-ember)' : t.type === 'success' ? 'var(--color-sage)' : 'var(--color-gold)'}`,
-            boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
-          }}
+          className="ink-toast pointer-events-auto flex w-full max-w-md items-center gap-3 px-3 py-3 font-sans text-sm"
         >
+          {/* Small seal: vermilion normally, dark ink for success, so the type still reads. */}
+          <span
+            aria-hidden="true"
+            className="ink-toast-seal shrink-0"
+            style={t.type === 'success' ? { background: 'var(--paper-ink-1, #1a1714)' } : undefined}
+          />
           {/* The whole toast height dismisses it, not just the line of text. */}
           <button
             type="button"
@@ -37,8 +40,8 @@ function Toasts() {
             <button
               type="button"
               onClick={() => { dismiss(t.id); t.action.onAction(); }}
-              className="-my-1 shrink-0 rounded-lg px-3 py-2 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+              className="-my-1 shrink-0 px-3 py-2 font-sans text-sm font-semibold uppercase"
+              style={{ background: 'var(--ver, var(--color-gold))', color: 'var(--washi-3, var(--color-on-accent))', borderRadius: 4, letterSpacing: '0.1em' }}
             >
               {t.action.label}
             </button>
@@ -74,7 +77,7 @@ function ConfirmDialog() {
           type="button"
           onClick={() => resolve(true)}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: danger ? 'var(--color-ember)' : 'var(--color-gold)', color: danger ? 'var(--color-text-inverse)' : 'var(--color-obsidian)' }}
+          style={{ background: danger ? 'var(--color-ember)' : 'var(--color-gold)', color: danger ? 'var(--color-text-inverse)' : 'var(--color-on-accent)' }}
         >
           {confirmLabel}
         </button>
@@ -120,7 +123,7 @@ function PromptDialog() {
           type="button"
           onClick={() => resolve(value.trim())}
           className="flex-1 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
         >
           Save
         </button>

@@ -189,11 +189,11 @@ export default function ProfilePage() {
           type="button"
           onClick={() => navigate('/progression')}
           className="mt-2 w-full rounded-xl px-4 py-3 text-left"
-          style={{ background: 'var(--color-obsidian)', border: '1px solid var(--color-gold)' }}
+          style={{ background: 'var(--color-obsidian)', border: '1px solid var(--gold-leaf)' }}
         >
           <div className="flex items-center gap-2">
-            <Swords size={14} style={{ color: 'var(--color-gold)' }} />
-            <span className="font-sans text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
+            <Swords size={14} style={{ color: 'var(--gold-leaf)' }} />
+            <span className="font-sans text-[11px] font-semibold uppercase tracking-widest" style={{ color: 'var(--gold-leaf)' }}>
               Boss gate · Level {boss.gate}
             </span>
           </div>
@@ -211,7 +211,7 @@ export default function ProfilePage() {
       <div className="mt-3 overflow-hidden rounded-xl" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
         {[
           { to: '/progression', icon: Swords, iconColor: 'var(--color-ash)', label: 'Ranks & prestige' },
-          { to: '/records', icon: Trophy, iconColor: 'var(--color-gold)', label: 'Hall of Records' },
+          { to: '/records', icon: Trophy, iconColor: 'var(--gold-leaf)', label: 'Hall of Records' },
           { to: '/wrapped', icon: Sparkles, iconColor: 'var(--color-gold)', label: 'Wrapped — monthly & yearly' },
         ].map((row, i) => (
           <button
@@ -234,13 +234,13 @@ export default function ProfilePage() {
         type="button"
         onClick={() => setVaultOpen(true)}
         className="mt-3 flex w-full items-center justify-between rounded-xl px-4 py-3"
-        style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-gold)' }}
+        style={{ background: 'var(--color-chalk)', border: '1px solid var(--gold-leaf)' }}
       >
         <span className="flex items-center gap-2.5 font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
-          <Gem size={15} style={{ color: 'var(--color-gold)' }} /> The Vault — cosmetics &amp; loot
+          <Gem size={15} style={{ color: 'var(--gold-leaf)' }} /> The Vault — cosmetics &amp; loot
         </span>
-        <span className="flex items-center gap-1.5 font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}>
-          <span style={{ display: 'inline-block', width: 11, height: 11, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
+        <span className="flex items-center gap-1.5 font-mono text-sm font-bold" style={{ color: 'var(--gold-leaf)' }}>
+          <span style={{ display: 'inline-block', width: 11, height: 11, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), color-mix(in srgb, var(--gold-leaf) 62%, #000))', borderRadius: 2 }} />
           {/* Nothing until it's read — a flashed "0" reads as a lost balance. */}
           {ironLoaded ? ironBal.toLocaleString() : ''}
         </span>
@@ -255,7 +255,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-3 gap-3">
         <StatTile icon={Dumbbell} value={life.workouts} countTo={life.workouts} label="Workouts" />
         <StatTile icon={Layers} value={life.totalSets.toLocaleString()} countTo={life.totalSets} label="Sets" />
-        <StatTile icon={Trophy} value={life.prCount} countTo={life.prCount} label="PRs" accent="var(--color-gold)" />
+        <StatTile icon={Trophy} value={life.prCount} countTo={life.prCount} label="PRs" accent="var(--gold-leaf)" />
         <StatTile icon={Zap} value={fmtVolume(life.totalVolume, unit)} label="Volume" />
         <StatTile icon={Clock} value={`${Math.round(life.hours)}h`} label="Trained" />
         <StatTile icon={Flame} value={bestStreak} countTo={bestStreak} label="Best streak" accent={bestStreak > 0 ? 'var(--color-ember)' : undefined} />
@@ -264,7 +264,7 @@ export default function ProfilePage() {
       {/* Current streak + XP */}
       <div className="mt-3 grid grid-cols-2 gap-3">
         <StatTile icon={Flame} value={streak.count} countTo={streak.count} label="Current streak" accent={streak.count > 0 ? 'var(--color-ember)' : undefined} />
-        <StatTile icon={Zap} value={totalXp.toLocaleString()} countTo={totalXp} label="Total XP" accent="var(--color-gold)" />
+        <StatTile icon={Zap} value={totalXp.toLocaleString()} countTo={totalXp} label="Total XP" accent="var(--gold-leaf)" />
       </div>
 
       {/* Member since */}

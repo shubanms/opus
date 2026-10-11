@@ -79,7 +79,7 @@ export default function WorkoutDetailsEditor({ workout }) {
               onClick={() => toggleTag(t)}
               aria-pressed={on}
               className="min-h-[32px] rounded-full px-3 py-1 font-sans text-xs font-medium"
-              style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+              style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
             >
               {t}
             </button>

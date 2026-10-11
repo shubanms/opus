@@ -5,7 +5,7 @@ export default function TitleBadge({ title, accent = true }) {
       className="rounded-full px-4 py-1 font-sans text-sm font-semibold"
       style={
         accent
-          ? { background: 'var(--color-gold)', color: 'var(--color-obsidian)' }
+          ? { background: 'var(--gold-leaf)', color: 'var(--color-obsidian)' }
           : { background: 'var(--color-ivory)', color: 'var(--color-text-secondary)' }
       }
     >

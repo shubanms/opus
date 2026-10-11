@@ -76,7 +76,7 @@ export default function HallOfRecordsPage() {
             onClick={() => open(latest)}
             aria-label={`${latest.exerciseName}, ${TYPE_LABEL[latest.type] ?? latest.type} ${fmt(latest)}. Open exercise`}
             className="glass mt-6 block w-full rounded-2xl px-5 py-5 text-left"
-            style={{ background: 'var(--accent-wash)', border: '1px solid var(--color-gold)' }}
+            style={{ background: 'var(--accent-wash)', border: '1px solid var(--gold-leaf)' }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             whileTap={{ scale: 0.98 }}
@@ -84,7 +84,7 @@ export default function HallOfRecordsPage() {
           >
             <p
               className="font-sans text-[10px] font-semibold uppercase"
-              style={{ color: 'var(--color-gold)', letterSpacing: '0.22em' }}
+              style={{ color: 'var(--gold-leaf)', letterSpacing: '0.22em' }}
             >
               Latest record
             </p>
@@ -106,7 +106,7 @@ export default function HallOfRecordsPage() {
             </div>
             <p className="mt-2 flex items-center gap-1 font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>
               {TYPE_LABEL[latest.type] ?? latest.type} · {friendlyDate(dateOf(latest))}
-              <ChevronRight size={13} className="ml-auto" style={{ color: 'var(--color-gold)' }} />
+              <ChevronRight size={13} className="ml-auto" style={{ color: 'var(--gold-leaf)' }} />
             </p>
           </m.button>
 
@@ -138,7 +138,7 @@ export default function HallOfRecordsPage() {
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                         style={{ background: 'var(--grad-accent)' }}
                       >
-                        <Trophy size={15} style={{ color: 'var(--color-obsidian)' }} />
+                        <Trophy size={15} style={{ color: 'var(--color-on-accent)' }} />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p
@@ -151,7 +151,7 @@ export default function HallOfRecordsPage() {
                           {TYPE_LABEL[p.type] ?? p.type}
                         </p>
                       </div>
-                      <span className="shrink-0 font-mono text-sm font-semibold" style={{ color: 'var(--color-gold)' }}>
+                      <span className="shrink-0 font-mono text-sm font-semibold" style={{ color: 'var(--gold-leaf)' }}>
                         {fmt(p)}
                       </span>
                       <ChevronRight size={15} className="shrink-0" style={{ color: 'var(--color-ash)' }} />

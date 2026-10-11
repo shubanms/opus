@@ -1,3 +1,4 @@
+@import './styles/fonts.css';
 @import 'tailwindcss';
 
 /* Tailwind v4 is configured here in CSS rather than in a tailwind.config.js.
@@ -10,9 +11,10 @@
    theme-aware for free. `tokens.css` stays the single source of colour truth —
    nothing here re-states a hex. */
 @theme inline {
-  --font-display: 'Cormorant Garamond', serif;
-  --font-sans: 'DM Sans', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-display: 'Shippori Mincho B1', 'Shippori Fallback', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  --font-sans: 'Zen Kaku Gothic New', 'Zen Kaku Fallback', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  --font-mono: 'Zen Kaku Gothic New', 'Zen Kaku Fallback', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+  --font-brush: 'Yuji Syuku', 'Shippori Mincho B1', serif;
 
   /* Surfaces and text — these flip with the active theme. */
   --color-surface: var(--color-chalk);
@@ -41,10 +43,12 @@ body {
   /* The aurora sits under everything and stays put while the page scrolls.
      `fixed` attachment keeps the light source anchored to the viewport rather
      than sliding away with the content. */
-  background: var(--aurora), var(--color-chalk);
+  background: var(--aurora), var(--ink-1);
   background-attachment: fixed;
   color: var(--color-text-primary);
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
@@ -62,68 +66,75 @@ body {
   display: none;
 }
 
-/* Glass — Aurora's core material.
-   Applied by class rather than to every surface, because `backdrop-filter` is
-   the most expensive thing you can put on a mid-range Android GPU. Reserved for
-   chrome that genuinely floats: the nav, sheets, and the hero. */
-.glass {
-  background: var(--color-ivory);
-  border: 1px solid var(--glass-line);
-}
-/* Chrome that content scrolls beneath. `.glass`'s 6%-white tint is nowhere near
-   enough — the page reads straight through it. */
+/* Surfaces. The Ink direction has no glass: .glass and .glass-strong are solid
+   raised sumi with a hairline. The class names stay because ~100 call sites use
+   them; there is no backdrop-filter anywhere. */
+.glass,
 .glass-strong {
-  background: var(--glass-chrome);
+  background: var(--ink-2);
+  border: 1px solid var(--ink-line);
 }
-
-/* Blur is applied only when effects are on.
-   `data-fx` is stamped on <html> from the settings store, which makes this the
-   single switch for the most expensive thing in the app: backdrop-filter is the
-   heaviest effect you can put on a mid-range Android GPU, and every blurred
-   surface compounds. Without it the panels are still translucent and the aurora
-   still reads through — the design degrades rather than breaking. */
-html[data-fx='on'] .glass {
-  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-}
-html[data-fx='on'] .glass-strong {
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
-}
-/* The scrim behind every modal and bottom sheet. It used to carry its blur as
-   an inline style, which meant the one switch that is supposed to govern every
-   backdrop-filter in the app did not reach the surface that covers the whole
-   screen — the most expensive one there is. */
+/* The scrim behind every modal and bottom sheet: dim, never blurred. */
 .modal-scrim {
-  background: rgba(6, 9, 20, 0.62);
-}
-html[data-fx='on'] .modal-scrim {
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  background: rgba(7, 6, 5, 0.78);
 }
 
-/* Users who ask for less transparency get solid surfaces, not frosted ones. */
-@media (prefers-reduced-transparency: reduce) {
-  .modal-scrim {
-    background: rgba(6, 9, 20, 0.86);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-  .glass,
-  .glass-strong {
-    background: var(--color-chalk);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
+/* Brush face for kanji (Yuji Syuku). Kanji only, never Latin text. */
+.font-brush {
+  font-family: var(--font-brush);
+  font-weight: 400;
+}
+/* Numbers line up in columns. */
+.font-mono {
+  font-variant-numeric: tabular-nums;
 }
 
-/* Devices that can't composite a backdrop fall back to a solid tint rather
-   than a transparent panel with unreadable text behind it. */
-@supports not (backdrop-filter: blur(1px)) {
-  .glass,
-  .glass-strong {
-    background: var(--color-chalk);
-  }
+/* Grain: a fixed film over the whole app, above content and below overlays
+   (z-index 35; modals and sheets sit at 41+). Animated only when effects are
+   on and motion is allowed; static otherwise, hidden when effects are off. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: -60%;
+  z-index: 35;
+  pointer-events: none;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .93 0 0 0 0 .89 0 0 0 0 .82 0 0 0 1.4 -.4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+html[data-fx='on'] body::after {
+  animation: ink-grain 1s steps(6) infinite;
+}
+html[data-fx='off'] body::after {
+  display: none;
+}
+@keyframes ink-grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-3%, 2%); }
+  40% { transform: translate(2%, -3%); }
+  60% { transform: translate(-2%, -1%); }
+  80% { transform: translate(3%, 3%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Washi paper card: --washi-1 plus fibre noise multiplied on top. Text on it
+   should use --paper-ink-*. Children sit above the fibre layer. */
+.washi {
+  position: relative;
+  isolation: isolate;
+  background: var(--washi-1);
+  color: var(--paper-ink-1);
+}
+.washi::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .35' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .28 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E");
 }
 
 /* Smooth theme switches: animate colour-only properties.
@@ -170,4 +181,13 @@ svg * {
   button:active {
     transform: none !important;
   }
+  body::after {
+    animation: none !important;
+  }
+}
+
+/* Keyboard focus: a gold-leaf ring that reads on sumi and on washi. */
+:focus-visible {
+  outline: 2px solid var(--gold-leaf);
+  outline-offset: 2px;
 }

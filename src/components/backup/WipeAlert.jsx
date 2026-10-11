@@ -115,7 +115,7 @@ export default function WipeAlert() {
               disabled={busy}
               onClick={restore}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: busy ? 0.5 : 1 }}
+              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.5 : 1 }}
             >
               <Upload size={15} /> {busy ? 'Restoring…' : 'Restore'}
             </button>
@@ -160,7 +160,7 @@ export default function WipeAlert() {
               type="button"
               onClick={() => fileRef.current?.click()}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
             >
               <Upload size={15} /> Restore a backup
             </button>

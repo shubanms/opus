@@ -202,7 +202,7 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, onSave, onClose
                 className="h-10 flex-1 rounded-xl font-sans text-xs font-semibold"
                 style={{
                   background: endAtLast === opt.on ? 'var(--color-gold)' : 'var(--color-chalk)',
-                  color: endAtLast === opt.on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)',
+                  color: endAtLast === opt.on ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
                 }}
               >
                 {opt.label}
@@ -234,8 +234,8 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, onSave, onClose
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>Total volume</p>
         </div>
         <div className={tile} style={{ background: 'var(--color-ivory)' }}>
-          <Zap size={14} style={{ color: 'var(--color-gold)' }} />
-          <CountUp value={stats.xp} format={(n) => `+${Math.round(n)}`} className="mt-1 block font-mono text-xl font-medium" style={{ color: 'var(--color-gold)' }} />
+          <Zap size={14} style={{ color: 'var(--gold-leaf)' }} />
+          <CountUp value={stats.xp} format={(n) => `+${Math.round(n)}`} className="mt-1 block font-mono text-xl font-medium" style={{ color: 'var(--gold-leaf)' }} />
           <p className="font-sans text-xs" style={{ color: 'var(--color-text-secondary)' }}>XP earned</p>
         </div>
       </div>
@@ -259,8 +259,8 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, onSave, onClose
 
       {/* Iron reward — legible so you know what the session pays into the Vault. */}
       <div className="mb-3 flex items-center justify-center gap-2 rounded-xl py-2.5" style={{ background: 'var(--color-obsidian)' }}>
-        <span style={{ display: 'inline-block', width: 12, height: 12, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
-        <span className="font-mono text-sm font-bold" style={{ color: 'var(--color-gold)' }}>+{IRON_PER_SESSION} Iron</span>
+        <span style={{ display: 'inline-block', width: 12, height: 12, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), color-mix(in srgb, var(--gold-leaf) 62%, #000))', borderRadius: 2 }} />
+        <span className="font-mono text-sm font-bold" style={{ color: 'var(--gold-leaf)' }}>+{IRON_PER_SESSION} Iron</span>
         <span className="font-sans text-xs" style={{ color: 'var(--color-ash)' }}>this session · +{IRON_PER_PR} per PR</span>
       </div>
 
@@ -294,7 +294,7 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, onSave, onClose
               className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
               style={{ background: saveRoutine ? 'var(--color-gold)' : 'var(--color-chalk)', border: saveRoutine ? 'none' : '1px solid var(--color-ash)' }}
             >
-              {saveRoutine && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />}
+              {saveRoutine && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-on-accent)' }} />}
             </span>
             <BookmarkPlus size={15} style={{ color: 'var(--color-gold)' }} />
             <span className="font-sans text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
@@ -332,7 +332,7 @@ export default function EndWorkoutModal({ isOpen, activeWorkout, onSave, onClose
           disabled={saving || stats.sets === 0}
           aria-busy={saving}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: stats.sets === 0 ? 0.35 : 1 }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: stats.sets === 0 ? 0.35 : 1 }}
         >
           {saving && <Loader2 size={15} className="animate-spin motion-reduce:animate-none" aria-hidden />}
           {saving ? 'Saving…' : 'Save & finish'}

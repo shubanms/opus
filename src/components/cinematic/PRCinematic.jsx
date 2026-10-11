@@ -90,7 +90,7 @@ export default function PRCinematic({ pr, extra = 0, scale = 1 }) {
       {extra > 0 && (
         <m.p
           className="mt-6 rounded-full px-4 py-1.5 font-sans text-xs font-semibold"
-          style={{ background: 'var(--accent-wash)', color: 'var(--color-gold)' }}
+          style={{ background: 'var(--accent-wash)', color: 'var(--gold-leaf)' }}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TWEEN.standard, delay: 1.05 * scale }}

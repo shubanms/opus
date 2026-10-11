@@ -115,7 +115,7 @@ export default function CardioLogger({ exerciseId, onLogged, onRemove }) {
         )}
         <button type="button" onClick={handleLog} disabled={!canLog} aria-label="Log cardio bout"
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: canLog ? 1 : 0.35 }}>
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: canLog ? 1 : 0.35 }}>
           <Plus size={18} strokeWidth={2.5} />
         </button>
       </div>

@@ -105,6 +105,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const [reset, setReset] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
   const [equip, setEquip] = useState(false);
   const [persist, setPersist] = useState(PERSIST_UNSUPPORTED);
   const [icsHour, setIcsHour] = useState(18);
@@ -151,8 +152,8 @@ export default function SettingsPage() {
   const setSound = useSettingsStore((s) => s.setSound);
   const themeOnOpen = useSettingsStore((s) => s.themeOnOpen);
   const setThemeOnOpen = useSettingsStore((s) => s.setThemeOnOpen);
-  const theme = useSettingsStore((s) => s.theme);
-  const setTheme = useSettingsStore((s) => s.setTheme);
+  const sky = useSettingsStore((s) => s.sky);
+  const setSky = useSettingsStore((s) => s.setSky);
   const setTourSeen = useSettingsStore((s) => s.setTourSeen);
   const resetCoachMarks = useSettingsStore((s) => s.resetCoachMarks);
   const stepGoal = useSettingsStore((s) => s.stepGoal);
@@ -308,7 +309,7 @@ export default function SettingsPage() {
           <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
             {['kg', 'lbs'].map((u) => (
               <button key={u} type="button" onClick={() => setUnit(u)} aria-pressed={unit === u} className="min-h-11 px-4 font-sans text-sm font-medium"
-                style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+                style={{ background: unit === u ? 'var(--color-gold)' : 'transparent', color: unit === u ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
                 {u}
               </button>
             ))}
@@ -374,7 +375,7 @@ export default function SettingsPage() {
                 {SEXES.map((s) => (
                   <button key={s} type="button" onClick={() => updateProfile({ sex: profile.sex === s ? null : s })} aria-pressed={profile.sex === s} aria-label={s}
                     className="h-11 w-11 rounded-lg font-sans text-xs"
-                    style={{ background: profile.sex === s ? 'var(--color-gold)' : 'var(--color-ivory)', color: profile.sex === s ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+                    style={{ background: profile.sex === s ? 'var(--color-gold)' : 'var(--color-ivory)', color: profile.sex === s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
                     {s[0]}
                   </button>
                 ))}
@@ -419,7 +420,7 @@ export default function SettingsPage() {
                 onClick={() => { setRestDuration(c.s); playChime('tick'); }}
                 aria-pressed={restDuration === c.s}
                 className="min-h-11 flex-1 rounded-lg font-mono text-xs font-medium"
-                style={{ background: restDuration === c.s ? 'var(--color-gold)' : 'var(--color-ivory)', color: restDuration === c.s ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+                style={{ background: restDuration === c.s ? 'var(--color-gold)' : 'var(--color-ivory)', color: restDuration === c.s ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
               >
                 {c.label}
               </button>
@@ -427,7 +428,7 @@ export default function SettingsPage() {
             {restIsCustom && (
               <span
                 className="flex min-h-11 flex-1 items-center justify-center rounded-lg font-mono text-xs font-medium"
-                style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+                style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
                 title="Set during a workout"
               >
                 {restDuration}s
@@ -571,11 +572,11 @@ export default function SettingsPage() {
             Experience
           </span>
         </div>
-        <Row label="Theme">
+        <Row label="Sky">
           <div className="flex overflow-hidden rounded-lg" style={{ background: 'var(--color-ivory)' }}>
-            {['light', 'dark', 'system'].map((t) => (
-              <button key={t} type="button" onClick={() => setTheme(t)} aria-pressed={theme === t} className="min-h-11 px-3 font-sans text-xs font-medium capitalize"
-                style={{ background: theme === t ? 'var(--color-gold)' : 'transparent', color: theme === t ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+            {['auto', 'dawn', 'dusk', 'night'].map((t) => (
+              <button key={t} type="button" onClick={() => setSky(t)} aria-pressed={sky === t} className="min-h-11 px-3 font-sans text-xs font-medium capitalize"
+                style={{ background: sky === t ? 'var(--color-gold)' : 'transparent', color: sky === t ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
                 {t}
               </button>
             ))}
@@ -646,7 +647,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={handleInstall}
                 className="mt-2 flex min-h-10 items-center gap-2 rounded-xl px-3 font-sans text-xs font-semibold"
-                style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+                style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
               >
                 <Download size={14} /> Install OPUS
               </button>
@@ -673,7 +674,7 @@ export default function SettingsPage() {
               className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
               style={{ background: autoBackup ? 'var(--color-gold)' : 'var(--color-chalk)', border: autoBackup ? 'none' : '1px solid var(--color-ash)' }}
             >
-              {autoBackup && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-obsidian)' }} />}
+              {autoBackup && <Check size={13} strokeWidth={3} style={{ color: 'var(--color-on-accent)' }} />}
             </span>
             <span className="text-left font-sans text-sm" style={{ color: 'var(--color-text-primary)' }}>
               Weekly backup to Downloads
@@ -807,9 +808,46 @@ export default function SettingsPage() {
         </a>
       </section>
 
+      {/* Developer — dev builds only; the whole block (and the seed it loads) is
+          removed from production bundles. */}
+      {import.meta.env.DEV && (
+        <section id="settings-developer" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+          <div className="mb-3 flex items-center gap-2">
+            <Sparkles size={14} style={{ color: 'var(--color-ash)' }} />
+            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+              Developer
+            </span>
+          </div>
+          <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Fill this device with three weeks of sample training. Also loads from any page with ?demo=1.
+          </p>
+          <button
+            type="button"
+            disabled={demoBusy}
+            onClick={async () => {
+              setDemoBusy(true);
+              try {
+                const { loadDemo } = await import('../dev/demoLoader.js');
+                const result = await loadDemo();
+                if (result !== 'cancelled') window.location.assign(`${import.meta.env.BASE_URL}home`);
+              } catch (err) {
+                console.error('Demo seed failed:', err);
+                useUIStore.getState().showToast('Demo data failed to load');
+              } finally {
+                setDemoBusy(false);
+              }
+            }}
+            className="min-h-11 w-full rounded-xl py-3 font-sans text-sm font-semibold"
+            style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
+          >
+            {demoBusy ? 'Loading…' : 'Load demo data'}
+          </button>
+        </section>
+      )}
+
       {/* Danger zone — last, where the jump-nav says it is, and the furthest a
           careless scroll can take you from it. */}
-      <section id="settings-danger" className="scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #FF8FA355' }}>
+      <section id="settings-danger" className="scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid #E0553B55' }}>
         <div className="mb-1 flex items-center gap-2">
           <Trash2 size={14} style={{ color: 'var(--color-ember)' }} />
           <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-ember)' }}>

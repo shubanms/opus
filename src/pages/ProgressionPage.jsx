@@ -21,18 +21,18 @@ function Rung({ reached, current, banked, left, right, sub }) {
         style={{ background: current ? 'var(--color-obsidian)' : reached ? 'var(--color-gold)' : 'var(--color-ivory)' }}
       >
         {reached && !current
-          ? <Check size={15} style={{ color: 'var(--color-obsidian)' }} strokeWidth={3} />
+          ? <Check size={15} style={{ color: 'var(--color-on-accent)' }} strokeWidth={3} />
           : current
             ? <Star size={15} fill="var(--color-gold)" style={{ color: 'var(--color-gold)' }} />
             : <Lock size={13} style={{ color: banked ? 'var(--color-gold)' : 'var(--color-ash)' }} />}
       </div>
       <div className="flex-1">
-        <p className="font-sans text-sm font-semibold" style={{ color: current ? 'var(--color-obsidian)' : 'var(--color-text-primary)' }}>
+        <p className="font-sans text-sm font-semibold" style={{ color: current ? 'var(--color-on-accent)' : 'var(--color-text-primary)' }}>
           {left}
         </p>
-        {sub && <p className="font-sans text-xs" style={{ color: current ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>{sub}</p>}
+        {sub && <p className="font-sans text-xs" style={{ color: current ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>{sub}</p>}
       </div>
-      <span className="font-mono text-xs" style={{ color: current ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}>
+      <span className="font-mono text-xs" style={{ color: current ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}>
         {right}
       </span>
     </div>

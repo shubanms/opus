@@ -114,7 +114,7 @@ export default function WeekPlannerModal({ isOpen, onClose, templates = [] }) {
               onClick={() => pickSplit(s.key)}
               aria-pressed={on}
               className="rounded-xl border px-4 py-3 text-left"
-              style={{ borderColor: on ? 'var(--color-gold)' : 'transparent', background: on ? 'var(--color-gold-soft, rgba(139, 125, 255,0.12))' : 'var(--color-ivory)' }}
+              style={{ borderColor: on ? 'var(--color-gold)' : 'transparent', background: on ? 'var(--color-gold-soft, rgba(210,174,90,0.12))' : 'var(--color-ivory)' }}
             >
               <div className="flex items-center justify-between">
                 <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>{s.label}</span>
@@ -142,7 +142,7 @@ export default function WeekPlannerModal({ isOpen, onClose, templates = [] }) {
         type="button"
         onClick={generate}
         className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+        style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
       >
         <Sparkles size={16} /> {week ? 'Re-generate week' : 'Generate week'}
       </button>

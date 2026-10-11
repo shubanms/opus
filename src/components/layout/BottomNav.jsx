@@ -15,42 +15,25 @@ const tabs = [
   { to: '/home', label: 'Home', Icon: Home },
   { to: '/progress', label: 'Progress', Icon: BarChart3 },
   { to: '/workout', label: 'Workout', Icon: Plus, center: true },
-  { to: '/exercises', label: 'Exercises', Icon: Dumbbell },
-  { to: '/profile', label: 'Profile', Icon: User },
+  { to: '/exercises', label: 'Forms', Icon: Dumbbell },
+  { to: '/profile', label: 'You', Icon: User },
 ];
 
 
 
 function NavItem({ to, label, Icon }) {
   return (
-    <NavLink to={to} aria-label={label} className="relative flex flex-1 flex-col items-center gap-1 py-1">
-      {({ isActive }) => (
-        <>
-          {/* One shared indicator: `layoutId` makes Motion tween the pill from
-              the old tab to the new one rather than cross-fading two pills. */}
-          {isActive && (
-            <m.span
-              layoutId="nav-indicator"
-              transition={SPRING.layout}
-              className="absolute inset-x-1 -top-0.5 bottom-0 rounded-2xl"
-              style={{ background: 'var(--accent-wash)' }}
-            />
-          )}
-          <m.span
-            className="relative"
-            animate={{ y: isActive ? -1 : 0, scale: isActive ? 1.1 : 1 }}
-            transition={SPRING.layout}
-          >
-            <Icon size={21} style={{ color: isActive ? 'var(--color-gold)' : 'var(--color-ash)' }} />
-          </m.span>
-          <span
-            className="relative font-sans text-[10px]"
-            style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-ash)' }}
-          >
-            {label}
-          </span>
-        </>
-      )}
+    <NavLink to={to} aria-label={label} className="relative flex h-full flex-1 flex-col items-center justify-center gap-1">
+      {({ isActive }) => {
+        const c = isActive ? 'var(--washi-2, var(--color-text-primary))' : 'var(--mute-2, var(--color-ash))';
+        return (
+          <>
+            {isActive && <span aria-hidden className="ink-nav-dot" />}
+            <Icon size={22} strokeWidth={1.6} style={{ color: c }} />
+            <span className="ink-nav-label" style={{ color: c, fontWeight: isActive ? 700 : 400 }}>{label}</span>
+          </>
+        );
+      }}
     </NavLink>
   );
 }
@@ -119,7 +102,7 @@ export default function BottomNav() {
             type="button"
             aria-label="Close quick actions"
             className="fixed inset-0 z-[41]"
-            style={{ background: 'rgba(6,9,20,0.5)' }}
+            style={{ background: 'var(--scrim, rgba(0,0,0,0.55))' }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -130,26 +113,24 @@ export default function BottomNav() {
       </AnimatePresence>
 
       <div
-        className="fixed bottom-0 left-1/2 z-[42] w-full max-w-md -translate-x-1/2 px-3"
-        style={{ paddingBottom: 'calc(var(--space-3) + env(safe-area-inset-bottom))' }}
-      >
+        className="fixed bottom-0 left-1/2 z-[42] w-full max-w-md -translate-x-1/2">
         {/* Quick actions fan up from the centre button. */}
         <AnimatePresence>
           {quickOpen && (
-            <m.div className="mb-3 flex flex-col items-center gap-2">
+            <m.div className="mb-3 flex flex-col items-center gap-2 px-3">
               {quick.map((q, i) => (
                 <m.button
                   type="button"
                   key={q.label}
                   onClick={() => go(q.run)}
-                  className="glass glass-strong flex w-56 items-center gap-3 rounded-2xl px-4 py-3"
+                  className="ink-quick flex w-56 items-center gap-3 px-4 py-3"
                   initial={{ opacity: 0, y: 14, scale: 0.94 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.96 }}
                   transition={{ ...SPRING.pop, delay: motionOn ? (quick.length - 1 - i) * 0.04 : 0 }}
                 >
-                  <q.Icon size={17} style={{ color: 'var(--color-gold)' }} />
-                  <span className="font-sans text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                  <q.Icon size={17} strokeWidth={1.6} style={{ color: 'var(--ver, var(--color-gold))' }} />
+                  <span className="font-sans text-sm font-semibold" style={{ color: 'var(--washi-2, var(--color-text-primary))' }}>
                     {q.label}
                   </span>
                 </m.button>
@@ -158,15 +139,10 @@ export default function BottomNav() {
           )}
         </AnimatePresence>
 
-        {/* The dock floats clear of the screen edge rather than sitting flush,
-            so the aurora reads underneath it. */}
-        <nav
-          className="glass glass-strong flex items-center justify-around rounded-3xl px-2 pb-1 pt-1.5"
-          style={{ boxShadow: 'var(--elev-3)' }}
-        >
+        <nav className="ink-nav flex items-stretch justify-around px-2">
           {tabs.map(({ to, label, Icon, center }) =>
             center ? (
-              <div key={to} className="relative flex flex-1 justify-center">
+              <div key={to} className="relative flex flex-1 items-center justify-center">
                 <m.button
                   type="button"
                   aria-label={
@@ -176,13 +152,7 @@ export default function BottomNav() {
                         : `Session in progress, ${formatClock(elapsed)} — tap to return`
                       : 'Workout — tap to start, press and hold for quick actions'
                   }
-                  className="-mt-7 flex h-14 w-14 items-center justify-center"
-                  style={{
-                    background: 'var(--grad-accent)',
-                    color: 'var(--color-obsidian)',
-                    borderRadius: 'var(--opus-radius-lg)',
-                    boxShadow: 'var(--glow-accent)',
-                  }}
+                  className="ink-centre -mt-3 flex h-14 w-14 items-center justify-center"
                   whileTap={{ scale: 0.92 }}
                   animate={{ rotate: quickOpen ? 45 : 0 }}
                   transition={SPRING.pop}
@@ -201,7 +171,8 @@ export default function BottomNav() {
                   onPointerLeave={() => clearTimeout(pressTimer.current)}
                   onPointerCancel={() => clearTimeout(pressTimer.current)}
                 >
-                  <Icon size={26} strokeWidth={2.5} />
+                  <span aria-hidden className="ink-centre-tex" />
+                  <Icon size={26} strokeWidth={2.5} className="relative" style={{ filter: 'url(#ink-brush-fine)' }} />
                 </m.button>
 
                 {/* A breathing halo behind the button, plus the running clock —
@@ -211,23 +182,19 @@ export default function BottomNav() {
                   <>
                     <m.span
                       aria-hidden
-                      className="pointer-events-none absolute -mt-7 h-14 w-14"
-                      style={{
-                        borderRadius: 'var(--opus-radius-lg)',
-                        border: '2px solid var(--color-sage)',
-                      }}
-                      initial={{ opacity: 0.9, scale: 1 }}
-                      animate={motionOn ? { opacity: [0.9, 0, 0.9], scale: [1, 1.35, 1] } : { opacity: 0.9 }}
-                      transition={motionOn ? { duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeOut' } : undefined}
+                      className="ink-halo pointer-events-none absolute -mt-3 h-14 w-14"
+                      initial={{ opacity: 0.8 }}
+                      animate={motionOn ? { opacity: [0.8, 0, 0.8], scale: [1, 1.3, 1] } : { opacity: 0.8 }}
+                      transition={motionOn ? { duration: 3.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' } : undefined}
                     />
                     {/* Elapsed time normally; the rest countdown while resting,
                         in the accent colour so the two never read as one. */}
                     <span
                       data-testid="session-clock"
-                      className="pointer-events-none absolute -top-8 flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums"
+                      className="pointer-events-none absolute -top-5 flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums"
                       style={{
-                        background: resting && !restDone ? 'var(--color-gold)' : 'var(--color-sage)',
-                        color: 'var(--color-obsidian)',
+                        background: resting && !restDone ? 'var(--color-gold)' : 'var(--ver, var(--color-sage))',
+                        color: resting && !restDone ? 'var(--color-on-accent)' : 'var(--washi-3, var(--color-on-accent))',
                         boxShadow: 'var(--elev-2)',
                         transition: 'background-color var(--dur-standard) var(--opus-ease-out)',
                       }}

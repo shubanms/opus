@@ -55,7 +55,7 @@ export default function DungeonCinematic({ name, iron = 0, xpBonus = 0, scale = 
       {xpBonus > 0 && (
         <m.p
           className="mt-6 rounded-full px-4 py-1.5 font-sans text-xs font-semibold"
-          style={{ background: 'var(--accent-wash)', color: 'var(--color-gold)' }}
+          style={{ background: 'var(--accent-wash)', color: 'var(--gold-leaf)' }}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ...TWEEN.standard, delay: 0.85 * scale }}

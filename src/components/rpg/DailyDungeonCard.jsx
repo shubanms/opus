@@ -64,13 +64,13 @@ export default function DailyDungeonCard() {
   }
 
   return (
-    <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-gold)' }}>
+    <div className="mb-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--gold-leaf)' }}>
       <div className="flex items-center justify-between">
-        <span className="flex items-center gap-1.5 font-sans text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-gold)' }}>
+        <span className="flex items-center gap-1.5 font-sans text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--gold-leaf)' }}>
           <Swords size={13} /> Daily Dungeon
         </span>
-        <span className="flex items-center gap-1 font-mono text-xs font-bold" style={{ color: 'var(--color-gold)' }}>
-          <span style={{ display: 'inline-block', width: 10, height: 10, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--color-gold), #a8791f)', borderRadius: 2 }} />
+        <span className="flex items-center gap-1 font-mono text-xs font-bold" style={{ color: 'var(--gold-leaf)' }}>
+          <span style={{ display: 'inline-block', width: 10, height: 10, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, var(--gold-leaf), color-mix(in srgb, var(--gold-leaf) 62%, #000))', borderRadius: 2 }} />
           {dungeon.ironReward}{fx.ironMult > 1 ? ` ×${fx.ironMult}` : ''}
         </span>
       </div>
@@ -79,7 +79,7 @@ export default function DailyDungeonCard() {
 
       {/* Objective — how to clear it. */}
       <div className="mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5" style={{ background: 'var(--color-ivory)' }}>
-        <Target size={13} style={{ color: cleared ? 'var(--color-sage)' : 'var(--color-gold)' }} />
+        <Target size={13} style={{ color: cleared ? 'var(--color-sage)' : 'var(--gold-leaf)' }} />
         <span className="font-sans text-xs" style={{ color: 'var(--color-text-primary)' }}>
           {cleared ? 'Cleared today — Iron awarded ✓' : `Clear it: log ${objective.minSets}+ working sets in this dungeon`}
         </span>
@@ -97,7 +97,7 @@ export default function DailyDungeonCard() {
         type="button"
         onClick={enter}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 font-sans text-sm font-semibold"
-        style={{ background: cleared ? 'var(--color-ivory)' : 'var(--color-gold)', color: cleared ? 'var(--color-text-primary)' : 'var(--color-obsidian)' }}
+        style={{ background: cleared ? 'var(--color-ivory)' : 'var(--gold-leaf)', color: cleared ? 'var(--color-text-primary)' : 'var(--color-obsidian)' }}
       >
         {cleared ? <><Check size={15} /> Run again</> : 'Enter dungeon'}
       </button>

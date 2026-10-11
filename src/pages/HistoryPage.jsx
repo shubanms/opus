@@ -125,7 +125,7 @@ export default function HistoryPage() {
                   aria-pressed={on}
                   onClick={() => setTag(on ? null : t)}
                   className="min-h-[34px] shrink-0 rounded-full px-3.5 font-sans text-xs font-medium"
-                  style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+                  style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
                 >
                   {t}
                 </button>

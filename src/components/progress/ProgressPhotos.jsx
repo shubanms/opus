@@ -84,7 +84,7 @@ export default function ProgressPhotos() {
               onClick={() => setCategory(c)}
               aria-pressed={category === c}
               className="h-8 rounded-md px-2.5 font-sans text-xs font-medium capitalize"
-              style={{ background: category === c ? 'var(--color-gold)' : 'transparent', color: category === c ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+              style={{ background: category === c ? 'var(--color-gold)' : 'transparent', color: category === c ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
             >
               {c}
             </button>
@@ -95,7 +95,7 @@ export default function ProgressPhotos() {
           onClick={() => fileRef.current?.click()}
           disabled={busy}
           className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg font-sans text-sm font-semibold"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: busy ? 0.6 : 1 }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: busy ? 0.6 : 1 }}
         >
           <Camera size={15} /> {busy ? 'Adding…' : 'Add photo'}
         </button>
@@ -148,7 +148,7 @@ export default function ProgressPhotos() {
               aria-label="Close photo"
               onClick={() => setViewer(null)}
               className="absolute inset-0"
-              style={{ background: 'rgba(17,16,16,0.94)' }}
+              style={{ background: 'rgba(7,6,5,0.94)' }}
             />
             <img src={urls[viewerPhoto.id]} alt={`${viewerPhoto.category}, ${friendlyDate(viewerPhoto.date)}`} className="relative max-h-[75vh] max-w-full rounded-xl" style={{ objectFit: 'contain' }} />
             <p className="relative mt-3 font-mono text-sm" style={{ color: 'var(--color-ivory)' }}>{friendlyDate(viewerPhoto.date)} · <span className="capitalize">{viewerPhoto.category}</span></p>

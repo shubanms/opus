@@ -85,7 +85,7 @@ export default function StreakRescueModal({ offer, tokens, onRescue, onLater, on
           className="flex-1 rounded-xl py-3 font-sans text-sm font-medium"
           style={{
             background: 'var(--color-gold)',
-            color: 'var(--color-obsidian)',
+            color: 'var(--color-on-accent)',
             opacity: affordable ? 1 : 0.35,
           }}
         >

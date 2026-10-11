@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useReducedMotion } from '../../motion/index.jsx';
 import useSettingsStore from '../../store/settingsStore.js';
 
-const COLORS = ['#8B7DFF', '#FF8FA3', '#F4F6FD', '#4FD8C4'];
+const COLORS = ['#D2AE5A', '#E0553B', '#EEE6D6', '#9DA67A'];
 
 // Full-screen one-shot particle burst from the centre. Parent renders it
 // briefly (e.g. for ~1.2s) then unmounts.

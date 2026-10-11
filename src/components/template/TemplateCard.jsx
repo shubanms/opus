@@ -5,10 +5,10 @@ import { friendlyDate } from '../../utils/dateKey.js';
 import { DAY_SHORT } from '../../utils/routineDays.js';
 
 const MUSCLE_HUE = {
-  chest: '#FF8FA3', triceps: '#FF8FA3', 'front-deltoids': '#FF8FA3',
-  biceps: '#8B7DFF', forearm: '#8B7DFF', abs: '#8B7DFF', obliques: '#8B7DFF',
-  'upper-back': '#4FD8C4', 'lower-back': '#4FD8C4', trapezius: '#4FD8C4', 'back-deltoids': '#4FD8C4',
-  quadriceps: '#7B83A6', hamstring: '#7B83A6', gluteal: '#7B83A6', calves: '#7B83A6',
+  chest: '#E0553B', triceps: '#E0553B', 'front-deltoids': '#E0553B',
+  biceps: '#D2AE5A', forearm: '#D2AE5A', abs: '#D2AE5A', obliques: '#D2AE5A',
+  'upper-back': '#9DA67A', 'lower-back': '#9DA67A', trapezius: '#9DA67A', 'back-deltoids': '#9DA67A',
+  quadriceps: '#8F877B', hamstring: '#8F877B', gluteal: '#8F877B', calves: '#8F877B',
 };
 
 // "Last done 28 Sep" / "Last done today".
@@ -84,7 +84,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
           )}
           {onStart && (
             <button type="button" onClick={() => onStart(template)} className={iconBtn} style={{ background: 'var(--color-gold)' }} aria-label={`Start ${name}`}>
-              <Play size={13} fill="var(--color-obsidian)" style={{ color: 'var(--color-obsidian)' }} />
+              <Play size={13} fill="var(--color-on-accent)" style={{ color: 'var(--color-on-accent)' }} />
             </button>
           )}
         </div>
@@ -108,7 +108,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
             </span>
           )}
           {muscleGroups.map((m) => {
-            const hue = MUSCLE_HUE[m] ?? '#7B83A6';
+            const hue = MUSCLE_HUE[m] ?? '#8F877B';
             return (
               <span key={m} className="rounded-full px-2 py-0.5 font-sans text-xs capitalize" style={{ background: `${hue}22`, color: hue }}>
                 {m.replace(/-/g, ' ')}
@@ -130,7 +130,7 @@ export default function TemplateCard({ template, onStart, onEdit, onDelete, onDu
           onClick={() => onShuffle(template)}
           disabled={busy}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2 font-sans text-xs font-medium"
-          style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
         >
           <Shuffle size={13} /> You've run this a while — shuffle it up?
         </button>

@@ -18,7 +18,7 @@ const BOTTOM = 20;
 /**
  * Advance width of one axis glyph at AXIS_FONT, plus breathing room.
  *
- * Deliberately wider than DM Mono actually measures. The label budget is an
+ * Deliberately wider than Zen Kaku Gothic New actually measures. The label budget is an
  * estimate, and it has to hold when the webfont has *not* loaded — offline
  * first paint, a blocked CDN — because the system fallback is wider and the
  * labels then overlap ("6/156/22"). Erring wide costs at most one label.
@@ -148,7 +148,7 @@ export default function ChartFrame({
               dy="0.32em"
               textAnchor="end"
               fontSize={AXIS_FONT}
-              fontFamily="DM Mono, monospace"
+              fontFamily="Zen Kaku Gothic New, sans-serif"
               fill="var(--color-ash)"
             >
               {compactNumber(t)}
@@ -176,7 +176,7 @@ export default function ChartFrame({
               y={innerHeight + 14}
               textAnchor={i === 0 ? 'start' : i === rows.length - 1 ? 'end' : 'middle'}
               fontSize={AXIS_FONT}
-              fontFamily="DM Mono, monospace"
+              fontFamily="Zen Kaku Gothic New, sans-serif"
               fill={index === i ? 'var(--color-gold)' : 'var(--color-ash)'}
             >
               {labelOf(rows[i])}

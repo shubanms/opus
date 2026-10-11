@@ -62,7 +62,7 @@ export default function InstallCard() {
         type="button"
         onClick={handleInstall}
         className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+        style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
       >
         <Download size={14} /> Install
       </button>

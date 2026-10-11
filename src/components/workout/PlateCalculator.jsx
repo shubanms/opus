@@ -5,8 +5,8 @@ import useSettingsStore from '../../store/settingsStore.js';
 import { toDisplay, unitLabel } from '../../utils/units.js';
 
 const PLATE_BG = {
-  45: '#FF8FA3', 35: '#8B7DFF', 25: '#FF8FA3', 20: '#8B7DFF', 15: '#4FD8C4',
-  10: '#7B83A6', 5: '#4A4A4A', 2.5: '#3A3A3A', 1.25: '#161B2E',
+  45: '#E0553B', 35: '#D2AE5A', 25: '#E0553B', 20: '#D2AE5A', 15: '#9DA67A',
+  10: '#8F877B', 5: '#4A4038', 2.5: '#2E2823', 1.25: '#1E1A16',
 };
 
 // `weight` is already in the display unit (from the SetLogger input).
@@ -46,7 +46,7 @@ export default function PlateCalculator({ weight, onClose }) {
               <div
                 key={id}
                 className="flex items-center justify-center rounded"
-                style={{ background: PLATE_BG[kg] ?? '#161B2E', width: 36, height: 48 + Math.min(kg, 25) * 0.8 }}
+                style={{ background: PLATE_BG[kg] ?? '#1E1A16', width: 36, height: 48 + Math.min(kg, 25) * 0.8 }}
               >
                 <span className="font-mono font-bold" style={{ color: 'var(--color-text-inverse)', fontSize: 10 }}>{kg}</span>
               </div>

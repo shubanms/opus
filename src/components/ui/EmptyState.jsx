@@ -44,7 +44,7 @@ export default function EmptyState({ icon: Icon, title, body, actionLabel, onAct
           className="mt-6 rounded-2xl px-6 py-3 font-sans text-sm font-semibold"
           style={{
             background: 'var(--grad-accent)',
-            color: 'var(--color-obsidian)',
+            color: 'var(--color-on-accent)',
             boxShadow: 'var(--glow-accent)',
           }}
           whileTap={{ scale: 0.96 }}

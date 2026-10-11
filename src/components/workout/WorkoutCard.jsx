@@ -279,7 +279,7 @@ export default function WorkoutCard({ workout }) {
               type="button"
               onClick={handleRepeat}
               className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl font-sans text-sm font-semibold"
-              style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+              style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)' }}
             >
               <RotateCcw size={14} /> Repeat
             </button>

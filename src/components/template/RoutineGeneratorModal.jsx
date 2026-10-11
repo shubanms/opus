@@ -98,7 +98,7 @@ export default function RoutineGeneratorModal({ isOpen, onClose, templates = [] 
               onClick={() => toggleGroup(g)}
               aria-pressed={on}
               className="rounded-full px-3 py-1.5 font-sans text-xs font-medium"
-              style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+              style={{ background: on ? 'var(--color-gold)' : 'var(--color-ivory)', color: on ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
             >
               {LABEL[g] ?? g}
             </button>
@@ -129,7 +129,7 @@ export default function RoutineGeneratorModal({ isOpen, onClose, templates = [] 
         onClick={handleGenerate}
         disabled={!groups.length}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 font-sans text-sm font-semibold"
-        style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)', opacity: groups.length ? 1 : 0.35 }}
+        style={{ background: 'var(--color-gold)', color: 'var(--color-on-accent)', opacity: groups.length ? 1 : 0.35 }}
       >
         <Sparkles size={16} /> {preview ? 'Re-generate' : 'Generate'}
       </button>
@@ -153,7 +153,7 @@ export default function RoutineGeneratorModal({ isOpen, onClose, templates = [] 
                 onClick={() => setDay(d.v)}
                 aria-pressed={day === d.v}
                 className="rounded-full px-3 py-1.5 font-sans text-xs font-medium"
-                style={{ background: day === d.v ? 'var(--color-gold)' : 'var(--color-ivory)', color: day === d.v ? 'var(--color-obsidian)' : 'var(--color-text-secondary)' }}
+                style={{ background: day === d.v ? 'var(--color-gold)' : 'var(--color-ivory)', color: day === d.v ? 'var(--color-on-accent)' : 'var(--color-text-secondary)' }}
               >
                 {d.l}
               </button>

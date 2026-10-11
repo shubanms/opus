@@ -32,7 +32,7 @@ export default function AchievementCinematic({ achievements = [] }) {
         <m.div
           key={a.key}
           className="glass glass-strong mb-2 flex w-full max-w-md items-center gap-3 rounded-2xl px-4 py-3"
-          style={{ border: '1px solid var(--color-gold)', boxShadow: 'var(--glow-accent)' }}
+          style={{ border: '1px solid var(--gold-leaf)', boxShadow: 'var(--glow-accent)' }}
           initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={SPRING.pop}
@@ -41,12 +41,12 @@ export default function AchievementCinematic({ achievements = [] }) {
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
             style={{ background: 'var(--grad-accent)' }}
           >
-            <Award size={20} style={{ color: 'var(--color-obsidian)' }} />
+            <Award size={20} style={{ color: 'var(--color-on-accent)' }} />
           </div>
           <div className="min-w-0 text-left">
             <p
               className="font-sans text-[10px] font-semibold uppercase tracking-widest"
-              style={{ color: 'var(--color-gold)' }}
+              style={{ color: 'var(--gold-leaf)' }}
             >
               Achievement unlocked
             </p>
@@ -58,7 +58,7 @@ export default function AchievementCinematic({ achievements = [] }) {
             </p>
           </div>
           {a.xp > 0 && (
-            <span className="ml-auto font-mono text-sm" style={{ color: 'var(--color-gold)' }}>
+            <span className="ml-auto font-mono text-sm" style={{ color: 'var(--gold-leaf)' }}>
               +{a.xp}
             </span>
           )}

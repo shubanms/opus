@@ -275,7 +275,7 @@ const isPositive = (v) => typeof v === 'number' && Number.isFinite(v) && v > 0;
 export const BACKUP_PREFS = {
   unit: (v) => v === 'kg' || v === 'lbs',
   barWeight: isAmount,
-  theme: (v) => typeof v === 'string' && v.length > 0,
+  sky: (v) => v === 'auto' || v === 'dawn' || v === 'dusk' || v === 'night',
   effects: isBool,
   sound: isBool,
   themeOnOpen: isBool,
