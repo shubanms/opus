@@ -199,6 +199,10 @@ export default function HomePage() {
         </div>
       )}
 
+      <div className="hm-verdict">
+        <SessionVerdict workout={recent[0]} />
+      </div>
+
       <WeekRow onOpen={() => openProgress(null)} />
 
       <DailyDungeonCard />
@@ -206,8 +210,6 @@ export default function HomePage() {
       <div className="hm-below">
         <BackupCard />
         <InstallCard />
-        <SessionVerdict workout={recent[0]} />
-
         <div className="hm-stats">
           {[
             { k: 'This week', v: String(week.sessions), u: week.sessions === 1 ? 'session' : 'sessions', focus: null },

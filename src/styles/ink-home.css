@@ -147,3 +147,5 @@
 @media (prefers-reduced-motion: reduce) {
   .hm-live * { animation: none !important; }
 }
+.hm-verdict { margin: 0 20px; }
+.hm-verdict:not(:empty) { margin-top: 16px; }
