@@ -54,7 +54,20 @@ function renderApp() {
 
 // Open the database before mounting so a failed/blocked upgrade shows a
 // recovery screen instead of a blank app with every query throwing.
-db.open().then(renderApp).catch((err) => {
+db.open().then(async () => {
+  // Dev builds only: `?demo=1` seeds sample data first. The dynamic import sits
+  // behind the DEV flag, so the seed code is dropped from production bundles.
+  let afterRender = null;
+  if (import.meta.env.DEV) {
+    try {
+      afterRender = await (await import('./dev/demoLoader.js')).bootDemoFromUrl();
+    } catch (err) {
+      console.error('Demo hook failed:', err);
+    }
+  }
+  renderApp();
+  if (afterRender) afterRender();
+}).catch((err) => {
   console.error('OpusDB failed to open:', err);
   root.render(
     <React.StrictMode>

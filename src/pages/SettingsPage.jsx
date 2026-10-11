@@ -105,6 +105,7 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { hash } = useLocation();
   const [reset, setReset] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
   const [equip, setEquip] = useState(false);
   const [persist, setPersist] = useState(PERSIST_UNSUPPORTED);
   const [icsHour, setIcsHour] = useState(18);
@@ -806,6 +807,43 @@ export default function SettingsPage() {
           <Github size={15} /> View on GitHub
         </a>
       </section>
+
+      {/* Developer — dev builds only; the whole block (and the seed it loads) is
+          removed from production bundles. */}
+      {import.meta.env.DEV && (
+        <section id="settings-developer" className="glass mb-5 scroll-mt-4 rounded-2xl p-4" style={{ background: 'var(--color-chalk)', border: '1px solid var(--color-ivory)' }}>
+          <div className="mb-3 flex items-center gap-2">
+            <Sparkles size={14} style={{ color: 'var(--color-ash)' }} />
+            <span className="font-sans text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+              Developer
+            </span>
+          </div>
+          <p className="mb-3 font-sans text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+            Fill this device with three weeks of sample training. Also loads from any page with ?demo=1.
+          </p>
+          <button
+            type="button"
+            disabled={demoBusy}
+            onClick={async () => {
+              setDemoBusy(true);
+              try {
+                const { loadDemo } = await import('../dev/demoLoader.js');
+                const result = await loadDemo();
+                if (result !== 'cancelled') window.location.assign(`${import.meta.env.BASE_URL}home`);
+              } catch (err) {
+                console.error('Demo seed failed:', err);
+                useUIStore.getState().showToast('Demo data failed to load');
+              } finally {
+                setDemoBusy(false);
+              }
+            }}
+            className="min-h-11 w-full rounded-xl py-3 font-sans text-sm font-semibold"
+            style={{ background: 'var(--color-gold)', color: 'var(--color-obsidian)' }}
+          >
+            {demoBusy ? 'Loading…' : 'Load demo data'}
+          </button>
+        </section>
+      )}
 
       {/* Danger zone — last, where the jump-nav says it is, and the furthest a
           careless scroll can take you from it. */}
