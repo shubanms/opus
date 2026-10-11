@@ -1,0 +1,46 @@
+/* Hall of Records (Ink): the shrine rack and the ledger. Loops run only under
+   .rec-live (effects on, motion not reduced) and only on plaques in view; all
+   animate transform or opacity. */
+
+.rec-page { position: relative; padding: 28px 20px calc(24px + env(safe-area-inset-bottom, 0px)); color: var(--washi-2); }
+.rec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rec-head__l { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.rec-title { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1.1; color: var(--washi-2); }
+.rec-count { white-space: nowrap; font-size: 12px; color: var(--mute-2); }
+
+.rec-rack { position: relative; margin: 18px -20px 0; }
+.rec-roof { display: block; width: 100%; height: auto; }
+.rec-row { position: relative; padding: 0 20px; }
+.rec-row::before, .rec-row::after { content: ''; position: absolute; top: 0; bottom: 0; width: 8px; background: #22180f; }
+.rec-row::before { left: 24px; }
+.rec-row::after { right: 24px; }
+.rec-beam { position: relative; z-index: 1; height: 6px; border-radius: 3px; background: #3a2a1e; }
+.rec-cells { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 6px; }
+.rec-cell { position: relative; display: flex; justify-content: center; padding-top: 16px; padding-bottom: 30px; }
+.rec-cord { position: absolute; top: 0; left: 50%; width: 120px; height: 26px; margin-left: -60px; overflow: visible; fill: none; stroke: var(--ver); stroke-width: 1.2; pointer-events: none; }
+
+.rec-ema { position: relative; display: block; width: 92px; height: 84px; padding: 0; border: 0; background: none; cursor: pointer; transform-origin: 46px 10px; -webkit-tap-highlight-color: transparent; }
+.rec-ema:focus-visible { outline: 2px solid var(--gold-leaf); outline-offset: 4px; }
+.rec-ema__svg { display: block; width: 92px; height: 84px; overflow: visible; }
+.rec-ema__glow { position: absolute; inset: -14px; border-radius: 50%; pointer-events: none; opacity: 0.55; background: radial-gradient(closest-side, rgba(224, 85, 59, 0.55), rgba(224, 85, 59, 0)); }
+.rec-ema__seal { position: absolute; left: 6px; top: 22px; }
+.rec-live .rec-ema[data-in='1'] { animation: rec-sway var(--rec-dur, 3.6s) ease-in-out var(--rec-delay, 0s) infinite alternate; }
+.rec-live .rec-ema[data-in='1'] .rec-ema__glow { animation: rec-glow 2.4s ease-in-out infinite; }
+@keyframes rec-sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+@keyframes rec-glow { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.8; } }
+
+.rec-t { font-family: var(--font-display); text-anchor: middle; }
+.rec-t--name { font-weight: 700; fill: #2a1e15; }
+.rec-t--mark { font-weight: 800; fill: #1a1410; }
+.rec-t--prev { font-family: inherit; fill: #5e4a34; text-decoration: line-through; }
+.rec-t--meta { font-family: inherit; fill: #5e4a34; }
+
+.rec-ledger { margin-top: 4px; }
+.rec-row-l { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 0; background: none; border: 0; border-bottom: 1px solid var(--ink-line); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rec-row-l:focus-visible { outline: 2px solid var(--gold-leaf); outline-offset: -2px; }
+.rec-row-l__date { width: 58px; flex: none; font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--mute-2); }
+.rec-row-l__date--new { color: var(--ver-soft); }
+.rec-row-l__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--washi-2); }
+.rec-row-l__mark { flex: none; font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--washi-2); }
+.rec-row-l__delta { flex: none; min-width: 54px; text-align: right; font-size: 12px; color: var(--mute-2); }
+.rec-row-l__delta--new { color: var(--ver-soft); }
