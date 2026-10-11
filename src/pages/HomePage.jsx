@@ -99,7 +99,7 @@ export default function HomePage() {
   const live = useInkMotion();
   const sky = useSky();
   const pal = SKY_PALETTES[sky] ?? SKY_PALETTES.dusk;
-  const { progress, xpToNext } = getXPProgress(effectiveXp);
+  const { xpToNext } = getXPProgress(effectiveXp);
   const caption = sealed
     ? `Sealed at the boss gate · ${banked} ${banked === 1 ? 'level' : 'levels'} banked`
     : `${xpToNext.toLocaleString()} XP to the next mark`;
@@ -144,7 +144,6 @@ export default function HomePage() {
           level={level}
           title={title}
           sealKanji={rankSealKanji(level, prestige)}
-          progress={sealed ? 1 : progress}
           caption={caption}
           live={live}
         />
@@ -163,7 +162,7 @@ export default function HomePage() {
             onBegin={startTemplate}
           />
         ) : today.type === 'rest' ? (
-          <TodayCard weekday={weekday} title="Rest day" meta={UI_KANJI.rest} line={today.reason} cta="Train anyway" ctaLabel="Train anyway" rest onBegin={() => navigate('/workout')} />
+          <TodayCard weekday={weekday} title="Rest day" meta={`${week.sessions} ${week.sessions === 1 ? 'session' : 'sessions'} this week`} line={today.reason} cta="Train anyway" ctaLabel="Train anyway" rest onBegin={() => navigate('/workout')} />
         ) : (
           <TodayCard weekday={weekday} title="A fresh session" meta="Open plan" line={today.reason || 'Jump into a new session.'} ctaLabel="Open workout" onBegin={() => navigate('/workout')} />
         )}

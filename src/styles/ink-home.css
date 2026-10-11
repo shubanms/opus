@@ -49,7 +49,7 @@
   100% { transform: translate(450px, 12px) rotate(630deg); }
 }
 @keyframes hm-wind { from { stroke-dashoffset: 720; } to { stroke-dashoffset: 0; } }
-@keyframes hm-write { from { stroke-dashoffset: var(--hm-len); } to { stroke-dashoffset: 0; } }
+@keyframes hm-write { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
 @keyframes hm-maple { 0%, 100% { transform: rotate(-22deg); } 50% { transform: rotate(-10deg); } }
 @keyframes hm-today { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.25); opacity: 0.45; } }
 
@@ -67,8 +67,8 @@
 /* ---- Today ---- */
 .hm-over { position: relative; z-index: 2; margin: -2px 20px 0; }
 .hm-today { padding: 14px 16px 16px; border-radius: 3px; box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55); }
-.hm-today .ink-card__seal { top: -14px; right: 14px; }
-.hm-maple { width: 30px; height: 30px; display: block; transform-origin: 50% 90%; transform: rotate(-16deg); }
+.hm-today .ink-card__seal { top: -20px; right: 14px; }
+.hm-maple { width: 38px; height: 38px; display: block; transform-origin: 50% 90%; transform: rotate(-16deg); }
 .hm-today__head { display: flex; align-items: baseline; gap: 8px; }
 .hm-today__kanji { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--ver-dark); }
 .hm-today__day, .hm-today__meta { font-size: 12px; font-weight: 500; color: var(--paper-ink-2); }
@@ -128,7 +128,7 @@
 .hm-trial:active .hm-trial__cta { background: var(--ver-dark); transform: scale(0.985); }
 
 /* ---- Below the fold ---- */
-.hm-below { margin: 22px 20px 0; display: grid; gap: 16px; }
+.hm-below { margin: 22px 20px 0; padding-bottom: 24px; display: grid; gap: 16px; }
 .hm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .hm-stat { text-align: left; padding: 10px 12px; background: var(--ink-2); border: 1px solid var(--ink-line); border-radius: 4px; color: var(--washi-2); cursor: pointer; min-height: 44px; }
 .hm-stat__k { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mute-3); display: block; }

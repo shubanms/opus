@@ -29,7 +29,7 @@ const WINDS = [
  * 24 pampas blades. Loops (`live`) are CSS transform/opacity only and exist
  * only when effects are on and motion is not reduced.
  */
-export default function SkyScene({ pal, level, title, sealKanji, progress, caption, live }) {
+export default function SkyScene({ pal, level, title, sealKanji, caption, live }) {
   return (
     <div className={`hm-sky${live ? ' hm-live' : ''}`}>
       <svg
@@ -75,9 +75,9 @@ export default function SkyScene({ pal, level, title, sealKanji, progress, capti
             ))}
           </g>
         )}
-        <EnsoRing pal={pal} progress={progress} live={live} />
-        <text x="195" y="212" textAnchor="middle" fill={pal.levelInk} style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 52 }}>{level}</text>
-        <text x="195" y="236" textAnchor="middle" fill={pal.levelInk} opacity="0.85" style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: String(title).length > 9 ? 8.5 : 9.5, letterSpacing: String(title).length > 9 ? '0.2em' : '0.34em' }}>{String(title).toUpperCase()}</text>
+        <EnsoRing pal={pal} live={live} />
+        <text x="195" y="218" textAnchor="middle" fill={pal.levelInk} style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 64 }}>{level}</text>
+        <text x="195" y="241" textAnchor="middle" fill={pal.levelInk} opacity="0.85" style={{ fontFamily: 'var(--font-sans)', fontWeight: 500, fontSize: String(title).length > 9 ? 10 : 11, letterSpacing: String(title).length > 9 ? '0.2em' : '0.34em' }}>{String(title).toUpperCase()}</text>
         <path d="M0 310 L0 278 C 22 268, 40 260, 62 256 C 84 252, 98 246, 116 250 C 138 255, 156 248, 176 244 C 196 240, 214 250, 236 254 C 258 258, 276 246, 298 242 C 322 238, 344 250, 366 256 C 376 259, 384 260, 390 260 L390 310 Z" fill={pal.mount1} />
         <ellipse cx="190" cy="278" rx="230" ry="22" fill="url(#hmMist)" className="hm-mist-a" />
         <g transform="translate(264 246) rotate(6)" filter="url(#ink-stamp)">
