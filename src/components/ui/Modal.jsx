@@ -8,6 +8,7 @@ import {
   sheetVariants,
   useMotionEnabled,
 } from '../../motion/index.jsx';
+import '../../styles/ink-sheets.css';
 import { useBackToClose } from '../../hooks/useBackToClose.js';
 
 export default function Modal({ isOpen, onClose, title, children }) {
@@ -44,12 +45,7 @@ export default function Modal({ isOpen, onClose, title, children }) {
             onClick={onClose}
           />
           <m.div
-            className="relative flex max-h-[90vh] w-full max-w-md flex-col rounded-t-3xl"
-            style={{
-              background: 'var(--color-chalk)',
-              boxShadow: 'var(--elev-3)',
-              borderTop: '1px solid var(--glass-line)',
-            }}
+            className="ink-sheet relative flex max-h-[90vh] w-full max-w-md flex-col"
             variants={sheetVariants}
             initial="initial"
             animate="animate"
@@ -66,17 +62,12 @@ export default function Modal({ isOpen, onClose, title, children }) {
           >
             {/* Grab handle — the affordance that says the sheet is draggable. */}
             <div className="flex shrink-0 justify-center pt-2.5">
-              <span
-                className="h-1 w-9 rounded-full"
-                style={{ background: 'var(--color-ash)', opacity: 0.4 }}
-              />
+              <span className="ink-sheet__grabber" />
             </div>
 
             {/* Fixed header */}
             <div className="flex shrink-0 items-center justify-between px-5 pb-4 pt-3">
-              <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--color-text-primary)' }}>
-                {title}
-              </h2>
+              <h2 className="ink-sheet__title">{title}</h2>
               {/* A 44 px target around the 32 px disc; the negative margin keeps
                   the header the height it was. */}
               <button
@@ -85,8 +76,8 @@ export default function Modal({ isOpen, onClose, title, children }) {
                 aria-label="Close"
                 className="-my-1.5 -mr-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: 'var(--color-ivory)' }}>
-                  <X size={16} style={{ color: 'var(--color-ash)' }} />
+                <span className="ink-sheet__close">
+                  <X size={16} />
                 </span>
               </button>
             </div>
